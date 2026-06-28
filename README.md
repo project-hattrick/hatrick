@@ -144,7 +144,7 @@ cp .env.example .env.local
 npm run dev                            # http://localhost:3000
 ```
 
-> The API boots cleanly with `TXLINE_ENABLED=false` (no credentials needed). TxLINE setup & endpoints: [`../docs/txline-provider.md`](../docs/txline-provider.md).
+> The API boots cleanly with `TXLINE_ENABLED=false` (no credentials needed). See [`api/README.md`](api/README.md) for TxLINE setup.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -163,7 +163,7 @@ TxLINE SSE (scores + odds)
 [api] WebSocket gateway ──► [front] animate on .during, reconcile on .after
 ```
 
-Full write-up: [`../docs/architecture.md`](../docs/architecture.md). Conventions: [`../docs/conventions.md`](../docs/conventions.md).
+Every event fires as `*.during` (optimistic) then `*.after` (confirmed by TxLINE); the WS gateway broadcasts both to the front.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -198,7 +198,7 @@ project/
 - [ ] Geo-blocking, deploy, demo video
 - [ ] *(Phase 2)* On-chain escrow + `validate_stat` settlement + Merkle-proof UI
 
-Detailed plan: [`../tasks/backlog.md`](../tasks/backlog.md).
+Order: Live Mode first, then Fantasy, then Crowd; on-chain settlement is Phase 2.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -211,7 +211,7 @@ Detailed plan: [`../tasks/backlog.md`](../tasks/backlog.md).
 - **Geo-blocking** — betting surfaces restrict regulated jurisdictions.
 - **Natural-person authorship** — AI used as a tool; a human team owns the submission.
 
-More: [`../docs/hackathon-brief.md`](../docs/hackathon-brief.md).
+Devnet only — fictitious tokens; no real money moves during the hackathon.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -221,10 +221,10 @@ More: [`../docs/hackathon-brief.md`](../docs/hackathon-brief.md).
 
 1. Open an issue describing the change.
 2. Create a feature branch (`git checkout -b feat/your-feature`).
-3. Follow the conventions: English · ≤600 lines/file · enums not strings · no cross-app imports · no tests this sprint (verify by running). Full guide in [`../CLAUDE.md`](../CLAUDE.md); knowledge base in [`../docs/`](../docs).
+3. Follow the conventions: English · ≤600 lines/file · enums not strings · no cross-app imports · no tests this sprint (verify by running).
 4. Open a focused PR with a short explanation and screenshots/GIFs for UI changes.
 
-> CI builds both apps on every push/PR — see [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+> CI builds both apps on every push/PR — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
