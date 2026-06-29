@@ -1,0 +1,8 @@
+type SolanaCluster = 'devnet' | 'testnet' | 'mainnet-beta';
+
+/** Public runtime config. Set via NEXT_PUBLIC_* (see .env.example). */
+export const env = {
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001',
+  solanaCluster: (process.env.NEXT_PUBLIC_SOLANA_CLUSTER ?? 'devnet') as SolanaCluster,
+} as const;
