@@ -1,0 +1,73 @@
+// Prisma schema — hat-trick / api
+// Persistence is for USER state (profile, wallet, bets, fantasy).
+// The live TxLINE feed stays in-memory (event-driven) — do NOT persist the stream here.
+// Rule: only *.repository.ts files touch the generated client (see docs/conventions.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums (persisted) -------------------------------------------------------
+// Persisted enums are declared here and imported from `@prisma/client`.
+// Where a concept is also a domain/event enum (e.g. MarketType in
+// src/events/enums/market-type.enum.ts), the members MUST mirror it exactly.
+
+enum BetStatus {
+  Pending
+  Won
+  Lost
+  Void
+  CashedOut
+}
+
+/// Mirrors src/events/enums/market-type.enum.ts — keep members in sync.
+enum MarketType {
+  MatchResult
+  NextGoal
+  TotalGoals
+  PlayerToScore
+  Corners
+  Cards
+}
+
+// --- Models ------------------------------------------------------------------
+
+/// A fan, identified by their Solana wallet (sign-in). `balance` is off-chain
+/// devnet play money for the hackathon — no real funds move (see compliance).
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  displayName   String?
+  balance       Decimal  @default(1000) @db.Decimal(18, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bets Bet[]
+
+  @@map("users")
+}
+
+/// A bet placed in Live Mode. Settled off the authoritative `*.after` events.
+model Bet {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fixtureId Int
+  market    MarketType
+  /// Market-specific pick: "Home" | "Over2.5" | a playerId, etc.
+  selection String
+  stake     Decimal    @db.Decimal(18, 2)
+  oddsTaken Decimal    @db.Decimal(10, 3)
+  status    BetStatus  @default(Pending)
+  placedAt  DateTime   @default(now())
+  settledAt DateTime?
+
+  @@index([userId])
+  @@index([fixtureId])
+  @@map("bets")
+}
