@@ -48,6 +48,20 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Brand tokens — dark-only Hat-trick identity (black-green stage + lime-neon accent). */
+@theme {
+  --color-surface-1: #101310;
+  --color-surface-2: #151814;
+  --color-surface-3: #232621;
+  --color-neon: #aef019;
+  --color-neon-hover: #c2ff3d;
+  --color-live: #ff5a5f;
+  --color-pitch: #0e2616;
+  --color-team-home: #60a5fa;
+  --color-team-away: #f87171;
+  --color-hot: #ece0c0;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -84,37 +98,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0a0d0a;
+  --foreground: #f2f5f0;
+  --card: #151814;
+  --card-foreground: #f2f5f0;
+  --popover: #101310;
+  --popover-foreground: #f2f5f0;
+  --primary: #aef019;
+  --primary-foreground: #0a0d0a;
+  --secondary: #232621;
+  --secondary-foreground: #f2f5f0;
+  --muted: #151814;
+  --muted-foreground: #8c928a;
+  --accent: #232621;
+  --accent-foreground: #f2f5f0;
+  --destructive: oklch(0.68 0.2 18);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: #aef019;
+  --chart-1: #aef019;
+  --chart-2: #ff5a5f;
+  --chart-3: #ece0c0;
+  --chart-4: #fbbf24;
+  --chart-5: #5b9bff;
+  --sidebar: #101310;
+  --sidebar-foreground: #f2f5f0;
+  --sidebar-primary: #aef019;
+  --sidebar-primary-foreground: #0a0d0a;
+  --sidebar-accent: #232621;
+  --sidebar-accent-foreground: #f2f5f0;
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: #aef019;
 }
 
 @layer base {
@@ -125,6 +139,73 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply scroll-smooth font-sans;
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(42px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fullscreen stage shrinks into a fixed mini-player in the top-right on scroll. */
+@keyframes pip {
+  to {
+    top: 4.5rem;
+    left: calc(100vw - 19.5rem);
+    width: 18rem;
+    height: 10.125rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 0 2px var(--color-neon), 0 24px 60px rgb(0 0 0 / 0.65);
+    z-index: 25;
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-surface-3);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #313846;
+  }
+  .neon-text {
+    text-shadow: 0 0 10px rgb(193 255 68 / 0.45);
+  }
+}
+
+/* CSS-only parallax — fixed stage + scroll-driven depth, degrades gracefully. */
+@supports (animation-timeline: scroll()) {
+  .pip-stage {
+    animation: pip linear both;
+    animation-timeline: scroll(root);
+    animation-range: 75vh 120vh;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 38%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip-stage,
+  .reveal {
+    animation: none;
   }
 }

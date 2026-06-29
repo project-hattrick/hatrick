@@ -1,23 +1,41 @@
 import { create } from 'zustand';
-
-export interface MatchEvent {
-  fixtureId: number;
-  action: string;
-  state: string;
-  ts: number;
-}
+import { MatchAction } from '@/enums/match-action.enum';
+import type { LiveMatch, MatchEventPayload, MatchScore } from '@/types/match';
 
 interface MatchStore {
-  fixtureId: number | null;
-  events: MatchEvent[];
-  setFixture: (id: number | null) => void;
-  pushEvent: (event: MatchEvent) => void;
+  match: LiveMatch | null;
+  events: MatchEventPayload[];
+  setMatch: (match: LiveMatch) => void;
+  applyEvent: (event: MatchEventPayload) => void;
 }
 
-/** Live match state fed by the realtime socket. Base seam. */
+function deriveScore(events: MatchEventPayload[]): MatchScore {
+  const goals = events.filter((event) => event.action === MatchAction.Goal);
+  return {
+    home: goals.filter((goal) => goal.participant === 1).length,
+    away: goals.filter((goal) => goal.participant === 2).length,
+  };
+}
+
+/** during is optimistic, after is authoritative — same seq supersedes. */
+function reconcile(events: MatchEventPayload[], incoming: MatchEventPayload): MatchEventPayload[] {
+  const others = events.filter((event) => event.seq !== incoming.seq);
+  return [...others, incoming].sort((a, b) => a.seq - b.seq).slice(-100);
+}
+
+/** Live match state fed by the realtime socket or the mock feed. */
 export const useMatchStore = create<MatchStore>((set) => ({
-  fixtureId: null,
+  match: null,
   events: [],
-  setFixture: (fixtureId) => set({ fixtureId }),
-  pushEvent: (event) => set((state) => ({ events: [...state.events, event].slice(-100) })),
+  setMatch: (match) => set({ match }),
+  applyEvent: (event) =>
+    set((state) => {
+      const events = reconcile(state.events, event);
+      if (!state.match) return { events };
+      const minute = event.minute ?? state.match.minute;
+      return { events, match: { ...state.match, score: deriveScore(events), minute } };
+    }),
 }));
+
+export const useMatch = () => useMatchStore((state) => state.match);
+export const useMatchEvents = () => useMatchStore((state) => state.events);

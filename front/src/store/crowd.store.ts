@@ -1,17 +1,17 @@
 import { create } from 'zustand';
-
-export interface Balloon {
-  id: string;
-  text: string;
-}
+import type { CrowdMessage } from '@/types/crowd';
 
 interface CrowdStore {
-  balloons: Balloon[];
-  push: (balloon: Balloon) => void;
+  messages: CrowdMessage[];
+  add: (message: CrowdMessage) => void;
+  seed: (messages: CrowdMessage[]) => void;
 }
 
-/** Crowd speech-balloons over the stands. Base seam. */
+/** Crowd chat feeding speech-balloons over the stands. */
 export const useCrowdStore = create<CrowdStore>((set) => ({
-  balloons: [],
-  push: (balloon) => set((state) => ({ balloons: [...state.balloons, balloon].slice(-30) })),
+  messages: [],
+  add: (message) => set((state) => ({ messages: [...state.messages, message].slice(-50) })),
+  seed: (messages) => set({ messages }),
 }));
+
+export const useCrowdMessages = () => useCrowdStore((state) => state.messages);
