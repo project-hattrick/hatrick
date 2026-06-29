@@ -209,3 +209,46 @@
     animation: none;
   }
 }
+
+/* Semantic role tokens — map DS roles to the brand palette so components reference roles, never raw colors. */
+@theme {
+  --color-positive: var(--color-neon);
+  --color-positive-foreground: var(--primary-foreground);
+  --color-warning: var(--chart-4);
+  --color-warning-foreground: var(--background);
+  --color-danger: var(--color-live);
+  --color-danger-foreground: var(--foreground);
+  --color-info: var(--chart-5);
+  --color-info-foreground: var(--background);
+  --color-neutral: var(--color-surface-3);
+  --color-neutral-foreground: var(--muted-foreground);
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 140ms;
+  --duration-base: 240ms;
+  --duration-slow: 420ms;
+}
+
+/* Resolve reveal — pending prediction settles into won/lost. */
+@keyframes resolve-pop {
+  from {
+    opacity: 0.45;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer utilities {
+  .motion-resolve {
+    animation: resolve-pop var(--duration-base) var(--ease-soft) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-resolve {
+    animation: none;
+  }
+}
