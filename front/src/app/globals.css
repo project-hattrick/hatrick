@@ -139,7 +139,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply scroll-smooth font-sans;
+    @apply font-sans;
   }
 }
 
@@ -151,19 +151,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* Fullscreen stage shrinks into a fixed mini-player in the top-right on scroll. */
-@keyframes pip {
-  to {
-    top: 4.5rem;
-    left: calc(100vw - 19.5rem);
-    width: 18rem;
-    height: 10.125rem;
-    border-radius: 1rem;
-    box-shadow: 0 0 0 2px var(--color-neon), 0 24px 60px rgb(0 0 0 / 0.65);
-    z-index: 25;
   }
 }
 
@@ -186,15 +173,6 @@
   }
 }
 
-/* CSS-only parallax — fixed stage + scroll-driven depth, degrades gracefully. */
-@supports (animation-timeline: scroll()) {
-  .pip-stage {
-    animation: pip linear both;
-    animation-timeline: scroll(root);
-    animation-range: 75vh 120vh;
-  }
-}
-
 @supports (animation-timeline: view()) {
   .reveal {
     animation: reveal-up linear both;
@@ -203,9 +181,48 @@
   }
 }
 
+/* Top bar contracts from hero width to the dashboard width as you scroll. */
+@keyframes navbar-shrink {
+  to {
+    max-width: 64rem;
+    background-color: color-mix(in oklch, var(--color-surface-1) 90%, transparent);
+    border-color: var(--border);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 12px 34px rgb(0 0 0 / 0.5);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .navbar-shrink {
+    animation: navbar-shrink linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 88vh;
+  }
+}
+
+/* Mini live-match summary fades in once the dashboard covers the hero. */
+@keyframes mini-summary-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .mini-summary {
+    animation: mini-summary-in linear both;
+    animation-timeline: scroll(root);
+    animation-range: 45vh 80vh;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .pip-stage,
-  .reveal {
+  .reveal,
+  .navbar-shrink {
     animation: none;
   }
 }
@@ -251,4 +268,22 @@
   .motion-resolve {
     animation: none;
   }
+}
+
+/* Lenis weighty smooth scroll — keep native scroll authoritative. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }

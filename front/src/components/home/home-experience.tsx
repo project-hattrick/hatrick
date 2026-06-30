@@ -1,22 +1,22 @@
 import { ParallaxStage } from './parallax-stage';
 import { SiteNavbar } from '@/components/common/site-navbar';
 import { LiveDashboard } from '@/components/live/live-dashboard';
-import { ModesSection } from './modes-section';
-import { HowItWorksSection } from './how-it-works-section';
-import { FeaturedSection } from './featured-section';
+import { MiniMatchSummary } from '@/components/live/mini-match-summary';
+import { HomeDashboard } from './home-dashboard';
 import { SiteFooter } from './site-footer';
 
-/** Scrollable landing: fixed parallax stage + navbar, hero, then placeholder sections. */
+/** Pinned hero + the dashboard that rises up and curtains over it on scroll. */
 export function HomeExperience() {
   return (
     <div className="relative w-full">
       <ParallaxStage />
       <SiteNavbar />
+      <MiniMatchSummary />
       <div className="relative z-10">
-        <LiveDashboard />
-        <ModesSection />
-        <HowItWorksSection />
-        <FeaturedSection />
+        <div className="sticky top-0 z-0 h-screen overflow-hidden">
+          <LiveDashboard />
+        </div>
+        <HomeDashboard />
         <SiteFooter />
       </div>
     </div>

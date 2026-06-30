@@ -1,9 +1,9 @@
 import { MatchBackground } from '@/components/live/match-background';
 
-/** Fullscreen stage that shrinks into a fixed top-right mini-player as you scroll. */
+/** Fullscreen match stage fixed behind the hero; the dashboard rises over it on scroll. */
 export function ParallaxStage() {
   return (
-    <div className="pip-stage fixed top-0 left-0 z-0 h-screen w-screen overflow-hidden will-change-[top,left,width,height]">
+    <div className="fixed inset-0 z-0 overflow-hidden">
       <MatchBackground />
     </div>
   );

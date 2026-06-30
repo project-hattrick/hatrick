@@ -5,6 +5,5 @@ export { MatchAction } from './match-action.enum';
 export { GameState } from './game-state.enum';
 export { Dimension } from './dimension.enum';
 export { PredictionStatus } from './prediction-status.enum';
-export { PredictionMarket } from './prediction-market.enum';
 export { TeamSide } from './team-side.enum';
 export { Tone } from './tone.enum';

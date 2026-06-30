@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/providers/app-providers";
 import { Toaster } from "@/components/ui/sonner";
+import { SmoothScroll } from "@/components/common/smooth-scroll";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -30,10 +31,12 @@ export default function RootLayout({
       className={`dark ${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppProviders>
-          <main className="flex flex-1 flex-col">{children}</main>
-          <Toaster />
-        </AppProviders>
+        <SmoothScroll>
+          <AppProviders>
+            <main className="flex flex-1 flex-col">{children}</main>
+            <Toaster />
+          </AppProviders>
+        </SmoothScroll>
       </body>
     </html>
   );

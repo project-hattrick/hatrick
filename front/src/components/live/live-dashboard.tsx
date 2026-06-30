@@ -26,7 +26,7 @@ export function LiveDashboard() {
           <PlaybackControls />
         </div>
 
-        <div className="md:absolute md:bottom-6 md:left-6">
+        <div className="md:absolute md:bottom-6 md:left-6 md:w-80">
           <MyPredictionsPanel />
         </div>
 

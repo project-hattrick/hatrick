@@ -8,6 +8,8 @@ export interface RawScoreEvent {
   seq: number;
   /** false → emit `*.during` · true → emit `*.after` */
   confirmed: boolean;
+  possession?: number;
+  possessionType?: string;
   dataSoccer?: {
     Action?: string;
     Type?: string;
@@ -21,6 +23,7 @@ export interface RawScoreEvent {
     Penalty?: boolean;
     VAR?: boolean;
   };
+  scoreSoccer?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -32,6 +35,7 @@ export interface RawOddsEvent {
   BookmakerId: number;
   SuperOddsType: string;
   InRunning: boolean;
+  MarketPeriod?: string;
   PriceNames?: string[];
   Prices?: number[];
   Pct?: string[];
@@ -41,11 +45,15 @@ export interface RawOddsEvent {
 export interface RawFixture {
   FixtureId: number;
   StartTime: number;
+  Ts: number;
   Competition: string;
   CompetitionId: number;
+  FixtureGroupId?: number;
   Participant1Id: number;
   Participant1: string;
   Participant2Id: number;
   Participant2: string;
   Participant1IsHome: boolean;
 }
+
+export type StreamKind = 'scores' | 'odds';

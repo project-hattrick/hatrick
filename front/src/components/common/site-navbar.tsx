@@ -16,7 +16,7 @@ const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.Walle
 export function SiteNavbar() {
   return (
     <nav className="pointer-events-auto fixed inset-x-0 top-0 z-30 h-16">
-      <div className="mx-auto flex h-full w-full items-center justify-between px-6 md:w-[92%]">
+      <div className="navbar-shrink mx-auto flex h-full w-full max-w-[120rem] items-center justify-between border border-transparent px-6 md:w-[92%]">
         <div className="flex flex-1 items-center gap-6 text-sm font-semibold">
           {navLinks.map((link) => (
             <Link
