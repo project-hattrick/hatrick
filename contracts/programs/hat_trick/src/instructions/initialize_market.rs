@@ -45,6 +45,7 @@ pub fn handler(
     kind: MarketKind,
     oracle: Pubkey,
     close_ts: i64,
+    void_delay: i64,
 ) -> Result<()> {
     let market = &mut ctx.accounts.market;
     market.authority = ctx.accounts.authority.key();
@@ -59,6 +60,7 @@ pub fn handler(
     market.merkle_root = [0u8; 32];
     market.result_hash = [0u8; 32];
     market.close_ts = close_ts;
+    market.void_delay = void_delay;
     market.vault_bump = ctx.bumps.vault;
     market.bump = ctx.bumps.market;
     Ok(())

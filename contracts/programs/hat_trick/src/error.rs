@@ -32,4 +32,8 @@ pub enum HatTrickError {
     Overflow,
     #[msg("Merkle proof is longer than the supported maximum")]
     ProofTooLong,
+    #[msg("Cannot void before close_ts + void_delay")]
+    VoidTooEarly,
+    #[msg("Market has not been voided")]
+    MarketNotVoided,
 }

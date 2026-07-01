@@ -29,8 +29,9 @@ pub mod hat_trick {
         kind: MarketKind,
         oracle: Pubkey,
         close_ts: i64,
+        void_delay: i64,
     ) -> Result<()> {
-        initialize_market::handler(ctx, market_id, kind, oracle, close_ts)
+        initialize_market::handler(ctx, market_id, kind, oracle, close_ts, void_delay)
     }
 
     /// Stake `amount` tokens on `selection` (keccak256 of the human selection).
@@ -56,5 +57,15 @@ pub mod hat_trick {
     /// Claim a winning position's pari-mutuel payout from escrow.
     pub fn claim(ctx: Context<Claim>) -> Result<()> {
         claim::handler(ctx)
+    }
+
+    /// Void an Open market once `close_ts + void_delay` has passed (escape hatch).
+    pub fn void_market(ctx: Context<VoidMarket>) -> Result<()> {
+        void_market::handler(ctx)
+    }
+
+    /// Refund a position's exact stake from a voided market.
+    pub fn refund(ctx: Context<Refund>, selection: [u8; 32]) -> Result<()> {
+        refund::handler(ctx, selection)
     }
 }

@@ -35,6 +35,8 @@ Program id (devnet, reserved): `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J`
 | `place_position` | bettor (wallet) | Transfers SPL tokens into escrow; upserts the per-selection pool + the user's position. |
 | `settle_market` | keeper (permissionless) | Verifies the oracle ed25519 signature + Merkle proof; locks the winning selection. |
 | `claim` | winner (wallet) | Pulls the pari-mutuel share from escrow; closes the position. |
+| `void_market` | anyone (permissionless) | Escape hatch: after `close_ts + void_delay`, flips an unsettled market to Voided. |
+| `refund` | bettor (wallet) | On a voided market, returns the position's exact stake; closes the position. |
 
 PDAs (seeds in `src/constants.rs`): `market[market_id]`, `vault[market]`,
 `pool[market, selection]`, `position[market, owner, selection]`.
@@ -55,10 +57,12 @@ anchor deploy --provider.cluster devnet
 
 ## Status
 
-- [x] Program: `initialize_market` / `place_position` / `settle_market` / `claim` — **compiles to SBF**
-- [x] On-chain ed25519 (oracle) + keccak Merkle verification
+- [x] Program: `initialize_market` / `place_position` / `settle_market` / `claim` / `void_market` / `refund` — **compiles to SBF**
+- [x] On-chain ed25519 (oracle) + keccak Merkle verification, hardened against ed25519 instruction-index spoofing
+- [x] Void-after-timeout + refund path (bounds "oracle never settles" stuck funds)
+- [x] e2e on local validator: happy path + forged-oracle / spoofed-index / void-too-early negatives
 - [ ] Devnet deploy + vendored IDL into api/front
 - [ ] Keeper bot (api) wired to `*.after` → `settle_market`
 - [ ] Play-token mint + faucet
 - [ ] Front: wallet `place_position` / `claim` + Merkle-proof panel
-- [ ] Void/refund path for empty winning pools
+- [ ] Bind `merkle_root` under the oracle signature (make the proof panel non-decorative)

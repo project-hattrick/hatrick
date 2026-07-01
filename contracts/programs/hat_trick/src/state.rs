@@ -51,6 +51,9 @@ pub struct Market {
     pub result_hash: [u8; 32],
     /// Unix seconds: betting closes / earliest settle time.
     pub close_ts: i64,
+    /// Seconds after `close_ts` before an unsettled market can be voided
+    /// (funds refundable). Bounds the "oracle never settles" stuck-funds risk.
+    pub void_delay: i64,
     pub vault_bump: u8,
     pub bump: u8,
 }
