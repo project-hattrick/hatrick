@@ -40,6 +40,11 @@ export class ChainConfig {
     return Number(this.config.get<string>('FAUCET_AMOUNT') ?? '1000');
   }
 
+  /** Seconds after close_ts before an unsettled market can be voided (default 3h). */
+  get voidDelaySeconds(): number {
+    return Number(this.config.get<string>('VOID_DELAY_SECONDS') ?? '10800');
+  }
+
   /** Configured play-token mint, or null to create one on first faucet use (dev). */
   playTokenMint(): PublicKey | null {
     const v = this.config.get<string>('PLAY_TOKEN_MINT');
