@@ -11,6 +11,7 @@ import { FantasyModule } from './fantasy/fantasy.module';
 import { LiveModule } from './live/live.module';
 import { CrowdModule } from './crowd/crowd.module';
 import { UsersModule } from './users/users.module';
+import { ChainModule } from './chain/chain.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     LiveModule,
     CrowdModule,
     UsersModule,
+    ChainModule,
   ],
   controllers: [AppController],
   providers: [AppService],
