@@ -6,4 +6,8 @@ export const env = {
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001',
   solanaCluster: (process.env.NEXT_PUBLIC_SOLANA_CLUSTER ?? 'devnet') as SolanaCluster,
   useMock: (process.env.NEXT_PUBLIC_USE_MOCK ?? 'true') === 'true',
+  programId:
+    process.env.NEXT_PUBLIC_HAT_TRICK_PROGRAM_ID ??
+    '6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J',
+  playTokenMint: process.env.NEXT_PUBLIC_PLAY_TOKEN_MINT ?? '',
 } as const;
