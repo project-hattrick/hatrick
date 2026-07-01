@@ -1,21 +1,28 @@
 import { env } from '@/lib/env';
 import { MarketType } from '@/enums';
 
-export interface PlaceBetInput {
+export interface BuildBetInput {
+  walletAddress: string;
   fixtureId: number;
   market: MarketType;
   selection: string;
-  stake: number;
+  amount: number;
+  oddsBps?: number;
 }
 
-/** Off-chain betting seam. On-chain settlement is Phase 2 (see docs). */
+/**
+ * On-chain betting seam. The api assembles an unsigned `place_position`
+ * transaction (POST /bets/build); the wallet signs it (see use-place-bet).
+ * Placing a bet moves the user's tokens, so only the user can sign.
+ */
 export const betService = {
-  placeBet: async (input: PlaceBetInput): Promise<{ ok: boolean }> => {
-    const res = await fetch(`${env.apiUrl}/bets`, {
+  buildPlaceBet: async (input: BuildBetInput): Promise<{ transaction: string }> => {
+    const res = await fetch(`${env.apiUrl}/bets/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
-    return { ok: res.ok };
+    if (!res.ok) throw new Error(`Failed to build bet transaction (${res.status})`);
+    return res.json() as Promise<{ transaction: string }>;
   },
 };
