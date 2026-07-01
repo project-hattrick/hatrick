@@ -64,7 +64,7 @@ describe("hat_trick", () => {
   it("initializes a market", async () => {
     const closeTs = new anchor.BN(Math.floor(Date.now() / 1000) + 2);
     await program.methods
-      .initializeMarket([...marketId], { liveMatch: {} }, oracle.publicKey, closeTs)
+      .initializeMarket([...marketId], { liveMatch: {} }, oracle.publicKey, closeTs, new anchor.BN(3600))
       .accounts({ authority: authority.publicKey, market, mint, vault })
       .rpc();
     const m = await program.account.market.fetch(market);

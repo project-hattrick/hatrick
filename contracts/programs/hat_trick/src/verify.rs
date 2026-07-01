@@ -49,6 +49,19 @@ pub fn verify_ed25519(
     require!(data[0] == 1, HatTrickError::InvalidOracleSignature);
 
     let read_u16 = |o: usize| u16::from_le_bytes([data[o], data[o + 1]]) as usize;
+
+    // The three *_instruction_index fields tell the native verifier which
+    // instruction holds the pubkey/message/signature it actually checks. Unless
+    // they all reference THIS instruction (sentinel 0xFFFF), an attacker could
+    // point them at another instruction (self-signed with their own key) while
+    // planting the oracle pubkey + expected message at the offsets we read here,
+    // bypassing the oracle gate. Require the sentinel so the bytes we parse are
+    // exactly the bytes the runtime verified.
+    const SELF_IX: usize = 0xFFFF;
+    require!(read_u16(4) == SELF_IX, HatTrickError::InvalidOracleSignature); // signature
+    require!(read_u16(8) == SELF_IX, HatTrickError::InvalidOracleSignature); // public key
+    require!(read_u16(14) == SELF_IX, HatTrickError::InvalidOracleSignature); // message
+
     let pubkey_off = read_u16(6);
     let msg_off = read_u16(10);
     let msg_size = read_u16(12);

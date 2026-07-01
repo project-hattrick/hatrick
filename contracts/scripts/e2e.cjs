@@ -67,7 +67,7 @@ async function main() {
       meta(vault, false, true), meta(TOKEN_PROGRAM_ID, false, false),
       meta(SystemProgram.programId, false, false), meta(SYSVAR_RENT_PUBKEY, false, false),
     ],
-    data: Buffer.concat([disc("initialize_market"), marketId, Buffer.from([0]), oracle.publicKey.toBuffer(), i64(closeTs)]),
+    data: Buffer.concat([disc("initialize_market"), marketId, Buffer.from([0]), oracle.publicKey.toBuffer(), i64(closeTs), i64(3600)]),
   })]);
   log("✓ initialize_market");
 
@@ -114,8 +114,19 @@ async function main() {
   assert(/InvalidOracleSignature/.test(forgeErr), "forged-oracle settle must fail InvalidOracleSignature");
   log("✓ forged-oracle settle rejected (InvalidOracleSignature)");
 
-  // real settle with the true oracle key
+  // negative (fix #1): a genuine oracle signature, but the ed25519 offsets'
+  // message_instruction_index is flipped off the 0xFFFF "current" sentinel.
+  // The native precompile still passes, so the OLD code would accept it — the
+  // hardened check must reject it.
   const edIx = Ed25519Program.createInstructionWithPrivateKey({ privateKey: oracle.secretKey, message });
+  const mutated = new TransactionInstruction({ programId: edIx.programId, keys: edIx.keys, data: Buffer.from(edIx.data) });
+  mutated.data.writeUInt16LE(0x0000, 14); // message_instruction_index: 0xFFFF -> 0
+  let idxErr = "";
+  try { await send(conn, payer, [mutated, settleIx]); } catch (e) { idxErr = (e.logs || []).join("\n"); }
+  assert(/InvalidOracleSignature/.test(idxErr), "mutated ed25519 instruction_index must be rejected");
+  log("✓ mutated ed25519 index rejected (fix #1)");
+
+  // real settle with the untouched benign instruction
   await send(conn, payer, [edIx, settleIx]);
   log("✓ settle_market — oracle signature + merkle verified on-chain");
 
@@ -149,6 +160,71 @@ async function main() {
   } catch { loserRejected = true; }
   assert(loserRejected, "loser claim must be rejected");
   log("✓ loser claim rejected");
+
+  // 5) void / refund path (fix #2) — fresh market that never settles
+  const idB = crypto.randomBytes(16);
+  const marketB = pda([Buffer.from("market"), idB]);
+  const vaultB = pda([Buffer.from("vault"), marketB.toBuffer()]);
+  const poolB = pda([Buffer.from("pool"), marketB.toBuffer(), HOME]);
+  const bettorB = Keypair.generate();
+  await conn.confirmTransaction(await conn.requestAirdrop(bettorB.publicKey, 100 * LAMPORTS_PER_SOL));
+  const posB = pda([Buffer.from("position"), marketB.toBuffer(), bettorB.publicKey.toBuffer(), HOME]);
+  const closeB = Math.floor(Date.now() / 1000) + 2;
+  const voidDelayB = 2; // voidable at closeB + 2
+
+  await send(conn, payer, [new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      meta(payer.publicKey, true, true), meta(marketB, false, true), meta(mint, false, false),
+      meta(vaultB, false, true), meta(TOKEN_PROGRAM_ID, false, false),
+      meta(SystemProgram.programId, false, false), meta(SYSVAR_RENT_PUBKEY, false, false),
+    ],
+    data: Buffer.concat([disc("initialize_market"), idB, Buffer.from([0]), oracle.publicKey.toBuffer(), i64(closeB), i64(voidDelayB)]),
+  })]);
+
+  const ataB = await getOrCreateAssociatedTokenAccount(conn, payer, mint, bettorB.publicKey);
+  await mintTo(conn, payer, mint, ataB.address, payer, 150);
+  await send(conn, bettorB, [new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      meta(bettorB.publicKey, true, true), meta(marketB, false, true), meta(vaultB, false, true),
+      meta(poolB, false, true), meta(posB, false, true), meta(ataB.address, false, true),
+      meta(TOKEN_PROGRAM_ID, false, false), meta(SystemProgram.programId, false, false),
+    ],
+    data: Buffer.concat([disc("place_position"), HOME, u64(150), u32(0)]),
+  })], [bettorB]);
+
+  const voidIx = new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [meta(bettorB.publicKey, true, false), meta(marketB, false, true)],
+    data: disc("void_market"),
+  });
+  let earlyErr = "";
+  try { await send(conn, bettorB, [voidIx], [bettorB]); } catch (e) { earlyErr = (e.logs || []).join("\n"); }
+  assert(/VoidTooEarly/.test(earlyErr), "void before deadline must be rejected");
+  log("✓ void-too-early rejected");
+
+  // on-chain clock can lag wall-clock on the test validator — retry until the
+  // void window opens rather than trusting a single computed sleep.
+  let voided = false;
+  for (let i = 0; i < 20 && !voided; i++) {
+    try { await send(conn, bettorB, [voidIx], [bettorB]); voided = true; }
+    catch { await sleep(1000); }
+  }
+  assert(voided, "void_market should succeed after close_ts + void_delay");
+  log("✓ void_market — unsettled market voided");
+
+  await send(conn, bettorB, [new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      meta(bettorB.publicKey, true, true), meta(marketB, false, false), meta(posB, false, true),
+      meta(vaultB, false, true), meta(ataB.address, false, true), meta(TOKEN_PROGRAM_ID, false, false),
+    ],
+    data: Buffer.concat([disc("refund"), HOME]),
+  })], [bettorB]);
+  const refundBal = await getAccount(conn, ataB.address);
+  assert(Number(refundBal.amount) === 150, `refund should return 150, got ${refundBal.amount}`);
+  log("✓ refund — full stake 150 returned");
 
   log("\nALL E2E ASSERTIONS PASSED ✅");
 }
