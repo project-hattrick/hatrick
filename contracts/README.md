@@ -19,8 +19,11 @@ Program id (devnet, reserved): `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J`
   program existing. The keeper caches the TxLINE-signed result and submits it
   with a native `Ed25519Program` instruction in the same transaction;
   `settle_market` binds that runtime-verified `(pubkey, message)` to the market's
-  `oracle`. A keccak Merkle proof is checked against the result root for the
-  "view proof" panel. (See `src/verify.rs`.)
+  `oracle`. The signed message is `market_id ‖ winning_selection ‖ merkle_root ‖
+  close_ts`, so the **root is authenticated by the oracle** (not a caller arg),
+  and the result leaf `keccak(market_id ‖ winning_selection ‖ close_ts)` is
+  Merkle-proven under that signed root — this is what the "view proof" panel
+  shows. (See `src/verify.rs`.)
 - **Pull payments.** Winners `claim` individually, so settlement is O(1) in the
   number of winners (no compute-limit blowup paying N accounts).
 - **Selections are opaque 32-byte hashes** = `keccak256(selection)` (e.g.
@@ -60,9 +63,9 @@ anchor deploy --provider.cluster devnet
 - [x] Program: `initialize_market` / `place_position` / `settle_market` / `claim` / `void_market` / `refund` — **compiles to SBF**
 - [x] On-chain ed25519 (oracle) + keccak Merkle verification, hardened against ed25519 instruction-index spoofing
 - [x] Void-after-timeout + refund path (bounds "oracle never settles" stuck funds)
-- [x] e2e on local validator: happy path + forged-oracle / spoofed-index / void-too-early negatives
+- [x] `merkle_root` bound under the oracle signature (proof panel is non-decorative)
+- [x] e2e on local validator: happy path + forged-oracle / spoofed-index / tampered-root / void-too-early negatives
 - [ ] Devnet deploy + vendored IDL into api/front
 - [ ] Keeper bot (api) wired to `*.after` → `settle_market`
 - [ ] Play-token mint + faucet
 - [ ] Front: wallet `place_position` / `claim` + Merkle-proof panel
-- [ ] Bind `merkle_root` under the oracle signature (make the proof panel non-decorative)

@@ -97,8 +97,10 @@ describe("hat_trick", () => {
     // canonical message = market_id(16) || winning_selection(32) || close_ts(8 LE)
     const closeTs = Buffer.alloc(8);
     closeTs.writeBigInt64LE(BigInt(m.closeTs.toString()));
-    const message = Buffer.concat([marketId, HOME, closeTs]);
-    const merkleRoot = Buffer.from(keccak_256.arrayBuffer(message)); // empty proof ⇒ leaf == root
+    const leaf = Buffer.from(keccak_256.arrayBuffer(Buffer.concat([marketId, HOME, closeTs])));
+    const merkleRoot = leaf; // empty proof ⇒ leaf == root
+    // oracle signs the root too: market_id || winning_selection || merkle_root || close_ts
+    const message = Buffer.concat([marketId, HOME, merkleRoot, closeTs]);
 
     const edIx = Ed25519Program.createInstructionWithPrivateKey({
       privateKey: oracle.secretKey,

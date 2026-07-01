@@ -15,13 +15,32 @@ use anchor_lang::solana_program::{
 use crate::error::HatTrickError;
 
 /// Canonical bytes the oracle signs for a settlement:
-/// `market_id(16) || winning_selection(32) || close_ts(8 LE)`.
-pub fn result_message(market_id: &[u8; 16], winning_selection: &[u8; 32], close_ts: i64) -> Vec<u8> {
-    let mut msg = Vec::with_capacity(16 + 32 + 8);
+/// `market_id(16) || winning_selection(32) || merkle_root(32) || close_ts(8 LE)`.
+/// The `merkle_root` is included so the oracle **attests to it** — otherwise it
+/// would be an unauthenticated caller argument and the Merkle proof decorative.
+pub fn settlement_message(
+    market_id: &[u8; 16],
+    winning_selection: &[u8; 32],
+    merkle_root: &[u8; 32],
+    close_ts: i64,
+) -> Vec<u8> {
+    let mut msg = Vec::with_capacity(16 + 32 + 32 + 8);
     msg.extend_from_slice(market_id);
     msg.extend_from_slice(winning_selection);
+    msg.extend_from_slice(merkle_root);
     msg.extend_from_slice(&close_ts.to_le_bytes());
     msg
+}
+
+/// The TxLINE result leaf proven to sit under the signed root:
+/// `keccak(market_id(16) || winning_selection(32) || close_ts(8 LE))`.
+/// Deliberately excludes `merkle_root` (a leaf cannot commit to the tree it is in).
+pub fn result_leaf(market_id: &[u8; 16], winning_selection: &[u8; 32], close_ts: i64) -> [u8; 32] {
+    let mut buf = Vec::with_capacity(16 + 32 + 8);
+    buf.extend_from_slice(market_id);
+    buf.extend_from_slice(winning_selection);
+    buf.extend_from_slice(&close_ts.to_le_bytes());
+    keccak::hash(&buf).0
 }
 
 /// Assert the transaction carries a native ed25519 verification (immediately

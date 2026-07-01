@@ -94,16 +94,18 @@ async function main() {
 
   // 3) settle_market — oracle ed25519 signature must precede settle in the tx
   await sleep((closeTs - Math.floor(Date.now() / 1000) + 1) * 1000);
-  const message = Buffer.concat([marketId, HOME, i64(closeTs)]);
-  const merkleRoot = keccak(message); // empty proof ⇒ leaf == root
-  const settleIx = new TransactionInstruction({
+  const leaf = keccak(Buffer.concat([marketId, HOME, i64(closeTs)]));   // TxLINE result leaf
+  const merkleRoot = leaf;                                              // empty proof ⇒ leaf == root
+  const message = Buffer.concat([marketId, HOME, merkleRoot, i64(closeTs)]); // oracle signs the root too
+  const mkSettle = (root) => new TransactionInstruction({
     programId: PROGRAM_ID,
     keys: [
       meta(payer.publicKey, true, true), meta(market, false, true),
       meta(poolHome, false, false), meta(SYSVAR_INSTRUCTIONS_PUBKEY, false, false),
     ],
-    data: Buffer.concat([disc("settle_market"), HOME, merkleRoot, u32(0)]),
+    data: Buffer.concat([disc("settle_market"), HOME, root, u32(0)]),
   });
+  const settleIx = mkSettle(merkleRoot);
 
   // negative (on the still-OPEN market): a validly-signed but WRONG signer must
   // fail the oracle binding — proves settlement is gated by TxLINE's key alone.
@@ -126,9 +128,17 @@ async function main() {
   assert(/InvalidOracleSignature/.test(idxErr), "mutated ed25519 instruction_index must be rejected");
   log("✓ mutated ed25519 index rejected (fix #1)");
 
+  // negative (root binding): keep the genuine oracle signature but pass a
+  // tampered merkle_root in the instruction. The program rebuilds the expected
+  // message from the arg, so it no longer matches what the oracle signed.
+  let rootErr = "";
+  try { await send(conn, payer, [edIx, mkSettle(crypto.randomBytes(32))]); } catch (e) { rootErr = (e.logs || []).join("\n"); }
+  assert(/InvalidOracleSignature/.test(rootErr), "tampered merkle_root must be rejected");
+  log("✓ tampered merkle_root rejected (root now bound to signature)");
+
   // real settle with the untouched benign instruction
   await send(conn, payer, [edIx, settleIx]);
-  log("✓ settle_market — oracle signature + merkle verified on-chain");
+  log("✓ settle_market — oracle signature + root-bound merkle verified on-chain");
 
   // 4) claim — winner takes the whole pool; loser is denied
   const winAta = await getOrCreateAssociatedTokenAccount(conn, payer, mint, winner.publicKey);
