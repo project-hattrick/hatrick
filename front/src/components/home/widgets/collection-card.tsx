@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { Sparkle } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { PlayerCard } from '@/components/fantasy/player-card';
@@ -21,7 +21,7 @@ function CollectionCard() {
             <PlayerCard key={card.id} card={card} />
           ))}
           <div className="flex h-[124px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neon/40 bg-neon/5 p-2 text-center">
-            <Sparkles className="size-6 text-neon" />
+            <Sparkle className="size-6 text-neon" />
             <span className="text-[9px] font-bold tracking-wide text-neon uppercase">Epic Pack</span>
             <Link href="/fantasy" className={buttonVariants({ variant: 'default', size: 'xs', className: 'h-6 px-2 text-[10px]' })}>
               Open pack

@@ -1,12 +1,12 @@
-import { Gamepad2, ShoppingCart, type LucideIcon } from 'lucide-react';
+import { GameController, ShoppingCart, type Icon } from '@/components/common/icons';
 
 interface NavLink {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: Icon;
 }
 
 export const navLinks: NavLink[] = [
-  { label: 'Games', href: '/', icon: Gamepad2 },
+  { label: 'Games', href: '/', icon: GameController },
   { label: 'Store', href: '/store', icon: ShoppingCart },
 ];

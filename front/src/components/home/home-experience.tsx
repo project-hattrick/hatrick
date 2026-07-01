@@ -2,6 +2,7 @@ import { ParallaxStage } from './parallax-stage';
 import { SiteNavbar } from '@/components/common/site-navbar';
 import { LiveDashboard } from '@/components/live/live-dashboard';
 import { MiniMatchSummary } from '@/components/live/mini-match-summary';
+import { MiniMatchDock } from '@/components/live/mini-match-dock';
 import { HomeDashboard } from './home-dashboard';
 import { SiteFooter } from './site-footer';
 
@@ -12,6 +13,7 @@ export function HomeExperience() {
       <ParallaxStage />
       <SiteNavbar />
       <MiniMatchSummary />
+      <MiniMatchDock />
       <div className="relative z-10">
         <div className="sticky top-0 z-0 h-screen overflow-hidden">
           <LiveDashboard />

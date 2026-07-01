@@ -1,6 +1,6 @@
 'use client';
 
-import { Users } from 'lucide-react';
+import { Users } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { CrowdMessage } from './crowd-message';

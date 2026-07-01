@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Gift, Image as ImageIcon, Bell, Plus } from 'lucide-react';
+import { Gift, Image as ImageIcon, Bell, Plus } from '@/components/common/icons';
 import { navLinks } from '@/config/nav.config';
 import { IconButton } from './icon-button';
 import { formatThousands } from '@/lib/format';

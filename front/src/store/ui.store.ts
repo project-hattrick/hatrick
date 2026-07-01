@@ -12,7 +12,7 @@ interface UiStore {
 
 /** Match-stage playback UI state (replaces ad-hoc useState toggles). */
 export const useUiStore = create<UiStore>((set) => ({
-  dimension: Dimension.TwoD,
+  dimension: Dimension.TwoFiveD,
   muted: false,
   playing: true,
   setDimension: (dimension) => set({ dimension }),

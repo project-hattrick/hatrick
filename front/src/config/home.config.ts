@@ -1,16 +1,16 @@
 import {
-  Activity,
-  CalendarDays,
+  Pulse,
+  CalendarDots,
   Crown,
-  Gamepad2,
+  GameController,
   Gift,
   Package,
   Play,
-  Sparkles,
+  Sparkle,
   Target,
   Trophy,
-  type LucideIcon,
-} from 'lucide-react';
+  type Icon,
+} from '@/components/common/icons';
 import { AppMode } from '@/enums/app-mode.enum';
 import { Tone } from '@/enums/tone.enum';
 
@@ -97,12 +97,12 @@ export interface PackData {
   topRating: string;
   price: number;
   tone: Tone;
-  icon: LucideIcon;
+  icon: Icon;
 }
 
 export const featuredPacks: PackData[] = [
   { id: 'gold', name: 'Gold Pack', tagline: 'Start your collection', players: 6, rares: 1, topRating: '80+', price: 900, tone: Tone.Warning, icon: Package },
-  { id: 'epic', name: 'Epic Pack', tagline: 'Guaranteed top players', players: 12, rares: 3, topRating: '85+', price: 1000, tone: Tone.Info, icon: Sparkles },
+  { id: 'epic', name: 'Epic Pack', tagline: 'Guaranteed top players', players: 12, rares: 3, topRating: '85+', price: 1000, tone: Tone.Info, icon: Sparkle },
   { id: 'legend', name: 'Legendary Pack', tagline: 'The best in the world', players: 20, rares: 5, topRating: '90+', price: 2000, tone: Tone.Primary, icon: Crown },
 ];
 
@@ -113,7 +113,7 @@ export interface PlayMode {
   features: string[];
   href: string;
   cta: string;
-  icon: LucideIcon;
+  icon: Icon;
   tone: Tone;
   badge?: string;
 }
@@ -126,7 +126,7 @@ export const playModes: PlayMode[] = [
     features: ['Instant predictions', 'Real-time chat & community', 'Rewards as it happens'],
     href: `/${AppMode.Live}`,
     cta: 'Enter Live',
-    icon: Activity,
+    icon: Pulse,
     tone: Tone.Danger,
     badge: 'Live',
   },
@@ -137,7 +137,7 @@ export const playModes: PlayMode[] = [
     features: ['Open packs & collect', 'Challenge your friends', 'Win epic rewards'],
     href: `/${AppMode.Fantasy}`,
     cta: 'Play Fantasy',
-    icon: Gamepad2,
+    icon: GameController,
     tone: Tone.Info,
   },
   {
@@ -156,7 +156,7 @@ export interface HowItWorksStep {
   step: string;
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: Icon;
 }
 
 export const howItWorksSteps: HowItWorksStep[] = [
@@ -187,4 +187,4 @@ export const appBadges: AppBadge[] = [
   { store: 'Google Play', tagline: 'Get it on' },
 ];
 
-export const calendarIcon: LucideIcon = CalendarDays;
+export const calendarIcon: Icon = CalendarDots;

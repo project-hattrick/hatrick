@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { buttonVariants } from '@/components/ui/button';
 import { formatMinute } from '@/lib/format';

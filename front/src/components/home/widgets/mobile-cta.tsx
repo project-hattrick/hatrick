@@ -1,7 +1,7 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { ScanLine, Smartphone } from 'lucide-react';
+import { Scan, DeviceMobile } from '@/components/common/icons';
 import { buttonVariants } from '@/components/ui/button';
 
 const MOBILE_URL = 'https://hat-trick.app';
@@ -21,7 +21,7 @@ export function MobileCta() {
           href={MOBILE_URL}
           className={buttonVariants({ size: 'lg', className: 'mt-1 h-11 gap-2 px-6 text-base font-semibold' })}
         >
-          <Smartphone className="size-5" />
+          <DeviceMobile className="size-5" />
           Continue on mobile
         </a>
       </div>
@@ -31,7 +31,7 @@ export function MobileCta() {
           <QRCodeSVG value={MOBILE_URL} size={132} marginSize={1} level="M" bgColor="transparent" className="block" />
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <ScanLine className="size-3.5" />
+          <Scan className="size-3.5" />
           Scan to open
         </span>
       </div>

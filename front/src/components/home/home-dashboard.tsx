@@ -12,6 +12,8 @@ import { StepCard } from './widgets/step-card';
 import { SectionLink } from './widgets/section-link';
 import { MobileCta } from './widgets/mobile-cta';
 import { SquadSection } from './squad-section';
+import { CupBracketSection } from './cup-bracket-section';
+import { CheckpointsSection } from './checkpoints-section';
 import { featuredPacks, howItWorksSteps, playModes } from '@/config/home.config';
 
 function RowHeader({ title, action }: { title: string; action?: React.ReactNode }) {
@@ -30,7 +32,7 @@ function RowHeader({ title, action }: { title: string; action?: React.ReactNode 
 export function HomeDashboard() {
   return (
     <div className="relative z-10">
-      <div aria-hidden className="h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
+      <div aria-hidden className="curtain-seam h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
       <div className="bg-background">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -46,7 +48,11 @@ export function HomeDashboard() {
           <TopPlayersCard />
         </div>
 
+        <CupBracketSection />
+
         <SquadSection />
+
+        <CheckpointsSection />
 
         <div className="grid gap-4 md:grid-cols-3">
           {playModes.map((mode) => (

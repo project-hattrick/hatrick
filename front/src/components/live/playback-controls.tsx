@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { Play, Pause, SpeakerHigh, SpeakerSlash, ArrowsOut } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { IconButton } from '@/components/common/icon-button';
 import { DimensionToggle } from './dimension-toggle';
@@ -23,11 +23,11 @@ export function PlaybackControls() {
           {playing ? <Pause /> : <Play />}
         </IconButton>
         <IconButton size="icon-sm" label={muted ? 'Unmute' : 'Mute'} onClick={toggleMuted}>
-          {muted ? <VolumeX /> : <Volume2 />}
+          {muted ? <SpeakerSlash /> : <SpeakerHigh />}
         </IconButton>
         <span className="mx-1 h-4 w-px bg-border" />
         <IconButton size="icon-sm" label="Fullscreen">
-          <Maximize />
+          <ArrowsOut />
         </IconButton>
       </GlassPanel>
     </div>

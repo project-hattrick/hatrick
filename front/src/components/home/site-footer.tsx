@@ -1,17 +1,17 @@
 import Link from 'next/link';
-import { Apple, Globe, Mail, MessageCircle, Play, Send, type LucideIcon } from 'lucide-react';
+import { AppleLogo, Globe, Envelope, ChatCircle, Play, PaperPlaneTilt, type Icon } from '@/components/common/icons';
 import { BrandMark } from '@/components/common/brand-mark';
 import { appBadges, footerColumns } from '@/config/home.config';
 
-const socials: { label: string; icon: LucideIcon }[] = [
+const socials: { label: string; icon: Icon }[] = [
   { label: 'Website', icon: Globe },
-  { label: 'Community', icon: MessageCircle },
-  { label: 'Telegram', icon: Send },
-  { label: 'Email', icon: Mail },
+  { label: 'Community', icon: ChatCircle },
+  { label: 'Telegram', icon: PaperPlaneTilt },
+  { label: 'Email', icon: Envelope },
 ];
 
-const storeIcons: Record<string, LucideIcon> = {
-  'App Store': Apple,
+const storeIcons: Record<string, Icon> = {
+  'App Store': AppleLogo,
   'Google Play': Play,
 };
 

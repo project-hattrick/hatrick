@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
 import { PlayerRosterCard } from './player-roster-card';
 import type { SquadPlayer } from '@/config/squad.config';
@@ -9,7 +9,7 @@ import type { SquadPlayer } from '@/config/squad.config';
 const STEP = 304;
 
 function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void }) {
-  const Icon = side === 'left' ? ChevronLeft : ChevronRight;
+  const Icon = side === 'left' ? CaretLeft : CaretRight;
   return (
     <button
       type="button"

@@ -1,4 +1,4 @@
-import { Trophy } from 'lucide-react';
+import { Trophy } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { ProgressBar } from '@/components/ui/progress-bar';

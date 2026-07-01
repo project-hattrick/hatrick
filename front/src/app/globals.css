@@ -220,9 +220,26 @@
   }
 }
 
+/* Curtain seam: the soft gradient where the landing meets the hero shows only at the
+   very start of the rise, then fades out as the landing curtains up over the hero. */
+@keyframes curtain-seam-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .curtain-seam {
+    animation: curtain-seam-out linear both;
+    animation-timeline: scroll(root);
+    animation-range: 10vh 50vh;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
-  .navbar-shrink {
+  .navbar-shrink,
+  .curtain-seam {
     animation: none;
   }
 }

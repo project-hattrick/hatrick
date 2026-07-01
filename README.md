@@ -4,7 +4,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/your-org/hat-trick">
-    <img src="https://placehold.co/96x96/14F195/0b0b0b?text=H" alt="Hat-trick" width="96" height="96" />
+    <img src="front/public/logo.png" alt="Hat-trick" width="96" />
   </a>
 
   <h1 align="center">Hat-trick</h1>

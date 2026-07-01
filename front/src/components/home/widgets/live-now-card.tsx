@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react';
+import { TrendUp } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { LiveBadge } from '@/components/common/live-badge';
@@ -19,7 +19,7 @@ function LiveNowCard() {
             <div className="text-xs text-muted-foreground">users online</div>
           </div>
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-neon">
-            <TrendingUp className="size-3.5" />
+            <TrendUp className="size-3.5" />
             {liveNow.changePct}%
           </span>
         </div>

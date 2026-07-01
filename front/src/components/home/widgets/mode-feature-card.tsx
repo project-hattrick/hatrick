@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Check } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
