@@ -1,10 +1,10 @@
-import { FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
+import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
 import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
 import { fieldBounds } from './field';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
-import type { FrameCfg } from './assets/configs';
+import { outfieldConfigFor, type FrameCfg } from './assets/configs';
 import { ITEM_MAP } from './assets/items';
 import type { HeadKey, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
@@ -20,12 +20,26 @@ interface SpriteRect {
   sourceH: number;
 }
 
-const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.GkRunSide, BodyAnim.GkDive]);
+const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive]);
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
 
-const gkHead = (v: HeadView): HeadKey => (v === HeadView.Back ? 'back' : v === HeadView.Side ? 'side' : 'front');
+const gkHead = (v: HeadView): HeadKey =>
+  v === HeadView.Back ? 'back' : v === HeadView.Side ? 'side' : v === HeadView.FrontClosed ? 'frontClosed' : 'front';
+
+/**
+ * Actor height at `depth`. With `normalizedSizes` a composited body is shrunk so body+head together
+ * read as the base height (playground rule); legacy path keeps the keeper's hand-tuned bodyScale.
+ */
+function spriteHeightFor(world: RealGkWorld, depth: number, frameCfg: FrameCfg | null): number {
+  const base = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth);
+  if (!frameCfg) return base;
+  if (world.cfg.features?.normalizedSizes) {
+    return base / Math.max(0.75, 1 + frameCfg.headScale - frameCfg.offsetYRatio);
+  }
+  return base * frameCfg.bodyScale;
+}
 
 function drawSprite(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, footY: number, height: number, mirror: boolean): void {
   if (!image || !image.complete || !image.naturalWidth) return;
@@ -112,7 +126,7 @@ function drawReferee(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: 
   const { referee, size } = world;
   if (!referee.active) return;
   const depth = flat ? FLAT_DEPTH : fieldBounds(size, referee.y).depth;
-  const height = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * REFEREE_SCALE;
+  const height = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * (world.cfg.actorScale?.referee ?? REFEREE_SCALE);
 
   ctx.save();
   ctx.globalAlpha = 0.18;
@@ -135,16 +149,28 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const sideMode = SIDE_MODES.has(player.mode);
   const isGk = player.role === Role.GK;
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
+  const outfieldCfg = isGk ? null : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const diving = isGk && player.action === PlayerAction.Dive;
-  const spriteHeight = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * (keeperCfg ? keeperCfg.bodyScale : 1);
+  // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
+  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
+  // the stretched sprite reads like a normal player instead of inflating off its short height.
+  const diveBox = diving ? modeItem?.bboxes[frameIdx] : null;
+  const spriteHeight = diveBox
+    ? (lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * DIVE_LENGTH) /
+      Math.max(1, (diveBox[2] - diveBox[0]) / Math.max(1, diveBox[3] - diveBox[1]))
+    : spriteHeightFor(world, depth, sizeCfg);
+  const footY = player.y - player.celebrationLift;
 
   // Small foot shadow with the team ring encircling it (concentric, ring sits just outside the shadow).
-  const shadowRX = lerp(8, 15, depth) * (diving ? 1.14 : 1);
-  const shadowRY = lerp(3, 6, depth);
+  // Hop celebrations shrink+fade the grounded shadow as the sprite lifts.
+  const liftShrink = 1 - Math.min(0.38, player.celebrationLift / 60);
+  const shadowRX = lerp(8, 15, depth) * (diving ? 1.14 : 1) * liftShrink;
+  const shadowRY = lerp(3, 6, depth) * liftShrink;
   const cy = player.y + 5;
 
   ctx.save();
-  ctx.globalAlpha = diving ? 0.26 : 0.2;
+  ctx.globalAlpha = (diving ? 0.26 : 0.2) - Math.min(0.12, player.celebrationLift * 0.004);
   ctx.fillStyle = '#000';
   ctx.beginPath();
   ctx.ellipse(player.x, cy, shadowRX, shadowRY, 0, 0, Math.PI * 2);
@@ -158,13 +184,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   ctx.stroke();
 
   const mirror = sideMode ? player.facing < 0 : false;
-  if (isGk && keeperCfg) {
-    const bodyRect = drawTrimmedSprite(ctx, frame, modeItem?.bboxes[frameIdx] ?? null, player.x, player.y, spriteHeight, mirror);
+  const composedCfg = keeperCfg ?? outfieldCfg;
+  if (composedCfg) {
+    // Composited body+head: keeper frames use their trim boxes; v4 outfield frames draw whole.
+    const bbox = modeItem?.bboxes[frameIdx] ?? (frame.complete && frame.naturalWidth ? [0, 0, frame.naturalWidth, frame.naturalHeight] : null);
+    const bodyRect = drawTrimmedSprite(ctx, frame, bbox, player.x, footY, spriteHeight, mirror);
     if (bodyRect) {
-      drawComposedHead(ctx, assets.heads[gkHead(keeperCfg.headView)], player.x, bodyRect, mirror, keeperCfg);
+      drawComposedHead(ctx, assets.heads[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg);
     }
   } else {
-    drawSprite(ctx, frame, player.x, player.y, spriteHeight, mirror);
+    drawSprite(ctx, frame, player.x, footY, spriteHeight, mirror);
   }
 }
 
@@ -172,8 +201,9 @@ function drawBall(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: Rea
   const { ball, size } = world;
   const bounds = fieldBounds(size, ball.y);
   const depth = flat ? FLAT_DEPTH : bounds.depth;
-  const shadowW = lerp(10, 22, depth) * (1 - Math.min(ball.z, 90) / 180);
-  const shadowH = lerp(4, 8, depth);
+  const ballScale = world.cfg.ballScale ?? 1;
+  const shadowW = lerp(10, 22, depth) * (1 - Math.min(ball.z, 90) / 180) * ballScale;
+  const shadowH = lerp(4, 8, depth) * ballScale;
   ctx.save();
   ctx.globalAlpha = clamp(0.28 - ball.z * 0.002, 0.08, 0.28);
   ctx.fillStyle = '#000';
@@ -186,7 +216,7 @@ function drawBall(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: Rea
   const frameIdx = ball.impact > 0.01 ? BALL_IMPACT_FRAME : v1BallFrameIndex(Math.hypot(ball.vx, ball.vy), ball.spin);
   const frame = assets.ball[frameIdx];
   if (!frame.complete || !frame.naturalWidth) return;
-  const px = lerp(10, 18, depth) * (1 + Math.min(ball.z, 90) * 0.0018);
+  const px = lerp(10, 18, depth) * (1 + Math.min(ball.z, 90) * 0.0018) * ballScale;
   const aspect = frame.naturalWidth / Math.max(1, frame.naturalHeight);
   const aspectScale = Math.sqrt(aspect);
   const drawW = Math.round(px * aspectScale);
@@ -196,7 +226,7 @@ function drawBall(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: Rea
 
 function drawCoach(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: RealGkAssets): void {
   const c = world.coach;
-  const spriteHeight = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, c.depth) * 1.06;
+  const spriteHeight = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, c.depth) * (world.cfg.actorScale?.coach ?? 1.06);
   ctx.save();
   ctx.globalAlpha = 0.18;
   ctx.fillStyle = '#000';

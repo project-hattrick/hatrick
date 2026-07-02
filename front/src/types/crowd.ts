@@ -1,4 +1,5 @@
 import type { TeamSide } from '@/enums/team-side.enum';
+import type { CrowdSource } from '@/enums/crowd-source.enum';
 
 /** A single chat message that becomes a balloon over the stands. */
 export interface CrowdMessage {
@@ -10,4 +11,5 @@ export interface CrowdMessage {
   avatar: string;
   text: string;
   ageLabel: string;
+  source: CrowdSource;
 }

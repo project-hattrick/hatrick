@@ -5,6 +5,7 @@ import { crowdService } from '../crowd.service';
 import { queryKeys } from './keys';
 import { useCrowdStore } from '@/store/crowd.store';
 import { TeamSide } from '@/enums/team-side.enum';
+import { CrowdSource } from '@/enums/crowd-source.enum';
 import type { CrowdMessage } from '@/types/crowd';
 
 const SELF = {
@@ -32,6 +33,7 @@ export function useSendMessage(fixtureId: number) {
         avatar: SELF.avatar,
         text,
         ageLabel: 'now',
+        source: CrowdSource.Community,
       };
       add(message);
       queryClient.invalidateQueries({ queryKey: queryKeys.crowd(fixtureId) });

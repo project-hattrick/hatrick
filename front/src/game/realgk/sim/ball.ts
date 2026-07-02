@@ -1,6 +1,6 @@
 import { BALL_FRAME_COUNT, BALL_GRAVITY } from '../constants';
 import { BodyAnim, PlayerAction, Role, Team } from '../enums';
-import { fieldBounds } from '../field';
+import { fieldBounds, fieldRatios, pointOnField, GOAL_MAX_Z, GOALS } from '../field';
 import type { Ball, RealGkPlayer, RealGkWorld, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
 import { BallText, Status } from './messages';
@@ -29,6 +29,7 @@ export function kickBall(world: RealGkWorld, player: RealGkPlayer, targetX: numb
   const ny = dy / len;
   const curlSeed = clamp((player.vx * ny - player.vy * nx) * 0.012, -1, 1);
   ball.ownerId = null;
+  ball.lastKickerId = player.id;
   ball.cooldown = lob ? 0.42 : 0.26;
   ball.vx = nx * power;
   ball.vy = ny * power * 0.92;
@@ -70,7 +71,50 @@ export function maybeClaimBall(world: RealGkWorld): void {
   }
 }
 
-/** Ball flight: glued to the owner's foot, else gravity + curl + drag + bounce + goal detection. */
+const opposite = (t: Team): Team => (t === Team.Blue ? Team.Red : Team.Blue);
+
+/** Places the ball as a dead ball at a pitch spot and names the restart (replaces the old wall bounce). */
+function deadBall(world: RealGkWorld, lat: number, depth: number, note: { title: string; text: string }): void {
+  const { ball, size } = world;
+  const spot = pointOnField(size, lat, depth);
+  ball.x = spot.x;
+  ball.y = spot.y;
+  ball.z = 0;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.vz = 0;
+  ball.spinRate = 0;
+  ball.ownerId = null;
+  ball.lastKickerId = null;
+  // Brief dead-ball window so it isn't snapped up instantly — the nearest player runs on and restarts.
+  ball.cooldown = 0.5;
+  world.match.ballText = BallText.deadBall;
+  setStatus(world, note.title, note.text);
+}
+
+/** Ball over a touchline (top/bottom) → throw-in for the team that didn't touch it last. */
+function throwInRestart(world: RealGkWorld, lastTeam: Team | null, topSide: boolean): void {
+  const { ball, size } = world;
+  const team = lastTeam ? opposite(lastTeam) : Team.Blue;
+  const lat = clamp(fieldRatios(size, ball.x, ball.y).lat, 0.06, 0.94);
+  deadBall(world, lat, topSide ? 0.04 : 0.96, Status.throwIn(team));
+}
+
+/** Ball over a goal line (left/right, no goal) → corner (attacker last touched) or goal kick (defender). */
+function bylineRestart(world: RealGkWorld, goalOwner: Team, lastTeam: Team | null): void {
+  const { ball, size } = world;
+  const attacker = opposite(goalOwner);
+  const topHalf = fieldRatios(size, ball.x, ball.y).depth < 0.5;
+  if (lastTeam === attacker) {
+    const lat = goalOwner === Team.Blue ? 0.03 : 0.97; // attacking-side corner flag
+    deadBall(world, lat, topHalf ? 0.05 : 0.95, Status.corner(attacker));
+  } else {
+    const lat = goalOwner === Team.Blue ? 0.14 : 0.86; // just inside the defended goal
+    deadBall(world, lat, 0.5, Status.goalKick(goalOwner));
+  }
+}
+
+/** Ball flight: glued to the owner's foot, else gravity + curl + drag + out-of-play restarts. */
 export function updateBall(world: RealGkWorld, dt: number): void {
   const { ball, size } = world;
   const owner = ballOwner(world);
@@ -129,39 +173,45 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   }
 
   const bounds = fieldBounds(size, ball.y);
-  const goalTop = lerp(bounds.topY, bounds.bottomY, 0.36);
-  const goalBottom = lerp(bounds.topY, bounds.bottomY, 0.64);
-  const inGoalMouth = ball.y >= goalTop && ball.y <= goalBottom && ball.z < 24;
+  // Per-side goal mouth (calibrated in field.ts GOALS). Blue defends the left, Red the right.
+  const leftGoal = GOALS[Team.Blue];
+  const rightGoal = GOALS[Team.Red];
+  const inLeftMouth =
+    ball.y >= lerp(bounds.topY, bounds.bottomY, leftGoal.depthTop) &&
+    ball.y <= lerp(bounds.topY, bounds.bottomY, leftGoal.depthBottom) &&
+    ball.z < GOAL_MAX_Z;
+  const inRightMouth =
+    ball.y >= lerp(bounds.topY, bounds.bottomY, rightGoal.depthTop) &&
+    ball.y <= lerp(bounds.topY, bounds.bottomY, rightGoal.depthBottom) &&
+    ball.z < GOAL_MAX_Z;
 
-  if (ball.y < bounds.topY + 4) {
-    ball.y = bounds.topY + 4;
-    ball.vy *= -0.66;
-    ball.impact = 0.08;
-  }
-  if (ball.y > bounds.bottomY - 4) {
-    ball.y = bounds.bottomY - 4;
-    ball.vy *= -0.66;
-    ball.impact = 0.08;
-  }
+  const lastTeam = world.players.find((p) => p.id === ball.lastKickerId)?.team ?? null;
 
+  // Goal lines (left/right) take priority: goal in the mouth, else corner / goal kick.
   if (ball.x < bounds.left + 6) {
-    if (inGoalMouth) {
+    if (inLeftMouth) {
       goal(world, Team.Red);
       return;
     }
-    ball.x = bounds.left + 6;
-    ball.vx *= -0.7;
-    ball.impact = 0.08;
+    bylineRestart(world, Team.Blue, lastTeam);
+    return;
   }
-
   if (ball.x > bounds.right - 6) {
-    if (inGoalMouth) {
+    if (inRightMouth) {
       goal(world, Team.Blue);
       return;
     }
-    ball.x = bounds.right - 6;
-    ball.vx *= -0.7;
-    ball.impact = 0.08;
+    bylineRestart(world, Team.Red, lastTeam);
+    return;
+  }
+  // Touchlines (top/bottom) → throw-in.
+  if (ball.y < bounds.topY + 4) {
+    throwInRestart(world, lastTeam, true);
+    return;
+  }
+  if (ball.y > bounds.bottomY - 4) {
+    throwInRestart(world, lastTeam, false);
+    return;
   }
 
   maybeClaimBall(world);

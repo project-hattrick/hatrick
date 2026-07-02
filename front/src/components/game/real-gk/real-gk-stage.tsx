@@ -17,6 +17,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const handleRef = useRef<RealGkHandle | null>(null);
   const apply = useRealGkStore((s) => s.apply);
   const goalActive = useRealGkStore((s) => s.goalActive);
+  const replayActive = useRealGkStore((s) => s.replayActive);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -36,8 +37,18 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         handle.restart();
       } else if (k === 'j') {
         handle.spawnReferee();
+      } else if (k === 'g') {
+        handle.debugGoal();
       } else if (k === 'h') {
         useRealGkStore.getState().toggleUi();
+      } else if (k === '1') {
+        handle.debugAction('header');
+      } else if (k === '2') {
+        handle.debugAction('receive');
+      } else if (k === '3') {
+        handle.debugAction('intercept');
+      } else if (k === '4') {
+        handle.debugAction('powershot');
       }
     };
     window.addEventListener('keydown', onKey);
@@ -54,7 +65,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
     <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
       <GoalBurst active={goalActive} />
-      <RealGkHud />
+      {!replayActive && <RealGkHud />}
       <RealGkControls handle={handleRef} />
     </div>
   );

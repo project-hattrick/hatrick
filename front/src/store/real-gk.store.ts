@@ -13,6 +13,7 @@ interface RealGkStore {
   speed: number;
   refereeActive: boolean;
   goalActive: boolean;
+  replayActive: boolean;
   cameraLabel: string;
   targetLabel: string;
   uiHidden: boolean;
@@ -33,6 +34,7 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   speed: 1,
   refereeActive: true,
   goalActive: false,
+  replayActive: false,
   cameraLabel: 'Cam: Broadcast',
   targetLabel: 'Follow: ball',
   uiHidden: false,

@@ -1,16 +1,17 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
-import { RefMode, RefPhase, Role, Team } from '../enums';
+import { MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
 import { pointOnField } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
+import { clearCelebrations } from './celebration';
 import { freshCoach, resetCoach, updateCoach } from './coach';
 import { BallText, Status } from './messages';
 import { faceBall, resetPlayers, updatePlayers } from './players';
 import { resetReferee, updateReferee } from './referee';
 import { setStatus } from './rules';
 
-const freshBall = (): Ball => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, spin: 0, spinRate: 0, ownerId: null, cooldown: 0, impact: 0 });
+const freshBall = (): Ball => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, spin: 0, spinRate: 0, ownerId: null, cooldown: 0, impact: 0, lastKickerId: null });
 
 const freshReferee = (): Referee => ({
   active: true,
@@ -43,6 +44,9 @@ const freshMatch = (): MatchState => ({
   statusTitle: '',
   statusText: '',
   ballText: BallText.loose,
+  phase: MatchPhase.Live,
+  phaseTimer: 0,
+  celebrantId: null,
 });
 
 /** Drops the ball at center and gives it to the kickoff team's most central outfielder. */
@@ -60,6 +64,7 @@ export function resetBall(world: RealGkWorld, centerTeam: Team): void {
   ball.cooldown = 0.25;
   ball.impact = 0;
   ball.ownerId = null;
+  ball.lastKickerId = null;
 
   const candidates = players.filter((p) => p.team === centerTeam && p.role !== Role.GK);
   if (candidates.length) {
@@ -77,6 +82,9 @@ export function restartMatch(world: RealGkWorld): void {
   world.match.celebration = 0;
   world.match.kickoffTeam = Team.Blue;
   world.match.ballText = BallText.loose;
+  world.match.phase = MatchPhase.Live;
+  world.match.phaseTimer = 0;
+  world.match.celebrantId = null;
   resetPlayers(world);
   resetBall(world, Team.Blue);
   resetReferee(world);
@@ -102,6 +110,15 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
   return world;
 }
 
+/** Kickoff reset after a goal: fresh formations, ball at center, restart status. Leaves `phase` to the caller. */
+export function kickoffReset(world: RealGkWorld): void {
+  resetPlayers(world);
+  resetBall(world, world.match.kickoffTeam);
+  clearCelebrations(world);
+  const note = Status.restart();
+  setStatus(world, note.title, note.text);
+}
+
 /** Advances the whole simulation by `dt` seconds (already scaled by speed). */
 export function step(world: RealGkWorld, dt: number): void {
   const { match } = world;
@@ -112,10 +129,13 @@ export function step(world: RealGkWorld, dt: number): void {
     updateReferee(world, dt);
     updateCoach(world, dt);
     if (match.celebration === 0) {
-      resetPlayers(world);
-      resetBall(world, match.kickoffTeam);
-      const note = Status.restart();
-      setStatus(world, note.title, note.text);
+      if (world.cfg.features?.replay) {
+        // Hand off to the replay director: it wipes to the slow-mo replay, then performs the kickoff reset.
+        match.phase = MatchPhase.ReplayIn;
+        match.phaseTimer = 0;
+        return;
+      }
+      kickoffReset(world);
     }
     return;
   }

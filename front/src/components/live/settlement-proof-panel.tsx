@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowSquareOut, ShieldCheck } from '@/components/common/icons';
 
 import { MarketType } from '@/enums';
 import { GlassPanel } from '@/components/common/glass-panel';
@@ -58,7 +58,7 @@ export function SettlementProofPanel({ fixtureId, market = MarketType.MatchResul
         className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
       >
         View on Solana Explorer
-        <ExternalLink className="size-4" aria-hidden />
+        <ArrowSquareOut className="size-4" aria-hidden />
       </a>
     </GlassPanel>
   );

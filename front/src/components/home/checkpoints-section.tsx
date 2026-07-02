@@ -9,7 +9,6 @@ export function CheckpointsSection() {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2.5">
-        <span className="h-4 w-1 rounded-full bg-neon" />
         <h2 className="text-sm font-bold tracking-wider uppercase">Game checkpoints</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-3">

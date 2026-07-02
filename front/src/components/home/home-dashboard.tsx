@@ -19,10 +19,7 @@ import { featuredPacks, howItWorksSteps, playModes } from '@/config/home.config'
 function RowHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <span className="h-4 w-1 rounded-full bg-neon" />
-        <h2 className="text-sm font-bold tracking-wider uppercase">{title}</h2>
-      </div>
+      <h2 className="text-sm font-bold tracking-wider uppercase">{title}</h2>
       {action}
     </div>
   );
@@ -32,9 +29,9 @@ function RowHeader({ title, action }: { title: string; action?: React.ReactNode 
 export function HomeDashboard() {
   return (
     <div className="relative z-10">
-      <div aria-hidden className="curtain-seam h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
+      <div aria-hidden className="curtain-seam h-32 bg-gradient-to-b from-transparent to-background md:h-48" />
       <div className="bg-background">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <LiveNowCard />
           <UpcomingSummaryCard />

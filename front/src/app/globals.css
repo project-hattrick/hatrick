@@ -184,7 +184,7 @@
 /* Top bar contracts from hero width to the dashboard width as you scroll. */
 @keyframes navbar-shrink {
   to {
-    max-width: 64rem;
+    max-width: 80rem;
     background-color: color-mix(in oklch, var(--color-surface-1) 90%, transparent);
     border-color: var(--border);
     border-radius: var(--radius-2xl);
@@ -236,10 +236,27 @@
   }
 }
 
+/* Cross-fade between the immersive and split hero layouts. */
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-fade {
+  animation: hero-fade var(--duration-slow) var(--ease-soft) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .navbar-shrink,
-  .curtain-seam {
+  .curtain-seam,
+  .hero-fade {
     animation: none;
   }
 }

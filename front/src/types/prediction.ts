@@ -18,4 +18,6 @@ export interface PredictionPrompt {
   yesPoints: number;
   noPoints: number;
   secondsLeft: number;
+  yesOdds: number;
+  noOdds: number;
 }

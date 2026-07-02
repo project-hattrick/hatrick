@@ -34,4 +34,27 @@ export class UserRepository {
       data: { balance: { increment: delta } },
     });
   }
+
+  create(data: { walletAddress: string; displayName?: string }): Promise<User> {
+    return this.prisma.user.create({ data });
+  }
+
+  /** Returns the requested page plus the total row count in one transaction. */
+  findMany(skip: number, take: number): Promise<[User[], number]> {
+    return this.prisma.$transaction([
+      this.prisma.user.findMany({ skip, take, orderBy: { createdAt: 'desc' } }),
+      this.prisma.user.count(),
+    ]);
+  }
+
+  update(
+    id: string,
+    data: { walletAddress?: string; displayName?: string },
+  ): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
+
+  delete(id: string): Promise<User> {
+    return this.prisma.user.delete({ where: { id } });
+  }
 }

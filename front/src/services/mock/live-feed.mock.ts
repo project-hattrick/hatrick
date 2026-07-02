@@ -4,6 +4,7 @@ import { GameState } from '@/enums/game-state.enum';
 import { MarketType } from '@/enums/market-type.enum';
 import { PredictionStatus } from '@/enums/prediction-status.enum';
 import { TeamSide } from '@/enums/team-side.enum';
+import { CrowdSource } from '@/enums/crowd-source.enum';
 import type { LiveMatch, MatchEventPayload } from '@/types/match';
 import type { CrowdMessage } from '@/types/crowd';
 import type { Prediction, PredictionPrompt } from '@/types/prediction';
@@ -56,6 +57,7 @@ export function randomCrowdMessage(): CrowdMessage {
     avatar: `https://i.pravatar.cc/64?img=${1 + Math.floor(Math.random() * 70)}`,
     text: pick(crowdTexts),
     ageLabel: 'now',
+    source: Math.random() < 0.55 ? CrowdSource.Twitter : CrowdSource.Community,
   };
 }
 
@@ -79,6 +81,8 @@ const seedPrompt: PredictionPrompt = {
   yesPoints: 50,
   noPoints: 10,
   secondsLeft: 45,
+  yesOdds: 1.9,
+  noOdds: 2.1,
 };
 
 /** Hydrates every store with a believable live match (idempotent). */

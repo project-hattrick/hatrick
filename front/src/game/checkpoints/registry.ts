@@ -2,6 +2,7 @@ import { ARENA_V1 } from './arena-v1';
 import { CHUVA_V1 } from './chuva-v1';
 import { REAL_GK_V2_META } from './real-gk-v2';
 import { REAL_GK_V3_META } from './real-gk-v3';
+import { REAL_GK_V4_META } from './real-gk-v4';
 import { CheckpointId, RuntimeKind, type CheckpointDef, type CheckpointMeta } from './types';
 
 export { CheckpointId, RuntimeKind };
@@ -14,7 +15,7 @@ const SHARED_DEFS: Partial<Record<CheckpointId, CheckpointDef>> = {
 };
 
 /** All checkpoint metadata — every version stays selectable (history). */
-export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META];
+export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META, REAL_GK_V4_META];
 
 const META = Object.fromEntries(CHECKPOINTS.map((m) => [m.id, m])) as Record<CheckpointId, CheckpointMeta>;
 

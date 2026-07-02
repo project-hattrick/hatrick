@@ -1,9 +1,9 @@
 import { BodyAnim } from '../enums';
 import { BALL_FRAMES as V1_BALL_FRAMES, ballFramePath as v1BallFramePath } from '../../assets/manifest';
 import { bodyFramePath, COACH_PATHS, COURT_BG, HEAD_PATHS, REF_SPRITE_PATHS, REF_WALK_FRAMES } from './manifest';
-import { ITEMS } from './items';
+import { ITEMS, V4_ANIMS } from './items';
 
-export type HeadKey = 'front' | 'back' | 'side';
+export type HeadKey = 'front' | 'frontClosed' | 'back' | 'side';
 
 export interface RefereeSprites {
   idleFront: HTMLImageElement;
@@ -34,10 +34,16 @@ function loadImage(src: string): HTMLImageElement {
   return img;
 }
 
-/** Resolves every v2 sprite (images start loading immediately; draws guard on `complete`). */
-export function loadRealGkAssets(): RealGkAssets {
+/**
+ * Resolves sprites (images start loading immediately; draws guard on `complete`).
+ * The v4 anim pack is only fetched when `includeV4` — legacy/hero boots stay at the original request set.
+ */
+export function loadRealGkAssets(includeV4 = false): RealGkAssets {
   const body = Object.fromEntries(
-    ITEMS.map((item) => [item.id, item.frames.map((name) => loadImage(bodyFramePath(name)))]),
+    ITEMS.map((item) => [
+      item.id,
+      includeV4 || !V4_ANIMS.has(item.id) ? item.frames.map((name) => loadImage(bodyFramePath(name))) : [],
+    ]),
   ) as Record<BodyAnim, HTMLImageElement[]>;
 
   return {
@@ -46,6 +52,7 @@ export function loadRealGkAssets(): RealGkAssets {
     ball: Array.from({ length: V1_BALL_FRAMES }, (_, i) => loadImage(v1BallFramePath(i))),
     heads: {
       front: loadImage(HEAD_PATHS.front),
+      frontClosed: loadImage(HEAD_PATHS.frontClosed),
       back: loadImage(HEAD_PATHS.back),
       side: loadImage(HEAD_PATHS.side),
     },

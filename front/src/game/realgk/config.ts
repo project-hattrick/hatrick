@@ -7,6 +7,18 @@ export interface CamPreset {
   follow: boolean;
 }
 
+/** Opt-in v4 behaviors. Undefined (v2/v3/hero) keeps every legacy code path byte-identical. */
+export interface RealGkFeatures {
+  /** turn_side / stop_brake actions in the outfield AI. */
+  extraAnims: boolean;
+  /** Goal celebration sequences (arms-up / knee slide) for the scoring team. */
+  celebrations: boolean;
+  /** Broadcast goal flow: TV wipe → slow-motion replay → kickoff. */
+  replay: boolean;
+  /** Size composited actors by visible body height so heads never inflate them. */
+  normalizedSizes: boolean;
+}
+
 /**
  * Tunables that define a Real Match GK *variant*. The engine, sim and renderer are shared; a config
  * is what makes "Cinema" feel bigger than "v2": a larger virtual pitch (players cover more ground, so
@@ -18,10 +30,18 @@ export interface RealGkConfig {
   /** Sprite height range (far → near), in field pixels. Smaller = tinier players on a vaster pitch. */
   spriteMinH: number;
   spriteMaxH: number;
+  /** Ball size multiplier (and its shadow). Defaults to 1; smaller reads better with tiny players. */
+  ballScale?: number;
   /** Camera preset ring (first entry is the default). */
   presets: CamPreset[];
   /** Cinematic camera: eases slower, leads the ball, and pushes in on shots / near-goal action. */
   cinematic: boolean;
+  /** v4 feature gates — leave unset to keep the exact legacy behavior. */
+  features?: RealGkFeatures;
+  /** Per-actor height multipliers; unset falls back to the legacy constants (referee 0.9, coach 1.06). */
+  actorScale?: { referee?: number; coach?: number };
+  /** Max cinematic zoom push near a goal (legacy default 1.32). */
+  nearGoalPush?: number;
 }
 
 /** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
@@ -38,6 +58,21 @@ export const REAL_GK_V2_CONFIG: RealGkConfig = {
   cinematic: false,
 };
 
+/** Home hero backdrop — small players on a larger pitch with a calm, cinematic follow-camera. */
+export const REAL_GK_HERO_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+};
+
 /** Checkpoint 4 — "Cinema": a large pitch the camera roams, small players, dramatic dynamic zoom. */
 export const REAL_GK_CINEMA_CONFIG: RealGkConfig = {
   fieldScale: 1.85,
@@ -52,7 +87,26 @@ export const REAL_GK_CINEMA_CONFIG: RealGkConfig = {
   cinematic: true,
 };
 
+/** Checkpoint 5 — "Broadcast": hero-standardized sizes, new anims, celebrations and TV goal replays. */
+export const REAL_GK_V4_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
+  nearGoalPush: 1.42,
+};
+
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;
   return id === CheckpointId.RealGkV3 ? REAL_GK_CINEMA_CONFIG : REAL_GK_V2_CONFIG;
 }

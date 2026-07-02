@@ -25,6 +25,13 @@ export const DIVE_DURATION = 0.68;
 export const DIVE_FORWARD = 104;
 export const DIVE_LIFT = 20;
 
+/**
+ * Diving-keeper footprint. The dive frames are horizontal poses (wide, short bboxes), so sizing them by
+ * height — like a standing sprite — inflates their width off-screen. Instead the dive's longest side is
+ * normalized to the standing height × this factor, so a stretched-out keeper reads like a normal player.
+ */
+export const DIVE_LENGTH = 1.12;
+
 /** Ball gravity (vz -= BALL_GRAVITY * dt). */
 export const BALL_GRAVITY = 760;
 

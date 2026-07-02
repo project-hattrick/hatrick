@@ -4,6 +4,8 @@ export { MarketType } from './market-type.enum';
 export { MatchAction } from './match-action.enum';
 export { GameState } from './game-state.enum';
 export { Dimension } from './dimension.enum';
+export { HeroLayout } from './hero-layout.enum';
+export { CrowdSource } from './crowd-source.enum';
 export { PredictionStatus } from './prediction-status.enum';
 export { TeamSide } from './team-side.enum';
 export { Tone } from './tone.enum';

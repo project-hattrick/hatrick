@@ -10,6 +10,7 @@ export const COURT_BG = '/game/stadiums/rain-court/court.png';
 
 export const HEAD_PATHS = {
   front: `${REAL_GK_ROOT}/head_front.png`,
+  frontClosed: `${REAL_GK_ROOT}/head_front_closed.png`,
   back: `${REAL_GK_ROOT}/head_back.png`,
   side: `${REAL_GK_ROOT}/head_side_right.png`,
 } as const;

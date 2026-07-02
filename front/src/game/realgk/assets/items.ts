@@ -8,7 +8,8 @@ interface RawItem {
   fps: number;
   frameCount: number;
   loop?: boolean;
-  bboxes: Bbox[];
+  /** Per-frame trim boxes; omitted = draw the whole frame (v4 anims ship pre-framed). */
+  bboxes?: Bbox[];
 }
 
 /** Body-animation defs ported verbatim (fps + per-frame trim bboxes). Frame names are deterministic. */
@@ -36,6 +37,18 @@ const RAW: RawItem[] = [
     loop: false,
     bboxes: [[142, 123, 354, 332], [56, 131, 512, 337], [0, 133, 398, 300], [1, 182, 441, 285], [83, 104, 451, 273], [58, 148, 389, 283], [65, 147, 357, 280], [74, 120, 327, 283]],
   },
+  // v4 pack — timings ported from the assets playground.
+  { id: BodyAnim.TurnSide, fps: 8.0, frameCount: 4, loop: false },
+  { id: BodyAnim.StopBrake, fps: 8.0, frameCount: 4, loop: false },
+  { id: BodyAnim.ArmsUpRun, fps: 7.2, frameCount: 4 },
+  { id: BodyAnim.HeaderFront, fps: 8.0, frameCount: 4, loop: false },
+  { id: BodyAnim.ReceiveFront, fps: 7.4, frameCount: 4, loop: false },
+  { id: BodyAnim.InterceptFront, fps: 8.0, frameCount: 4, loop: false },
+  { id: BodyAnim.PowerShotFront, fps: 7.7, frameCount: 4, loop: false },
+  { id: BodyAnim.CelebrateJump, fps: 8.4, frameCount: 6, loop: false },
+  { id: BodyAnim.KneeSlide, fps: 7.8, frameCount: 6, loop: false },
+  { id: BodyAnim.KneeRise, fps: 6.0, frameCount: 3, loop: false },
+  { id: BodyAnim.KneeJump, fps: 7.2, frameCount: 4, loop: false },
 ];
 
 export interface BodyItem {
@@ -52,8 +65,23 @@ export const ITEMS: BodyItem[] = RAW.map((r) => ({
   fps: r.fps,
   frameCount: r.frameCount,
   loop: r.loop ?? true,
-  bboxes: r.bboxes,
+  bboxes: r.bboxes ?? [],
   frames: Array.from({ length: r.frameCount }, (_, i) => `${r.id}_frame_${pad2(i + 1)}.png`),
 }));
 
 export const ITEM_MAP = Object.fromEntries(ITEMS.map((i) => [i.id, i])) as Record<BodyAnim, BodyItem>;
+
+/** v4-only anims (turn/brake/celebrations) — only these need loading when features are enabled. */
+export const V4_ANIMS = new Set<BodyAnim>([
+  BodyAnim.TurnSide,
+  BodyAnim.StopBrake,
+  BodyAnim.ArmsUpRun,
+  BodyAnim.HeaderFront,
+  BodyAnim.ReceiveFront,
+  BodyAnim.InterceptFront,
+  BodyAnim.PowerShotFront,
+  BodyAnim.CelebrateJump,
+  BodyAnim.KneeSlide,
+  BodyAnim.KneeRise,
+  BodyAnim.KneeJump,
+]);

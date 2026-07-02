@@ -4,7 +4,7 @@ import { PageShell } from '@/components/common/page-shell';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { WireBlock } from '@/components/common/wire-block';
-import { Button } from '@/components/ui/button';
+import { PackOpening } from '@/components/store/pack-opening';
 import { formatThousands } from '@/lib/format';
 
 const packs = [
@@ -41,7 +41,7 @@ export default function StorePage() {
                   </div>
                   <span className="text-sm font-bold text-neon">{pack.price}</span>
                 </div>
-                <Button className="w-full">Buy pack</Button>
+                <PackOpening packName={pack.name} />
               </GlassPanel>
             ))}
           </div>

@@ -1,0 +1,25 @@
+/* Refraction color override — the lib hard-codes its rainbow in injected CSS
+   and ignores the `colors` prop, so we re-declare the gradients with vars.
+   --holo-1/2/3 are set inline per card (country flag colors); gold fallback. */
+
+.holoRefraction:global(.sticker-refraction-1) {
+  background: radial-gradient(
+    circle at 0 100%,
+    transparent 10%,
+    var(--holo-1, #ffd98a),
+    var(--holo-2, #ffaa40),
+    var(--holo-3, #a78bfa),
+    transparent 60%
+  );
+}
+
+.holoRefraction:global(.sticker-refraction-2) {
+  background: radial-gradient(
+    circle at 100% 0,
+    transparent 10%,
+    var(--holo-1, #ffd98a),
+    var(--holo-2, #ffaa40),
+    var(--holo-3, #a78bfa),
+    transparent 60%
+  );
+}

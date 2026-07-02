@@ -1,17 +1,21 @@
-import { BodyAnim, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
 import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { ITEM_MAP } from '../assets/items';
 import { ballOwner, kickBall, teamPlayers } from './ball';
+import { updatePlayerCelebration } from './celebration';
 import { FORMATION } from './formation';
+import { maybeTriggerHeader, updateHeader } from './header';
+import { maybeTriggerReceive, updateReceive } from './receive';
+import { startPowerShot, updatePowerShot } from './shot';
 import { maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { setStatus } from './rules';
 
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
 
-/** (Re)spawns both 5-a-side squads into formation. */
+/** (Re)spawns both 11-a-side squads into formation. */
 export function resetPlayers(world: RealGkWorld): void {
   world.players = [];
   world.nextPlayerId = 1;
@@ -55,6 +59,17 @@ export function resetPlayers(world: RealGkWorld): void {
         diveStartX: pt.x,
         diveStartY: pt.y,
         saveCooldown: 0,
+        celebrationKind: CelebrationKind.None,
+        celebrationPhase: CelebrationPhase.None,
+        celebrationTimer: 0,
+        celebrationLift: 0,
+        brakeCooldown: 0,
+        prevSpeed: 0,
+        headerCooldown: 0,
+        headerHit: false,
+        receiveCooldown: 0,
+        receiveHit: false,
+        powerShotHit: false,
       });
     });
   }
@@ -86,11 +101,20 @@ export function chooseMode(player: RealGkPlayer): BodyAnim {
   return speed > 120 ? BodyAnim.RunFront : BodyAnim.WalkFront;
 }
 
+/** Static open-arms frame held during the Pose/Loop celebration phases (playground frame 2). */
+const ARMSUP_HOLD_FRAME = 2;
+
 export function frameIndexFor(player: RealGkPlayer, now: number): number {
   const item = ITEM_MAP[player.mode];
   if (player.mode.startsWith('idle') || player.mode === BodyAnim.GkIdle) return 0;
   if (!item) return 0;
-  if (player.mode === BodyAnim.GkDive) return Math.min(item.frames.length - 1, Math.floor(player.actionElapsed * item.fps));
+  if (player.celebrationPhase !== CelebrationPhase.None) {
+    if (player.celebrationPhase === CelebrationPhase.Pose || player.celebrationPhase === CelebrationPhase.Loop) return ARMSUP_HOLD_FRAME;
+    // Celebration anims cycle off the phase clock (playground: phaseAnimTime modulo).
+    return Math.floor(player.actionElapsed * item.fps) % item.frames.length;
+  }
+  // Non-looping actions (dive, turn, brake) play once off their own clock.
+  if (!item.loop) return Math.min(item.frames.length - 1, Math.floor(player.actionElapsed * item.fps));
   return Math.floor((now / 1000) * item.fps) % item.frames.length;
 }
 
@@ -134,11 +158,66 @@ function updateFacingGuard(player: RealGkPlayer, dt: number): void {
 
 const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.GkRunSide, BodyAnim.GkDive]);
 
+/** Ticks a one-shot outfield action (turn / brake): hold position, play out, then release. */
+function updateOutfieldAction(player: RealGkPlayer, dt: number): boolean {
+  if (player.action !== PlayerAction.TurnSide && player.action !== PlayerAction.StopBrake) return false;
+  player.actionTimer = Math.max(0, player.actionTimer - dt);
+  player.actionElapsed += dt;
+  player.vx *= Math.pow(0.4, dt * 60);
+  player.vy *= Math.pow(0.4, dt * 60);
+  if (player.actionTimer === 0) {
+    player.action = PlayerAction.None;
+    player.actionElapsed = 0;
+    player.modeLock = 0;
+    player.mode = player.idleMode;
+    return false;
+  }
+  return true;
+}
+
+const TURN_SECONDS = 0.48;
+const BRAKE_SECONDS = 0.42;
+const BRAKE_COOLDOWN = 1.4;
+
+/** Fires turn_side on a run-direction reversal, or stop_brake on a hard arrival from a sprint. */
+function startTurnOrBrake(player: RealGkPlayer, facingBefore: number, targetDist: number, stopRadius: number): boolean {
+  const speed = Math.hypot(player.vx, player.vy);
+  if (player.facing !== facingBefore && player.mode === BodyAnim.RunSide && Math.abs(player.vx) > 60) {
+    player.action = PlayerAction.TurnSide;
+    player.actionTimer = TURN_SECONDS;
+    player.actionElapsed = 0;
+    player.mode = BodyAnim.TurnSide;
+    player.modeLock = TURN_SECONDS;
+    return true;
+  }
+  const arriving = targetDist <= stopRadius + 6;
+  // prevSpeed is a decaying recent peak — arrival easing bleeds speed over ~10 frames, so a
+  // one-frame lookback would never see the sprint that led into the stop.
+  const wasSprinting = player.prevSpeed > 110;
+  const facingAway = player.mode.includes('back');
+  if (arriving && wasSprinting && speed < 70 && !facingAway && player.brakeCooldown <= 0) {
+    player.action = PlayerAction.StopBrake;
+    player.actionTimer = BRAKE_SECONDS;
+    player.actionElapsed = 0;
+    player.mode = BodyAnim.StopBrake;
+    player.modeLock = BRAKE_SECONDS;
+    player.brakeCooldown = BRAKE_COOLDOWN;
+    return true;
+  }
+  return false;
+}
+
 /** Steers a player toward (tx,ty) with arrival easing, clamps to pitch, and resolves the body mode. */
 export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number, ty: number, topSpeed: number, dt: number): void {
   if (player.role === Role.GK) {
     player.saveCooldown = Math.max(0, player.saveCooldown - dt);
     if (updateKeeperDive(player, dt)) return;
+  }
+
+  const extraAnims = world.cfg.features?.extraAnims === true;
+  if (extraAnims) {
+    player.brakeCooldown = Math.max(0, player.brakeCooldown - dt);
+    if (updateOutfieldAction(player, dt)) return;
   }
 
   player.targetX += (tx - player.targetX) * Math.min(1, dt * 4.2);
@@ -176,7 +255,12 @@ export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number,
   const bounds = fieldBounds(world.size, player.y);
   player.y = clamp(player.y, bounds.topY + 4, bounds.bottomY - 8);
   player.x = clamp(player.x, bounds.left + 12, bounds.right - 12);
+  const facingBefore = player.facing;
   updateFacingGuard(player, dt);
+
+  if (extraAnims && player.role !== Role.GK && startTurnOrBrake(player, facingBefore, len, stopRadius)) return;
+  // Decaying recent-peak speed (~150 px/s² bleed) so the brake can see the sprint that just ended.
+  player.prevSpeed = Math.max(Math.hypot(player.vx, player.vy), player.prevSpeed - 150 * dt);
 
   player.modeLock = Math.max(0, player.modeLock - dt);
   if (player.role === Role.GK) player.idleMode = BodyAnim.GkIdle;
@@ -240,9 +324,14 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
   }
 
   if (distToGoal < 180) {
-    kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false);
-    const note = Status.shot(owner.name);
-    setStatus(world, note.title, note.text);
+    // v4: wind up an animated power shot (fires at the contact frame); legacy: instant strike.
+    if (world.cfg.features?.extraAnims) {
+      startPowerShot(owner);
+    } else {
+      kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false);
+      const note = Status.shot(owner.name);
+      setStatus(world, note.title, note.text);
+    }
     return;
   }
   if (forwardMate && Math.random() < 0.63) {
@@ -270,6 +359,17 @@ export function faceBall(world: RealGkWorld): void {
   for (const p of players) {
     if (ball.ownerId === p.id) continue;
     if (p.role === Role.GK) continue;
+    if (p.celebrationPhase !== CelebrationPhase.None) continue;
+    // Don't re-face a player mid one-shot (turn/brake/header/receive) — it would flip the sprite's mirror.
+    if (
+      p.action === PlayerAction.TurnSide ||
+      p.action === PlayerAction.StopBrake ||
+      p.action === PlayerAction.Header ||
+      p.action === PlayerAction.Receive ||
+      p.action === PlayerAction.PowerShot
+    ) {
+      continue;
+    }
     const dx = ball.x - p.x;
     const dy = ball.y - p.y;
     const len = Math.hypot(dx, dy) || 1;
@@ -294,13 +394,43 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
 
   for (const player of players) {
     if (match.celebration > 0) {
-      const pt = pointOnField(size, player.homeLat, player.homeDepth);
-      moveToward(world, player, pt.x, pt.y, player.role === Role.GK ? 70 : 110, dt);
+      if (player.celebrationPhase !== CelebrationPhase.None) {
+        updatePlayerCelebration(world, player, dt);
+      } else {
+        const pt = pointOnField(size, player.homeLat, player.homeDepth);
+        moveToward(world, player, pt.x, pt.y, player.role === Role.GK ? 70 : 110, dt);
+      }
+      continue;
+    }
+
+    player.headerCooldown = Math.max(0, player.headerCooldown - dt);
+    player.receiveCooldown = Math.max(0, player.receiveCooldown - dt);
+    // An in-progress header/receive owns the tick (holds position, plays the one-shot once).
+    if (player.action === PlayerAction.Header) {
+      updateHeader(world, player, dt);
+      continue;
+    }
+    if (player.action === PlayerAction.Receive) {
+      updateReceive(world, player, dt);
+      continue;
+    }
+    if (player.action === PlayerAction.PowerShot) {
+      updatePowerShot(world, player, dt);
       continue;
     }
 
     if (player.role === Role.GK && maybeTriggerKeeperDive(world, player)) {
       updateKeeperDive(player, dt);
+      continue;
+    }
+
+    // A reachable airborne ball triggers a jump-header; a fast incoming ground ball a first-touch trap.
+    if (maybeTriggerHeader(world, player)) {
+      updateHeader(world, player, dt);
+      continue;
+    }
+    if (maybeTriggerReceive(world, player)) {
+      updateReceive(world, player, dt);
       continue;
     }
 
@@ -333,8 +463,10 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   }
 
   for (const player of players) {
+    if (player.celebrationPhase !== CelebrationPhase.None) continue;
     for (const other of players) {
       if (player.id >= other.id) continue;
+      if (other.celebrationPhase !== CelebrationPhase.None) continue;
       const dx = other.x - player.x;
       const dy = other.y - player.y;
       const d = Math.hypot(dx, dy);

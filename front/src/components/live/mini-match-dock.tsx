@@ -57,12 +57,15 @@ export function MiniMatchDock() {
   const stats = deriveMatchStats(events);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-24 z-30">
-      <div className="mx-auto w-full max-w-[120rem] px-6 md:w-[92%]">
-        <div
-          ref={ref}
-          className="ml-auto hidden w-72 translate-x-6 flex-col gap-3 opacity-0 transition-all duration-500 ease-out data-[revealed=true]:translate-x-0 data-[revealed=true]:opacity-100 sm:flex"
-        >
+    // Anchored just OUTSIDE the right edge of the max-w-7xl (80rem) content section, in
+    // the gutter, so it never overlaps the dashboard. Left edge = content-right-edge +
+    // gap. Only shown once the viewport is wide enough to hold the 18rem dock in the
+    // gutter (needs ≈1904px).
+    <div className="pointer-events-none fixed top-24 left-[calc(50%+40rem+1.5rem)] z-30">
+      <div
+        ref={ref}
+        className="hidden w-72 translate-x-6 flex-col gap-3 opacity-0 transition-all duration-500 ease-out data-[revealed=true]:translate-x-0 data-[revealed=true]:opacity-100 min-[1904px]:flex"
+      >
           <GlassPanel radius="lg" tone="dark" className="overflow-hidden p-0">
             <MiniPitch minute={match.minute} />
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
@@ -94,7 +97,6 @@ export function MiniMatchDock() {
               })}
             </div>
           </GlassPanel>
-        </div>
       </div>
     </div>
   );
