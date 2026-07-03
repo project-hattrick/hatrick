@@ -49,12 +49,12 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Brand tokens — dark-only Hat-trick identity (black-green stage + lime-neon accent). */
+/* Brand tokens — dark-only Hat-trick identity (neutral graphite surfaces + lime-neon accent). */
 @theme {
-  --color-surface-1: #101310;
-  --color-surface-2: #151814;
-  --color-surface-3: #232621;
-  --color-surface-deep: #121612;
+  --color-surface-1: #141519;
+  --color-surface-2: #1b1c21;
+  --color-surface-3: #26272e;
+  --color-surface-deep: #141519;
   --color-neon: #aef019;
   --color-neon-hover: #c2ff3d;
   --color-live: #ff5a5f;
@@ -100,20 +100,20 @@
 }
 
 .dark {
-  --background: #0a0d0a;
-  --foreground: #f2f5f0;
-  --card: #151814;
-  --card-foreground: #f2f5f0;
-  --popover: #101310;
-  --popover-foreground: #f2f5f0;
+  --background: #0b0c0f;
+  --foreground: #f2f3f5;
+  --card: #1b1c21;
+  --card-foreground: #f2f3f5;
+  --popover: #141519;
+  --popover-foreground: #f2f3f5;
   --primary: #aef019;
-  --primary-foreground: #0a0d0a;
-  --secondary: #232621;
-  --secondary-foreground: #f2f5f0;
-  --muted: #151814;
-  --muted-foreground: #8c928a;
-  --accent: #232621;
-  --accent-foreground: #f2f5f0;
+  --primary-foreground: #0b0c0f;
+  --secondary: #26272e;
+  --secondary-foreground: #f2f3f5;
+  --muted: #1b1c21;
+  --muted-foreground: #8b8d94;
+  --accent: #26272e;
+  --accent-foreground: #f2f3f5;
   --destructive: oklch(0.68 0.2 18);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
@@ -123,12 +123,12 @@
   --chart-3: #ece0c0;
   --chart-4: #fbbf24;
   --chart-5: #5b9bff;
-  --sidebar: #101310;
-  --sidebar-foreground: #f2f5f0;
+  --sidebar: #141519;
+  --sidebar-foreground: #f2f3f5;
   --sidebar-primary: #aef019;
-  --sidebar-primary-foreground: #0a0d0a;
-  --sidebar-accent: #232621;
-  --sidebar-accent-foreground: #f2f5f0;
+  --sidebar-primary-foreground: #0b0c0f;
+  --sidebar-accent: #26272e;
+  --sidebar-accent-foreground: #f2f3f5;
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: #aef019;
 }
@@ -199,26 +199,6 @@
     animation: navbar-shrink linear both;
     animation-timeline: scroll(root);
     animation-range: 0 88vh;
-  }
-}
-
-/* Mini live-match summary fades in once the dashboard covers the hero. */
-@keyframes mini-summary-in {
-  from {
-    opacity: 0;
-    transform: translateY(-0.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@supports (animation-timeline: scroll()) {
-  .mini-summary {
-    animation: mini-summary-in linear both;
-    animation-timeline: scroll(root);
-    animation-range: 45vh 80vh;
   }
 }
 
@@ -302,6 +282,69 @@
 
 @media (prefers-reduced-motion: reduce) {
   .motion-resolve {
+    animation: none;
+  }
+}
+
+/* Landing intro — spotlight (holofote) reveal that plays over the hero as a loading screen.
+   Black stage + logo scales in, a radial mask sweeps it like a spotlight, then the whole
+   overlay fades out to hand off to the landing underneath. */
+@keyframes intro-logo-in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+    filter: brightness(0.4);
+  }
+  25% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  62% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(8);
+    opacity: 0;
+  }
+}
+@keyframes intro-spot-out {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes intro-out {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.landing-intro {
+  animation: intro-out 3.3s forwards;
+}
+.landing-intro-logo {
+  animation: intro-logo-in 3.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.landing-intro-spot {
+  background: radial-gradient(circle at 50% 45%, transparent 0, transparent 90px, rgb(0 0 0 / 0.96) 240px);
+  animation: intro-spot-out 3.3s ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-intro,
+  .landing-intro-logo,
+  .landing-intro-spot {
     animation: none;
   }
 }

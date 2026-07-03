@@ -11,6 +11,7 @@ import { FantasyModule } from './fantasy/fantasy.module';
 import { LiveModule } from './live/live.module';
 import { CrowdModule } from './crowd/crowd.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 import { ChainModule } from './chain/chain.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { ChainModule } from './chain/chain.module';
     LiveModule,
     CrowdModule,
     UsersModule,
+    AuthModule,
     ChainModule,
   ],
   controllers: [AppController],

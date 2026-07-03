@@ -3,11 +3,12 @@ import { PlaybackControls } from './playback-controls';
 import { PlayerFocusCard } from './player-focus-card';
 import { PredictionPrompt } from './prediction-prompt';
 import { MatchBackground } from './match-background';
+import { MatchSelector } from './match-selector';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 
-/** Wire 3b — framed live match on the left, prediction/cards/crowd column on the right. */
+/** Wire 3b — framed live match on the left (prediction docked over the pitch), game switcher + cards + crowd on the right. */
 export function SplitDashboard() {
   return (
     <div className="flex min-h-screen w-full flex-col gap-4 bg-background px-4 pt-20 pb-4 md:h-screen md:flex-row md:overflow-hidden md:pt-[72px]">
@@ -19,13 +20,16 @@ export function SplitDashboard() {
         <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2">
           <Scoreboard />
         </div>
-        <div className="absolute bottom-4 left-4 z-10 w-[260px] max-w-[calc(100%-2rem)]">
+        <div className="absolute top-4 right-4 z-10 hidden w-[240px] max-w-[calc(100%-2rem)] lg:block">
           <PlayerFocusCard />
+        </div>
+        <div className="absolute inset-x-4 bottom-4 z-20 flex justify-center md:inset-x-auto md:left-1/2 md:-translate-x-1/2">
+          <PredictionPrompt />
         </div>
       </div>
 
       <div className="flex w-full flex-col gap-3 md:w-[392px]">
-        <PredictionPrompt variant="card" />
+        <MatchSelector />
         <UserCardsStrip />
         <div className="min-h-[40vh] flex-1 md:min-h-0">
           <CrowdPanel fixtureId={MOCK_FIXTURE_ID} />

@@ -169,10 +169,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const spd = Math.hypot(player.vx, player.vy);
   const vary = 0.9 + ((player.id * 37) % 21) / 100; // stable 0.9–1.1 size variety per player
   const stretch = diving ? 1.35 : 1 + Math.min(0.45, spd / 280);
-  const shadowRX = lerp(8, 15, depth) * stretch * vary * liftShrink;
-  const shadowRY = lerp(3, 6, depth) * (diving ? 1 : 1 / Math.sqrt(stretch)) * vary * liftShrink;
+  const shadowRX = lerp(6.5, 12, depth) * stretch * vary * liftShrink;
+  const shadowRY = lerp(2.5, 4.8, depth) * (diving ? 1 : 1 / Math.sqrt(stretch)) * vary * liftShrink;
   const cy = player.y + 5;
-  const shadowAlpha = ((diving ? 0.42 : 0.34) - Math.min(0.2, player.celebrationLift * 0.006)) * liftShrink;
+  const shadowAlpha = ((diving ? 0.4 : 0.32) - Math.min(0.2, player.celebrationLift * 0.006)) * liftShrink;
 
   // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
@@ -188,7 +188,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   };
 
   // Cast-shadow "reflection": the sprite as a solid BLACK silhouette, flipped down from the feet,
-  // stretched + skewed to read like a long shadow on the pitch.
+  // stretched + skewed to read like a long shadow on the pitch (hero default).
   if (player.celebrationLift < 2 && !diving) {
     ctx.save();
     ctx.globalAlpha = 0.34;
@@ -211,28 +211,33 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
 
   const ringRX = shadowRX + lerp(3, 5, depth);
   const ringRY = shadowRY + lerp(1.6, 2.6, depth);
-  ctx.save();
-  ctx.strokeStyle = TEAM_RING[player.team];
-  ctx.globalAlpha = 0.3 * liftShrink;
-  ctx.lineWidth = Math.max(3, lerp(3, 5.5, depth));
-  ctx.beginPath();
-  ctx.ellipse(player.x, cy, ringRX, ringRY, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.globalAlpha = 0.95 * liftShrink;
-  ctx.lineWidth = Math.max(1.3, lerp(1.3, 2, depth));
-  ctx.beginPath();
-  ctx.ellipse(player.x, cy, ringRX, ringRY, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
+  // "Player in action" = whoever has the ball (or the controlled player in the sandbox). It shows the
+  // pulsing pixel marker instead of the plain team ring (no double circle).
+  const isActive = world.ball.ownerId === player.id || (world.cfg.features?.playable === true && world.controlId === player.id);
+  if (!isActive) {
+    ctx.save();
+    ctx.strokeStyle = TEAM_RING[player.team];
+    ctx.globalAlpha = 0.3 * liftShrink;
+    ctx.lineWidth = Math.max(3, lerp(3, 5.5, depth));
+    ctx.beginPath();
+    ctx.ellipse(player.x, cy, ringRX, ringRY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.95 * liftShrink;
+    ctx.lineWidth = Math.max(1.3, lerp(1.3, 2, depth));
+    ctx.beginPath();
+    ctx.ellipse(player.x, cy, ringRX, ringRY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 
-  // Active-player marker (sandbox): a pulsing SOLID ring drawn in crisp pixel blocks + an inner glow.
-  const isActive = world.cfg.features?.playable === true && world.controlId === player.id;
+  // Active-player marker: a pulsing SOLID ring drawn in crisp pixel blocks + an inner glow, in team color.
+  const markColor = TEAM_RING[player.team];
   if (isActive) {
     const pulse = (Math.sin(now * 0.005) + 1) / 2;
     const rr = ringRX + 1 + pulse * 3;
     const ry = ringRY + 0.6 + pulse * 1.3;
     ctx.save();
-    ctx.fillStyle = '#4fe6d4';
+    ctx.fillStyle = markColor;
     ctx.globalAlpha = 0.22; // inner glow
     ctx.beginPath();
     ctx.ellipse(player.x, cy, Math.max(1, rr - 2), Math.max(0.6, ry - 1), 0, 0, Math.PI * 2);
@@ -255,7 +260,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     const ax = Math.round(player.x);
     const ay = Math.round(footY - spriteHeight - 9 + (Math.floor(now / 180) % 3) - 1);
     ctx.save();
-    ctx.fillStyle = '#4fe6d4';
+    ctx.fillStyle = markColor;
     ctx.fillRect(ax - 4, ay, 9, 2);
     ctx.fillRect(ax - 3, ay + 2, 7, 2);
     ctx.fillRect(ax - 2, ay + 4, 5, 2);
@@ -347,23 +352,31 @@ function drawGoalNet(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: 
   }
 }
 
-/** Fixed, dispersed diagonal shadow beams with soft (blurred) edges — reads like cast stadium shadows. */
+/** Placed court shadows (field ratios of world.size), authored in /sandbox/shadow-editor. */
+const COURT_SHADOWS = [
+  { x: 0.336, y: 0.469, w: 0.082, h: 0.731, skew: -0.517, alpha: 0.33, blur: 19 },
+  { x: 0.725, y: 0.513, w: 0.122, h: 0.538, skew: -0.372, alpha: 0.39, blur: 24 },
+];
+
+/** Soft blurred court shadows pinned to the pitch (world space) — pan with the follow camera. */
 function drawShadowBeams(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
   if (!world.cfg.features?.duskShadow) return;
   const { width, height } = world.size;
-  const gap = height * 0.62; // dispersed
-  const bw = height * 0.22;
-  const skew = height * 0.55;
   ctx.save();
-  ctx.globalAlpha = 0.22;
   ctx.fillStyle = '#0a1030';
-  ctx.filter = 'blur(7px)'; // soft fade like a real shadow
-  for (let x = -height; x < width + height; x += gap) {
+  for (const s of COURT_SHADOWS) {
+    const cx = s.x * width;
+    const cy = s.y * height;
+    const w = s.w * width;
+    const h = s.h * height;
+    const skew = s.skew * width;
+    ctx.globalAlpha = s.alpha;
+    ctx.filter = `blur(${s.blur}px)`;
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x + bw, 0);
-    ctx.lineTo(x + bw - skew, height);
-    ctx.lineTo(x - skew, height);
+    ctx.moveTo(cx - w / 2 + skew / 2, cy - h / 2);
+    ctx.lineTo(cx + w / 2 + skew / 2, cy - h / 2);
+    ctx.lineTo(cx + w / 2 - skew / 2, cy + h / 2);
+    ctx.lineTo(cx - w / 2 - skew / 2, cy + h / 2);
     ctx.closePath();
     ctx.fill();
   }

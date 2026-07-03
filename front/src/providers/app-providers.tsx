@@ -6,6 +6,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import type { Adapter } from '@solana/wallet-adapter-base';
 import { IconContext, type IconProps } from '@/components/common/icons';
+import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 import { createQueryClient } from '@/lib/query-client';
@@ -25,6 +26,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <ConnectionProvider endpoint={solanaEndpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>
+            <WalletAuthSync />
             <IconContext.Provider value={ICON_DEFAULTS}>{children}</IconContext.Provider>
           </WalletModalProvider>
         </WalletProvider>

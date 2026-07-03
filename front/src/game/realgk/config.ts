@@ -64,7 +64,7 @@ export const REAL_GK_V2_CONFIG: RealGkConfig = {
   cinematic: false,
 };
 
-/** Home hero backdrop — small players on a larger pitch with a calm, cinematic follow-camera. */
+/** Home hero backdrop — small players on a larger pitch, calm cinematic camera + the tuned visual styles. */
 export const REAL_GK_HERO_CONFIG: RealGkConfig = {
   fieldScale: 1.5,
   spriteMinH: 26,
@@ -77,6 +77,9 @@ export const REAL_GK_HERO_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
+  // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
 };
 
 /** Checkpoint 4 — "Cinema": a large pitch the camera roams, small players, dramatic dynamic zoom. */
