@@ -7,6 +7,7 @@ interface Note {
 
 /** English status-ticker copy (the prototype's PT strings, translated; content centralized). */
 export const Status = {
+  intro: (): Note => ({ title: 'Matchday', text: 'The teams walk out for kickoff.' }),
   kickoff: (): Note => ({
     title: 'Kickoff',
     text: 'Both teams share one base doll, driven by AI, possession, pressing, passing and finishing to feel like a real match.',

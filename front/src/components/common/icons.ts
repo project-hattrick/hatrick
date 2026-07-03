@@ -44,6 +44,7 @@ export {
   Info,
   Lightning,
   Package,
+  Palette,
   PaperPlaneTilt,
   Pause,
   Pencil,

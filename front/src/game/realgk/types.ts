@@ -108,6 +108,8 @@ export interface Referee {
   nextPatrolPause: number;
   homeX: number;
   homeY: number;
+  /** True while running the v5 kickoff whistle (Pause → Whistle instead of the red card). */
+  kickoff: boolean;
 }
 
 /** Sideline coach that flips between idle and angry during intense play near the bench. */
@@ -203,6 +205,17 @@ export interface RealGkHud {
   redCardActive: boolean;
   /** Scoring team of the current goal ('blue' | 'red' | ''), for country-colored confetti. */
   goalTeam: string;
+  /** v5 match intro: overlay visibility + current stage (empty when not in the intro). */
+  introActive: boolean;
+  introStage: string;
+  /** v5 dead-ball restart: banner visibility + label ('CORNER' | 'THROW-IN' | 'GOAL KICK' | ''). */
+  restartActive: boolean;
+  restartLabel: string;
+  /** v5 team brands for the intro card (name + flag id per side; empty → generic). */
+  teamBlueName: string;
+  teamRedName: string;
+  teamBlueFlag: string;
+  teamRedFlag: string;
   cameraLabel: string;
   targetLabel: string;
 }
@@ -222,6 +235,10 @@ export interface RealGkHandle {
   debugGoal: () => void;
   /** Debug helper: forces an action anim on the nearest outfielder to review sprite sizes on demand. */
   debugAction: (kind: 'header' | 'receive' | 'intercept' | 'powershot') => void;
+  /** v5: replays the pre-match entrance (teams walk on, referee whistle, kickoff). */
+  playIntro: () => void;
+  /** v5: forces a dead-ball restart so the corner / throw-in / goal-kick flow can be tested on demand. */
+  debugRestart: (kind: 'throwin' | 'corner' | 'goalkick') => void;
   resize: () => void;
   destroy: () => void;
 }

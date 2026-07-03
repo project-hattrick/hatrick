@@ -13,22 +13,22 @@ export function WatchTogetherCard() {
     >
       <div className="flex items-center gap-2">
         <Users className="size-5 text-neon" />
-        <span className="text-sm font-bold">Assistir junto</span>
+        <span className="text-sm font-bold">Watch together</span>
       </div>
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Inicie uma sessão e chame a galera pra ver e palpitar em tempo real.
+        Start a session and invite your crew to watch and predict in real time.
       </p>
       <div className="flex items-center gap-1.5">
-        <span className="size-6 rounded-full border-2 border-background bg-gradient-to-br from-slate-500 to-slate-800" />
-        <span className="-ml-3 size-6 rounded-full border-2 border-background bg-gradient-to-br from-rose-500/70 to-rose-950" />
-        <span className="-ml-3 grid size-6 place-items-center rounded-full border-2 border-dashed border-neon/50 bg-white/5 text-xs font-bold text-neon">
+        <span className="size-6 rounded-full border-2 border-background bg-gradient-to-br from-surface-3 to-surface-deep" />
+        <span className="-ml-3 size-6 rounded-full border-2 border-background bg-gradient-to-br from-team-away/70 to-team-away/10" />
+        <span className="-ml-3 grid size-6 place-items-center rounded-full border-2 border-dashed border-neon/50 bg-foreground/5 text-xs font-bold text-neon">
           +
         </span>
-        <span className="ml-1 text-[11px] text-muted-foreground">2 amigos online</span>
+        <span className="ml-1 text-xs text-muted-foreground">2 friends online</span>
       </div>
       <Link href={`/${AppMode.Live}`} className={buttonVariants({ className: 'h-9 w-full gap-1.5 font-semibold' })}>
         <UserPlus className="size-4" />
-        Iniciar sessão
+        Start session
       </Link>
     </GlassPanel>
   );

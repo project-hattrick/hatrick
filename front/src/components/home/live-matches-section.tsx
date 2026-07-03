@@ -11,7 +11,7 @@ import { SectionLink } from './widgets/section-link';
 function LiveRailRow({ match }: { match: LiveScoreMatch }) {
   return (
     <GlassPanel tone="surface" radius="lg" className="flex items-center gap-3 px-3.5 py-3">
-      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-live">
+      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-live">
         <span className="size-1.5 animate-pulse rounded-full bg-live" />
         {match.minute}&apos;
       </span>
@@ -28,25 +28,25 @@ function LiveRailRow({ match }: { match: LiveScoreMatch }) {
         href={`/${AppMode.Live}`}
         className={buttonVariants({ variant: 'outline', size: 'sm', className: 'shrink-0 px-3' })}
       >
-        Ver
+        Watch
       </Link>
     </GlassPanel>
   );
 }
 
-/** "Jogos rolando agora" — featured live match plus a rail of other games and watch-together. */
+/** "Live right now" — featured live match plus a rail of other games and watch-together. */
 export function LiveMatchesSection() {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight md:text-2xl">
             <span className="size-2 animate-pulse rounded-full bg-live" />
-            Jogos rolando agora
+            Live right now
           </h2>
-          <p className="text-sm text-muted-foreground">Entra no destaque ou chama alguém pra assistir junto</p>
+          <p className="text-sm text-muted-foreground">Jump into the spotlight or invite someone to watch together</p>
         </div>
-        <SectionLink href={`/${AppMode.Live}`} label="Ver todos" className="mt-1" />
+        <SectionLink href={`/${AppMode.Live}`} label="View all" className="mt-1" />
       </div>
 
       <div className="grid items-stretch gap-4 lg:grid-cols-[1.5fr_1fr]">

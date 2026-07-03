@@ -12,7 +12,7 @@ export function MatchBackground({ scrim = true }: { scrim?: boolean }) {
       ) : (
         <GameBackground checkpoint={HERO_CHECKPOINT} className="absolute inset-0" />
       )}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_0%_0%,rgba(174,240,25,0.10),transparent_42%),radial-gradient(120%_90%_at_100%_100%,rgba(174,240,25,0.08),transparent_42%)]" />
+      <div className="hero-ambient pointer-events-none absolute inset-0" />
       {scrim ? (
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/55 via-background/15 to-background/90" />

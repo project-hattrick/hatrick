@@ -96,6 +96,34 @@ export function resetPlayers(world: RealGkWorld): void {
   }
 }
 
+/** Seconds after the intro's rise begins before each line starts walking on (back-to-front). */
+const INTRO_ROLE_DELAY: Record<Role, number> = {
+  [Role.GK]: 0,
+  [Role.DEF]: 0.25,
+  [Role.MID]: 0.6,
+  [Role.ST]: 0.95,
+};
+
+/** v5 intro: parks the squads just below the pitch with staggered walk-on delays (call after resetPlayers). */
+export function placePlayersOffPitch(world: RealGkWorld): void {
+  let blueIdx = 0;
+  let redIdx = 0;
+  for (const p of world.players) {
+    const idx = p.team === Team.Blue ? blueIdx++ : redIdx++;
+    const spawn = pointOnField(world.size, p.homeLat, 1.08);
+    p.spawnX = spawn.x;
+    p.spawnY = spawn.y;
+    p.x = spawn.x;
+    p.y = spawn.y;
+    p.vx = 0;
+    p.vy = 0;
+    p.targetX = spawn.x;
+    p.targetY = spawn.y;
+    p.introDelay = INTRO_ROLE_DELAY[p.role] + idx * 0.05;
+    p.mode = p.idleMode;
+  }
+}
+
 export function nearestPlayerToBall(world: RealGkWorld, team: Team): RealGkPlayer | null {
   const { ball } = world;
   const roster = world.players.filter((p) => p.team === team);
@@ -229,8 +257,9 @@ function startTurnOrBrake(player: RealGkPlayer, facingBefore: number, targetDist
   return false;
 }
 
-/** Steers a player toward (tx,ty) with arrival easing, clamps to pitch, and resolves the body mode. */
-export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number, ty: number, topSpeed: number, dt: number): void {
+/** Steers a player toward (tx,ty) with arrival easing, clamps to pitch, and resolves the body mode.
+ *  `clampToPitch=false` lets a player enter from off the pitch (v5 intro walk-on) without snapping to the edge. */
+export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number, ty: number, topSpeed: number, dt: number, clampToPitch = true): void {
   if (player.role === Role.GK) {
     player.saveCooldown = Math.max(0, player.saveCooldown - dt);
     if (updateKeeperDive(player, dt)) return;
@@ -274,9 +303,11 @@ export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number,
 
   player.x += player.vx * dt;
   player.y += player.vy * dt;
-  const bounds = fieldBounds(world.size, player.y);
-  player.y = clamp(player.y, bounds.topY + 4, bounds.bottomY - 8);
-  player.x = clamp(player.x, bounds.left + 12, bounds.right - 12);
+  if (clampToPitch) {
+    const bounds = fieldBounds(world.size, player.y);
+    player.y = clamp(player.y, bounds.topY + 4, bounds.bottomY - 8);
+    player.x = clamp(player.x, bounds.left + 12, bounds.right - 12);
+  }
   const facingBefore = player.facing;
   updateFacingGuard(player, dt);
 

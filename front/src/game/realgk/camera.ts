@@ -1,6 +1,7 @@
+import { BILLBOARDS } from './billboards';
 import type { CamPreset } from './config';
-import { RefPhase } from './enums';
-import { fieldRatios, metrics } from './field';
+import { IntroStage, RefPhase } from './enums';
+import { fieldRatios, metrics, pointOnField } from './field';
 import type { RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 
@@ -23,11 +24,20 @@ export interface RealGkCamera {
   /** Ace-Attorney camera shake — seconds remaining (0 = off) + running phase. */
   shakeT: number;
   shakePhase: number;
+  /** v5 periodic sponsor sweep during Live lulls — seconds remaining (0 = off). */
+  sponsorT: number;
+  /** Seconds until the next sponsor sweep may fire. */
+  sponsorCooldown: number;
 }
 
 /** How long the shake rattles + its strength. */
 const REF_SHAKE_SECONDS = 0.6;
 const REF_SHAKE_PX = 9;
+
+/** v5 sponsor sweep timing: the intro pan length, the in-play pan length, and the gap between in-play sweeps. */
+const INTRO_SWEEP_SECONDS = 3.4;
+const SPONSOR_LIVE_SECONDS = 3.6;
+const SPONSOR_COOLDOWN_SECONDS = 55;
 
 /** Referee phases that keep the camera locked on him (spawn run-in → pause → red card). */
 const REF_EVENT_PHASES = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase.Card]);
@@ -51,7 +61,93 @@ export function createCamera(world: RealGkWorld): RealGkCamera {
     coachFocusT: 0,
     shakeT: 0,
     shakePhase: 0,
+    sponsorT: 0,
+    sponsorCooldown: SPONSOR_COOLDOWN_SECONDS,
   };
+}
+
+/** The perimeter sponsor-board band in field pixels (x span + center y) — the sweep path. */
+function sponsorBand(world: RealGkWorld): { xLeft: number; xRight: number; y: number } {
+  const { width, height } = world.size;
+  let minX = 1;
+  let maxX = 0;
+  let sumY = 0;
+  let n = 0;
+  for (const bb of BILLBOARDS) {
+    for (const [x, y] of bb.corners) {
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      sumY += y;
+      n += 1;
+    }
+  }
+  const yRatio = n ? sumY / n : 0.32;
+  return { xLeft: minX * width, xRight: maxX * width, y: yRatio * height + height * 0.06 };
+}
+
+/**
+ * v5 pre-match camera: wide showcase → glide across the sponsor boards → follow the walking-on squads with a
+ * gentle zoom pulse → lock on the referee's whistle → settle on the ball for kickoff.
+ */
+export function updateIntroCamera(cam: RealGkCamera, world: RealGkWorld): void {
+  const { match, size } = world;
+  const preset = cam.presets[cam.presetIdx];
+  const m = metrics(size);
+  const centerX = size.width / 2;
+  const centerY = (m.topY + m.bottomY) / 2;
+
+  let tx = centerX;
+  let ty = centerY;
+  let zt = preset.zoom;
+
+  switch (match.introStage) {
+    case IntroStage.Showcase:
+      // Wide full-pitch framing behind the team + flag card.
+      zt = 0.72;
+      break;
+    case IntroStage.SponsorSweep: {
+      const band = sponsorBand(world);
+      const p = clamp(match.introTimer / INTRO_SWEEP_SECONDS, 0, 1);
+      tx = lerp(band.xLeft, band.xRight, p);
+      ty = band.y;
+      zt = 1.25;
+      break;
+    }
+    case IntroStage.RiseIn: {
+      // Follow the centroid of the players still walking on, easing wide → broadcast with a soft zoom pulse.
+      let sx = 0;
+      let sy = 0;
+      let n = 0;
+      for (const pl of world.players) {
+        const home = pointOnField(size, pl.homeLat, pl.homeDepth);
+        if (Math.hypot(home.x - pl.x, home.y - pl.y) > 10) {
+          sx += pl.x;
+          sy += pl.y;
+          n += 1;
+        }
+      }
+      tx = n ? sx / n : centerX;
+      ty = n ? sy / n : centerY;
+      const t = clamp(match.introTimer / 3, 0, 1);
+      zt = lerp(0.85, preset.zoom, t) + 0.07 * Math.sin(match.introTimer * 1.6);
+      break;
+    }
+    case IntroStage.RefWhistle:
+      tx = world.referee.x;
+      ty = world.referee.y - 6;
+      zt = preset.zoom * 1.5;
+      break;
+    case IntroStage.Kickoff:
+      tx = world.ball.x;
+      ty = world.ball.y;
+      zt = preset.zoom;
+      break;
+  }
+
+  cam.x += (tx - cam.x) * 0.06;
+  cam.y += (ty - cam.y) * 0.06;
+  cam.z += (zt - cam.z) * 0.05;
+  clampToField(cam, world);
 }
 
 /** Kicks off the "objection!" beat: lock focus on the referee through his run-in + card, rattle the frame. */
@@ -134,6 +230,33 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
       cam.cardActive = false;
       cam.coachFocusT = COACH_FOCUS_SECONDS;
     }
+  }
+
+  // v5: periodic broadcast sponsor sweep during calm midfield play — glide wide across the boards, then release.
+  if (world.cfg.features?.matchIntro) {
+    cam.sponsorCooldown = Math.max(0, cam.sponsorCooldown - dt);
+    if (cam.sponsorT > 0) {
+      cam.sponsorT = Math.max(0, cam.sponsorT - dt);
+      const band = sponsorBand(world);
+      const p = 1 - cam.sponsorT / SPONSOR_LIVE_SECONDS;
+      cam.x += (lerp(band.xLeft, band.xRight, p) - cam.x) * 0.05;
+      cam.y += (band.y - cam.y) * 0.05;
+      cam.z += (1.2 - cam.z) * 0.04;
+      clampToField(cam, world);
+      if (cam.sponsorT === 0) cam.sponsorCooldown = SPONSOR_COOLDOWN_SECONDS;
+      return;
+    }
+    const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
+    const calm =
+      cam.sponsorCooldown === 0 &&
+      cam.targetIdx < 0 &&
+      preset.follow &&
+      world.match.celebration === 0 &&
+      !world.match.restart &&
+      !cam.refFocus &&
+      ballRatio.lat > 0.32 &&
+      ballRatio.lat < 0.68;
+    if (calm) cam.sponsorT = SPONSOR_LIVE_SECONDS;
   }
 
   if (!preset.follow) {

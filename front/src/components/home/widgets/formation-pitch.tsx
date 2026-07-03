@@ -23,8 +23,8 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
         <span className="relative">
           <span
             className={cn(
-              'relative block size-12 overflow-hidden rounded-full border bg-gradient-to-b from-[#2c3757] to-[#141a2c] shadow-lg',
-              slot.highlight ? 'border-[#d8c46a] ring-2 ring-[#d8c46a]/70' : 'border-white/20',
+              'relative block size-12 overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-lg',
+              slot.highlight ? 'border-medal-gold ring-2 ring-medal-gold/70' : 'border-white/20',
             )}
           >
             {slot.portraitSrc ? (
@@ -38,7 +38,7 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
               />
             ) : null}
           </span>
-          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-[#0f130f] px-1.5 py-0.5 font-mono text-[10px] font-bold text-neon tabular-nums shadow">
+          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-[10px] font-bold text-neon tabular-nums shadow">
             {slot.rating}
           </span>
         </span>
@@ -62,7 +62,7 @@ export function FormationPitch() {
   const cycle = () => setIndex((i) => (i + 1) % formations.length);
 
   return (
-    <div className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[repeating-linear-gradient(180deg,#0d2417_0_46px,#0f2a1b_46px_92px)] md:h-[480px]">
+    <div className="pitch-stripes-v relative h-[420px] w-full overflow-hidden rounded-2xl border border-white/10 md:h-[480px]">
       {/* Pitch markings — kept low-contrast so the players read first. */}
       <div className="pointer-events-none absolute inset-3 rounded-lg border border-white/10" />
       <div className="pointer-events-none absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
@@ -71,16 +71,16 @@ export function FormationPitch() {
       <div className="pointer-events-none absolute bottom-3 left-1/2 h-16 w-1/2 -translate-x-1/2 rounded-t-md border-x border-t border-white/10" />
 
       <span className="absolute top-4 left-4 z-10 font-mono text-[10px] font-bold tracking-[0.14em] text-white/70">
-        {formation.shape} · {formation.filled}/{formation.total} ESCALADOS
+        {formation.shape} · {formation.filled}/{formation.total} LINED UP
       </span>
 
       <button
         type="button"
         onClick={cycle}
-        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-3 py-1.5 text-[11px] font-bold text-white/85 backdrop-blur-md transition hover:border-neon/50 hover:text-neon"
+        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-3 py-1.5 text-xs font-bold text-white/85 backdrop-blur-md transition hover:border-neon/50 hover:text-neon"
       >
         <ArrowsLeftRight className="size-3.5" />
-        Trocar formação
+        Change formation
       </button>
 
       {formation.slots.map((slot) => (

@@ -4,6 +4,7 @@ import { LiveDashboard } from '@/components/live/live-dashboard';
 import { LandingIntro } from './landing-intro';
 import { HomeDashboard } from './home-dashboard';
 import { SiteFooter } from './site-footer';
+import { ThemeSwitcher } from '@/components/common/theme-switcher';
 
 /** Pinned hero + the dashboard that rises up and curtains over it on scroll. */
 export function HomeExperience() {
@@ -19,6 +20,7 @@ export function HomeExperience() {
         <HomeDashboard />
         <SiteFooter />
       </div>
+      <ThemeSwitcher />
     </div>
   );
 }

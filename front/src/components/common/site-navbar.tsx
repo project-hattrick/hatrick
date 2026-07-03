@@ -34,8 +34,8 @@ export function SiteNavbar() {
             </Link>
           ))}
           <span className="hidden items-center gap-2 lg:flex">
-            <Gift className="size-4 text-amber-400" />
-            <span className="text-amber-400">5 Months</span>
+            <Gift className="size-4 text-warning" />
+            <span className="text-warning">5 Months</span>
             <span className="text-muted-foreground">·</span>
             <span className="text-neon">Free Access</span>
           </span>

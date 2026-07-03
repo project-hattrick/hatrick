@@ -1,0 +1,92 @@
+import { IntroStage, MatchPhase, RefPhase, Role } from '../enums';
+import { pointOnField } from '../field';
+import type { RealGkWorld } from '../types';
+import { updateCoach } from './coach';
+import { Status } from './messages';
+import { moveToward } from './players';
+import { spawnRefereeKickoff, updateReferee } from './referee';
+import { setStatus } from './rules';
+import { resetBall } from './world';
+
+/** Beat lengths for the v5 pre-match entrance (seconds). */
+const SHOWCASE_SECONDS = 2.2;
+const SPONSOR_SWEEP_SECONDS = 3.4;
+/** Hard cap so a stuck walk-on never blocks kickoff. */
+const RISE_TIMEOUT_SECONDS = 7;
+const KICKOFF_HOLD_SECONDS = 0.5;
+/** Distance (px) at which a player is considered "home". */
+const ARRIVE_EPS = 7;
+
+function advance(world: RealGkWorld, stage: IntroStage): void {
+  world.match.introStage = stage;
+  world.match.introTimer = 0;
+}
+
+/**
+ * Advances the v5 pre-match entrance: Showcase (teams + flags) → SponsorSweep (wide pan over the boards) →
+ * RiseIn (players walk on from below) → RefWhistle (referee jogs to center + whistles) → Kickoff → Live.
+ * Owns the tick while `phase === Intro`; the camera side is handled by `updateIntroCamera`.
+ */
+export function updateIntro(world: RealGkWorld, dt: number): void {
+  const { match } = world;
+  match.introTimer += dt;
+
+  // Referee + coach keep animating throughout the intro (players are driven per-stage below).
+  updateReferee(world, dt);
+  updateCoach(world, dt);
+
+  switch (match.introStage) {
+    case IntroStage.Showcase:
+      if (match.introTimer >= SHOWCASE_SECONDS) advance(world, IntroStage.SponsorSweep);
+      return;
+
+    case IntroStage.SponsorSweep:
+      if (match.introTimer >= SPONSOR_SWEEP_SECONDS) advance(world, IntroStage.RiseIn);
+      return;
+
+    case IntroStage.RiseIn: {
+      let allHome = true;
+      for (const p of world.players) {
+        const home = pointOnField(world.size, p.homeLat, p.homeDepth);
+        const dist = Math.hypot(home.x - p.x, home.y - p.y);
+        if (dist <= ARRIVE_EPS) {
+          p.x = home.x;
+          p.y = home.y;
+          p.vx = 0;
+          p.vy = 0;
+          p.mode = p.idleMode;
+          continue;
+        }
+        allHome = false;
+        // Staggered start (back-to-front) via introDelay; walk on without the pitch clamp (they start off-pitch).
+        if (match.introTimer >= p.introDelay) {
+          moveToward(world, p, home.x, home.y, p.role === Role.GK ? 70 : 96, dt, false);
+        }
+      }
+      if (allHome || match.introTimer >= RISE_TIMEOUT_SECONDS) {
+        spawnRefereeKickoff(world);
+        advance(world, IntroStage.RefWhistle);
+      }
+      return;
+    }
+
+    case IntroStage.RefWhistle:
+      // Hold players at home; the referee run-to-center + whistle is driven by updateReferee above.
+      for (const p of world.players) {
+        p.vx *= 0.8;
+        p.vy *= 0.8;
+        p.mode = p.idleMode;
+      }
+      if (world.referee.phase === RefPhase.Whistle) advance(world, IntroStage.Kickoff);
+      return;
+
+    case IntroStage.Kickoff:
+      if (match.introTimer >= KICKOFF_HOLD_SECONDS) {
+        resetBall(world, match.kickoffTeam);
+        match.phase = MatchPhase.Live;
+        const note = Status.kickoff();
+        setStatus(world, note.title, note.text);
+      }
+      return;
+  }
+}

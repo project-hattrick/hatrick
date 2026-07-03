@@ -62,6 +62,12 @@
   --color-team-home: #60a5fa;
   --color-team-away: #f87171;
   --color-hot: #ece0c0;
+  --color-medal-gold: #f5c451;
+  --color-medal-silver: #c8ccd4;
+  --color-medal-bronze: #d08a4e;
+  /* Pitch turf stripes (mini-pitch backdrops) — themeable via the .pitch-stripes utility. */
+  --pitch-stripe-a: #17301f;
+  --pitch-stripe-b: #142a1b;
 }
 
 :root {
@@ -133,6 +139,216 @@
   --sidebar-ring: #aef019;
 }
 
+/* ── Alternative palettes ──────────────────────────────────────────────────────
+   The app is always `.dark`; `.dark[data-theme='x']` (specificity 0,2,0) reliably wins
+   over both the baseline `.dark` block and the `@theme` `:root` tokens. Each block is a
+   full palette: overriding the brand tokens (surfaces/neon/live/pitch/...) and pointing the
+   shadcn tokens at them via var() so a single set of colors drives the whole cascade.       */
+
+/* Broadcast Night — deep indigo/navy surfaces + electric cyan accent (TV-broadcast, tech). */
+.dark[data-theme='broadcast-night'] {
+  --color-surface-1: #111629;
+  --color-surface-2: #161d33;
+  --color-surface-3: #212a45;
+  --color-surface-deep: #0c1020;
+  --color-neon: #22d3ee;
+  --color-neon-hover: #5eeaf7;
+  --color-live: #ff5a6a;
+  --color-pitch: #0b1f2e;
+  --color-team-home: #38bdf8;
+  --color-team-away: #fb7185;
+  --color-hot: #cfe4ff;
+  --color-medal-gold: #ffd36b;
+  --color-medal-silver: #cdd6e6;
+  --color-medal-bronze: #e0975a;
+  --pitch-stripe-a: #123047;
+  --pitch-stripe-b: #0e2739;
+
+  --background: #0a0e1a;
+  --foreground: #eef2fb;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --primary: var(--color-neon);
+  --primary-foreground: #05080f;
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --muted-foreground: #8792ad;
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: var(--color-neon);
+  --chart-1: var(--color-neon);
+  --chart-2: var(--color-live);
+  --chart-3: var(--color-hot);
+  --chart-4: #a78bfa;
+  --chart-5: #38bdf8;
+  --sidebar: var(--color-surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--color-neon);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: var(--color-neon);
+}
+
+/* Grass Classic — green-black surfaces + fresh grass accent + chalk-white lines. */
+.dark[data-theme='grass-classic'] {
+  --color-surface-1: #0d1a12;
+  --color-surface-2: #122619;
+  --color-surface-3: #1b3323;
+  --color-surface-deep: #0a150e;
+  --color-neon: #35d06a;
+  --color-neon-hover: #57e084;
+  --color-live: #ff5a5f;
+  --color-pitch: #0e2616;
+  --color-team-home: #63b3ff;
+  --color-team-away: #ff7a6b;
+  --color-hot: #e9e6cf;
+  --color-medal-gold: #f5c451;
+  --color-medal-silver: #cdd6cf;
+  --color-medal-bronze: #cf8a4e;
+  --pitch-stripe-a: #163a22;
+  --pitch-stripe-b: #12301c;
+
+  --background: #08120c;
+  --foreground: #f0f5ef;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --primary: var(--color-neon);
+  --primary-foreground: #05130a;
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --muted-foreground: #8ba394;
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: var(--color-neon);
+  --chart-1: var(--color-neon);
+  --chart-2: var(--color-live);
+  --chart-3: var(--color-hot);
+  --chart-4: #fbbf24;
+  --chart-5: #5b9bff;
+  --sidebar: var(--color-surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--color-neon);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: var(--color-neon);
+}
+
+/* Sunset Kickoff — warm charcoal surfaces + amber→orange accent + magenta live. */
+.dark[data-theme='sunset-kickoff'] {
+  --color-surface-1: #1c1512;
+  --color-surface-2: #241a15;
+  --color-surface-3: #33241c;
+  --color-surface-deep: #17110e;
+  --color-neon: #ff9e2c;
+  --color-neon-hover: #ffb454;
+  --color-live: #ff4d6d;
+  --color-pitch: #2a1810;
+  --color-team-home: #f6b24d;
+  --color-team-away: #ff5d7d;
+  --color-hot: #ffe0b3;
+  --color-medal-gold: #ffcf5c;
+  --color-medal-silver: #d8cabb;
+  --color-medal-bronze: #d88a4e;
+  --pitch-stripe-a: #33200f;
+  --pitch-stripe-b: #2a1a0d;
+
+  --background: #140f0d;
+  --foreground: #f6efe9;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --primary: var(--color-neon);
+  --primary-foreground: #1a0f05;
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --muted-foreground: #a99a8e;
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: var(--color-neon);
+  --chart-1: var(--color-neon);
+  --chart-2: var(--color-live);
+  --chart-3: var(--color-hot);
+  --chart-4: #f97316;
+  --chart-5: #22d3ee;
+  --sidebar: var(--color-surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--color-neon);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: var(--color-neon);
+}
+
+/* Mono Live — near-black surfaces + silver/white accent + a single red live accent. */
+.dark[data-theme='mono-live'] {
+  --color-surface-1: #121213;
+  --color-surface-2: #1a1a1c;
+  --color-surface-3: #262628;
+  --color-surface-deep: #0e0e0f;
+  --color-neon: #f4f4f5;
+  --color-neon-hover: #ffffff;
+  --color-live: #ff3b3b;
+  --color-pitch: #171717;
+  --color-team-home: #d4d4d8;
+  --color-team-away: #ff6b6b;
+  --color-hot: #e6e6e6;
+  --color-medal-gold: #e7c66b;
+  --color-medal-silver: #d4d4d8;
+  --color-medal-bronze: #c98d5b;
+  --pitch-stripe-a: #1f1f20;
+  --pitch-stripe-b: #191919;
+
+  --background: #0a0a0b;
+  --foreground: #fafafa;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --primary: var(--color-neon);
+  --primary-foreground: #0a0a0b;
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --muted-foreground: #8a8a8f;
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: var(--color-neon);
+  --chart-1: var(--color-neon);
+  --chart-2: var(--color-live);
+  --chart-3: #a1a1aa;
+  --chart-4: #d4d4d8;
+  --chart-5: #71717a;
+  --sidebar: var(--color-surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--color-neon);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: var(--color-neon);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -171,7 +387,33 @@
     background: #313846;
   }
   .neon-text {
-    text-shadow: 0 0 10px rgb(193 255 68 / 0.45);
+    text-shadow: 0 0 10px color-mix(in oklch, var(--color-neon) 45%, transparent);
+  }
+  /* Shared eyebrow/label type step — replaces scattered inline text-[10px] uppercase. */
+  .text-eyebrow {
+    font-size: 0.625rem;
+    line-height: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  /* Ambient accent glow behind the hero — follows the active palette's accent. */
+  .hero-ambient {
+    background:
+      radial-gradient(120% 90% at 0% 0%, color-mix(in oklch, var(--color-neon) 10%, transparent), transparent 42%),
+      radial-gradient(120% 90% at 100% 100%, color-mix(in oklch, var(--color-neon) 8%, transparent), transparent 42%);
+  }
+  /* Themeable mini-pitch turf stripes (horizontal + vertical mow lines). */
+  .pitch-stripes {
+    background: repeating-linear-gradient(90deg, var(--pitch-stripe-a) 0 30px, var(--pitch-stripe-b) 30px 60px);
+  }
+  .pitch-stripes-v {
+    background: repeating-linear-gradient(180deg, var(--pitch-stripe-a) 0 46px, var(--pitch-stripe-b) 46px 92px);
+  }
+  /* The match ball marker — foreground-tinted so it reads on any palette. */
+  .match-ball {
+    background: var(--foreground);
+    box-shadow: 0 0 6px color-mix(in oklch, var(--foreground) 70%, transparent);
   }
 }
 

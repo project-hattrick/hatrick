@@ -107,6 +107,9 @@ function playerFromSnap(snap: ReplayPlayerSnap): RealGkPlayer {
     receiveCooldown: 0,
     receiveHit: false,
     powerShotHit: false,
+    introDelay: 0,
+    spawnX: snap.x,
+    spawnY: snap.y,
   };
 }
 

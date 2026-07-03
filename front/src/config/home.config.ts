@@ -57,10 +57,10 @@ export const featuredLiveMatch: FeaturedLiveMatch = {
   homeScore: 2,
   awayScore: 1,
   minute: 67,
-  halfLabel: '2º tempo',
+  halfLabel: '2nd half',
   viewers: 24800,
-  spotlight: 'Messi na bola',
-  prediction: { question: 'Sai gol nos próximos 10 min?', yesPoints: 50, noPoints: 10 },
+  spotlight: 'Messi on the ball',
+  prediction: { question: 'Goal in the next 10 min?', yesPoints: 50, noPoints: 10 },
 };
 
 export const liveRailMatches: LiveScoreMatch[] = [

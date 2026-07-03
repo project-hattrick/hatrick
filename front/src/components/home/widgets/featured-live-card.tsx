@@ -23,14 +23,14 @@ export function FeaturedLiveCard() {
 
   return (
     <GlassPanel tone="surface" className="flex flex-col overflow-hidden">
-      <div className="relative h-48 bg-[repeating-linear-gradient(90deg,#17301f_0_30px,#142a1b_30px_60px)] md:h-52">
+      <div className="pitch-stripes relative h-48 md:h-52">
         <div className="absolute top-[8%] bottom-[8%] left-1/2 border-l border-dashed border-white/25" />
         <div className="absolute top-1/2 left-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/25" />
-        <PitchDot left="30%" top="44%" className="border-sky-400" />
-        <PitchDot left="58%" top="40%" className="border-rose-500" />
-        <PitchDot left="52%" top="60%" className="border-rose-500" />
+        <PitchDot left="30%" top="44%" className="border-team-home" />
+        <PitchDot left="58%" top="40%" className="border-team-away" />
+        <PitchDot left="52%" top="60%" className="border-team-away" />
         <span
-          className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_6px_#fff]"
+          className="match-ball absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
           style={{ left: '46%', top: '50%' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/90" />
@@ -61,21 +61,19 @@ export function FeaturedLiveCard() {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] font-bold tracking-widest text-neon uppercase">
-            ● Predição aberta · grátis
-          </span>
+          <span className="text-eyebrow text-neon">● Free prediction · open</span>
           <span className="text-base font-bold">{match.prediction.question}</span>
         </div>
         <div className="flex gap-2.5">
           <Link href={liveHref} className={buttonVariants({ variant: 'outline', className: 'h-10 flex-1 gap-1.5' })}>
-            NÃO <span className="text-xs font-bold text-muted-foreground">+{match.prediction.noPoints}</span>
+            NO <span className="text-xs font-bold text-muted-foreground">+{match.prediction.noPoints}</span>
           </Link>
           <Link href={liveHref} className={buttonVariants({ className: 'h-10 flex-1 gap-1.5 font-semibold' })}>
-            SIM <span className="text-xs font-bold">+{match.prediction.yesPoints}</span>
+            YES <span className="text-xs font-bold">+{match.prediction.yesPoints}</span>
           </Link>
           <Link href={liveHref} className={buttonVariants({ variant: 'secondary', className: 'h-10 flex-[1.2] gap-1.5 font-semibold' })}>
             <Play className="size-4" />
-            Assistir
+            Watch
           </Link>
         </div>
       </div>

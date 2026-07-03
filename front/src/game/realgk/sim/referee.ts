@@ -28,6 +28,7 @@ export function resetReferee(world: RealGkWorld): void {
   referee.patrolDir = 1;
   referee.patrolPause = 0.75;
   referee.nextPatrolPause = 1.8 + Math.random() * 1.7;
+  referee.kickoff = false;
 }
 
 export function spawnReferee(world: RealGkWorld): void {
@@ -43,10 +44,29 @@ export function spawnReferee(world: RealGkWorld): void {
   referee.phase = RefPhase.RunCenter;
   referee.elapsed = 0;
   referee.patrolPause = 0;
+  referee.kickoff = false;
   referee.nextPatrolPause = 1.5 + Math.random() * 1.8;
   referee.mirror = referee.targetX < referee.x;
   const note = Status.refereeCalled();
   setStatus(world, note.title, note.text);
+}
+
+/** v5 intro: the referee jogs to the center spot and blows the whistle (Pause → Whistle, no red card). */
+export function spawnRefereeKickoff(world: RealGkWorld): void {
+  const { referee, size } = world;
+  if (!referee.active) resetReferee(world);
+  referee.startX = referee.x;
+  referee.startY = referee.y;
+  const center = pointOnField(size, 0.5, 0.5);
+  referee.targetX = center.x;
+  referee.targetY = center.y;
+  referee.active = true;
+  referee.mode = RefMode.WalkSide;
+  referee.phase = RefPhase.RunCenter;
+  referee.elapsed = 0;
+  referee.patrolPause = 0;
+  referee.kickoff = true;
+  referee.mirror = referee.targetX < referee.x;
 }
 
 function moveRefereeTowards(referee: Referee, tx: number, ty: number, speed: number, dt: number): boolean {
@@ -137,11 +157,38 @@ export function updateReferee(world: RealGkWorld, dt: number): void {
 
   if (referee.phase === RefPhase.Pause) {
     if (referee.elapsed >= 0.65) {
-      referee.mode = RefMode.Red;
-      referee.phase = RefPhase.Card;
+      if (referee.kickoff) {
+        // Kickoff whistle beat instead of the red card.
+        referee.mode = RefMode.Whistle;
+        referee.phase = RefPhase.Whistle;
+        referee.elapsed = 0;
+        const note = Status.kickoff();
+        setStatus(world, note.title, note.text);
+      } else {
+        referee.mode = RefMode.Red;
+        referee.phase = RefPhase.Card;
+        referee.elapsed = 0;
+        const note = Status.redCard();
+        setStatus(world, note.title, note.text);
+      }
+    }
+    return;
+  }
+
+  if (referee.phase === RefPhase.Whistle) {
+    referee.mode = RefMode.Whistle;
+    if (referee.elapsed >= 0.8) {
+      referee.kickoff = false;
+      referee.mode = RefMode.WalkSide;
+      referee.phase = RefPhase.ReturnPatrol;
       referee.elapsed = 0;
-      const note = Status.redCard();
-      setStatus(world, note.title, note.text);
+      referee.startX = referee.x;
+      referee.startY = referee.y;
+      const returnLeftDist = Math.abs(referee.x - referee.patrolLeftX);
+      const returnRightDist = Math.abs(referee.x - referee.patrolRightX);
+      referee.targetX = returnLeftDist < returnRightDist ? referee.patrolLeftX : referee.patrolRightX;
+      referee.targetY = referee.patrolY;
+      referee.mirror = referee.targetX < referee.x;
     }
     return;
   }

@@ -10,7 +10,7 @@ interface SectionHeaderProps extends React.ComponentProps<'div'> {
 function SectionHeader({ title, action, className, ...props }: SectionHeaderProps) {
   return (
     <div className={cn('flex items-center justify-between gap-2 px-4 py-3', className)} {...props}>
-      <span className="text-[10px] font-bold tracking-wider text-foreground uppercase">{title}</span>
+      <span className="text-eyebrow text-foreground">{title}</span>
       {action}
     </div>
   );

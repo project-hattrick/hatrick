@@ -11,7 +11,7 @@ import { featuredPacks, howItWorksSteps, playModes } from '@/config/home.config'
 function RowHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <h2 className="text-sm font-bold tracking-wider uppercase">{title}</h2>
+      <h2 className="text-eyebrow">{title}</h2>
       {action}
     </div>
   );

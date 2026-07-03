@@ -1,14 +1,16 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
 import { IntroStage, MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
-import { pointOnField } from '../field';
+import { centerSpot, pointOnField } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
 import { clearCelebrations } from './celebration';
 import { freshCoach, resetCoach, updateCoach } from './coach';
+import { updateIntro } from './intro';
 import { BallText, Status } from './messages';
-import { faceBall, resetPlayers, updatePlayers } from './players';
+import { faceBall, placePlayersOffPitch, resetPlayers, updatePlayers } from './players';
 import { resetReferee, updateReferee } from './referee';
+import { updateRestart } from './restart';
 import { setStatus } from './rules';
 
 const freshBall = (): Ball => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, spin: 0, spinRate: 0, ownerId: null, cooldown: 0, impact: 0, lastKickerId: null, lofted: false, landX: 0, landY: 0 });
@@ -33,6 +35,7 @@ const freshReferee = (): Referee => ({
   nextPatrolPause: 0,
   homeX: 0,
   homeY: 0,
+  kickoff: false,
 });
 
 const freshMatch = (): MatchState => ({
@@ -79,6 +82,41 @@ export function resetBall(world: RealGkWorld, centerTeam: Team): void {
   }
 }
 
+/** Parks the ball dead at center with no owner — used while the v5 intro entrance plays out. */
+function parkBallCenter(world: RealGkWorld): void {
+  const { ball, size } = world;
+  const c = centerSpot(size);
+  ball.x = c.x;
+  ball.y = c.y;
+  ball.z = 0;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.vz = 0;
+  ball.spin = 0;
+  ball.spinRate = 0;
+  ball.cooldown = 0;
+  ball.impact = 0;
+  ball.ownerId = null;
+  ball.lastKickerId = null;
+  ball.lofted = false;
+}
+
+/** v5: opens the match on the entrance sequence (teams walk on, referee whistles), then kicks off. */
+export function enterIntro(world: RealGkWorld): void {
+  resetPlayers(world);
+  placePlayersOffPitch(world);
+  parkBallCenter(world);
+  resetReferee(world);
+  resetCoach(world);
+  world.match.phase = MatchPhase.Intro;
+  world.match.introStage = IntroStage.Showcase;
+  world.match.introTimer = 0;
+  world.match.celebration = 0;
+  world.match.restart = null;
+  const note = Status.intro();
+  setStatus(world, note.title, note.text);
+}
+
 export function restartMatch(world: RealGkWorld): void {
   world.match.blue = 0;
   world.match.red = 0;
@@ -86,9 +124,14 @@ export function restartMatch(world: RealGkWorld): void {
   world.match.celebration = 0;
   world.match.kickoffTeam = Team.Blue;
   world.match.ballText = BallText.loose;
-  world.match.phase = MatchPhase.Live;
   world.match.phaseTimer = 0;
   world.match.celebrantId = null;
+  world.match.restart = null;
+  if (world.cfg.features?.matchIntro) {
+    enterIntro(world);
+    return;
+  }
+  world.match.phase = MatchPhase.Live;
   resetPlayers(world);
   resetBall(world, Team.Blue);
   resetReferee(world);
@@ -127,6 +170,16 @@ export function kickoffReset(world: RealGkWorld): void {
 /** Advances the whole simulation by `dt` seconds (already scaled by speed). */
 export function step(world: RealGkWorld, dt: number): void {
   const { match } = world;
+  // v5 pre-match entrance owns the tick until it kicks off.
+  if (match.phase === MatchPhase.Intro) {
+    updateIntro(world, dt);
+    return;
+  }
+  // v5 dead-ball restart: the ball rolls out, a taker sets up and puts it back in play.
+  if (match.restart) {
+    updateRestart(world, dt);
+    return;
+  }
   if (match.celebration > 0) {
     match.celebration = Math.max(0, match.celebration - dt);
     updatePlayers(world, dt);

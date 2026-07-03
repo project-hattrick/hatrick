@@ -6,9 +6,9 @@ import { formatThousands } from '@/lib/format';
 import { topPlayers } from '@/config/home.config';
 
 const rankAccent: Record<number, string> = {
-  1: 'text-amber-300',
-  2: 'text-zinc-300',
-  3: 'text-orange-400',
+  1: 'text-medal-gold',
+  2: 'text-medal-silver',
+  3: 'text-medal-bronze',
 };
 
 /** Board column: global ranking leaderboard with the user's own row pinned. */

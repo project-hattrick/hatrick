@@ -14,7 +14,7 @@ interface SettlementProofPanelProps {
 }
 
 /**
- * "Ver prova do resultado" — shows that a settled market's result was verified
+ * "See result proof" — shows that a settled market's result was verified
  * on-chain (TxLINE Merkle root + result hash), with a plain-language note and a
  * Solana Explorer link. A fan with no blockchain knowledge can see the payout
  * can't have been altered.
@@ -30,7 +30,7 @@ export function SettlementProofPanel({ fixtureId, market = MarketType.MatchResul
 
   return (
     <GlassPanel tone="dark" className="p-4 space-y-3">
-      <header className="flex items-center gap-2 text-emerald-400">
+      <header className="flex items-center gap-2 text-positive">
         <ShieldCheck className="size-5" aria-hidden />
         <span className="font-semibold tracking-tight">Result verified on-chain</span>
       </header>

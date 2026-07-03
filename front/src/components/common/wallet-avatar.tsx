@@ -47,7 +47,7 @@ export function WalletAvatar() {
           isAuthenticated
             ? 'bg-neon'
             : busy
-              ? 'animate-pulse bg-amber-400'
+              ? 'animate-pulse bg-warning'
               : 'bg-muted-foreground',
         )}
       />

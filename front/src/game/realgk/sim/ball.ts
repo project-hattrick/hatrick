@@ -1,7 +1,7 @@
 import { BALL_FRAME_COUNT, BALL_GRAVITY } from '../constants';
-import { BodyAnim, PlayerAction, Role, Team } from '../enums';
-import { fieldBounds, fieldRatios, pointOnField, GOAL_MAX_Z, GOALS } from '../field';
-import type { Ball, RealGkPlayer, RealGkWorld, Vec2 } from '../types';
+import { BodyAnim, PlayerAction, RestartKind, RestartStage, Role, Team } from '../enums';
+import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throwInSpot, GOAL_MAX_Z, GOALS } from '../field';
+import type { Ball, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
 import { BallText, Status } from './messages';
 import { goal, setStatus } from './rules';
@@ -101,24 +101,81 @@ function deadBall(world: RealGkWorld, lat: number, depth: number, note: { title:
   setStatus(world, note.title, note.text);
 }
 
+/** v5 deadBallSequence: flag the restart and let the ball keep rolling OUT — restart.ts then places it,
+ *  walks the taker to the correct spot and puts it back in play. Legacy (gate off) snaps via `deadBall`. */
+function beginRestart(world: RealGkWorld, kind: RestartKind, team: Team, spot: Vec2, note: { title: string; text: string }): void {
+  world.match.restart = { kind, team, stage: RestartStage.BallOut, timer: 0, spot, takerId: null };
+  world.match.ballText = BallText.deadBall;
+  setStatus(world, note.title, note.text);
+}
+
 /** Ball over a touchline (top/bottom) → throw-in for the team that didn't touch it last. */
 function throwInRestart(world: RealGkWorld, lastTeam: Team | null, topSide: boolean): void {
   const { ball, size } = world;
   const team = lastTeam ? opposite(lastTeam) : Team.Blue;
+  if (world.cfg.features?.deadBallSequence) {
+    beginRestart(world, RestartKind.ThrowIn, team, throwInSpot(size, ball.x, ball.y, topSide), Status.throwIn(team));
+    return;
+  }
   const lat = clamp(fieldRatios(size, ball.x, ball.y).lat, 0.06, 0.94);
   deadBall(world, lat, topSide ? 0.04 : 0.96, Status.throwIn(team));
 }
 
 /** Ball over a goal line (left/right, no goal) → corner (attacker last touched) or goal kick (defender). */
 function bylineRestart(world: RealGkWorld, goalOwner: Team, lastTeam: Team | null): void {
+  const { ball, size } = world;
   const attacker = opposite(goalOwner);
+  // Which corner / goal-area side the ball crossed (top vs bottom half of the pitch).
+  const top = fieldRatios(size, ball.x, ball.y).depth < 0.5;
   if (lastTeam === attacker) {
-    // Corner right at the bottom (near-camera) corner flag on the goal-line side the ball crossed.
+    if (world.cfg.features?.deadBallSequence) {
+      beginRestart(world, RestartKind.Corner, attacker, cornerSpot(size, goalOwner, top), Status.corner(attacker));
+      return;
+    }
     const lat = goalOwner === Team.Blue ? 0.015 : 0.985;
     deadBall(world, lat, 0.94, Status.corner(attacker));
   } else {
+    if (world.cfg.features?.deadBallSequence) {
+      beginRestart(world, RestartKind.GoalKick, goalOwner, goalKickSpot(size, goalOwner, top), Status.goalKick(goalOwner));
+      return;
+    }
     const lat = goalOwner === Team.Blue ? 0.14 : 0.86; // just inside the defended goal
     deadBall(world, lat, 0.5, Status.goalKick(goalOwner));
+  }
+}
+
+/** Loose-ball flight: gravity + curl + drag + ground bounce (NO out-of-play detection). Shared with restarts. */
+export function integrateBallFlight(world: RealGkWorld, dt: number): void {
+  const { ball } = world;
+  ball.vz -= BALL_GRAVITY * dt;
+
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed > 1) {
+    const sideX = -ball.vy / speed;
+    const sideY = ball.vx / speed;
+    const curveStrength = (ball.z > 8 ? 5.8 : 2.2) * ball.spinRate;
+    ball.vx += sideX * curveStrength * dt;
+    ball.vy += sideY * curveStrength * dt;
+  }
+
+  ball.x += ball.vx * dt;
+  ball.y += ball.vy * dt;
+  ball.z += ball.vz * dt;
+
+  const drag = ball.z > 8 ? 0.995 : ball.z > 2 ? 0.991 : 0.978;
+  ball.vx *= Math.pow(drag, dt * 60);
+  ball.vy *= Math.pow(drag, dt * 60);
+  ball.spinRate *= Math.pow(ball.z > 1 ? 0.994 : 0.972, dt * 60);
+  ball.spin = (ball.spin + ball.spinRate * dt * 5 + BALL_FRAME_COUNT) % BALL_FRAME_COUNT;
+
+  if (ball.z <= 0) {
+    if (ball.vz < -70) ball.impact = 0.09;
+    ball.z = 0;
+    ball.vz = -ball.vz * 0.42;
+    ball.spinRate += clamp((ball.vx + ball.vy) * 0.0035, -1.3, 1.3);
+    ball.vx *= 0.986;
+    ball.vy *= 0.986;
+    if (Math.abs(ball.vz) < 20) ball.vz = 0;
   }
 }
 
@@ -150,36 +207,7 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   }
 
   ball.ownerId = null;
-  ball.vz -= BALL_GRAVITY * dt;
-
-  const speed = Math.hypot(ball.vx, ball.vy);
-  if (speed > 1) {
-    const sideX = -ball.vy / speed;
-    const sideY = ball.vx / speed;
-    const curveStrength = (ball.z > 8 ? 5.8 : 2.2) * ball.spinRate;
-    ball.vx += sideX * curveStrength * dt;
-    ball.vy += sideY * curveStrength * dt;
-  }
-
-  ball.x += ball.vx * dt;
-  ball.y += ball.vy * dt;
-  ball.z += ball.vz * dt;
-
-  const drag = ball.z > 8 ? 0.995 : ball.z > 2 ? 0.991 : 0.978;
-  ball.vx *= Math.pow(drag, dt * 60);
-  ball.vy *= Math.pow(drag, dt * 60);
-  ball.spinRate *= Math.pow(ball.z > 1 ? 0.994 : 0.972, dt * 60);
-  ball.spin = (ball.spin + ball.spinRate * dt * 5 + BALL_FRAME_COUNT) % BALL_FRAME_COUNT;
-
-  if (ball.z <= 0) {
-    if (ball.vz < -70) ball.impact = 0.09;
-    ball.z = 0;
-    ball.vz = -ball.vz * 0.42;
-    ball.spinRate += clamp((ball.vx + ball.vy) * 0.0035, -1.3, 1.3);
-    ball.vx *= 0.986;
-    ball.vy *= 0.986;
-    if (Math.abs(ball.vz) < 20) ball.vz = 0;
-  }
+  integrateBallFlight(world, dt);
 
   const bounds = fieldBounds(size, ball.y);
   // Per-side goal mouth (calibrated in field.ts GOALS). Blue defends the left, Red the right.

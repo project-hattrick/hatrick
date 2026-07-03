@@ -31,10 +31,10 @@ function MatchRow({
       aria-pressed={selected}
       className={cn(
         'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition',
-        selected ? 'border-neon/40 bg-neon/5' : 'border-white/10 bg-white/[0.02] hover:bg-white/5',
+        selected ? 'border-neon/40 bg-neon/5' : 'border-white/10 bg-foreground/[0.02] hover:bg-foreground/5',
       )}
     >
-      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-live tabular-nums">
+      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-live tabular-nums">
         <span className="size-1.5 animate-pulse rounded-full bg-live" />
         {match.minute}&apos;
       </span>
@@ -48,8 +48,8 @@ function MatchRow({
         <Flag code={fifaToIso(match.away.code)} className="text-base" />
       </span>
       {watching ? (
-        <span className="shrink-0 rounded-full bg-neon/15 px-2 py-0.5 font-mono text-[9px] font-bold tracking-wide text-neon uppercase">
-          Assistindo
+        <span className="text-eyebrow shrink-0 rounded-full bg-neon/15 px-2 py-0.5 font-mono text-neon">
+          Watching
         </span>
       ) : null}
     </button>
@@ -73,10 +73,10 @@ export function MatchSelector() {
       <div className="mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2 text-[13px] font-bold tracking-wide">
           <Broadcast className="size-4 text-neon" />
-          Jogos ao vivo
+          Live matches
         </span>
-        <span className="font-mono text-[10px] font-bold tracking-wide text-muted-foreground uppercase">
-          {MATCHES.length} ao vivo
+        <span className="text-eyebrow font-mono text-muted-foreground">
+          {MATCHES.length} live
         </span>
       </div>
 

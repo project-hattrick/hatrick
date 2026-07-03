@@ -16,6 +16,14 @@ interface RealGkStore {
   replayActive: boolean;
   redCardActive: boolean;
   goalTeam: string;
+  introActive: boolean;
+  introStage: string;
+  restartActive: boolean;
+  restartLabel: string;
+  teamBlueName: string;
+  teamRedName: string;
+  teamBlueFlag: string;
+  teamRedFlag: string;
   cameraLabel: string;
   targetLabel: string;
   uiHidden: boolean;
@@ -39,6 +47,14 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   replayActive: false,
   redCardActive: false,
   goalTeam: '',
+  introActive: false,
+  introStage: '',
+  restartActive: false,
+  restartLabel: '',
+  teamBlueName: 'Blue',
+  teamRedName: 'Red',
+  teamBlueFlag: '',
+  teamRedFlag: '',
   cameraLabel: 'Cam: Broadcast',
   targetLabel: 'Follow: ball',
   uiHidden: false,

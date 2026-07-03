@@ -106,12 +106,12 @@ export interface StrengthLine {
 export const teamStrength = {
   overall: 91,
   lines: [
-    { label: 'Ataque', value: 93 },
-    { label: 'Meio', value: 88 },
-    { label: 'Defesa', value: 90 },
+    { label: 'Attack', value: 93 },
+    { label: 'Midfield', value: 88 },
+    { label: 'Defense', value: 90 },
   ] satisfies StrengthLine[],
-  chemistry: 'alta',
-  chemistryNote: '3 do mesmo país',
+  chemistry: 'High',
+  chemistryNote: '3 from the same country',
 };
 
 export const dailyDuel = {

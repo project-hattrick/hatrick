@@ -2,8 +2,8 @@ import { MAX_DT } from './constants';
 import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
-import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera } from './camera';
-import { MatchPhase, RefPhase, Role, Team } from './enums';
+import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
+import { MatchPhase, RefPhase, RestartKind, Role, Team } from './enums';
 import { pointOnField } from './field';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
@@ -15,8 +15,12 @@ import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
 import { spawnReferee } from './sim/referee';
-import { createWorld, resetBall, restartMatch, step } from './sim/world';
+import { createWorld, enterIntro, resetBall, restartMatch, step } from './sim/world';
 import type { RealGkHandle, RealGkHudPatch } from './types';
+
+/** Broadcast banner copy per restart type (enum → label; empty when the ball is live). */
+const restartLabelFor = (kind: RestartKind): string =>
+  kind === RestartKind.Corner ? 'CORNER' : kind === RestartKind.GoalKick ? 'GOAL KICK' : kind === RestartKind.ThrowIn ? 'THROW-IN' : '';
 
 export interface RealGkEngineOptions {
   onHud: (patch: RealGkHudPatch) => void;
@@ -111,6 +115,10 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     replayActive: true,
     redCardActive: true,
     goalTeam: 'x',
+    introActive: true,
+    introStage: 'x',
+    restartActive: true,
+    restartLabel: 'x',
   };
 
   const syncHud = (): void => {
@@ -136,6 +144,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (redCardActive !== last.redCardActive) patch.redCardActive = last.redCardActive = redCardActive;
     const goalTeam = match.celebration > 0 && match.scorer ? match.scorer : '';
     if (goalTeam !== last.goalTeam) patch.goalTeam = last.goalTeam = goalTeam;
+    const introActive = match.phase === MatchPhase.Intro;
+    if (introActive !== last.introActive) patch.introActive = last.introActive = introActive;
+    const introStage = introActive ? match.introStage : '';
+    if (introStage !== last.introStage) patch.introStage = last.introStage = introStage;
+    const restartActive = match.restart !== null;
+    if (restartActive !== last.restartActive) patch.restartActive = last.restartActive = restartActive;
+    const restartLabel = match.restart ? restartLabelFor(match.restart.kind) : '';
+    if (restartLabel !== last.restartLabel) patch.restartLabel = last.restartLabel = restartLabel;
     if (Object.keys(patch).length) opts.onHud(patch);
   };
 
@@ -152,9 +168,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (world.players.length) {
       director?.reset();
       recorder?.clear();
-      resetPlayers(world);
-      resetBall(world, world.match.kickoffTeam);
-      resetCoach(world);
+      if (world.match.phase === MatchPhase.Intro) {
+        // Re-lay the entrance for the new viewport (keeps players off-pitch mid-intro instead of snapping home).
+        enterIntro(world);
+      } else {
+        resetPlayers(world);
+        resetBall(world, world.match.kickoffTeam);
+        resetCoach(world);
+      }
     }
   };
 
@@ -163,7 +184,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     try {
       const rawDt = Math.min(MAX_DT, (now - lastT) / 1000);
       lastT = now;
-      const simRunning = world.match.phase === MatchPhase.Live || world.match.phase === MatchPhase.Celebration;
+      const phase = world.match.phase;
+      const simRunning = phase === MatchPhase.Intro || phase === MatchPhase.Live || phase === MatchPhase.Celebration;
       // Red card / any state that halts the sim also halts the sprite animation clock.
       const cardFrozen = world.referee.active && world.referee.phase === RefPhase.Card;
       if (!paused && simRunning && !cardFrozen) animClock += rawDt * 1000;
@@ -171,13 +193,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         if (simRunning) step(world, rawDt * speed);
         if (director && recorder) {
           director.tick(rawDt, now);
-          if (world.match.phase === MatchPhase.Live && world.match.celebration === 0) recorder.capture(world, now);
+          if (phase === MatchPhase.Live && world.match.celebration === 0) recorder.capture(world, now);
         }
       }
       const replayScene = director?.scene() ?? null;
-      // Live camera follows play; during the replay flow the director owns the camera (snap + slow track).
-      if (!replayScene && (world.match.phase === MatchPhase.Live || world.match.phase === MatchPhase.Celebration)) {
-        updateCamera(cam, world, rawDt);
+      // Live camera follows play; the intro has its own choreography; the replay flow owns the camera (snap + track).
+      if (!replayScene) {
+        if (phase === MatchPhase.Intro) updateIntroCamera(cam, world);
+        else if (phase === MatchPhase.Live || phase === MatchPhase.Celebration) updateCamera(cam, world, rawDt);
       }
       render(ctx, replayScene?.world ?? world, assets, cam, replayScene?.now ?? animClock, flat);
       if (director) {
@@ -196,7 +219,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   lastT = performance.now();
   raf = requestAnimationFrame(frame);
   syncHud();
-  opts.onHud({ cameraLabel: cameraLabel(cam), targetLabel: 'Follow: ball' });
+  opts.onHud({
+    cameraLabel: cameraLabel(cam),
+    targetLabel: 'Follow: ball',
+    teamBlueName: config.teams?.blue.name ?? 'Blue',
+    teamRedName: config.teams?.red.name ?? 'Red',
+    teamBlueFlag: config.teams?.blue.flagId ?? '',
+    teamRedFlag: config.teams?.red.flagId ?? '',
+  });
 
   return {
     togglePause: () => {
@@ -255,6 +285,46 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.vz = 30;
       ball.spinRate = 0;
       ball.cooldown = 1.0;
+    },
+    playIntro: () => {
+      if (!config.features?.matchIntro) return;
+      director?.reset();
+      recorder?.clear();
+      enterIntro(world);
+    },
+    debugRestart: (kind) => {
+      // v5-only test hook: nudges the ball out of play so the real detection places the correct restart.
+      if (!config.features?.deadBallSequence) return;
+      if (world.match.phase !== MatchPhase.Live || world.match.restart || world.match.celebration > 0) return;
+      const { ball, players, size } = world;
+      const blue = players.find((p) => p.team === Team.Blue && p.role !== Role.GK);
+      ball.ownerId = null;
+      ball.z = 2;
+      ball.vz = 12;
+      ball.spinRate = 0;
+      ball.cooldown = 0;
+      if (kind === 'throwin') {
+        const p = pointOnField(size, 0.5, 0.22);
+        ball.x = p.x;
+        ball.y = p.y;
+        ball.vx = 0;
+        ball.vy = -520; // over the top touchline → Red throw-in (Blue touched last)
+        ball.lastKickerId = blue?.id ?? null;
+      } else if (kind === 'corner') {
+        const p = pointOnField(size, 0.9, 0.1);
+        ball.x = p.x;
+        ball.y = p.y;
+        ball.vx = 520; // over Red's goal line, above the mouth → Blue corner
+        ball.vy = -60;
+        ball.lastKickerId = blue?.id ?? null;
+      } else {
+        const p = pointOnField(size, 0.1, 0.12);
+        ball.x = p.x;
+        ball.y = p.y;
+        ball.vx = -520; // Blue puts it over its OWN goal line → Blue goal kick
+        ball.vy = -40;
+        ball.lastKickerId = blue?.id ?? null;
+      }
     },
     resize,
     destroy: () => {

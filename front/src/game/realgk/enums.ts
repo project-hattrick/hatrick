@@ -100,6 +100,8 @@ export enum MatchPhase {
 export enum IntroStage {
   /** Broadcast card: both teams + flags on screen, camera wide. */
   Showcase = 'showcase',
+  /** Camera pulls out to full pitch and glides across the perimeter sponsor boards. */
+  SponsorSweep = 'sponsor_sweep',
   /** Players walk on from below the pitch to their formation homes, staggered back-to-front. */
   RiseIn = 'rise_in',
   /** Referee runs to center and blows the whistle. */

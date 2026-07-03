@@ -8,9 +8,11 @@ import { CheckpointId } from '@/game/checkpoints/registry';
 import { useRealGkStore } from '@/store/real-gk.store';
 import { GoalBurst } from '../goal-burst';
 import { ConfettiBurst } from './confetti-burst';
+import { MatchIntroOverlay } from './match-intro-overlay';
 import { RealGkControls } from './real-gk-controls';
 import { RealGkHud } from './real-gk-hud';
 import { RedCardOverlay } from './red-card-overlay';
+import { RestartBanner } from './restart-banner';
 
 /** Full-bleed Real Match GK stage: stadium backdrop + engine canvas + HUD/controls. */
 export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint?: CheckpointId }) {
@@ -22,6 +24,14 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const replayActive = useRealGkStore((s) => s.replayActive);
   const redCardActive = useRealGkStore((s) => s.redCardActive);
   const goalTeam = useRealGkStore((s) => s.goalTeam);
+  const introActive = useRealGkStore((s) => s.introActive);
+  const introStage = useRealGkStore((s) => s.introStage);
+  const restartActive = useRealGkStore((s) => s.restartActive);
+  const restartLabel = useRealGkStore((s) => s.restartLabel);
+  const teamBlueName = useRealGkStore((s) => s.teamBlueName);
+  const teamRedName = useRealGkStore((s) => s.teamRedName);
+  const teamBlueFlag = useRealGkStore((s) => s.teamBlueFlag);
+  const teamRedFlag = useRealGkStore((s) => s.teamRedFlag);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,6 +64,14 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         handle.debugAction('intercept');
       } else if (k === '4') {
         handle.debugAction('powershot');
+      } else if (k === 'i') {
+        handle.playIntro();
+      } else if (k === 'c') {
+        handle.debugRestart('corner');
+      } else if (k === 't') {
+        handle.debugRestart('throwin');
+      } else if (k === 'k') {
+        handle.debugRestart('goalkick');
       }
     };
     window.addEventListener('keydown', onKey);
@@ -72,7 +90,16 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
       <GoalBurst active={goalActive} />
       <ConfettiBurst active={goalActive} team={goalTeam} />
       <RedCardOverlay active={redCardActive} />
-      {!replayActive && <RealGkHud />}
+      <RestartBanner active={restartActive} label={restartLabel} />
+      <MatchIntroOverlay
+        active={introActive}
+        stage={introStage}
+        blueName={teamBlueName}
+        redName={teamRedName}
+        blueFlag={teamBlueFlag}
+        redFlag={teamRedFlag}
+      />
+      {!replayActive && !introActive && <RealGkHud />}
       <RealGkControls handle={handleRef} />
     </div>
   );
