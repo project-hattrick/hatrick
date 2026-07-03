@@ -11,6 +11,7 @@ export enum CheckpointId {
   RealGkV3 = 'real-gk-v3',
   RealGkV4 = 'real-gk-v4',
   RealGkPlay = 'real-gk-play',
+  RealGkMatch = 'real-gk-match',
 }
 
 /** Which engine a checkpoint runs on. The sandbox picks a Stage component per runtime. */

@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import { MarketType } from '@/enums';
+import { authHeaders } from './auth-header';
 
 export interface BuildBetInput {
   walletAddress: string;
@@ -19,7 +20,7 @@ export const betService = {
   buildPlaceBet: async (input: BuildBetInput): Promise<{ transaction: string }> => {
     const res = await fetch(`${env.apiUrl}/bets/build`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(input),
     });
     if (!res.ok) throw new Error(`Failed to build bet transaction (${res.status})`);

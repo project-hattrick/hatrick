@@ -7,6 +7,7 @@ import { Gift, Image as ImageIcon, Bell, Plus } from '@/components/common/icons'
 import { navLinks } from '@/config/nav.config';
 import { IconButton } from './icon-button';
 import { formatThousands } from '@/lib/format';
+import { useAuth } from '@/services/queries/use-auth';
 
 const COIN_BALANCE = 28_105_820;
 
@@ -14,6 +15,10 @@ const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.Walle
 
 /** Transparent top bar, centered on the same max width as the floating widgets. */
 export function SiteNavbar() {
+  const { isAuthenticated, user } = useAuth();
+  // Show the real devnet play-money balance from the DB once signed in.
+  const coins = isAuthenticated && user ? Number(user.balance) : COIN_BALANCE;
+
   return (
     <nav className="pointer-events-auto fixed inset-x-0 top-0 z-30 h-16 pt-[env(safe-area-inset-top)]">
       <div className="navbar-shrink mx-auto flex h-full w-full items-center justify-between border border-transparent px-3 sm:px-4 md:px-6">
@@ -52,7 +57,7 @@ export function SiteNavbar() {
           </span>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Image src="/coin.png" alt="Coins" width={22} height={22} className="size-4 sm:size-5" />
-            <span className="text-xs font-bold text-foreground sm:text-sm">{formatThousands(COIN_BALANCE)}</span>
+            <span className="text-xs font-bold text-foreground sm:text-sm">{formatThousands(coins)}</span>
             <button
               type="button"
               aria-label="Add coins"

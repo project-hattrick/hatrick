@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { GlassPanel } from '@/components/common/glass-panel';
-import { CaretLeft, CaretRight } from '@/components/common/icons';
+import { CaretDown, CaretLeft, CaretRight } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
 import { focusAt, type FocusPlayer } from '@/config/live-roster.config';
 import { useUiStore } from '@/store/ui.store';
@@ -56,26 +57,47 @@ function StatCell({ value, label, highlight }: { value: string | number; label: 
   );
 }
 
-/** "On the ball" focus card — cycles the live roster and shows the active player's live stats. */
+/** "On the ball" focus card — minimalist by default, expands to the player's live stats. */
 export function PlayerFocusCard() {
   const focusedPlayerIndex = useUiStore((s) => s.focusedPlayerIndex);
   const focusNext = useUiStore((s) => s.focusNext);
   const focusPrev = useUiStore((s) => s.focusPrev);
+  const [expanded, setExpanded] = useState(false);
   const { player, position, total }: { player: FocusPlayer; position: number; total: number } =
     focusAt(focusedPlayerIndex);
 
   return (
-    <GlassPanel tone="blur" className="p-3 text-left md:p-3.5 md:text-center">
-      <div className="flex items-center gap-2 md:mb-3">
+    <GlassPanel tone="blur" className="p-3 text-left md:p-3.5">
+      {/* Always-visible minimalist header. */}
+      <div className="flex items-center gap-2">
         <span className={cn('size-1.5 rounded-full', player.onBall ? 'bg-neon' : 'bg-muted-foreground')} />
         <span className="mr-auto font-mono text-[9px] font-bold tracking-wider text-muted-foreground">
           {player.onBall ? 'ON THE BALL' : 'FOCUS'}
         </span>
         <span className="font-mono text-[9px] font-bold text-muted-foreground/70">{player.code}</span>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Collapse player stats' : 'Expand player stats'}
+          className="grid size-5 place-items-center rounded text-muted-foreground transition hover:text-foreground"
+        >
+          <CaretDown className={cn('size-3.5 transition-transform duration-300', expanded && 'rotate-180')} />
+        </button>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-3 md:hidden">
-        <div className="min-w-0">
+      <div className="mt-2 flex items-center gap-2.5">
+        <span className="relative grid size-9 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-1 ring-1 ring-white/10">
+          <Image
+            src={player.portraitSrc}
+            alt={player.name}
+            width={36}
+            height={36}
+            className="translate-y-[8%] scale-110 object-contain object-bottom"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        </span>
+        <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-white">{player.name}</div>
           <div className="truncate text-[9px] font-semibold text-muted-foreground">{player.team} · {player.position}</div>
         </div>
@@ -84,40 +106,45 @@ export function PlayerFocusCard() {
         </span>
       </div>
 
-      <div className="hidden md:block">
-        <RatingRing rating={player.rating} portraitSrc={player.portraitSrc} name={player.name} />
+      {/* Expandable region — height animates via the grid-rows 0fr→1fr trick (no deps). */}
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-300 ease-soft',
+          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="pt-3 text-center">
+            <RatingRing rating={player.rating} portraitSrc={player.portraitSrc} name={player.name} />
+          </div>
 
-        <div className="mt-2.5 text-[17px] font-bold text-white">{player.name}</div>
-        <div className="mb-2.5 text-[10px] font-semibold text-muted-foreground">
-          {player.team} · {player.position}
-        </div>
+          <div className="mt-3 flex gap-1.5">
+            <StatCell value={player.pass} label="PASS" />
+            <StatCell value={player.touches} label="TCH" />
+            <StatCell value={player.goals} label="GOALS" highlight />
+          </div>
 
-        <div className="flex gap-1.5">
-          <StatCell value={player.pass} label="PASS" />
-          <StatCell value={player.touches} label="TCH" />
-          <StatCell value={player.goals} label="GOALS" highlight />
-        </div>
-
-        <div className="mt-3 flex items-center justify-between">
-          <button
-            type="button"
-            aria-label="Previous player"
-            onClick={focusPrev}
-            className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
-          >
-            <CaretLeft className="size-4" />
-          </button>
-          <span className="font-mono text-[10px] font-bold tracking-wider text-muted-foreground">
-            {position} / {total}
-          </span>
-          <button
-            type="button"
-            aria-label="Next player"
-            onClick={focusNext}
-            className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
-          >
-            <CaretRight className="size-4" />
-          </button>
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="Previous player"
+              onClick={focusPrev}
+              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
+            >
+              <CaretLeft className="size-4" />
+            </button>
+            <span className="font-mono text-[10px] font-bold tracking-wider text-muted-foreground">
+              {position} / {total}
+            </span>
+            <button
+              type="button"
+              aria-label="Next player"
+              onClick={focusNext}
+              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
+            >
+              <CaretRight className="size-4" />
+            </button>
+          </div>
         </div>
       </div>
     </GlassPanel>

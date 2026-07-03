@@ -12,13 +12,16 @@ const toBase64 = (bytes: Uint8Array): string =>
   btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''));
 
 /**
- * Wallet sign-in: nonce → signMessage → verify → session JWT (Zustand-persisted).
- * Auto-runs when a wallet connects without a matching session, and clears the
- * session on disconnect. All network access goes through authService.
+ * DRIVER hook — runs the wallet sign-in and owns the auto-connect effect. Mount
+ * it exactly ONCE (in WalletAuthSync). Components that only need to *read* auth
+ * state should use useAuth(), not this, to avoid double-triggering sign-in.
+ *
+ * Flow: nonce → signMessage → verify → session JWT (Zustand-persisted). Auto-runs
+ * when a wallet connects without a matching session; clears it on disconnect.
  */
 export function useWalletAuth() {
   const { publicKey, signMessage, connected } = useWallet();
-  const { token, user, setSession, clear } = useAuthStore();
+  const { token, user, setSession, setAuthenticating, clear } = useAuthStore();
   const inFlight = useRef(false);
 
   const signIn = useMutation({
@@ -32,6 +35,8 @@ export function useWalletAuth() {
       const session = await authService.verify(walletAddress, toBase64(signature));
       setSession(session.token, session.user);
     },
+    onMutate: () => setAuthenticating(true),
+    onSettled: () => setAuthenticating(false),
   });
 
   const { mutate } = signIn;

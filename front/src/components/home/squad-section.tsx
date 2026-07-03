@@ -1,12 +1,12 @@
-'use client';
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FormationPitch } from './widgets/formation-pitch';
+import { TeamStrengthCard } from './widgets/team-strength-card';
+import { DailyDuelCard } from './widgets/daily-duel-card';
 import { SquadCarousel } from './widgets/squad-carousel';
 import { SectionLink } from './widgets/section-link';
 import { AppMode } from '@/enums/app-mode.enum';
-import { squad, squadTabs } from '@/config/squad.config';
+import { squad } from '@/config/squad.config';
 
-/** "Seu time no fantasy" — roster of the user's team as cards, filtered by position tabs. */
+/** "Seu time no fantasy" — the XI on the pitch, squad strength, today's duel and the card row. */
 export function SquadSection() {
   return (
     <div className="flex flex-col gap-5">
@@ -18,24 +18,21 @@ export function SquadSection() {
         <SectionLink href={`/${AppMode.Fantasy}`} label="Editar formação" className="mt-2" />
       </div>
 
-      <Tabs defaultValue="all" className="gap-5">
-        <TabsList variant="line" className="h-auto flex-wrap justify-start gap-1">
-          {squadTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="px-3 py-1.5">
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <FormationPitch />
+        <div className="flex flex-col gap-4">
+          <TeamStrengthCard />
+          <DailyDuelCard />
+        </div>
+      </div>
 
-        {squadTabs.map((tab) => {
-          const players = tab.value === 'all' ? squad : squad.filter((player) => player.group === tab.value);
-          return (
-            <TabsContent key={tab.value} value={tab.value}>
-              <SquadCarousel players={players} />
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold tracking-wider uppercase">Suas cartas</h3>
+          <SectionLink href={`/${AppMode.Fantasy}`} label="Ver coleção" />
+        </div>
+        <SquadCarousel players={squad} />
+      </div>
     </div>
   );
 }

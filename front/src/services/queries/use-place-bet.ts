@@ -6,6 +6,7 @@ import { Transaction } from '@solana/web3.js';
 
 import { MarketType } from '@/enums';
 import { betService } from '../bet.service';
+import { useRequireAuth } from './use-require-auth';
 
 export interface PlaceBetVars {
   fixtureId: number;
@@ -25,9 +26,11 @@ const fromBase64 = (b64: string): Uint8Array =>
 export function usePlaceBet() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
+  const requireAuth = useRequireAuth();
 
   return useMutation({
     mutationFn: async (vars: PlaceBetVars): Promise<string> => {
+      if (!requireAuth()) throw new Error('Sign in with your wallet to place a bet');
       if (!publicKey) throw new Error('Connect your wallet to place a bet');
 
       const { transaction } = await betService.buildPlaceBet({

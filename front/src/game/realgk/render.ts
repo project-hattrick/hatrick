@@ -1,6 +1,7 @@
 import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
 import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
 import { fieldBounds, GOALS, metrics } from './field';
+import { drawBillboards } from './billboards';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
@@ -428,6 +429,7 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   // Center on the viewport (screen), but paint the court at the full virtual-pitch size.
   ctx.setTransform(dpr * z, 0, 0, dpr * zy, dpr * (world.view.width / 2 - cam.x * z), dpr * (world.view.height / 2 - cam.y * zy));
   if (assets.court.complete && assets.court.naturalWidth) ctx.drawImage(assets.court, 0, 0, width, height);
+  drawBillboards(ctx, world, now); // perimeter advertiser panels, behind the action
   drawLandingMarker(ctx, world);
   drawGoalNet(ctx, world, assets, 'back'); // behind the players
 

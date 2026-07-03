@@ -23,6 +23,8 @@ export interface RealGkFeatures {
   playable: boolean;
   /** Render the goal net (traves + rede) in layers at both goal lines. */
   goalNet: boolean;
+  /** Perimeter advertiser panels (image + LED boards) pinned to the pitch (see billboards.ts). */
+  billboards: boolean;
 }
 
 /**
@@ -78,7 +80,7 @@ export const REAL_GK_HERO_CONFIG: RealGkConfig = {
   ],
   cinematic: true,
   // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: true },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: true, billboards: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -109,7 +111,7 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: true },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -131,12 +133,31 @@ export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: true },
+  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: true, billboards: false },
   actorScale: { referee: 0.95, coach: 0.95 },
+};
+
+/** Auto full match — identical look/assets to the sandbox, but 11-a-side AI with goal replays. */
+export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
+  nearGoalPush: 1.42,
 };
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
   if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;
   if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;
   return id === CheckpointId.RealGkV3 ? REAL_GK_CINEMA_CONFIG : REAL_GK_V2_CONFIG;

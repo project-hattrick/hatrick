@@ -1,7 +1,17 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PublicKey } from '@solana/web3.js';
 
+import type { AuthenticatedUser } from '../auth/auth.types';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { MarketType } from '../events/enums/market-type.enum';
 import { BetService } from './bet.service';
 
@@ -21,13 +31,21 @@ export class BetController {
 
   /** Assemble an unsigned place_position transaction for the wallet to sign. */
   @Post('build')
-  async build(@Body() body: BuildBetBody): Promise<{ transaction: string }> {
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async build(
+    @Body() body: BuildBetBody,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ transaction: string }> {
     const { walletAddress, fixtureId, market, selection, amount } = body;
     if (!walletAddress || fixtureId === undefined || !market || !selection || !amount) {
       throw new BadRequestException('walletAddress, fixtureId, market, selection, amount are required');
     }
     if (!Object.values(MarketType).includes(market)) {
       throw new BadRequestException(`unknown market type: ${market}`);
+    }
+    if (walletAddress !== user.walletAddress) {
+      throw new ForbiddenException('walletAddress must match the signed-in wallet');
     }
     try {
       new PublicKey(walletAddress);

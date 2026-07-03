@@ -1,6 +1,9 @@
 'use client';
 
-import { GlassPanel } from '@/components/common/glass-panel';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+
+import { MetalButton } from '@/components/ui/metal-button';
 import { cn } from '@/lib/utils';
 
 export interface DockOption {
@@ -18,56 +21,94 @@ interface PredictionDockProps {
   className?: string;
 }
 
-const NET = 'repeating-linear-gradient(90deg,rgba(255,255,255,.26) 0 1px,transparent 1px 8px),repeating-linear-gradient(0deg,rgba(255,255,255,.26) 0 1px,transparent 1px 8px)';
-
 function clock(seconds: number): string {
   const s = Math.max(0, seconds);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-/** Bottom-center "Will there be a goal?" dock — goal illustration header + YES/NO odds. */
+/** Compact "Will there be a goal?" dock — art on top, all copy + YES/NO stacked at the bottom. */
 export function PredictionDock({ question, secondsLeft, yes, no, onPick, className }: PredictionDockProps) {
-  return (
-    <GlassPanel
-      tone="blur"
-      radius="xl"
-      aria-label={question}
-      className={cn('w-full max-w-[470px] min-w-0 overflow-hidden md:w-[min(470px,44vw)]', className)}
-    >
-      <div className="relative h-[76px] bg-gradient-to-b from-[#22593a] to-pitch sm:h-[88px] md:h-[96px]">
-        <div
-          className="absolute top-2.5 left-1/2 h-[44px] w-[124px] -translate-x-1/2 border-2 border-b-0 border-white/75 sm:top-3 sm:h-[50px] sm:w-[140px] md:top-3.5 md:h-[54px] md:w-[150px]"
-          style={{ backgroundImage: NET }}
-        />
-        <div className="absolute bottom-4 left-1/2 size-3 -translate-x-1/2 rounded-full bg-white shadow-md" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/90" />
-        <div className="absolute right-16 bottom-2 left-3 sm:right-20 sm:bottom-2.5 sm:left-4">
-          <div className="font-mono text-[8px] font-bold tracking-[0.16em] text-neon">● LIVE PREDICTION · FREE</div>
-          <div className="truncate text-sm font-bold text-white sm:text-base md:text-[19px]">{question}</div>
-        </div>
-        <span className="absolute right-3 bottom-2.5 font-mono text-xs font-bold text-neon tabular-nums sm:right-4 sm:bottom-3 sm:text-[15px]">
-          {clock(secondsLeft)}
-        </span>
-      </div>
+  const totalRef = useRef(secondsLeft || 1);
+  const [remaining, setRemaining] = useState(secondsLeft);
 
-      <div className="flex gap-2 p-2.5 sm:gap-2.5 sm:p-3.5">
-        <button
-          type="button"
-          onClick={() => onPick?.(yes.label)}
-          className="flex min-w-0 flex-1 items-center justify-between gap-1 rounded-xl bg-neon px-3 py-2.5 text-primary-foreground transition hover:bg-neon-hover sm:px-3.5 sm:py-3"
-        >
-          <span className="text-[15px] font-bold">{yes.label}</span>
-          <span className="truncate font-mono text-[10px] font-bold sm:text-xs">×{yes.odds} · +{yes.points}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onPick?.(no.label)}
-          className="flex min-w-0 flex-1 items-center justify-between gap-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-foreground transition hover:bg-white/10 sm:px-3.5 sm:py-3"
-        >
-          <span className="text-[15px] font-bold">{no.label}</span>
-          <span className="truncate font-mono text-[10px] font-bold text-muted-foreground sm:text-xs">×{no.odds} · +{no.points}</span>
-        </button>
+  // Reset the countdown whenever a new prompt arrives.
+  useEffect(() => {
+    totalRef.current = secondsLeft || 1;
+    setRemaining(secondsLeft);
+  }, [question, secondsLeft]);
+
+  // Tick down to 0.
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const id = window.setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [remaining]);
+
+  const pct = Math.max(0, Math.min(100, (remaining / totalRef.current) * 100));
+
+  return (
+    // Padded "bezel" frame (RevenueWidget look) around the overlay card.
+    <div
+      className={cn(
+        'w-full max-w-[520px] min-w-0 rounded-[26px] bg-muted p-1.5 shadow-[0px_0px_0px_1px_rgba(255,255,255,0.05),0px_2px_6px_rgba(0,0,0,0.4),0px_16px_40px_-12px_rgba(0,0,0,0.55)] md:w-[min(520px,48vw)]',
+        className,
+      )}
+    >
+      <div
+        className="relative h-[248px] w-full overflow-hidden rounded-[20px] ring-1 ring-white/10 sm:h-[280px]"
+        aria-label={question}
+      >
+        <Image src="/prediction-goal.png" alt="" fill sizes="520px" className="object-cover object-center" />
+        {/* Gradient so the bottom copy + buttons stay legible; the top stays free art. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
+
+        {/* Everything stacked at the bottom. */}
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[8px] font-bold tracking-[0.16em] text-neon [text-shadow:0_1px_4px_rgba(0,0,0,0.85)]">
+              ● LIVE PREDICTION · FREE
+            </span>
+            <span className="font-mono text-xs font-bold text-neon tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.85)]">
+              {clock(remaining)}
+            </span>
+          </div>
+
+          {/* Countdown bar depleting to 0. */}
+          <div className="h-1 overflow-hidden rounded-full bg-white/15">
+            <div
+              className="h-full rounded-full bg-neon transition-[width] duration-1000 ease-linear"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+
+          <div className="truncate text-sm font-bold text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-base">
+            {question}
+          </div>
+
+          <div className="flex items-stretch gap-1.5">
+            <MetalButton
+              type="button"
+              preset="silver"
+              variant="outline"
+              strength={1}
+              onClick={() => onPick?.(yes.label)}
+              metalFxClassName="flex-[2] cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full cursor-pointer justify-between gap-1 px-3.5 py-3.5 text-sm font-bold text-white"
+            >
+              <span>{yes.label}</span>
+              <span className="truncate font-mono text-[10px] font-semibold text-white/70">×{yes.odds} · +{yes.points}</span>
+            </MetalButton>
+            <button
+              type="button"
+              onClick={() => onPick?.(no.label)}
+              className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-1 rounded-[15px] bg-black/40 px-3.5 py-3.5 text-muted-foreground backdrop-blur-sm transition hover:bg-black/55 hover:text-foreground active:scale-[0.98]"
+            >
+              <span className="text-sm font-semibold">{no.label}</span>
+              <span className="truncate font-mono text-[10px] font-semibold text-muted-foreground/70">×{no.odds} · +{no.points}</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </GlassPanel>
+    </div>
   );
 }

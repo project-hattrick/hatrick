@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module';
 import { ChainConfig } from './chain.config';
 import { SolanaService } from './solana.service';
 import { FaucetService } from './faucet.service';
@@ -16,6 +17,7 @@ import { BetController } from './bet.controller';
  * until SOLANA_ENABLED=true.
  */
 @Module({
+  imports: [AuthModule], // JwtAuthGuard for /bets/build + /faucet
   providers: [
     ChainConfig,
     SolanaService,
