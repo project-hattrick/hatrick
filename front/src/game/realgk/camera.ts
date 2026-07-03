@@ -36,8 +36,8 @@ const REF_SHAKE_PX = 9;
 
 /** v5 sponsor sweep timing: the intro pan length, the in-play pan length, and the gap between in-play sweeps. */
 const INTRO_SWEEP_SECONDS = 3.4;
-const SPONSOR_LIVE_SECONDS = 3.6;
-const SPONSOR_COOLDOWN_SECONDS = 55;
+const SPONSOR_LIVE_SECONDS = 3.4;
+const SPONSOR_COOLDOWN_SECONDS = 80;
 
 /** Referee phases that keep the camera locked on him (spawn run-in → pause → red card). */
 const REF_EVENT_PHASES = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase.Card]);
@@ -232,31 +232,30 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
     }
   }
 
-  // v5: periodic broadcast sponsor sweep during calm midfield play — glide wide across the boards, then release.
+  // v5: periodic broadcast sponsor sweep during a calm, loose midfield ball — glide wide across the boards.
   if (world.cfg.features?.matchIntro) {
-    cam.sponsorCooldown = Math.max(0, cam.sponsorCooldown - dt);
-    if (cam.sponsorT > 0) {
-      cam.sponsorT = Math.max(0, cam.sponsorT - dt);
-      const band = sponsorBand(world);
-      const p = 1 - cam.sponsorT / SPONSOR_LIVE_SECONDS;
-      cam.x += (lerp(band.xLeft, band.xRight, p) - cam.x) * 0.05;
-      cam.y += (band.y - cam.y) * 0.05;
-      cam.z += (1.2 - cam.z) * 0.04;
-      clampToField(cam, world);
-      if (cam.sponsorT === 0) cam.sponsorCooldown = SPONSOR_COOLDOWN_SECONDS;
-      return;
+    // Never sweep during a goal, restart or referee beat — abort any in-flight sweep so the camera stays on play.
+    const canSweep = world.match.celebration === 0 && !world.match.restart && !cam.refFocus && !cam.cardActive;
+    if (!canSweep) {
+      cam.sponsorT = 0;
+    } else {
+      cam.sponsorCooldown = Math.max(0, cam.sponsorCooldown - dt);
+      if (cam.sponsorT > 0) {
+        cam.sponsorT = Math.max(0, cam.sponsorT - dt);
+        const band = sponsorBand(world);
+        const p = 1 - cam.sponsorT / SPONSOR_LIVE_SECONDS;
+        cam.x += (lerp(band.xLeft, band.xRight, p) - cam.x) * 0.05;
+        cam.y += (band.y - cam.y) * 0.05;
+        cam.z += (1.2 - cam.z) * 0.04;
+        clampToField(cam, world);
+        if (cam.sponsorT === 0) cam.sponsorCooldown = SPONSOR_COOLDOWN_SECONDS;
+        return;
+      }
+      // Only when the ball is loose in midfield — never cut away from a player carrying the ball.
+      const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
+      const calm = cam.sponsorCooldown === 0 && cam.targetIdx < 0 && preset.follow && !world.ball.ownerId && ballRatio.lat > 0.34 && ballRatio.lat < 0.66;
+      if (calm) cam.sponsorT = SPONSOR_LIVE_SECONDS;
     }
-    const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
-    const calm =
-      cam.sponsorCooldown === 0 &&
-      cam.targetIdx < 0 &&
-      preset.follow &&
-      world.match.celebration === 0 &&
-      !world.match.restart &&
-      !cam.refFocus &&
-      ballRatio.lat > 0.32 &&
-      ballRatio.lat < 0.68;
-    if (calm) cam.sponsorT = SPONSOR_LIVE_SECONDS;
   }
 
   if (!preset.follow) {

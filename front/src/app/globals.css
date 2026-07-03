@@ -68,6 +68,8 @@
   /* Pitch turf stripes (mini-pitch backdrops) — themeable via the .pitch-stripes utility. */
   --pitch-stripe-a: #17301f;
   --pitch-stripe-b: #142a1b;
+  /* The single themeable "glass black" — used by floating panels/scrims so all darks agree. */
+  --color-overlay: #07080b;
 }
 
 :root {
@@ -139,163 +141,174 @@
   --sidebar-ring: #aef019;
 }
 
-/* ── Alternative palettes ──────────────────────────────────────────────────────
+/* ── Alternative palettes — dark tonal variants ────────────────────────────────
    The app is always `.dark`; `.dark[data-theme='x']` (specificity 0,2,0) reliably wins
-   over both the baseline `.dark` block and the `@theme` `:root` tokens. Each block is a
-   full palette: overriding the brand tokens (surfaces/neon/live/pitch/...) and pointing the
-   shadcn tokens at them via var() so a single set of colors drives the whole cascade.       */
+   over both the baseline `.dark` block and the `@theme` `:root` tokens. These are all
+   BLACK variations: each block only shifts the dark tones — background, surfaces, the
+   glass `overlay`, the pitch and the fade — while the accent (neon/live) inherits the
+   baseline, so switching a theme re-skins the whole landing without changing the colors. */
 
-/* Broadcast Night — deep indigo/navy surfaces + electric cyan accent (TV-broadcast, tech). */
-.dark[data-theme='broadcast-night'] {
-  --color-surface-1: #111629;
-  --color-surface-2: #161d33;
-  --color-surface-3: #212a45;
-  --color-surface-deep: #0c1020;
-  --color-neon: #22d3ee;
-  --color-neon-hover: #5eeaf7;
-  --color-live: #ff5a6a;
-  --color-pitch: #0b1f2e;
-  --color-team-home: #38bdf8;
-  --color-team-away: #fb7185;
-  --color-hot: #cfe4ff;
-  --color-medal-gold: #ffd36b;
-  --color-medal-silver: #cdd6e6;
-  --color-medal-bronze: #e0975a;
-  --pitch-stripe-a: #123047;
-  --pitch-stripe-b: #0e2739;
+/* Obsidian — true black, OLED, maximum contrast. */
+.dark[data-theme='obsidian'] {
+  --color-surface-1: #0a0a0c;
+  --color-surface-2: #101013;
+  --color-surface-3: #191a1e;
+  --color-surface-deep: #000000;
+  --color-overlay: #000000;
+  --color-pitch: #08160d;
+  --pitch-stripe-a: #123021;
+  --pitch-stripe-b: #0d2417;
 
-  --background: #0a0e1a;
-  --foreground: #eef2fb;
+  --background: #000000;
   --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
   --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --primary: var(--color-neon);
-  --primary-foreground: #05080f;
   --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
   --muted: var(--color-surface-2);
-  --muted-foreground: #8792ad;
   --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: var(--color-neon);
-  --chart-1: var(--color-neon);
-  --chart-2: var(--color-live);
-  --chart-3: var(--color-hot);
-  --chart-4: #a78bfa;
-  --chart-5: #38bdf8;
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--color-neon);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: var(--color-neon);
-}
-
-/* Grass Classic — green-black surfaces + fresh grass accent + chalk-white lines. */
-.dark[data-theme='grass-classic'] {
-  --color-surface-1: #0d1a12;
-  --color-surface-2: #122619;
-  --color-surface-3: #1b3323;
-  --color-surface-deep: #0a150e;
-  --color-neon: #35d06a;
-  --color-neon-hover: #57e084;
-  --color-live: #ff5a5f;
-  --color-pitch: #0e2616;
-  --color-team-home: #63b3ff;
-  --color-team-away: #ff7a6b;
-  --color-hot: #e9e6cf;
-  --color-medal-gold: #f5c451;
-  --color-medal-silver: #cdd6cf;
-  --color-medal-bronze: #cf8a4e;
-  --pitch-stripe-a: #163a22;
-  --pitch-stripe-b: #12301c;
-
-  --background: #08120c;
-  --foreground: #f0f5ef;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --primary: var(--color-neon);
-  --primary-foreground: #05130a;
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --muted-foreground: #8ba394;
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: var(--color-neon);
-  --chart-1: var(--color-neon);
-  --chart-2: var(--color-live);
-  --chart-3: var(--color-hot);
-  --chart-4: #fbbf24;
-  --chart-5: #5b9bff;
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--color-neon);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: var(--color-neon);
-}
-
-/* Sunset Kickoff — warm charcoal surfaces + amber→orange accent + magenta live. */
-.dark[data-theme='sunset-kickoff'] {
-  --color-surface-1: #1c1512;
-  --color-surface-2: #241a15;
-  --color-surface-3: #33241c;
-  --color-surface-deep: #17110e;
-  --color-neon: #ff9e2c;
-  --color-neon-hover: #ffb454;
-  --color-live: #ff4d6d;
-  --color-pitch: #2a1810;
-  --color-team-home: #f6b24d;
-  --color-team-away: #ff5d7d;
-  --color-hot: #ffe0b3;
-  --color-medal-gold: #ffcf5c;
-  --color-medal-silver: #d8cabb;
-  --color-medal-bronze: #d88a4e;
-  --pitch-stripe-a: #33200f;
-  --pitch-stripe-b: #2a1a0d;
-
-  --background: #140f0d;
-  --foreground: #f6efe9;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --primary: var(--color-neon);
-  --primary-foreground: #1a0f05;
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --muted-foreground: #a99a8e;
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 9%);
+  --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 13%);
-  --ring: var(--color-neon);
-  --chart-1: var(--color-neon);
-  --chart-2: var(--color-live);
-  --chart-3: var(--color-hot);
-  --chart-4: #f97316;
-  --chart-5: #22d3ee;
+  --sidebar: var(--color-surface-1);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-border: oklch(1 0 0 / 9%);
+}
+
+/* Onyx — cool blue-black. */
+.dark[data-theme='onyx'] {
+  --color-surface-1: #0f131b;
+  --color-surface-2: #151a24;
+  --color-surface-3: #20262f;
+  --color-surface-deep: #080a0f;
+  --color-overlay: #04060b;
+  --color-pitch: #0a1f18;
+  --pitch-stripe-a: #143122;
+  --pitch-stripe-b: #10291c;
+
+  --background: #080a0f;
+  --muted-foreground: #8890a0;
+  --card: var(--color-surface-2);
+  --popover: var(--color-surface-1);
+  --secondary: var(--color-surface-3);
+  --muted: var(--color-surface-2);
+  --accent: var(--color-surface-3);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --sidebar: var(--color-surface-1);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-border: oklch(1 0 0 / 8%);
+}
+
+/* Midnight — deep night-blue black (cooler and deeper than Onyx). */
+.dark[data-theme='midnight'] {
+  --color-surface-1: #0c1120;
+  --color-surface-2: #12182c;
+  --color-surface-3: #1c2440;
+  --color-surface-deep: #070b16;
+  --color-overlay: #04060f;
+  --color-pitch: #0a1e1a;
+  --pitch-stripe-a: #123024;
+  --pitch-stripe-b: #0d271d;
+
+  --background: #070b16;
+  --muted-foreground: #808bad;
+  --card: var(--color-surface-2);
+  --popover: var(--color-surface-1);
+  --secondary: var(--color-surface-3);
+  --muted: var(--color-surface-2);
+  --accent: var(--color-surface-3);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --sidebar: var(--color-surface-1);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-border: oklch(1 0 0 / 8%);
+}
+
+/* Carbon — warm charcoal-black. */
+.dark[data-theme='carbon'] {
+  --color-surface-1: #151210;
+  --color-surface-2: #1c1815;
+  --color-surface-3: #28221d;
+  --color-surface-deep: #0c0a09;
+  --color-overlay: #070503;
+  --color-pitch: #14200f;
+  --pitch-stripe-a: #22301a;
+  --pitch-stripe-b: #1b2915;
+
+  --background: #0c0a09;
+  --foreground: #f5efe8;
+  --muted-foreground: #a3988c;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
   --sidebar: var(--color-surface-1);
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--color-neon);
-  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--color-surface-3);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: var(--color-neon);
+}
+
+/* Espresso — deep warm coffee-black (richer and warmer than Carbon). */
+.dark[data-theme='espresso'] {
+  --color-surface-1: #17110d;
+  --color-surface-2: #1f1812;
+  --color-surface-3: #2b211a;
+  --color-surface-deep: #0d0805;
+  --color-overlay: #080402;
+  --color-pitch: #15200e;
+  --pitch-stripe-a: #24301a;
+  --pitch-stripe-b: #1d2915;
+
+  --background: #0d0805;
+  --foreground: #f6ede2;
+  --muted-foreground: #a89586;
+  --card: var(--color-surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-surface-1);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--color-surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--color-surface-2);
+  --accent: var(--color-surface-3);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --sidebar: var(--color-surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(1 0 0 / 8%);
+}
+
+/* Slate — softer, lighter dark gray (lower contrast). */
+.dark[data-theme='slate'] {
+  --color-surface-1: #181b21;
+  --color-surface-2: #20242c;
+  --color-surface-3: #2b303a;
+  --color-surface-deep: #101216;
+  --color-overlay: #0a0c10;
+  --color-pitch: #132a1c;
+  --pitch-stripe-a: #1c3a28;
+  --pitch-stripe-b: #163021;
+
+  --background: #101216;
+  --muted-foreground: #969cab;
+  --card: var(--color-surface-2);
+  --popover: var(--color-surface-1);
+  --secondary: var(--color-surface-3);
+  --muted: var(--color-surface-2);
+  --accent: var(--color-surface-3);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 14%);
+  --sidebar: var(--color-surface-1);
+  --sidebar-accent: var(--color-surface-3);
+  --sidebar-border: oklch(1 0 0 / 10%);
 }
 
 /* Mono Live — near-black surfaces + silver/white accent + a single red live accent. */
@@ -304,6 +317,7 @@
   --color-surface-2: #1a1a1c;
   --color-surface-3: #262628;
   --color-surface-deep: #0e0e0f;
+  --color-overlay: #050505;
   --color-neon: #f4f4f5;
   --color-neon-hover: #ffffff;
   --color-live: #ff3b3b;

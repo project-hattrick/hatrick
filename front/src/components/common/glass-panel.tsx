@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 const glassPanelVariants = cva('border border-border/70 shadow-2xl backdrop-blur-md', {
   variants: {
     tone: {
-      blur: 'bg-black/80',
+      blur: 'bg-overlay/72',
       surface: 'bg-surface-2/95',
       dark: 'bg-surface-1/95',
     },

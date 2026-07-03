@@ -1,12 +1,11 @@
 import { IntroStage, MatchPhase, RefPhase, Role } from '../enums';
-import { pointOnField } from '../field';
+import { centerSpot, pointOnField } from '../field';
 import type { RealGkWorld } from '../types';
 import { updateCoach } from './coach';
 import { Status } from './messages';
 import { moveToward } from './players';
 import { spawnRefereeKickoff, updateReferee } from './referee';
 import { setStatus } from './rules';
-import { resetBall } from './world';
 
 /** Beat lengths for the v5 pre-match entrance (seconds). */
 const SHOWCASE_SECONDS = 2.2;
@@ -82,7 +81,17 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
 
     case IntroStage.Kickoff:
       if (match.introTimer >= KICKOFF_HOLD_SECONDS) {
-        resetBall(world, match.kickoffTeam);
+        // Leave the ball loose at center (no teleport of a player onto it) — the nearest player runs on.
+        const c = centerSpot(world.size);
+        world.ball.x = c.x;
+        world.ball.y = c.y;
+        world.ball.z = 0;
+        world.ball.vx = 0;
+        world.ball.vy = 0;
+        world.ball.vz = 0;
+        world.ball.ownerId = null;
+        world.ball.lastKickerId = null;
+        world.ball.cooldown = 0;
         match.phase = MatchPhase.Live;
         const note = Status.kickoff();
         setStatus(world, note.title, note.text);

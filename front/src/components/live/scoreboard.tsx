@@ -33,7 +33,7 @@ export function Scoreboard() {
 
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
-      <div className="inline-flex items-center gap-2 rounded-full border border-live/30 bg-black/35 px-3 py-1 backdrop-blur-md">
+      <div className="inline-flex items-center gap-2 rounded-full border border-live/30 bg-overlay/45 px-3 py-1 backdrop-blur-md">
         <span className="size-1.5 animate-pulse rounded-full bg-live" />
         <span className="font-mono text-[10px] font-bold tracking-[0.16em] text-live uppercase">
           LIVE {formatMinute(match.minute)} · {phase.label}
@@ -58,7 +58,7 @@ export function Scoreboard() {
             return (
               <span
                 key={event.seq}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[11px] font-semibold text-foreground/80 backdrop-blur-md"
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-overlay/40 px-2 py-1 text-[11px] font-semibold text-foreground/80 backdrop-blur-md"
               >
                 <span className={cn('size-1.5 rounded-full', meta.dotClass)} />
                 {formatMinute(event.minute ?? match.minute)} {meta.label}

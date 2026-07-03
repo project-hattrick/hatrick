@@ -67,7 +67,7 @@ export function MatchHeroCard() {
         </div>
         <div className="text-[11px] text-white/50">{heroMatch.label}</div>
 
-        <div className="mt-2 flex items-start gap-3 rounded-xl bg-black/35 px-4 py-2 backdrop-blur-sm">
+        <div className="mt-2 flex items-start gap-3 rounded-xl bg-overlay/40 px-4 py-2 backdrop-blur-sm">
           <CountUnit value={d} label="Days" />
           <span className="pt-1 text-xl font-bold text-white/40">:</span>
           <CountUnit value={h} label="Hours" />

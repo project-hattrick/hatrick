@@ -1,9 +1,14 @@
-/** Selectable home palette. Values are the `data-theme` attribute written on <html>. */
+/** Selectable home palette — all dark, differing in black tone (accent stays constant). */
 export enum Theme {
   NeonTurf = 'neon-turf',
-  BroadcastNight = 'broadcast-night',
-  GrassClassic = 'grass-classic',
-  SunsetKickoff = 'sunset-kickoff',
+  Obsidian = 'obsidian',
+  Onyx = 'onyx',
+  Midnight = 'midnight',
+  Carbon = 'carbon',
+  Espresso = 'espresso',
+  Slate = 'slate',
+  Graphite = 'graphite',
+  Ash = 'ash',
   MonoLive = 'mono-live',
 }
 

@@ -3,24 +3,34 @@ import { Theme } from '@/enums/theme.enum';
 /** Display metadata for the theme switcher — keeps enum→UI mapping out of components. */
 export interface ThemeMeta {
   label: string;
-  /** Accent (neon) swatch shown in the switcher. */
+  /** Accent (neon) swatch shown ringed inside the surface dot. */
   accent: string;
-  /** Background swatch behind the accent dot. */
+  /** Background/surface swatch — the black tone that actually distinguishes each theme. */
   surface: string;
 }
 
 export const themeConfig: Record<Theme, ThemeMeta> = {
-  [Theme.NeonTurf]: { label: 'Neon Turf', accent: '#aef019', surface: '#141519' },
-  [Theme.BroadcastNight]: { label: 'Broadcast Night', accent: '#22d3ee', surface: '#111629' },
-  [Theme.GrassClassic]: { label: 'Grass Classic', accent: '#35d06a', surface: '#0d1a12' },
-  [Theme.SunsetKickoff]: { label: 'Sunset Kickoff', accent: '#ff9e2c', surface: '#1c1512' },
-  [Theme.MonoLive]: { label: 'Mono Live', accent: '#f4f4f5', surface: '#121213' },
+  [Theme.NeonTurf]: { label: 'Neon Turf', accent: '#aef019', surface: '#0b0c0f' },
+  [Theme.Obsidian]: { label: 'Obsidian', accent: '#aef019', surface: '#000000' },
+  [Theme.Onyx]: { label: 'Onyx', accent: '#aef019', surface: '#080a0f' },
+  [Theme.Midnight]: { label: 'Midnight', accent: '#aef019', surface: '#12182c' },
+  [Theme.Carbon]: { label: 'Carbon', accent: '#aef019', surface: '#0c0a09' },
+  [Theme.Espresso]: { label: 'Espresso', accent: '#aef019', surface: '#1f1812' },
+  [Theme.Slate]: { label: 'Slate', accent: '#aef019', surface: '#101216' },
+  [Theme.Graphite]: { label: 'Graphite', accent: '#aef019', surface: '#1f2024' },
+  [Theme.Ash]: { label: 'Ash', accent: '#aef019', surface: '#23201c' },
+  [Theme.MonoLive]: { label: 'Mono Live', accent: '#f4f4f5', surface: '#0a0a0b' },
 };
 
 export const themeOrder: Theme[] = [
   Theme.NeonTurf,
-  Theme.BroadcastNight,
-  Theme.GrassClassic,
-  Theme.SunsetKickoff,
+  Theme.Obsidian,
+  Theme.Onyx,
+  Theme.Midnight,
+  Theme.Carbon,
+  Theme.Espresso,
+  Theme.Slate,
+  Theme.Graphite,
+  Theme.Ash,
   Theme.MonoLive,
 ];

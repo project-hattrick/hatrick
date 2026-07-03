@@ -25,7 +25,7 @@ export function ThemeSwitcher() {
   const setTheme = useUiStore((state) => state.setTheme);
   const [open, setOpen] = useState(false);
 
-  // Seed once from the URL (?theme=broadcast-night). Client-only read avoids a Suspense boundary.
+  // Seed once from the URL (?theme=obsidian). Client-only read avoids a Suspense boundary.
   useEffect(() => {
     const fromUrl = parseTheme(new URLSearchParams(window.location.search).get('theme'));
     if (fromUrl) setTheme(fromUrl);

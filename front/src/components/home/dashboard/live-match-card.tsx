@@ -15,7 +15,7 @@ export function LiveMatchCard() {
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-black/20 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-overlay/30 px-3 py-2.5">
         <span className="flex items-center gap-1.5 text-sm font-bold">
           <Flag code={liveMatch.home.code} className="text-base" />
           {liveMatch.home.short}

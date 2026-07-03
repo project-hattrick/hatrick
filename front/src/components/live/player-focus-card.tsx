@@ -50,7 +50,7 @@ function RatingRing({ rating, portraitSrc, name }: { rating: number; portraitSrc
 
 function StatCell({ value, label, highlight }: { value: string | number; label: string; highlight?: boolean }) {
   return (
-    <div className={cn('flex-1 rounded-md py-1.5 text-center', highlight ? 'bg-neon/15' : 'bg-white/5')}>
+    <div className={cn('flex-1 rounded-md py-1.5 text-center', highlight ? 'bg-neon/15' : 'bg-foreground/5')}>
       <div className={cn('font-mono text-sm font-bold', highlight ? 'text-neon' : 'text-foreground')}>{value}</div>
       <div className="font-mono text-[7px] font-bold tracking-wider text-muted-foreground">{label}</div>
     </div>
@@ -67,7 +67,7 @@ export function PlayerFocusCard() {
     focusAt(focusedPlayerIndex);
 
   return (
-    <GlassPanel tone="blur" className="p-3 text-left md:p-3.5">
+    <GlassPanel tone="surface" className="p-3 text-left md:p-3.5">
       {/* Always-visible minimalist header. */}
       <div className="flex items-center gap-2">
         <span className={cn('size-1.5 rounded-full', player.onBall ? 'bg-neon' : 'bg-muted-foreground')} />
@@ -98,7 +98,7 @@ export function PlayerFocusCard() {
           />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold text-white">{player.name}</div>
+          <div className="truncate text-sm font-bold text-foreground">{player.name}</div>
           <div className="truncate text-[9px] font-semibold text-muted-foreground">{player.team} · {player.position}</div>
         </div>
         <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-neon bg-surface-1 font-mono text-xs font-bold text-neon">
@@ -129,7 +129,7 @@ export function PlayerFocusCard() {
               type="button"
               aria-label="Previous player"
               onClick={focusPrev}
-              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
+              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-foreground/5 text-foreground transition hover:bg-foreground/10"
             >
               <CaretLeft className="size-4" />
             </button>
@@ -140,7 +140,7 @@ export function PlayerFocusCard() {
               type="button"
               aria-label="Next player"
               onClick={focusNext}
-              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-foreground transition hover:bg-white/10"
+              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-foreground/5 text-foreground transition hover:bg-foreground/10"
             >
               <CaretRight className="size-4" />
             </button>

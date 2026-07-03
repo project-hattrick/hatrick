@@ -104,21 +104,26 @@ const INTRO_ROLE_DELAY: Record<Role, number> = {
   [Role.ST]: 0.95,
 };
 
-/** v5 intro: parks the squads just below the pitch with staggered walk-on delays (call after resetPlayers). */
+/**
+ * v5 intro: parks each player DIRECTLY BELOW their own formation home, so they walk straight up into place
+ * and the formation shape is preserved (spawning everyone on one depth line collapsed same-lat players onto
+ * one point). Staggered walk-on delays by line (back-to-front).
+ */
 export function placePlayersOffPitch(world: RealGkWorld): void {
+  const rise = world.size.height * 0.3; // how far below home each player starts
   let blueIdx = 0;
   let redIdx = 0;
   for (const p of world.players) {
     const idx = p.team === Team.Blue ? blueIdx++ : redIdx++;
-    const spawn = pointOnField(world.size, p.homeLat, 1.08);
-    p.spawnX = spawn.x;
-    p.spawnY = spawn.y;
-    p.x = spawn.x;
-    p.y = spawn.y;
+    const home = pointOnField(world.size, p.homeLat, p.homeDepth);
+    p.spawnX = home.x;
+    p.spawnY = home.y + rise;
+    p.x = p.spawnX;
+    p.y = p.spawnY;
     p.vx = 0;
     p.vy = 0;
-    p.targetX = spawn.x;
-    p.targetY = spawn.y;
+    p.targetX = p.spawnX;
+    p.targetY = p.spawnY;
     p.introDelay = INTRO_ROLE_DELAY[p.role] + idx * 0.05;
     p.mode = p.idleMode;
   }

@@ -60,7 +60,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
       >
         <Image src="/prediction-goal.png" alt="" fill sizes="460px" className="object-cover object-center" />
         {/* Gradient so the bottom copy + buttons stay legible; the top stays free art. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-overlay/95 via-overlay/60 to-transparent" />
 
         {/* Everything stacked at the bottom. */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-2.5">
