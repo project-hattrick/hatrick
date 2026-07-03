@@ -66,6 +66,7 @@ function PackOpening({ packName }: { packName: string }) {
   const [exitDir, setExitDir] = useState(0);
   const [flashing, setFlashing] = useState(false);
   const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const dragStart = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -78,6 +79,7 @@ function PackOpening({ packName }: { packName: string }) {
     setExitDir(0);
     setFlashing(false);
     setDragX(0);
+    setDragging(false);
     dragStart.current = null;
   };
 
@@ -144,6 +146,7 @@ function PackOpening({ packName }: { packName: string }) {
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (stage !== PackStage.Revealed || exitDir !== 0) return;
     dragStart.current = event.clientX;
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -156,11 +159,12 @@ function PackOpening({ packName }: { packName: string }) {
     if (dragStart.current === null) return;
     const distance = dragX;
     dragStart.current = null;
+    setDragging(false);
     if (Math.abs(distance) > SWIPE_THRESHOLD_PX) nextCard(Math.sign(distance));
     else setDragX(0);
   };
 
-  const isDragging = dragStart.current !== null;
+  const isDragging = dragging;
   const onCard = stage === PackStage.FaceDown || stage === PackStage.Revealed;
   const cardStyle: CSSProperties = {
     // capped by height too (card is 7/5 tall) so it fits between header and podium

@@ -14,12 +14,10 @@ export function LandingIntro() {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // Reduced motion skips the animation — hide on the next tick (0ms) instead of
+    // synchronously, so the effect never sets state in its own body.
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      setVisible(false);
-      return;
-    }
-    const timer = window.setTimeout(() => setVisible(false), INTRO_DURATION_MS);
+    const timer = window.setTimeout(() => setVisible(false), reduced ? 0 : INTRO_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, []);
 

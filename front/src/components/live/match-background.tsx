@@ -15,8 +15,8 @@ export function MatchBackground({ scrim = true }: { scrim?: boolean }) {
       <div className="hero-ambient pointer-events-none absolute inset-0" />
       {scrim ? (
         <>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/55 via-background/15 to-background/90" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-background/95 via-background/55 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/55" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-background/70 via-background/25 to-transparent" />
         </>
       ) : null}
     </div>

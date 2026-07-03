@@ -1,49 +1,31 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
-
-/** Base64-encode raw signature bytes for transport (api decodes with Buffer). */
-const toBase64 = (bytes: Uint8Array): string =>
-  btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''));
+import { useSignInMutation } from './use-sign-in';
 
 /**
- * DRIVER hook — runs the wallet sign-in and owns the auto-connect effect. Mount
- * it exactly ONCE (in WalletAuthSync). Components that only need to *read* auth
- * state should use useAuth(), not this, to avoid double-triggering sign-in.
+ * DRIVER hook — owns the auto-connect effect. Mount it exactly ONCE (in
+ * WalletAuthSync). Components that only *read* auth state use useAuth(); the
+ * sign-in mutation itself lives in useSignInMutation.
  *
- * Flow: nonce → signMessage → verify → session JWT (Zustand-persisted). Auto-runs
- * when a wallet connects without a matching session; clears it on disconnect.
+ * Auto-runs sign-in when a wallet connects without a matching session; clears
+ * the session on disconnect.
  */
 export function useWalletAuth() {
   const { publicKey, signMessage, connected } = useWallet();
-  const { token, user, setSession, setAuthenticating, clear } = useAuthStore();
+  const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
+  const clear = useAuthStore((s) => s.clear);
+  const signIn = useSignInMutation();
   const inFlight = useRef(false);
-
-  const signIn = useMutation({
-    mutationFn: async (): Promise<void> => {
-      if (!publicKey || !signMessage) {
-        throw new Error('Wallet does not support message signing');
-      }
-      const walletAddress = publicKey.toBase58();
-      const { message } = await authService.requestNonce(walletAddress);
-      const signature = await signMessage(new TextEncoder().encode(message));
-      const session = await authService.verify(walletAddress, toBase64(signature));
-      setSession(session.token, session.user);
-    },
-    onMutate: () => setAuthenticating(true),
-    onSettled: () => setAuthenticating(false),
-  });
 
   const { mutate } = signIn;
   const wallet = publicKey?.toBase58() ?? null;
   const authedWallet = user?.walletAddress ?? null;
 
-  // Auto sign-in once per fresh connection; clear the session on disconnect.
   useEffect(() => {
     if (!connected) {
       if (token) clear();

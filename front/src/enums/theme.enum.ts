@@ -2,14 +2,24 @@
 export enum Theme {
   NeonTurf = 'neon-turf',
   Obsidian = 'obsidian',
+  Void = 'void',
+  Ink = 'ink',
+  Sable = 'sable',
+  Jet = 'jet',
   Onyx = 'onyx',
+  Abyss = 'abyss',
   Midnight = 'midnight',
   Carbon = 'carbon',
   Espresso = 'espresso',
   Slate = 'slate',
   Graphite = 'graphite',
   Ash = 'ash',
+  Fog = 'fog',
+  Stone = 'stone',
+  Mist = 'mist',
   MonoLive = 'mono-live',
+  Platinum = 'platinum',
+  Bronze = 'bronze',
 }
 
 /** Baseline palette — rendered by the default `.dark` block (no `data-theme` attribute). */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { MetalButton } from '@/components/ui/metal-button';
@@ -28,14 +28,18 @@ function clock(seconds: number): string {
 
 /** Compact "Will there be a goal?" dock — art on top, all copy + YES/NO stacked at the bottom. */
 export function PredictionDock({ question, secondsLeft, yes, no, onPick, className }: PredictionDockProps) {
-  const totalRef = useRef(secondsLeft || 1);
+  const [total, setTotal] = useState(secondsLeft || 1);
   const [remaining, setRemaining] = useState(secondsLeft);
+  const [promptKey, setPromptKey] = useState(`${question}|${secondsLeft}`);
 
-  // Reset the countdown whenever a new prompt arrives.
-  useEffect(() => {
-    totalRef.current = secondsLeft || 1;
+  // Reset the countdown whenever a new prompt arrives — adjust state during render
+  // (React's recommended pattern) instead of a synchronous setState inside an effect.
+  const nextKey = `${question}|${secondsLeft}`;
+  if (promptKey !== nextKey) {
+    setPromptKey(nextKey);
+    setTotal(secondsLeft || 1);
     setRemaining(secondsLeft);
-  }, [question, secondsLeft]);
+  }
 
   // Tick down to 0.
   useEffect(() => {
@@ -44,7 +48,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
     return () => window.clearInterval(id);
   }, [remaining]);
 
-  const pct = Math.max(0, Math.min(100, (remaining / totalRef.current) * 100));
+  const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
 
   return (
     // Padded "bezel" frame (RevenueWidget look) around the overlay card.

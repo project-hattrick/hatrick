@@ -86,24 +86,30 @@ export function PlayerFocusCard() {
         </button>
       </div>
 
+      {/* Identity row. The avatar + rating badge only show while collapsed — when expanded
+          the RatingRing below carries the portrait and rating, so they aren't repeated. */}
       <div className="mt-2 flex items-center gap-2.5">
-        <span className="relative grid size-9 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-1 ring-1 ring-white/10">
-          <Image
-            src={player.portraitSrc}
-            alt={player.name}
-            width={36}
-            height={36}
-            className="translate-y-[8%] scale-110 object-contain object-bottom"
-            style={{ imageRendering: 'pixelated' }}
-          />
-        </span>
+        {!expanded ? (
+          <span className="relative grid size-9 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-1 ring-1 ring-white/10">
+            <Image
+              src={player.portraitSrc}
+              alt={player.name}
+              width={36}
+              height={36}
+              className="translate-y-[8%] scale-110 object-contain object-bottom"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </span>
+        ) : null}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-foreground">{player.name}</div>
           <div className="truncate text-[9px] font-semibold text-muted-foreground">{player.team} · {player.position}</div>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-neon bg-surface-1 font-mono text-xs font-bold text-neon">
-          {player.rating}
-        </span>
+        {!expanded ? (
+          <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-neon bg-surface-1 font-mono text-xs font-bold text-neon">
+            {player.rating}
+          </span>
+        ) : null}
       </div>
 
       {/* Expandable region — height animates via the grid-rows 0fr→1fr trick (no deps). */}

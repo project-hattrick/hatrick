@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Palette, CaretDown } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Theme, DEFAULT_THEME, parseTheme } from '@/enums/theme.enum';
-import { themeConfig, themeOrder } from '@/config/theme.config';
+import { themeCategories, themeConfig } from '@/config/theme.config';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
 
@@ -40,29 +40,34 @@ export function ThemeSwitcher() {
   return (
     <div className="pointer-events-auto fixed right-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex flex-col items-end gap-2">
       {open ? (
-        <GlassPanel tone="dark" radius="lg" className="flex flex-col gap-1 p-1.5">
-          {themeOrder.map((key) => {
-            const meta = themeConfig[key];
-            const selected = key === theme;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTheme(key)}
-                aria-pressed={selected}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-xs font-semibold transition',
-                  selected ? 'bg-surface-3 text-foreground' : 'text-muted-foreground hover:bg-surface-3/60 hover:text-foreground',
-                )}
-              >
-                <span
-                  className="size-4 shrink-0 rounded-full border border-white/15"
-                  style={{ background: meta.surface, boxShadow: `inset 0 0 0 2px ${meta.accent}` }}
-                />
-                {meta.label}
-              </button>
-            );
-          })}
+        <GlassPanel tone="dark" radius="lg" className="flex max-h-[72vh] flex-col gap-1 overflow-y-auto p-1.5">
+          {themeCategories.map((cat) => (
+            <div key={cat.label} className="flex flex-col gap-0.5">
+              <span className="px-2 pt-1.5 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{cat.label}</span>
+              {cat.themes.map((key) => {
+                const meta = themeConfig[key];
+                const selected = key === theme;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTheme(key)}
+                    aria-pressed={selected}
+                    className={cn(
+                      'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-xs font-semibold transition',
+                      selected ? 'bg-surface-3 text-foreground' : 'text-muted-foreground hover:bg-surface-3/60 hover:text-foreground',
+                    )}
+                  >
+                    <span
+                      className="size-4 shrink-0 rounded-full border border-white/15"
+                      style={{ background: meta.surface, boxShadow: `inset 0 0 0 2px ${meta.accent}` }}
+                    />
+                    {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </GlassPanel>
       ) : null}
 
