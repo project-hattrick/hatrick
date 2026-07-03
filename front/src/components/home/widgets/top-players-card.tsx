@@ -22,7 +22,7 @@ function TopPlayersCard() {
             key={player.rank}
             className={cn(
               'flex items-center justify-between rounded-lg px-2 py-2',
-              player.you ? 'bg-neon/10 ring-1 ring-neon/40' : 'hover:bg-surface-3/40',
+              player.you ? 'bg-surface-deep ring-1 ring-neon/30' : 'hover:bg-surface-3/40',
             )}
           >
             <div className="flex items-center gap-2.5">

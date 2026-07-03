@@ -157,6 +157,7 @@ export interface RealGkHud {
   refereeActive: boolean;
   goalActive: boolean;
   replayActive: boolean;
+  redCardActive: boolean;
   cameraLabel: string;
   targetLabel: string;
 }

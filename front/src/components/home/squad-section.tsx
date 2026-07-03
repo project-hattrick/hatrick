@@ -2,15 +2,20 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SquadCarousel } from './widgets/squad-carousel';
+import { SectionLink } from './widgets/section-link';
+import { AppMode } from '@/enums/app-mode.enum';
 import { squad, squadTabs } from '@/config/squad.config';
 
-/** "Your squad" — roster of the user's team as cards, filtered by position tabs. */
+/** "Seu time no fantasy" — roster of the user's team as cards, filtered by position tabs. */
 export function SquadSection() {
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Your squad</h2>
-        <p className="text-sm text-muted-foreground">The players powering your fantasy team this season.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Seu time no fantasy</h2>
+          <p className="text-sm text-muted-foreground">Seu XI em campo · pronto pro próximo 1v1</p>
+        </div>
+        <SectionLink href={`/${AppMode.Fantasy}`} label="Editar formação" className="mt-2" />
       </div>
 
       <Tabs defaultValue="all" className="gap-5">

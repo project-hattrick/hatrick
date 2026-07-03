@@ -8,7 +8,7 @@ function TeamRow({ team, score, win, dim }: { team: BracketTeam; score?: number;
     <div
       className={cn(
         'flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5',
-        win && 'bg-neon/10',
+        win && 'bg-surface-deep',
       )}
     >
       <span className="flex items-center gap-2">
@@ -20,7 +20,7 @@ function TeamRow({ team, score, win, dim }: { team: BracketTeam; score?: number;
         </span>
       </span>
       {score != null ? (
-        <span className={cn('text-xs font-bold tabular-nums', win ? 'text-neon' : 'text-muted-foreground')}>{score}</span>
+        <span className={cn('font-talero text-xs tabular-nums', win ? 'text-neon' : 'text-muted-foreground')}>{score}</span>
       ) : null}
     </div>
   );

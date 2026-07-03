@@ -34,6 +34,43 @@ export const liveNow = {
   trend: [12, 18, 14, 22, 19, 28, 24, 33, 29, 38, 34, 42],
 };
 
+export interface LiveScoreMatch {
+  id: string;
+  home: Team;
+  away: Team;
+  homeScore: number;
+  awayScore: number;
+  minute: number;
+}
+
+export interface FeaturedLiveMatch extends LiveScoreMatch {
+  viewers: number;
+  halfLabel: string;
+  spotlight: string;
+  prediction: { question: string; yesPoints: number; noPoints: number };
+}
+
+export const featuredLiveMatch: FeaturedLiveMatch = {
+  id: 'arg-fra-live',
+  home: { code: 'ARG', flag: '🇦🇷' },
+  away: { code: 'FRA', flag: '🇫🇷' },
+  homeScore: 2,
+  awayScore: 1,
+  minute: 67,
+  halfLabel: '2º tempo',
+  viewers: 24800,
+  spotlight: 'Messi na bola',
+  prediction: { question: 'Sai gol nos próximos 10 min?', yesPoints: 50, noPoints: 10 },
+};
+
+export const liveRailMatches: LiveScoreMatch[] = [
+  { id: 'bra-mex-live', home: { code: 'BRA', flag: '🇧🇷' }, away: { code: 'MEX', flag: '🇲🇽' }, homeScore: 1, awayScore: 0, minute: 54 },
+  { id: 'eng-ger-live', home: { code: 'ENG', flag: '🇬🇧' }, away: { code: 'GER', flag: '🇩🇪' }, homeScore: 0, awayScore: 0, minute: 23 },
+];
+
+/** Featured match + rail matches — what "jogos rolando agora" counts. */
+export const liveMatchCount = liveRailMatches.length + 1;
+
 export const upcomingSummary: { total: number; fixtures: Fixture[] } = {
   total: 12,
   fixtures: [
@@ -139,16 +176,6 @@ export const playModes: PlayMode[] = [
     cta: 'Play Fantasy',
     icon: GameController,
     tone: Tone.Info,
-  },
-  {
-    key: 'predict',
-    title: 'Predictions',
-    description: 'Call the outcomes and climb the global ranking with points.',
-    features: ['Daily predictions', 'Global ranking', 'Points & streaks'],
-    href: '#',
-    cta: 'Make Predictions',
-    icon: Target,
-    tone: Tone.Primary,
   },
 ];
 

@@ -17,7 +17,7 @@ export function CheckpointsSection() {
           return (
             <GlassPanel key={cp.id} tone="surface" className="flex flex-col gap-3 p-5">
               <div className="flex items-center justify-between">
-                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-neon/15 text-neon">
+                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-surface-deep text-neon">
                   <GameController className="size-5" />
                 </span>
                 <span className="rounded-full bg-surface-3/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">

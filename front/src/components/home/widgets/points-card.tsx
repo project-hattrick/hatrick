@@ -11,12 +11,12 @@ function PointsCard() {
   const progress = userPoints.total / userPoints.nextReward;
 
   return (
-    <GlassPanel tone="surface" className="flex flex-col">
+    <GlassPanel tone="surface" className="flex h-full flex-col">
       <SectionHeader
         title="Your points"
         action={<span className="text-[11px] font-semibold text-neon">{userPoints.tier}</span>}
       />
-      <div className="flex flex-col gap-3 px-4 pb-4">
+      <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-center gap-2">
           <Trophy className="size-5 text-neon" />
           <span className="text-3xl font-bold tracking-tight">{formatThousands(userPoints.total)}</span>
@@ -31,7 +31,7 @@ function PointsCard() {
           </div>
           <ProgressBar value={progress} label="Progress to next reward" />
         </div>
-        <SectionLink href="/store" label="Rewards store" className="self-start" />
+        <SectionLink href="/store" label="Rewards store" className="mt-auto self-start" />
       </div>
     </GlassPanel>
   );

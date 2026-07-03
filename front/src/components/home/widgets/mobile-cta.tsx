@@ -9,20 +9,21 @@ const MOBILE_URL = 'https://hat-trick.app';
 /** Closing banner: scan a QR code (or tap) to continue the experience on mobile. */
 export function MobileCta() {
   return (
-    <div className="flex flex-col items-center gap-8 rounded-2xl border border-neon/30 bg-gradient-to-r from-neon/15 via-neon/5 to-transparent px-8 py-10 text-center md:flex-row md:justify-between md:text-left">
+    <div className="flex flex-col items-center gap-8 rounded-2xl border border-neon/20 bg-surface-deep px-8 py-10 text-center md:flex-row md:justify-between md:text-left">
       <div className="flex flex-col items-center gap-3 md:items-start">
+        <span className="text-[10px] font-bold tracking-widest text-neon uppercase">Continue no seu celular</span>
         <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-          Keep playing <span className="text-neon">on your phone</span>
+          O jogo não espera. <span className="text-neon">Leve ele com você.</span>
         </h2>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Scan the QR code to make predictions and follow every match live, wherever you are.
+          Aponte a câmera pro código e sua sessão ao vivo abre no navegador do celular. Sem baixar nada.
         </p>
         <a
           href={MOBILE_URL}
           className={buttonVariants({ size: 'lg', className: 'mt-1 h-11 gap-2 px-6 text-base font-semibold' })}
         >
           <DeviceMobile className="size-5" />
-          Continue on mobile
+          Continuar no celular
         </a>
       </div>
 
@@ -32,7 +33,7 @@ export function MobileCta() {
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <Scan className="size-3.5" />
-          Scan to open
+          Escaneia pra abrir
         </span>
       </div>
     </div>

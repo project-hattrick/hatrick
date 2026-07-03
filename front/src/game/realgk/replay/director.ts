@@ -126,6 +126,9 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
       if (match.phaseTimer >= WIPE_SECONDS) {
         match.phase = MatchPhase.Live;
         match.phaseTimer = 0;
+        // Must clear here: otherwise the NEXT goal's ReplayIn sees didKickoffReset=true and skips the
+        // replay entirely (only the first goal would ever replay).
+        didKickoffReset = false;
         finishToLive();
       }
     }

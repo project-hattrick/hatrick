@@ -1,0 +1,81 @@
+/* Center-screen red card slam — play is frozen while this is up. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.68));
+  animation: fadeIn 0.18s ease-out both;
+}
+
+.card {
+  width: clamp(120px, 15vw, 190px);
+  height: clamp(180px, 22vw, 280px);
+  border-radius: 12px;
+  background: linear-gradient(150deg, #ef4444 0%, #b91c1c 60%, #7f1010 100%);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.14),
+    0 22px 60px rgba(220, 38, 38, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+  transform: perspective(900px) rotateZ(-8deg) rotateX(6deg);
+  animation: cardSlam 0.42s cubic-bezier(0.2, 1.5, 0.35, 1) both;
+}
+
+.label {
+  font-size: clamp(26px, 5vw, 52px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(220, 38, 38, 0.8), 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: labelIn 0.5s ease-out 0.12s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cardSlam {
+  0% {
+    opacity: 0;
+    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(2.4) translateY(-40px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(1) translateY(0);
+  }
+}
+
+@keyframes labelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card,
+  .label {
+    animation: none;
+  }
+}

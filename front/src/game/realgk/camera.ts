@@ -1,4 +1,5 @@
 import type { CamPreset } from './config';
+import { RefPhase } from './enums';
 import { fieldRatios, metrics } from './field';
 import type { RealGkWorld } from './types';
 import { clamp, lerp } from './util';
@@ -11,17 +12,28 @@ export interface RealGkCamera {
   targetIdx: number;
   presets: CamPreset[];
   cinematic: boolean;
-  /** Scripted "focus the referee" cinematic — seconds remaining (0 = off). */
-  refFocusT: number;
+  /** Scripted "focus the referee" cinematic — follows his spawn → run → card beat until it ends. */
+  refFocus: boolean;
+  /** Edge-trigger so the red-card shake fires exactly once when the card comes up. */
+  cardShaken: boolean;
+  /** True while the red card is up — used to hand the camera to the coach once it ends. */
+  cardActive: boolean;
+  /** Post-card "focus the coach" beat — seconds remaining (0 = off). */
+  coachFocusT: number;
   /** Ace-Attorney camera shake — seconds remaining (0 = off) + running phase. */
   shakeT: number;
   shakePhase: number;
 }
 
-/** Duration of the referee focus cinematic + how long the shake rattles inside it. */
-const REF_FOCUS_SECONDS = 1.7;
+/** How long the shake rattles + its strength. */
 const REF_SHAKE_SECONDS = 0.6;
 const REF_SHAKE_PX = 9;
+
+/** Referee phases that keep the camera locked on him (spawn run-in → pause → red card). */
+const REF_EVENT_PHASES = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase.Card]);
+
+/** How long the camera lingers on the coach after the red card. */
+const COACH_FOCUS_SECONDS = 2.0;
 
 export function createCamera(world: RealGkWorld): RealGkCamera {
   const presets = world.cfg.presets;
@@ -33,15 +45,21 @@ export function createCamera(world: RealGkWorld): RealGkCamera {
     targetIdx: -1,
     presets,
     cinematic: world.cfg.cinematic,
-    refFocusT: 0,
+    refFocus: false,
+    cardShaken: false,
+    cardActive: false,
+    coachFocusT: 0,
     shakeT: 0,
     shakePhase: 0,
   };
 }
 
-/** Kicks off the "objection!" beat: snap focus on the referee, punch the zoom in and rattle the frame. */
+/** Kicks off the "objection!" beat: lock focus on the referee through his run-in + card, rattle the frame. */
 export function triggerRefereeFocus(cam: RealGkCamera): void {
-  cam.refFocusT = REF_FOCUS_SECONDS;
+  cam.refFocus = true;
+  cam.cardShaken = false;
+  cam.cardActive = false;
+  cam.coachFocusT = 0;
   cam.shakeT = REF_SHAKE_SECONDS;
   cam.shakePhase = 0;
 }
@@ -80,19 +98,42 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
   let ty: number;
   let zt: number;
 
-  // Scripted referee focus overrides normal follow: hard push-in on the ref while the beat runs.
-  cam.refFocusT = Math.max(0, cam.refFocusT - dt);
-  if (cam.refFocusT > 0 && world.referee.active) {
-    tx = world.referee.x;
-    ty = world.referee.y - 6;
-    zt = preset.zoom * 2.1;
-    const focusEase = 0.16;
-    cam.x += (tx - cam.x) * focusEase;
-    cam.y += (ty - cam.y) * focusEase;
-    cam.z += (zt - cam.z) * 0.12;
+  // After the red card, linger on the coach for a beat.
+  cam.coachFocusT = Math.max(0, cam.coachFocusT - dt);
+  if (cam.coachFocusT > 0) {
+    cam.x += (world.coach.x - cam.x) * 0.14;
+    cam.y += (world.coach.y - 8 - cam.y) * 0.14;
+    cam.z += (preset.zoom * 1.7 - cam.z) * 0.1;
     clampToField(cam, world);
     applyShake(cam, dt);
     return;
+  }
+
+  // Scripted referee focus: follow him through the run-in and stay locked (tighter) on the red card.
+  if (cam.refFocus && world.referee.active && REF_EVENT_PHASES.has(world.referee.phase)) {
+    const onCard = world.referee.phase === RefPhase.Card;
+    if (onCard) {
+      cam.cardActive = true;
+      if (!cam.cardShaken) {
+        cam.cardShaken = true;
+        cam.shakeT = REF_SHAKE_SECONDS;
+        cam.shakePhase = 0;
+      }
+    }
+    cam.x += (world.referee.x - cam.x) * 0.16;
+    cam.y += (world.referee.y - 6 - cam.y) * 0.16;
+    cam.z += (preset.zoom * (onCard ? 2.6 : 2.0) - cam.z) * 0.12;
+    clampToField(cam, world);
+    applyShake(cam, dt);
+    return;
+  }
+  // Beat ended: release the referee lock and, if a card just happened, hand the camera to the coach.
+  if (cam.refFocus && !REF_EVENT_PHASES.has(world.referee.phase)) {
+    cam.refFocus = false;
+    if (cam.cardActive) {
+      cam.cardActive = false;
+      cam.coachFocusT = COACH_FOCUS_SECONDS;
+    }
   }
 
   if (!preset.follow) {

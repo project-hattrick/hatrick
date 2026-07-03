@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowUpRight } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { buttonVariants } from '@/components/ui/button';
@@ -20,12 +21,14 @@ export function PlayerRosterCard({ player }: { player: SquadPlayer }) {
     <GlassPanel tone="surface" radius="xl" className="flex w-72 shrink-0 flex-col overflow-hidden">
       <div className="relative h-44 bg-gradient-to-b from-surface-3 to-surface-1">
         <div className="absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-surface-1/80 to-transparent" />
-        <span className="absolute top-3 left-4 z-20 text-3xl font-black text-neon">{player.number}</span>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`https://i.pravatar.cc/320?img=${player.photo}`}
+        <span className="absolute top-3 left-4 z-20 font-talero text-3xl text-neon">{player.number}</span>
+        <Image
+          src={player.portraitSrc}
           alt={player.name}
-          className="absolute inset-0 size-full object-cover object-top"
+          fill
+          sizes="288px"
+          className="object-contain object-bottom pt-3"
+          style={{ imageRendering: 'pixelated' }}
         />
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-surface-2 via-surface-2/60 to-transparent" />
       </div>

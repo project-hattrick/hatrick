@@ -15,11 +15,11 @@ function ModeFeatureCard({ mode }: { mode: PlayMode }) {
   return (
     <GlassPanel tone="surface" className="flex flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
-        <span className={cn('inline-flex size-11 items-center justify-center rounded-xl', accent.soft)}>
+        <span className={cn('inline-flex size-11 items-center justify-center rounded-xl bg-surface-deep', accent.text)}>
           <Icon className="size-5" />
         </span>
         {mode.badge ? (
-          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase', accent.soft)}>
+          <span className={cn('inline-flex items-center gap-1.5 rounded-full bg-surface-deep px-2.5 py-1 text-[10px] font-bold uppercase', accent.text)}>
             <span className={cn('size-1.5 animate-pulse rounded-full', accent.dot)} />
             {mode.badge}
           </span>

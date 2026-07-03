@@ -17,6 +17,8 @@ export interface RealGkFeatures {
   replay: boolean;
   /** Size composited actors by visible body height so heads never inflate them. */
   normalizedSizes: boolean;
+  /** Late-afternoon stadium shadow that covers ~half the pitch and slowly creeps across. */
+  duskShadow: boolean;
 }
 
 /**
@@ -100,7 +102,7 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };

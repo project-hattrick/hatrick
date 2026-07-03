@@ -32,7 +32,7 @@ function CollectionCard() {
               />
             </div>
           ))}
-          <div className="flex h-[168px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neon/40 bg-neon/5 p-2 text-center">
+          <div className="flex h-[168px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neon/25 bg-surface-deep p-2 text-center">
             <Sparkle className="size-6 text-neon" />
             <span className="text-[9px] font-bold tracking-wide text-neon uppercase">Epic Pack</span>
             <Link href="/fantasy" className={buttonVariants({ variant: 'default', size: 'xs', className: 'h-6 px-2 text-[10px]' })}>

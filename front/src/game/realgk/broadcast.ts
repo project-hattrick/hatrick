@@ -17,6 +17,33 @@ const BANDS: WipeBand[] = [
   { from: '#ef4444', to: '#5c1010', fromLeft: false },
 ];
 
+/**
+ * Country flag shown in each band while the wipe covers the screen. Tricolor vertical stripes drawn on
+ * canvas (renders everywhere — Windows can't render 🇧🇷-style emoji). Swap the palettes for the real
+ * matchup; index 0 = top/blue band, index 1 = bottom/red band.
+ */
+const BAND_FLAGS: [string, string, string][] = [
+  ['#1d4ed8', '#ffffff', '#1d4ed8'],
+  ['#dc2626', '#ffffff', '#dc2626'],
+];
+
+/** Draws a small pennant-on-a-pole with three vertical stripes, centered on (cx, cy). */
+function drawFlag(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, colors: [string, string, string]): void {
+  const h = w * 0.64;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+  ctx.fillStyle = 'rgba(232, 237, 241, 0.95)'; // pole
+  ctx.fillRect(x - 6, y - 10, 4, h + 24);
+  const sw = w / 3;
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(x + i * sw, y, sw + 0.5, h);
+  }
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+}
+
 function drawBand(ctx: CanvasRenderingContext2D, view: Size, band: WipeBand, coverage: number, yTop: number, yBottom: number): void {
   const skew = view.height * 0.35;
   const reach = (view.width + skew * 2) * coverage;
@@ -64,6 +91,16 @@ export function drawBroadcastWipe(ctx: CanvasRenderingContext2D, view: Size, dpr
   const midY = view.height / 2;
   drawBand(ctx, view, BANDS[0], coverage, 0, midY);
   drawBand(ctx, view, BANDS[1], coverage, midY, view.height);
+
+  // Country flags fade in as the bands close over the screen (peak at the cut).
+  const flagAlpha = clamp((coverage - 0.5) / 0.4, 0, 1);
+  if (flagAlpha > 0.001) {
+    const fw = Math.min(view.width * 0.16, 220);
+    ctx.globalAlpha = flagAlpha;
+    drawFlag(ctx, view.width / 2, view.height * 0.25, fw, BAND_FLAGS[0]);
+    drawFlag(ctx, view.width / 2, view.height * 0.75, fw, BAND_FLAGS[1]);
+    ctx.globalAlpha = 1;
+  }
 
   const flash = clamp(1 - Math.abs(p - 0.5) * 6, 0, 1) * 0.9;
   if (flash > 0.001) {

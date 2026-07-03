@@ -30,7 +30,7 @@ export const DIVE_LIFT = 20;
  * height — like a standing sprite — inflates their width off-screen. Instead the dive's longest side is
  * normalized to the standing height × this factor, so a stretched-out keeper reads like a normal player.
  */
-export const DIVE_LENGTH = 1.12;
+export const DIVE_LENGTH = 0.78;
 
 /** Ball gravity (vz -= BALL_GRAVITY * dt). */
 export const BALL_GRAVITY = 760;

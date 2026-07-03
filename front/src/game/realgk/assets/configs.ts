@@ -7,6 +7,10 @@ export interface FrameCfg {
   headScale: number;
   offsetXRatio: number;
   offsetYRatio: number;
+  /** Optional per-frame size multiplier (edited in /sandbox/sprite-editor). Undefined = 1 = unchanged. */
+  sizeScale?: number;
+  /** Optional: mirror the head horizontally (flip the look direction). Undefined = false. */
+  headFlip?: boolean;
 }
 
 const repeat = (cfg: FrameCfg, n: number): FrameCfg[] => Array.from({ length: n }, () => cfg);
@@ -69,6 +73,22 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
     { headView: HeadView.Front, bodyScale: 1, headScale: 0.47, offsetXRatio: -0.004, offsetYRatio: 0.135 },
     { headView: HeadView.Front, bodyScale: 1, headScale: 0.47, offsetXRatio: 0.006, offsetYRatio: 0.145 },
     { headView: HeadView.Front, bodyScale: 1, headScale: 0.47, offsetXRatio: 0.004, offsetYRatio: 0.145 },
+  ],
+  // Power-shot (back view): back head, higher seat on the shoulders.
+  [BodyAnim.PowerShotBack]: [
+    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.22 },
+    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.004, offsetYRatio: 0.215 },
+    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.002, offsetYRatio: 0.218 },
+    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.22 },
+  ],
+  // Power-shot (side/profile view): side head, mirrors with facing; contact around frame 4.
+  [BodyAnim.PowerShotSide]: [
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.18, offsetYRatio: 0.055 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.18, offsetYRatio: 0.055 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.17, offsetYRatio: 0.06 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.12, offsetYRatio: 0.07 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.09, offsetYRatio: 0.075 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.16, offsetYRatio: 0.06 },
   ],
 };
 

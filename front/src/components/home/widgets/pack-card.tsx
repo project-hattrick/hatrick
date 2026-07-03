@@ -25,7 +25,7 @@ function PackCard({ pack }: { pack: PackData }) {
   return (
     <GlassPanel tone="surface" className="flex flex-col gap-4 p-5">
       <div className="flex items-center gap-4">
-        <span className={cn('inline-flex size-14 items-center justify-center rounded-xl', accent.soft)}>
+        <span className={cn('inline-flex size-14 items-center justify-center rounded-xl bg-surface-deep', accent.text)}>
           <Icon className="size-7" />
         </span>
         <div className="flex flex-col">

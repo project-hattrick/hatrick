@@ -140,6 +140,13 @@ export function step(world: RealGkWorld, dt: number): void {
     return;
   }
 
+  // Red card stops the match: players/ball freeze while the referee finishes brandishing the card.
+  if (world.referee.active && world.referee.phase === RefPhase.Card) {
+    updateReferee(world, dt);
+    updateCoach(world, dt);
+    return;
+  }
+
   match.time += dt * TIME_SCALE;
   updatePlayers(world, dt);
   updateBall(world, dt);

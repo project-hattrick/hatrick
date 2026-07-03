@@ -3,7 +3,7 @@ import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera } from './camera';
-import { MatchPhase, Role, Team } from './enums';
+import { MatchPhase, RefPhase, Role, Team } from './enums';
 import { pointOnField } from './field';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
@@ -48,6 +48,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   let flat = false;
   let raf = 0;
   let lastT = performance.now();
+  // Animation clock fed to render for looping sprite frames. It only advances while play runs, so a
+  // pause / red-card freeze also freezes the walk/idle cycles (not just positions).
+  let animClock = 0;
 
   const last = {
     scoreBlue: -1,
@@ -62,6 +65,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     refereeActive: !world.referee.active,
     goalActive: true,
     replayActive: true,
+    redCardActive: true,
   };
 
   const syncHud = (): void => {
@@ -83,6 +87,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (goalActive !== last.goalActive) patch.goalActive = last.goalActive = goalActive;
     const replayActive = director?.replayActive() ?? false;
     if (replayActive !== last.replayActive) patch.replayActive = last.replayActive = replayActive;
+    const redCardActive = referee.active && referee.phase === RefPhase.Card;
+    if (redCardActive !== last.redCardActive) patch.redCardActive = last.redCardActive = redCardActive;
     if (Object.keys(patch).length) opts.onHud(patch);
   };
 
@@ -111,6 +117,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       const rawDt = Math.min(MAX_DT, (now - lastT) / 1000);
       lastT = now;
       const simRunning = world.match.phase === MatchPhase.Live || world.match.phase === MatchPhase.Celebration;
+      // Red card / any state that halts the sim also halts the sprite animation clock.
+      const cardFrozen = world.referee.active && world.referee.phase === RefPhase.Card;
+      if (!paused && simRunning && !cardFrozen) animClock += rawDt * 1000;
       if (!paused) {
         if (simRunning) step(world, rawDt * speed);
         if (director && recorder) {
@@ -123,7 +132,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       if (!replayScene && (world.match.phase === MatchPhase.Live || world.match.phase === MatchPhase.Celebration)) {
         updateCamera(cam, world, rawDt);
       }
-      render(ctx, replayScene?.world ?? world, assets, cam, replayScene?.now ?? now, flat);
+      render(ctx, replayScene?.world ?? world, assets, cam, replayScene?.now ?? animClock, flat);
       if (director) {
         const overlayState = director.overlay();
         if (overlayState.dressing) drawReplayDressing(ctx, world.view, world.dpr, now);

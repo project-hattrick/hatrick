@@ -2,8 +2,11 @@
 
 .pack {
   position: relative;
-  width: 270px;
-  height: 380px;
+  /* capped by viewport height so short screens never push it under the header */
+  width: min(240px, 62vw, 36svh);
+  /* pack-foil.png trimmed dimensions; tear line measured at y=140 of 1122px */
+  aspect-ratio: 660 / 1122;
+  --tear: 12.48%;
   cursor: pointer;
   transition: transform 0.2s ease;
   /* teasing wiggle: rest, then a quick shake (rotate is independent of the hover transform) */
@@ -52,33 +55,24 @@
   border: 1px solid hsl(0 0% 100% / 0.08);
 }
 
-/* Crimped tear-off strip at the top */
+/* Tear-off strip: exact top slice of the pack render (top-aligned bg = rows above the tear line) */
 .strip {
-  composes: foil;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 52px;
-  border-radius: 10px 10px 0 0;
-  border-bottom: 2px dashed hsl(0 0% 100% / 0.25);
-  background-position: center top;
+  height: var(--tear);
+  background: url('/cards/pack-foil.png') no-repeat top center / 100% auto;
 }
 
+/* Pack body: the remaining slice (bottom-aligned bg = rows below the tear line) */
 .body {
-  composes: foil;
   position: absolute;
-  top: 54px;
+  top: var(--tear);
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 0 0 14px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background-position: center bottom;
+  background: url('/cards/pack-foil.png') no-repeat bottom center / 100% auto;
 }
 
 /* Foil shine sweeping across the sealed pack */
@@ -156,34 +150,110 @@
   }
 }
 
-/* Revealed stack: next cards peeking behind the active one */
-.stack {
-  position: relative;
-  width: min(400px, 82vw);
-  aspect-ratio: 5 / 7;
+.dragging {
+  cursor: grabbing;
+  transition: none;
 }
 
-.stackCard {
+/* Podium stage: bottom of the active card/pack lands on the podium top */
+.stage {
   position: absolute;
-  inset: 0;
-  transition:
-    transform 0.35s ease,
-    filter 0.35s ease;
+  left: 50%;
+  bottom: 21svh;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.stackBehind {
-  pointer-events: none;
-  filter: brightness(0.55);
+.cardGlow {
+  filter: drop-shadow(0 24px 40px rgb(0 0 0 / 0.7));
 }
 
-.stackTop {
+/* Sealed pack sits higher on the podium than the revealed card */
+.stagePack {
+  bottom: 30svh;
+}
+
+/* 3D flip: back of the card -> holographic face */
+.flipScene {
+  position: relative;
+  perspective: 1400px;
   cursor: grab;
   touch-action: none;
 }
 
-.dragging {
-  cursor: grabbing;
-  transition: none;
+.flipInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.flipBack,
+.flipFace {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.flipBack {
+  transform: rotateY(0deg);
+}
+
+.flipFace {
+  transform: rotateY(180deg);
+}
+
+/* Backface-visibility is unreliable with the card's nested preserve-3d —
+   hard-hide the back at the flip midpoint so it never bleeds behind the face. */
+.flipped .flipBack {
+  visibility: hidden;
+  transition: visibility 0s linear 0.3s;
+}
+
+/* Card back rises out of the torn pack / podium smoke */
+.riseFromPodium {
+  animation: rise-from-podium 0.7s cubic-bezier(0.2, 0.85, 0.3, 1.05) both;
+}
+
+@keyframes rise-from-podium {
+  from {
+    transform: translateY(120px) scale(0.82);
+    opacity: 0;
+  }
+}
+
+/* One-shot radial burst behind the card at the reveal moment */
+.flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.45) 0%, rgb(255 255 255 / 0.2) 30%, transparent 65%);
+  animation: reveal-flash 0.55s ease-out both;
+}
+
+@keyframes reveal-flash {
+  0% {
+    opacity: 0;
+    scale: 0.4;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.15;
+  }
 }
 
 /* --exit-dir (1 | -1) mirrors the fly-out to the swipe direction */

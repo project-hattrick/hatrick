@@ -8,7 +8,7 @@ function StepCard({ data }: { data: HowItWorksStep }) {
   return (
     <GlassPanel tone="surface" className="flex h-full flex-col gap-3 p-6">
       <div className="flex items-center justify-between">
-        <span className="inline-flex size-11 items-center justify-center rounded-xl bg-neon/10 text-neon">
+        <span className="inline-flex size-11 items-center justify-center rounded-xl bg-surface-deep text-neon">
           <Icon className="size-5" />
         </span>
         <span className="text-3xl font-black text-surface-3">{data.step}</span>

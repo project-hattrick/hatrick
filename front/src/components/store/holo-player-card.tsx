@@ -56,6 +56,9 @@ function HoloPlayerCard({
     '--holo-1': holoColors[0],
     '--holo-2': holoColors[1],
     '--holo-3': holoColors[2],
+    // The lib clamps .sticker-card with max-width: var(--sticker-card-width, 260px)
+    // and its width prop only sets inline width — set the var or cards never exceed 260px.
+    '--sticker-card-width': `${width}px`,
     minHeight: 0, // the lib's .sticker-root forces 400px, which breaks small cards
   } as CSSProperties;
 

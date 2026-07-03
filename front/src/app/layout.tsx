@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { talero } from "@/lib/fonts";
 import { AppProviders } from "@/providers/app-providers";
 import { Toaster } from "@/components/ui/sonner";
 import { SmoothScroll } from "@/components/common/smooth-scroll";
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${inter.variable} ${geistMono.variable} ${talero.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SmoothScroll>

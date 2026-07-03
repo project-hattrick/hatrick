@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { AppleLogo, Globe, Envelope, ChatCircle, Play, PaperPlaneTilt, type Icon } from '@/components/common/icons';
-import { BrandMark } from '@/components/common/brand-mark';
 import { appBadges, footerColumns } from '@/config/home.config';
 
 const socials: { label: string; icon: Icon }[] = [
@@ -19,10 +19,10 @@ const storeIcons: Record<string, Icon> = {
 export function SiteFooter() {
   return (
     <footer className="relative z-10 border-t border-border/60 bg-background px-6 py-14">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div className="flex flex-col gap-4">
-          <Link href="/" className="flex items-center gap-2 text-neon">
-            <BrandMark className="size-8" />
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Hat-trick" width={472} height={481} className="h-8 w-auto" />
             <span className="text-lg font-bold text-foreground">Hat-trick</span>
           </Link>
           <p className="max-w-xs text-sm text-muted-foreground">
@@ -77,7 +77,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mx-auto mt-10 flex w-full max-w-7xl flex-col gap-2 border-t border-border/40 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto mt-10 flex w-full max-w-6xl flex-col gap-2 border-t border-border/40 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
         <span>© 2026 Hat-trick. All rights reserved.</span>
         <span>Devnet demo · play-money only · not affiliated with FIFA.</span>
       </div>
