@@ -1,0 +1,55 @@
+import { GlassPanel } from '@/components/common/glass-panel';
+import { Flag } from '@/components/common/flag';
+import { teamFormation, type FormationDot } from '@/config/match-dashboard.config';
+
+function Dots({ dots, color }: { dots: FormationDot[]; color: string }) {
+  return (
+    <>
+      {dots.map((dot) => (
+        <div
+          key={`${color}-${dot.number}-${dot.x}-${dot.y}`}
+          className="absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[10px] font-bold text-white shadow-md ring-2 ring-black/30 sm:size-7 sm:text-xs"
+          style={{ left: `${dot.x}%`, top: `${dot.y}%`, backgroundColor: color }}
+        >
+          {dot.number}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function TeamTag({ name, shape, code, align }: { name: string; shape: string; code: string; align?: 'right' }) {
+  return (
+    <div className={align === 'right' ? 'flex flex-row-reverse items-center gap-2 text-right' : 'flex items-center gap-2'}>
+      <Flag code={code} className="text-base" />
+      <div className={align === 'right' ? 'flex flex-col items-end' : 'flex flex-col'}>
+        <span className="text-xs font-bold">{name}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">{shape}</span>
+      </div>
+    </div>
+  );
+}
+
+/** "Team Formation" — both line-ups on one horizontal pitch. */
+export function TeamFormationCard() {
+  const { home, away } = teamFormation;
+  return (
+    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
+      <span className="text-[13px] font-bold">Team Formation</span>
+
+      <div className="flex items-center justify-between">
+        <TeamTag name={home.name} shape={home.shape} code={home.code} />
+        <span className="font-mono text-[10px] font-bold text-muted-foreground">FT</span>
+        <TeamTag name={away.name} shape={away.shape} code={away.code} align="right" />
+      </div>
+
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">
+        <div className="pointer-events-none absolute inset-2 rounded-md border border-white/10" />
+        <div className="pointer-events-none absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
+        <div className="pointer-events-none absolute top-1/2 left-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
+        <Dots dots={home.dots} color={home.color} />
+        <Dots dots={away.dots} color={away.color} />
+      </div>
+    </GlassPanel>
+  );
+}

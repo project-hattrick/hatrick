@@ -1,18 +1,11 @@
 import * as React from 'react';
-import { UpcomingSummaryCard } from './widgets/upcoming-summary-card';
-import { PointsCard } from './widgets/points-card';
-import { UpcomingMatchesCard } from './widgets/upcoming-matches-card';
-import { CollectionCard } from './widgets/collection-card';
-import { TopPlayersCard } from './widgets/top-players-card';
 import { ModeFeatureCard } from './widgets/mode-feature-card';
 import { PackCard } from './widgets/pack-card';
 import { StepCard } from './widgets/step-card';
 import { SectionLink } from './widgets/section-link';
 import { MobileCta } from './widgets/mobile-cta';
-import { GreetingBanner } from './widgets/greeting-banner';
-import { LiveMatchesSection } from './live-matches-section';
 import { SquadSection } from './squad-section';
-import { CupBracketSection } from './cup-bracket-section';
+import { MatchDashboard } from './dashboard/match-dashboard';
 import { featuredPacks, howItWorksSteps, playModes } from '@/config/home.config';
 
 function RowHeader({ title, action }: { title: string; action?: React.ReactNode }) {
@@ -31,22 +24,7 @@ export function HomeDashboard() {
       <div aria-hidden className="curtain-seam h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
       <div className="bg-background">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
-        <GreetingBanner />
-
-        <LiveMatchesSection />
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <UpcomingSummaryCard />
-          <PointsCard />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[1fr_1.25fr_1fr]">
-          <UpcomingMatchesCard />
-          <CollectionCard />
-          <TopPlayersCard />
-        </div>
-
-        <CupBracketSection />
+        <MatchDashboard />
 
         <SquadSection />
 

@@ -63,6 +63,8 @@ export enum RefPhase {
   PatrolPause = 'patrol_pause',
   RunCenter = 'run_center',
   Pause = 'pause',
+  /** Kickoff whistle at center (v5 intro) — the peaceful counterpart to Card. */
+  Whistle = 'whistle',
   Card = 'card',
   ReturnPatrol = 'return_patrol',
 }
@@ -83,13 +85,45 @@ export enum CoachMode {
   Angry = 'angry',
 }
 
-/** Top-level match flow. v2/v3 never leave Live; v4's goal flow walks the full ring. */
+/** Top-level match flow. v2/v3 never leave Live; v4's goal flow walks the replay ring; v5 opens on Intro. */
 export enum MatchPhase {
+  /** Pre-match entrance: team+flag showcase, players walking on, referee whistle (v5 matchIntro only). */
+  Intro = 'intro',
   Live = 'live',
   Celebration = 'celebration',
   ReplayIn = 'replay_in',
   Replay = 'replay',
   ReplayOut = 'replay_out',
+}
+
+/** Stages of the v5 match intro (drives the sim state machine + the overlay copy). */
+export enum IntroStage {
+  /** Broadcast card: both teams + flags on screen, camera wide. */
+  Showcase = 'showcase',
+  /** Players walk on from below the pitch to their formation homes, staggered back-to-front. */
+  RiseIn = 'rise_in',
+  /** Referee runs to center and blows the whistle. */
+  RefWhistle = 'ref_whistle',
+  /** Ball is placed at center and handed to the kickoff team — the last beat before Live. */
+  Kickoff = 'kickoff',
+}
+
+/** Out-of-play restart type (v5 deadBallSequence). Kickoff is handled by the intro, not here. */
+export enum RestartKind {
+  None = 'none',
+  ThrowIn = 'throw_in',
+  Corner = 'corner',
+  GoalKick = 'goal_kick',
+}
+
+/** Stages of a v5 dead-ball restart: the ball rolls out, a taker is set up, then it's put back in play. */
+export enum RestartStage {
+  /** Ball keeps rolling off the pitch (no teleport) while the banner shows. */
+  BallOut = 'ball_out',
+  /** Ball placed at the correct spot; the taker walks over, opponents give space. */
+  Setup = 'setup',
+  /** Taker strikes the ball back into play; the match resumes. */
+  Taking = 'taking',
 }
 
 export enum CelebrationKind {

@@ -50,15 +50,15 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
     // Padded "bezel" frame (RevenueWidget look) around the overlay card.
     <div
       className={cn(
-        'w-full max-w-[520px] min-w-0 rounded-[26px] bg-muted p-1.5 shadow-[0px_0px_0px_1px_rgba(255,255,255,0.05),0px_2px_6px_rgba(0,0,0,0.4),0px_16px_40px_-12px_rgba(0,0,0,0.55)] md:w-[min(520px,48vw)]',
+        'w-full max-w-[460px] min-w-0 rounded-[26px] bg-muted p-1.5 shadow-[0px_0px_0px_1px_rgba(255,255,255,0.05),0px_2px_6px_rgba(0,0,0,0.4),0px_16px_40px_-12px_rgba(0,0,0,0.55)] md:w-[min(460px,44vw)]',
         className,
       )}
     >
       <div
-        className="relative h-[248px] w-full overflow-hidden rounded-[20px] ring-1 ring-white/10 sm:h-[280px]"
+        className="relative h-[224px] w-full overflow-hidden rounded-[20px] ring-1 ring-white/10 sm:h-[248px]"
         aria-label={question}
       >
-        <Image src="/prediction-goal.png" alt="" fill sizes="520px" className="object-cover object-center" />
+        <Image src="/prediction-goal.png" alt="" fill sizes="460px" className="object-cover object-center" />
         {/* Gradient so the bottom copy + buttons stay legible; the top stays free art. */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
 
@@ -88,23 +88,24 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
           <div className="flex items-stretch gap-1.5">
             <MetalButton
               type="button"
-              preset="silver"
-              variant="outline"
+              preset="chromatic"
+              variant="default"
               strength={1}
+              ringCssPx={3}
               onClick={() => onPick?.(yes.label)}
-              metalFxClassName="flex-[2] cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
-              className="w-full cursor-pointer justify-between gap-1 px-3.5 py-3.5 text-sm font-bold text-white"
+              metalFxClassName="flex-[1.5] cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full cursor-pointer justify-between gap-1 px-3.5 py-3 text-sm font-bold text-primary-foreground"
             >
               <span>{yes.label}</span>
-              <span className="truncate font-mono text-[10px] font-semibold text-white/70">×{yes.odds} · +{yes.points}</span>
+              <span className="truncate font-mono text-[10px] font-semibold text-primary-foreground/80">×{yes.odds} · +{yes.points}</span>
             </MetalButton>
             <button
               type="button"
               onClick={() => onPick?.(no.label)}
-              className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-1 rounded-[15px] bg-black/40 px-3.5 py-3.5 text-muted-foreground backdrop-blur-sm transition hover:bg-black/55 hover:text-foreground active:scale-[0.98]"
+              className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-1 rounded-[15px] border border-white/15 bg-white/10 px-3.5 py-3 text-foreground backdrop-blur-sm transition hover:bg-white/15 active:scale-[0.98]"
             >
               <span className="text-sm font-semibold">{no.label}</span>
-              <span className="truncate font-mono text-[10px] font-semibold text-muted-foreground/70">×{no.odds} · +{no.points}</span>
+              <span className="truncate font-mono text-[10px] font-semibold text-muted-foreground">×{no.odds} · +{no.points}</span>
             </button>
           </div>
         </div>

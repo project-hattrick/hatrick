@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "flag-icons/css/flag-icons.min.css";
 import { talero } from "@/lib/fonts";
 import { AppProviders } from "@/providers/app-providers";
 import { Toaster } from "@/components/ui/sonner";

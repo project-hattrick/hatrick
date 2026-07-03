@@ -25,6 +25,20 @@ export interface RealGkFeatures {
   goalNet: boolean;
   /** Perimeter advertiser panels (image + LED boards) pinned to the pitch (see billboards.ts). */
   billboards: boolean;
+  /** v5 matchday entrance: team+flag showcase → players walk on → referee whistles → kickoff. */
+  matchIntro: boolean;
+  /** v5 dead balls: the ball rolls out of play, a banner names the restart, a taker walks over and restarts. */
+  deadBallSequence: boolean;
+}
+
+/** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
+export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina';
+
+export interface TeamBrand {
+  name: string;
+  flagId: FlagId;
+  /** Three-stop palette used for the intro flag stripes / confetti when a real flag isn't drawn. */
+  colors: [string, string, string];
 }
 
 /**
@@ -50,6 +64,8 @@ export interface RealGkConfig {
   actorScale?: { referee?: number; coach?: number };
   /** Max cinematic zoom push near a goal (legacy default 1.32). */
   nearGoalPush?: number;
+  /** Team brands for the v5 intro showcase (flags + names). Unset → generic Blue/Red. */
+  teams?: { blue: TeamBrand; red: TeamBrand };
 }
 
 /** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
@@ -80,7 +96,7 @@ export const REAL_GK_HERO_CONFIG: RealGkConfig = {
   ],
   cinematic: true,
   // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: true, billboards: false },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -111,7 +127,7 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -133,7 +149,7 @@ export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: true, billboards: false },
+  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -150,15 +166,42 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true },
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
+};
+
+/**
+ * Checkpoint 6 — "Matchday": v4 Broadcast plus a team+flag entrance (players walk on, referee whistles)
+ * and legible dead-ball restarts (ball rolls out, banner, taker walks to the correct corner / touchline /
+ * goal-area spot and puts it back in play).
+ */
+export const REAL_GK_V5_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
+  nearGoalPush: 1.42,
+  teams: {
+    blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
+    red: { name: 'Spain', flagId: 'spain', colors: ['#AA151B', '#F1BF00', '#AA151B'] },
+  },
 };
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
   if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
   if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;
+  if (id === CheckpointId.RealGkV5) return REAL_GK_V5_CONFIG;
   if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;
   return id === CheckpointId.RealGkV3 ? REAL_GK_CINEMA_CONFIG : REAL_GK_V2_CONFIG;
 }

@@ -19,6 +19,7 @@
     "@tanstack/react-query": "^5.101.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "flag-icons": "^7.5.0",
     "holographic-sticker": "^1.0.4",
     "js-sha3": "^0.9.3",
     "lenis": "^1.3.25",

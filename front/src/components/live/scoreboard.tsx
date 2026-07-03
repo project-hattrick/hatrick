@@ -3,18 +3,18 @@
 import { useMatch, useMatchEvents } from '@/store/match.store';
 import { gameStateConfig, gameStateFallback } from '@/config/game-state.config';
 import { matchActionConfig, matchActionFallback } from '@/config/match-action.config';
+import { Flag } from '@/components/common/flag';
 import { lookup } from '@/lib/lookup';
+import { fifaToIso } from '@/lib/country';
 import { formatMinute } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const MAX_EVENTS = 3;
 
-function TeamColumn({ flag, code }: { flag: string; code: string }) {
+function TeamColumn({ code }: { code: string }) {
   return (
     <div className="flex flex-col items-center gap-1 sm:gap-1.5">
-      <span className="text-lg leading-none sm:text-2xl" aria-hidden>
-        {flag}
-      </span>
+      <Flag code={fifaToIso(code)} className="text-lg sm:text-2xl" />
       <span className="text-[10px] font-semibold tracking-[0.1em] text-foreground/90 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-xs">
         {code}
       </span>
@@ -41,13 +41,13 @@ export function Scoreboard() {
       </div>
 
       <div className="flex items-center gap-4 sm:gap-6">
-        <TeamColumn flag={match.home.flag} code={match.home.code} />
+        <TeamColumn code={match.home.code} />
         <div className="flex items-center gap-2 text-[38px] font-bold leading-none [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:gap-2.5 sm:text-[52px]">
           <span>{match.score.home}</span>
           <span className="text-2xl text-muted-foreground sm:text-[34px]">–</span>
           <span>{match.score.away}</span>
         </div>
-        <TeamColumn flag={match.away.flag} code={match.away.code} />
+        <TeamColumn code={match.away.code} />
       </div>
 
       {recent.length > 0 ? (

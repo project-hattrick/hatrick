@@ -1,6 +1,6 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
-import { MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
+import { IntroStage, MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
 import { pointOnField } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
@@ -48,6 +48,9 @@ const freshMatch = (): MatchState => ({
   phaseTimer: 0,
   celebrantId: null,
   scorer: null,
+  introStage: IntroStage.Showcase,
+  introTimer: 0,
+  restart: null,
 });
 
 /** Drops the ball at center and gives it to the kickoff team's most central outfielder. */

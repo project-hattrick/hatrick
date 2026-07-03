@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Broadcast } from '@/components/common/icons';
+import { Flag } from '@/components/common/flag';
+import { fifaToIso } from '@/lib/country';
 import { useMatch } from '@/store/match.store';
 import { featuredLiveMatch, liveRailMatches, type LiveScoreMatch } from '@/config/home.config';
 import { cn } from '@/lib/utils';
@@ -37,13 +39,13 @@ function MatchRow({
         {match.minute}&apos;
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
-        <span className="text-base leading-none" aria-hidden>{match.home.flag}</span>
+        <Flag code={fifaToIso(match.home.code)} className="text-base" />
         <span className="text-sm font-bold">{match.home.code}</span>
         <span className="font-mono text-sm font-bold tabular-nums">
           {match.homeScore}–{match.awayScore}
         </span>
         <span className="text-sm font-bold">{match.away.code}</span>
-        <span className="text-base leading-none" aria-hidden>{match.away.flag}</span>
+        <Flag code={fifaToIso(match.away.code)} className="text-base" />
       </span>
       {watching ? (
         <span className="shrink-0 rounded-full bg-neon/15 px-2 py-0.5 font-mono text-[9px] font-bold tracking-wide text-neon uppercase">

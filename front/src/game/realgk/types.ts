@@ -1,5 +1,5 @@
 import type { RealGkConfig } from './config';
-import type { BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, MatchPhase, PlayerAction, RefMode, RefPhase, Role, Team } from './enums';
+import type { BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 
 export interface Vec2 {
   x: number;
@@ -60,6 +60,11 @@ export interface RealGkPlayer {
   receiveHit: boolean;
   /** Power-shot wind-up flag — true once the strike has fired (v4 extraAnims; inert otherwise). */
   powerShotHit: boolean;
+  /** Seconds after the intro starts before this player begins walking on (v5 matchIntro; 0 otherwise). */
+  introDelay: number;
+  /** Off-pitch entrance spawn (v5 matchIntro) — where the player walks on FROM. */
+  spawnX: number;
+  spawnY: number;
 }
 
 export interface Ball {
@@ -116,6 +121,20 @@ export interface Coach {
   angryDuration: number;
 }
 
+/** In-progress dead-ball restart (v5 deadBallSequence). Null while the ball is live. */
+export interface RestartState {
+  kind: RestartKind;
+  /** Team taking the restart. */
+  team: Team;
+  stage: RestartStage;
+  /** Seconds elapsed in the current stage. */
+  timer: number;
+  /** Where the ball is placed once it finishes rolling out. */
+  spot: Vec2;
+  /** Player assigned to take the restart (set when the ball is placed). */
+  takerId: number | null;
+}
+
 export interface MatchState {
   blue: number;
   red: number;
@@ -125,13 +144,18 @@ export interface MatchState {
   statusTitle: string;
   statusText: string;
   ballText: string;
-  /** Goal-flow phase (v4 replay features; stays Live elsewhere). */
+  /** Goal-flow phase (v4 replay features; stays Live elsewhere, opens on Intro for v5). */
   phase: MatchPhase;
   phaseTimer: number;
   /** Player id celebrating the goal — camera target while the celebration runs. */
   celebrantId: number | null;
   /** Team that scored the current goal (drives country-colored confetti). */
   scorer: Team | null;
+  /** Intro sequence stage + clock (v5 matchIntro; inert while phase !== Intro). */
+  introStage: IntroStage;
+  introTimer: number;
+  /** Active out-of-play restart (v5 deadBallSequence; null while the ball is live). */
+  restart: RestartState | null;
 }
 
 /** All mutable v2 state. Mutated by the loop; lives outside React. */

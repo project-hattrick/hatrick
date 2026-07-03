@@ -1,10 +1,9 @@
 import { FormationPitch } from './widgets/formation-pitch';
 import { TeamStrengthCard } from './widgets/team-strength-card';
 import { DailyDuelCard } from './widgets/daily-duel-card';
-import { SquadCarousel } from './widgets/squad-carousel';
+import { SquadMiniStrip } from './widgets/squad-mini-strip';
 import { SectionLink } from './widgets/section-link';
 import { AppMode } from '@/enums/app-mode.enum';
-import { squad } from '@/config/squad.config';
 
 /** "Seu time no fantasy" — the XI on the pitch, squad strength, today's duel and the card row. */
 export function SquadSection() {
@@ -26,12 +25,12 @@ export function SquadSection() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold tracking-wider uppercase">Suas cartas</h3>
+          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Suas cartas</h3>
           <SectionLink href={`/${AppMode.Fantasy}`} label="Ver coleção" />
         </div>
-        <SquadCarousel players={squad} />
+        <SquadMiniStrip />
       </div>
     </div>
   );

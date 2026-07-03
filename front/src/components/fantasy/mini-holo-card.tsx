@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { talero } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
+import { Flag } from '@/components/common/flag';
 import type { PlayerCardData } from '@/config/fantasy-cards.config';
 
 /**
@@ -39,7 +40,7 @@ export function MiniHoloCard({ card, className }: { card: PlayerCardData; classN
         <span className={cn(talero.className, 'text-lg text-white [text-shadow:0_1px_4px_rgb(0_0_0/0.7)]')}>
           {card.rating}
         </span>
-        <span className="text-[10px]">{card.flag}</span>
+        <Flag code={card.code} className="text-[10px]" />
       </div>
 
       {/* Name plate over the portrait */}

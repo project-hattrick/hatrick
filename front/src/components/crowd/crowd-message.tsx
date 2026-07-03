@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { lookup } from '@/lib/lookup';
 import { X, ChatCircle, type Icon } from '@/components/common/icons';
+import { Flag } from '@/components/common/flag';
+import { fifaToIso } from '@/lib/country';
 import { teamSideConfig, teamSideFallback } from '@/config/team-side.config';
 import { CrowdSource } from '@/enums/crowd-source.enum';
 import type { CrowdMessage as CrowdMessageModel } from '@/types/crowd';
@@ -31,7 +33,7 @@ export function CrowdMessage({ message }: { message: CrowdMessageModel }) {
       <div className="flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="text-sm leading-none">{message.flag}</span>
+            <Flag code={fifaToIso(message.countryCode)} className="text-sm" />
             <span className={cn('truncate text-xs font-bold', meta.tone)}>{message.author}</span>
             <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-muted-foreground uppercase">
               {message.countryCode}

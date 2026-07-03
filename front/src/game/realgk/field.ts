@@ -84,3 +84,44 @@ export function goalCenterForTeam(size: Size, team: Team): Vec2 {
   const g = GOALS[team];
   return pointOnField(size, g.lat, (g.depthTop + g.depthBottom) * 0.5);
 }
+
+/**
+ * Field-ratio spots for dead-ball restarts (v5 deadBallSequence). Tuned to the painted court markings via
+ * `/sandbox/field-calibrator`; `lat` is measured from the team's OWN goal line (Blue ≈ 0, Red ≈ 1).
+ */
+export const RESTART = {
+  /** Corner flag: laterally on the goal line, at the near/far touchline corner. */
+  cornerLatInset: 0.02,
+  cornerDepthTop: 0.06,
+  cornerDepthBottom: 0.94,
+  /** Throw-in: on the touchline, just inside it. */
+  throwDepthTop: 0.03,
+  throwDepthBottom: 0.97,
+  /** Goal kick: inside the goal area, at its top/bottom corner. */
+  goalKickLat: 0.12,
+  goalKickDepthTop: 0.4,
+  goalKickDepthBottom: 0.6,
+};
+
+/** Halfway spot — the kickoff / mapping "center" reference. */
+export function centerSpot(size: Size): Vec2 {
+  return pointOnField(size, 0.5, 0.5);
+}
+
+/** Throw-in restart point: lateral where the ball left, on the crossed touchline (top or bottom). */
+export function throwInSpot(size: Size, x: number, y: number, top: boolean): Vec2 {
+  const lat = clamp(fieldRatios(size, x, y).lat, 0.06, 0.94);
+  return pointOnField(size, lat, top ? RESTART.throwDepthTop : RESTART.throwDepthBottom);
+}
+
+/** Corner restart point on the flank the ball crossed — fixes the old "always near corner" bug. */
+export function cornerSpot(size: Size, defendTeam: Team, top: boolean): Vec2 {
+  const lat = defendTeam === Team.Blue ? RESTART.cornerLatInset : 1 - RESTART.cornerLatInset;
+  return pointOnField(size, lat, top ? RESTART.cornerDepthTop : RESTART.cornerDepthBottom);
+}
+
+/** Goal-kick restart point inside the defending team's goal area (top/bottom corner). */
+export function goalKickSpot(size: Size, defendTeam: Team, top: boolean): Vec2 {
+  const lat = defendTeam === Team.Blue ? RESTART.goalKickLat : 1 - RESTART.goalKickLat;
+  return pointOnField(size, lat, top ? RESTART.goalKickDepthTop : RESTART.goalKickDepthBottom);
+}

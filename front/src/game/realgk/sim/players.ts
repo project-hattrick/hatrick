@@ -65,6 +65,9 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
     receiveCooldown: 0,
     receiveHit: false,
     powerShotHit: false,
+    introDelay: 0,
+    spawnX: pt.x,
+    spawnY: pt.y,
   };
 }
 

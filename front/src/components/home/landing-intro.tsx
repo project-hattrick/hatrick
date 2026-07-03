@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
-// Matches the 3.3s CSS animations plus a short tail before the overlay unmounts.
+import { HolofoteLoader } from '@/components/common/holofote-loader';
+
+// Matches the 3.3s intro-out animation plus a short tail before the overlay unmounts.
 const INTRO_DURATION_MS = 3400;
 
-/** One-shot spotlight (holofote) loading intro that reveals the landing behind it. */
+/** One-shot pulsing holofote intro (same visual as the route loader), then reveals the landing. */
 export function LandingIntro() {
   // Start visible so the overlay is painted on the very first frame (SSR + hydration),
   // ahead of the landing. The effect then plays it out, or removes it for reduced motion.
@@ -24,19 +25,10 @@ export function LandingIntro() {
 
   if (!visible) return null;
 
+  // The wrapper's opacity fade (intro-out) applies to the fixed holofote layers underneath.
   return (
-    <>
-      <div className="landing-intro fixed inset-0 z-[70] grid place-items-center bg-black" role="status" aria-label="Loading">
-        <Image
-          src="/logo.png"
-          alt="Hat-trick"
-          width={472}
-          height={481}
-          priority
-          className="landing-intro-logo h-auto w-[min(46vw,340px)] will-change-transform"
-        />
-      </div>
-      <div className="landing-intro-spot pointer-events-none fixed inset-0 z-[71]" aria-hidden />
-    </>
+    <div className="landing-intro" role="status" aria-label="Loading">
+      <HolofoteLoader />
+    </div>
   );
 }

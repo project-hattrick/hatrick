@@ -48,22 +48,6 @@ export const BILLBOARDS: Billboard[] = [
     theme: 'blue',
     speed: 9,
   },
-  // Left touchline hoarding, beside the left goal (recedes back → front along the sideline).
-  {
-    kind: BillboardKind.Led,
-    corners: [[0.209, 0.364], [0.178, 0.44], [0.178, 0.515], [0.209, 0.409]],
-    text: 'TxODDS  ·  LIVE',
-    theme: 'green',
-    speed: 8,
-  },
-  // Right touchline hoarding, beside the right goal (mirror of the left).
-  {
-    kind: BillboardKind.Led,
-    corners: [[0.79, 0.364], [0.821, 0.44], [0.821, 0.515], [0.79, 0.409]],
-    text: 'BET  ·  WIN',
-    theme: 'red',
-    speed: 8,
-  },
 ];
 
 const imageCache = new Map<string, HTMLImageElement>();
