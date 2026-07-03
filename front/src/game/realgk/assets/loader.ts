@@ -1,6 +1,6 @@
 import { BodyAnim } from '../enums';
 import { BALL_FRAMES as V1_BALL_FRAMES, ballFramePath as v1BallFramePath } from '../../assets/manifest';
-import { bodyFramePath, COACH_PATHS, COURT_BG, HEAD_PATHS, REF_SPRITE_PATHS, REF_WALK_FRAMES } from './manifest';
+import { bodyFramePath, COACH_PATHS, COURT_BG, GOAL_PATHS, HEAD_PATHS, REF_SPRITE_PATHS, REF_WALK_FRAMES } from './manifest';
 import { ITEMS, V4_ANIMS } from './items';
 
 export type HeadKey = 'front' | 'frontClosed' | 'back' | 'side';
@@ -21,6 +21,7 @@ export interface RealGkAssets {
   heads: Record<HeadKey, HTMLImageElement>;
   ref: RefereeSprites;
   coach: { idle: HTMLImageElement; angry: HTMLImageElement };
+  goal: { back: HTMLImageElement; front: HTMLImageElement; shadow: HTMLImageElement };
 }
 
 const cache = new Map<string, HTMLImageElement>();
@@ -67,6 +68,11 @@ export function loadRealGkAssets(includeV4 = false): RealGkAssets {
     coach: {
       idle: loadImage(COACH_PATHS.idle),
       angry: loadImage(COACH_PATHS.angry),
+    },
+    goal: {
+      back: includeV4 ? loadImage(GOAL_PATHS.back) : new Image(),
+      front: includeV4 ? loadImage(GOAL_PATHS.front) : new Image(),
+      shadow: includeV4 ? loadImage(GOAL_PATHS.shadow) : new Image(),
     },
   };
 }

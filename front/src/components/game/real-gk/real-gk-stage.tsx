@@ -21,6 +21,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const goalActive = useRealGkStore((s) => s.goalActive);
   const replayActive = useRealGkStore((s) => s.replayActive);
   const redCardActive = useRealGkStore((s) => s.redCardActive);
+  const goalTeam = useRealGkStore((s) => s.goalTeam);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,11 +32,12 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
     const observer = new ResizeObserver(() => handle.resize());
     if (containerRef.current) observer.observe(containerRef.current);
 
+    const playable = realGkConfigFor(checkpoint).features?.playable === true;
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if (k === ' ') {
         e.preventDefault();
-        handle.togglePause();
+        if (!playable) handle.togglePause(); // in the sandbox, Space passes (handled by the engine)
       } else if (k === 'r') {
         handle.restart();
       } else if (k === 'j') {
@@ -68,7 +70,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
     <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
       <GoalBurst active={goalActive} />
-      <ConfettiBurst active={goalActive} />
+      <ConfettiBurst active={goalActive} team={goalTeam} />
       <RedCardOverlay active={redCardActive} />
       {!replayActive && <RealGkHud />}
       <RealGkControls handle={handleRef} />

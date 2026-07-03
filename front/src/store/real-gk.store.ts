@@ -15,6 +15,7 @@ interface RealGkStore {
   goalActive: boolean;
   replayActive: boolean;
   redCardActive: boolean;
+  goalTeam: string;
   cameraLabel: string;
   targetLabel: string;
   uiHidden: boolean;
@@ -37,6 +38,7 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   goalActive: false,
   replayActive: false,
   redCardActive: false,
+  goalTeam: '',
   cameraLabel: 'Cam: Broadcast',
   targetLabel: 'Follow: ball',
   uiHidden: false,

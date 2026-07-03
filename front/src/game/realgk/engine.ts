@@ -9,6 +9,7 @@ import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
 import { createRecorder, type ReplayRecorder } from './replay/recorder';
 import { resetCoach } from './sim/coach';
+import { controlPass, controlShoot } from './sim/control';
 import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
@@ -43,6 +44,49 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   const recorder: ReplayRecorder | null = config.features?.replay ? createRecorder() : null;
   const director: ReplayDirector | null = recorder ? createDirector(world, recorder, cam) : null;
 
+  // Playable sandbox: hold keys drive the controlled player; Space passes, X shoots.
+  let removeInput: (() => void) | null = null;
+  if (config.features?.playable) {
+    world.control = { up: false, down: false, left: false, right: false };
+    const setKey = (e: KeyboardEvent, down: boolean): void => {
+      const c = world.control;
+      if (!c) return;
+      const k = e.key.toLowerCase();
+      if (k === 'arrowup' || k === 'w') c.up = down;
+      else if (k === 'arrowdown' || k === 's') c.down = down;
+      else if (k === 'arrowleft' || k === 'a') c.left = down;
+      else if (k === 'arrowright' || k === 'd') c.right = down;
+      else return;
+      e.preventDefault();
+    };
+    const controlled = (): (typeof world.players)[number] | undefined => world.players.find((p) => p.id === world.controlId);
+    const onKeyDown = (e: KeyboardEvent): void => {
+      const k = e.key.toLowerCase();
+      if (k === ' ') {
+        controlPass(world);
+      } else if (k === 'x') {
+        controlShoot(world);
+      } else if (k === 'c' || k === 'v' || k === 'b') {
+        const p = controlled();
+        if (p && p.actionTimer <= 0) {
+          if (k === 'c') startHeader(p);
+          else startReceive(world, p, k === 'b'); // v = trap, b = intercept/steal
+        }
+      } else {
+        setKey(e, true);
+        return;
+      }
+      e.preventDefault();
+    };
+    const onKeyUp = (e: KeyboardEvent): void => setKey(e, false);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    removeInput = () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }
+
   let paused = false;
   let speed = 1;
   let flat = false;
@@ -66,6 +110,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     goalActive: true,
     replayActive: true,
     redCardActive: true,
+    goalTeam: 'x',
   };
 
   const syncHud = (): void => {
@@ -89,6 +134,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (replayActive !== last.replayActive) patch.replayActive = last.replayActive = replayActive;
     const redCardActive = referee.active && referee.phase === RefPhase.Card;
     if (redCardActive !== last.redCardActive) patch.redCardActive = last.redCardActive = redCardActive;
+    const goalTeam = match.celebration > 0 && match.scorer ? match.scorer : '';
+    if (goalTeam !== last.goalTeam) patch.goalTeam = last.goalTeam = goalTeam;
     if (Object.keys(patch).length) opts.onHud(patch);
   };
 
@@ -210,6 +257,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.cooldown = 1.0;
     },
     resize,
-    destroy: () => cancelAnimationFrame(raf),
+    destroy: () => {
+      cancelAnimationFrame(raf);
+      removeInput?.();
+    },
   };
 }

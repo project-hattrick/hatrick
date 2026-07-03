@@ -15,6 +15,7 @@ export function goal(world: RealGkWorld, team: Team): void {
   const features = world.cfg.features;
   if (team === Team.Blue) match.blue += 1;
   else match.red += 1;
+  match.scorer = team;
   match.kickoffTeam = team === Team.Blue ? Team.Red : Team.Blue;
   if (features?.celebrations || features?.replay) {
     // v4 broadcast flow: short live celebration, then the replay director takes over.

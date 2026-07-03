@@ -11,7 +11,7 @@ import { faceBall, resetPlayers, updatePlayers } from './players';
 import { resetReferee, updateReferee } from './referee';
 import { setStatus } from './rules';
 
-const freshBall = (): Ball => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, spin: 0, spinRate: 0, ownerId: null, cooldown: 0, impact: 0, lastKickerId: null });
+const freshBall = (): Ball => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, spin: 0, spinRate: 0, ownerId: null, cooldown: 0, impact: 0, lastKickerId: null, lofted: false, landX: 0, landY: 0 });
 
 const freshReferee = (): Referee => ({
   active: true,
@@ -47,6 +47,7 @@ const freshMatch = (): MatchState => ({
   phase: MatchPhase.Live,
   phaseTimer: 0,
   celebrantId: null,
+  scorer: null,
 });
 
 /** Drops the ball at center and gives it to the kickoff team's most central outfielder. */
@@ -105,6 +106,7 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     view,
     cfg,
     dpr: 1,
+    controlId: 0,
   };
   restartMatch(world);
   return world;

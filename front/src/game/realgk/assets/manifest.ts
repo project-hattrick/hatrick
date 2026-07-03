@@ -28,6 +28,13 @@ export const REF_SPRITE_PATHS = {
 
 export const REF_WALK_FRAMES = [1, 2, 3, 4].map((i) => `${REF_V2}/ref_walk_side_0${i}.png`);
 
+/** Goal net rendered in depth layers (back behind players, front over them). */
+export const GOAL_PATHS = {
+  back: `${REAL_GK_ROOT}/goal/goal_back.png`,
+  front: `${REAL_GK_ROOT}/goal/goal_front.png`,
+  shadow: `${REAL_GK_ROOT}/goal/goal_shadow.png`,
+} as const;
+
 export const COACH_PATHS = {
   idle: `${REAL_GK_ROOT}/coach/coach_idle_side.png`,
   angry: `${REAL_GK_ROOT}/coach/coach_angry_side.png`,

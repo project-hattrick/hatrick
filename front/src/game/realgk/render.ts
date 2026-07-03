@@ -1,6 +1,6 @@
-import { BALL_GRAVITY, DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
+import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
 import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
-import { fieldBounds } from './field';
+import { fieldBounds, GOALS, metrics } from './field';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
@@ -165,7 +165,6 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     : spriteHeightFor(world, depth, sizeCfg);
   const footY = player.y - player.celebrationLift;
 
-  // Foot shadow (with per-player variety + a stretch along movement) and a glowing team ring.
   const liftShrink = 1 - Math.min(0.38, player.celebrationLift / 60);
   const spd = Math.hypot(player.vx, player.vy);
   const vary = 0.9 + ((player.id * 37) % 21) / 100; // stable 0.9–1.1 size variety per player
@@ -173,9 +172,9 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const shadowRX = lerp(8, 15, depth) * stretch * vary * liftShrink;
   const shadowRY = lerp(3, 6, depth) * (diving ? 1 : 1 / Math.sqrt(stretch)) * vary * liftShrink;
   const cy = player.y + 5;
-  const shadowAlpha = ((diving ? 0.34 : 0.28) - Math.min(0.14, player.celebrationLift * 0.004)) * liftShrink;
+  const shadowAlpha = ((diving ? 0.42 : 0.34) - Math.min(0.2, player.celebrationLift * 0.006)) * liftShrink;
 
-  // Composited/plain sprite painter — reused for the mirrored reflection and the real draw.
+  // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
   const composedCfg = keeperCfg ?? outfieldCfg;
   const paintSprite = (): void => {
@@ -188,32 +187,28 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     }
   };
 
-  // Reflection: a flipped, squashed, faded copy under the feet (wet-turf sheen). Skipped when airborne.
-  if (player.celebrationLift < 2) {
+  // Cast-shadow "reflection": the sprite as a solid BLACK silhouette, flipped down from the feet,
+  // stretched + skewed to read like a long shadow on the pitch.
+  if (player.celebrationLift < 2 && !diving) {
     ctx.save();
-    ctx.globalAlpha = 0.14 * (diving ? 0.6 : 1);
-    ctx.translate(0, footY);
-    ctx.scale(1, -0.5);
-    ctx.translate(0, -footY);
+    ctx.globalAlpha = 0.34;
+    ctx.filter = 'brightness(0)';
+    ctx.translate(player.x, footY);
+    ctx.transform(1, 0, 0.62, -1.25, 0, 0); // skewX + flip & stretch downward
+    ctx.translate(-player.x, -footY);
     paintSprite();
     ctx.restore();
   }
 
-  // Radial-gradient shadow squashed to an ellipse — reads rounder/softer than a flat fill.
+  // Small solid foot shadow to ground the sprite, plus the glowing team ring.
   ctx.save();
-  ctx.translate(player.x, cy);
-  ctx.scale(1, Math.max(0.001, shadowRY / shadowRX));
-  const shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, shadowRX);
-  shadowGrad.addColorStop(0, `rgba(0,0,0,${shadowAlpha})`);
-  shadowGrad.addColorStop(0.6, `rgba(0,0,0,${shadowAlpha * 0.5})`);
-  shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = shadowGrad;
+  ctx.globalAlpha = Math.max(0, shadowAlpha);
+  ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.arc(0, 0, shadowRX, 0, Math.PI * 2);
+  ctx.ellipse(player.x, cy, shadowRX, shadowRY, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Team ring: a soft wide glow underneath + a crisp bright line on top.
   const ringRX = shadowRX + lerp(3, 5, depth);
   const ringRY = shadowRY + lerp(1.6, 2.6, depth);
   ctx.save();
@@ -230,7 +225,43 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   ctx.stroke();
   ctx.restore();
 
+  // Active-player marker (sandbox): a pulsing SOLID ring drawn in crisp pixel blocks + an inner glow.
+  const isActive = world.cfg.features?.playable === true && world.controlId === player.id;
+  if (isActive) {
+    const pulse = (Math.sin(now * 0.005) + 1) / 2;
+    const rr = ringRX + 1 + pulse * 3;
+    const ry = ringRY + 0.6 + pulse * 1.3;
+    ctx.save();
+    ctx.fillStyle = '#4fe6d4';
+    ctx.globalAlpha = 0.22; // inner glow
+    ctx.beginPath();
+    ctx.ellipse(player.x, cy, Math.max(1, rr - 2), Math.max(0.6, ry - 1), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    const steps = Math.max(22, Math.round(rr * 3.2)); // dense 2px blocks → pixel "solid" ring
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const dx = Math.round(player.x + Math.cos(a) * rr);
+      const dy = Math.round(cy + Math.sin(a) * ry);
+      ctx.fillRect(dx - 1, dy - 1, 2, 2);
+    }
+    ctx.restore();
+  }
+
   paintSprite();
+
+  // Overhead pixel arrow (built from stacked rects) bobbing above the controlled player.
+  if (isActive) {
+    const ax = Math.round(player.x);
+    const ay = Math.round(footY - spriteHeight - 9 + (Math.floor(now / 180) % 3) - 1);
+    ctx.save();
+    ctx.fillStyle = '#4fe6d4';
+    ctx.fillRect(ax - 4, ay, 9, 2);
+    ctx.fillRect(ax - 3, ay + 2, 7, 2);
+    ctx.fillRect(ax - 2, ay + 4, 5, 2);
+    ctx.fillRect(ax - 1, ay + 6, 3, 2);
+    ctx.restore();
+  }
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: RealGkAssets, flat: boolean): void {
@@ -281,52 +312,93 @@ function drawCoach(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: Re
   drawSprite(ctx, image, c.x, c.y, spriteHeight, false);
 }
 
-/** Late-afternoon stadium shadow: a cool dark band covering ~half the pitch that slowly creeps across. */
-function drawDuskShadow(ctx: CanvasRenderingContext2D, world: RealGkWorld, now: number): void {
+// Goal-net placement knobs (tune to the pitch): height vs the goal-mouth band, nudge off the line, and
+// which way the source art's opening faces (left goal uses it as-is, right goal mirrors it).
+const GOAL_H_SCALE = 1.7;
+const GOAL_X_OFF = 6;
+const GOAL_Y_OFF = 0;
+
+/** Draws one depth layer of the goal net at both goal lines (aligned to field.ts GOALS). */
+function drawGoalNet(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: RealGkAssets, layer: 'back' | 'front'): void {
+  if (!world.cfg.features?.goalNet) return;
+  const img = layer === 'back' ? assets.goal.back : assets.goal.front;
+  if (!img.complete || !img.naturalWidth) return;
+  const m = metrics(world.size);
+  const aspect = img.naturalWidth / img.naturalHeight;
+  for (const team of [Team.Blue, Team.Red]) {
+    const g = GOALS[team];
+    const midD = (g.depthTop + g.depthBottom) / 2;
+    const yTop = lerp(m.topY, m.bottomY, g.depthTop);
+    const yBottom = lerp(m.topY, m.bottomY, g.depthBottom);
+    const H = (yBottom - yTop) * GOAL_H_SCALE;
+    const W = H * aspect;
+    const y = (yTop + yBottom) / 2 - H / 2 + GOAL_Y_OFF;
+    const left = g.lat < 0.5;
+    const lineX = left ? lerp(m.topLeft, m.bottomLeft, midD) : lerp(m.topRight, m.bottomRight, midD);
+    ctx.save();
+    if (left) {
+      ctx.drawImage(img, lineX - W + GOAL_X_OFF, y, W, H); // extends outward (left), opening faces the pitch
+    } else {
+      ctx.translate(lineX - GOAL_X_OFF + W, 0); // mirror for the right goal
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, y, W, H);
+    }
+    ctx.restore();
+  }
+}
+
+/** Fixed, dispersed diagonal shadow beams with soft (blurred) edges — reads like cast stadium shadows. */
+function drawShadowBeams(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
   if (!world.cfg.features?.duskShadow) return;
   const { width, height } = world.size;
-  const edge = clamp(0.4 + now * 0.0000016, 0.4, 0.62) * width; // creeps from ~40% to ~62% over the match
-  const soft = width * 0.16;
-  const grad = ctx.createLinearGradient(0, 0, edge, 0);
-  grad.addColorStop(0, 'rgba(16,20,42,0.36)');
-  grad.addColorStop(Math.max(0, 1 - soft / Math.max(1, edge)), 'rgba(16,20,42,0.36)');
-  grad.addColorStop(1, 'rgba(16,20,42,0)');
+  const gap = height * 0.62; // dispersed
+  const bw = height * 0.22;
+  const skew = height * 0.55;
   ctx.save();
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, edge, height);
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#0a1030';
+  ctx.filter = 'blur(7px)'; // soft fade like a real shadow
+  for (let x = -height; x < width + height; x += gap) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + bw, 0);
+    ctx.lineTo(x + bw - skew, height);
+    ctx.lineTo(x - skew, height);
+    ctx.closePath();
+    ctx.fill();
+  }
   ctx.restore();
 }
 
 /** Predicted landing spot of a lofted ball — a ground shadow + a white "×2.5" target on the pitch. */
 function drawLandingMarker(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
   const { ball } = world;
-  if (ball.ownerId != null || (ball.z < 14 && ball.vz < 60)) return;
-  const t = (ball.vz + Math.sqrt(Math.max(0, ball.vz * ball.vz + 2 * BALL_GRAVITY * ball.z))) / BALL_GRAVITY;
-  if (t < 0.2) return;
-  const lx = ball.x + ball.vx * t;
-  const ly = ball.y + ball.vy * t;
+  // Only for lofted balls (crosses / long balls); fixed spot computed at the cross, up the whole flight.
+  if (ball.ownerId != null || !ball.lofted || ball.z < 3) return;
+  const lx = ball.landX;
+  const ly = ball.landY;
 
   ctx.save();
-  ctx.globalAlpha = 0.22;
+  ctx.globalAlpha = 0.2;
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.ellipse(lx, ly, 11, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(lx, ly, 6, 2.6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 0.9;
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2.4;
+  ctx.lineWidth = 1.6;
   ctx.lineCap = 'round';
-  const s = 7;
+  const s = 4;
   ctx.beginPath();
   ctx.moveTo(lx - s, ly - s * 0.55);
   ctx.lineTo(lx + s, ly + s * 0.55);
   ctx.moveTo(lx + s, ly - s * 0.55);
   ctx.lineTo(lx - s, ly + s * 0.55);
   ctx.stroke();
-  ctx.globalAlpha = 0.95;
+  ctx.globalAlpha = 0.92;
   ctx.fillStyle = '#ffffff';
-  ctx.font = '700 11px system-ui, sans-serif';
-  ctx.fillText('×2.5', lx + 11, ly - 6);
+  ctx.font = '700 8px system-ui, sans-serif';
+  ctx.fillText('×2.5', lx + 7, ly - 4);
   ctx.restore();
 }
 
@@ -344,6 +416,7 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   ctx.setTransform(dpr * z, 0, 0, dpr * zy, dpr * (world.view.width / 2 - cam.x * z), dpr * (world.view.height / 2 - cam.y * zy));
   if (assets.court.complete && assets.court.naturalWidth) ctx.drawImage(assets.court, 0, 0, width, height);
   drawLandingMarker(ctx, world);
+  drawGoalNet(ctx, world, assets, 'back'); // behind the players
 
   const renderables: { sortY: number; draw: () => void }[] = world.players.map((player) => ({
     sortY: player.y,
@@ -353,14 +426,16 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   if (world.referee.active) {
     renderables.push({ sortY: world.referee.y, draw: () => drawReferee(ctx, world, assets, now, flat) });
   }
-  // A dribbled ball sits at the owner's foot — always sort it just in front of him so his body
-  // never hides it ("ball behind the player"). Loose/airborne balls use their own y (with z lift).
+  // A dribbled ball sits at the owner's foot: sort it in front when he faces the camera, behind when he
+  // faces away (back to us) so the body correctly occludes it. Loose/airborne balls use their own y.
   const ballOwner = world.ball.ownerId != null ? world.players.find((p) => p.id === world.ball.ownerId) : null;
-  const ballSortY = ballOwner ? ballOwner.y + 6 : world.ball.y + (world.ball.z > 0 ? -18 : 0);
+  const facingAway = ballOwner ? ballOwner.lookY < -0.25 || ballOwner.mode.includes('back') : false;
+  const ballSortY = ballOwner ? ballOwner.y + (facingAway ? -10 : 6) : world.ball.y + (world.ball.z > 0 ? -18 : 0);
   renderables.push({ sortY: ballSortY, draw: () => drawBall(ctx, world, assets, flat) });
 
   renderables.sort((a, b) => a.sortY - b.sortY).forEach((r) => r.draw());
+  drawGoalNet(ctx, world, assets, 'front'); // near posts/net over the players
 
-  // Dusk shadow darkens the grass + anyone standing in the covered half (drawn over the scene).
-  drawDuskShadow(ctx, world, now);
+  // Fixed diagonal shadow beams over the whole scene.
+  drawShadowBeams(ctx, world);
 }

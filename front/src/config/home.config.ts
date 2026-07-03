@@ -68,9 +68,6 @@ export const liveRailMatches: LiveScoreMatch[] = [
   { id: 'eng-ger-live', home: { code: 'ENG', flag: '🇬🇧' }, away: { code: 'GER', flag: '🇩🇪' }, homeScore: 0, awayScore: 0, minute: 23 },
 ];
 
-/** Featured match + rail matches — what "jogos rolando agora" counts. */
-export const liveMatchCount = liveRailMatches.length + 1;
-
 export const upcomingSummary: { total: number; fixtures: Fixture[] } = {
   total: 12,
   fixtures: [

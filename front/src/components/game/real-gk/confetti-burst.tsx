@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-const COLORS = ['#aef019', '#3b82f6', '#ef4444', '#f0c24f', '#ffffff', '#22d3ee', '#fb7185'];
+const NEUTRAL = ['#aef019', '#3b82f6', '#ef4444', '#f0c24f', '#ffffff', '#22d3ee', '#fb7185'];
+
+/** Country-ish palettes keyed by the scoring team (swap for real matchup flags any time). */
+const TEAM_COLORS: Record<string, string[]> = {
+  blue: ['#0055A4', '#ffffff', '#EF4135', '#cfe0ff'], // Blue → France-style
+  red: ['#AA151B', '#F1BF00', '#ffffff', '#ffe08a'], // Red → Spain-style
+};
 
 interface Particle {
   x: number;
@@ -15,12 +21,16 @@ interface Particle {
   vr: number;
 }
 
-/** Pixel confetti that bursts each time `active` flips true (goal celebration). */
-export function ConfettiBurst({ active }: { active: boolean }) {
+/** Pixel confetti that bursts each time `active` flips true (goal celebration), in the scorer's colors. */
+export function ConfettiBurst({ active, team = '' }: { active: boolean; team?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particles = useRef<Particle[]>([]);
   const raf = useRef(0);
   const running = useRef(false);
+  const teamRef = useRef(team);
+  useEffect(() => {
+    teamRef.current = team;
+  }, [team]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,15 +92,17 @@ export function ConfettiBurst({ active }: { active: boolean }) {
   useEffect(() => {
     if (!active) return;
     const W = canvasRef.current?.width || window.innerWidth;
+    const palette = TEAM_COLORS[teamRef.current] ?? NEUTRAL;
     const ps = particles.current;
-    for (let i = 0; i < 180; i++) {
+    // Spawn across the FULL screen width so confetti covers 100%.
+    for (let i = 0; i < 300; i++) {
       ps.push({
-        x: W * 0.5 + (Math.random() - 0.5) * W * 0.55,
-        y: -20 - Math.random() * 90,
-        vx: (Math.random() - 0.5) * 9,
+        x: Math.random() * W,
+        y: -20 - Math.random() * 120,
+        vx: (Math.random() - 0.5) * 7,
         vy: Math.random() * 4 + 2,
         size: 4 + Math.floor(Math.random() * 7),
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        color: palette[Math.floor(Math.random() * palette.length)],
         rot: Math.random() * Math.PI,
         vr: (Math.random() - 0.5) * 0.3,
       });

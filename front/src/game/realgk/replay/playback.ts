@@ -119,6 +119,9 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     ownerId: null,
     cooldown: 0,
     lastKickerId: null,
+    lofted: false,
+    landX: 0,
+    landY: 0,
   };
   const referee: Referee = {
     ...live.referee,
@@ -142,5 +145,6 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     view: live.view,
     cfg: live.cfg,
     dpr: live.dpr,
+    controlId: live.controlId,
   };
 }

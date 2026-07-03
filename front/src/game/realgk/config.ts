@@ -19,6 +19,10 @@ export interface RealGkFeatures {
   normalizedSizes: boolean;
   /** Late-afternoon stadium shadow that covers ~half the pitch and slowly creeps across. */
   duskShadow: boolean;
+  /** Playable sandbox: two same-team players under keyboard control (pass switches control). */
+  playable: boolean;
+  /** Render the goal net (traves + rede) in layers at both goal lines. */
+  goalNet: boolean;
 }
 
 /**
@@ -102,13 +106,35 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: true },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
 
+/**
+ * Playable sandbox — the HERO look (best feel: instant shot, hero sprite sizes, cinematic camera) made
+ * controllable, with goal celebrations added. `extraAnims: false` keeps the crisp instant strike;
+ * `celebrations: true` (with the v4 anim pack still loaded because `features` is defined) adds the party.
+ */
+export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
+};
+
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;
   if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;
   return id === CheckpointId.RealGkV3 ? REAL_GK_CINEMA_CONFIG : REAL_GK_V2_CONFIG;
 }

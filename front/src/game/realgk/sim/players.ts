@@ -6,6 +6,7 @@ import { ITEM_MAP } from '../assets/items';
 import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
 import { FORMATION } from './formation';
+import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { startPowerShot, updatePowerShot } from './shot';
@@ -15,69 +16,87 @@ import { setStatus } from './rules';
 
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
 
-/** (Re)spawns both 11-a-side squads into formation. */
+/** Builds one player object at (lat, depth) for the given team. */
+function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, depth: number, name: string): RealGkPlayer {
+  const dir = team === Team.Blue ? 1 : -1;
+  const pt = pointOnField(world.size, lat, depth);
+  const idle = role === Role.GK ? BodyAnim.GkIdle : dir > 0 ? BodyAnim.IdleFront : BodyAnim.IdleBack;
+  return {
+    id: world.nextPlayerId++,
+    name,
+    team,
+    dir,
+    role,
+    homeLat: lat,
+    homeDepth: depth,
+    x: pt.x,
+    y: pt.y,
+    vx: 0,
+    vy: 0,
+    facing: dir,
+    lookX: dir,
+    lookY: 0,
+    desiredLookX: dir,
+    desiredLookY: 0,
+    facingLock: 0,
+    pendingFacing: dir,
+    pendingFacingTime: 0,
+    targetX: pt.x,
+    targetY: pt.y,
+    idleMode: idle,
+    modeLock: 0,
+    mode: idle,
+    think: Math.random() * 0.4,
+    action: PlayerAction.None,
+    actionTimer: 0,
+    actionElapsed: 0,
+    diveDir: dir,
+    diveStartX: pt.x,
+    diveStartY: pt.y,
+    saveCooldown: 0,
+    celebrationKind: CelebrationKind.None,
+    celebrationPhase: CelebrationPhase.None,
+    celebrationTimer: 0,
+    celebrationLift: 0,
+    brakeCooldown: 0,
+    prevSpeed: 0,
+    headerCooldown: 0,
+    headerHit: false,
+    receiveCooldown: 0,
+    receiveHit: false,
+    powerShotHit: false,
+  };
+}
+
+/** Playable sandbox roster: two Blue teammates near center — no opponents, no keepers. */
+function resetPlayablePlayers(world: RealGkWorld): void {
+  world.players = [
+    createPlayer(world, Team.Blue, Role.ST, 0.42, 0.5, 'YOU-1'),
+    createPlayer(world, Team.Blue, Role.MID, 0.58, 0.5, 'YOU-2'),
+  ];
+  world.controlId = world.players[0].id;
+}
+
+/** (Re)spawns the squads: full 11-a-side, or the 2-player sandbox when `playable`. */
 export function resetPlayers(world: RealGkWorld): void {
   world.players = [];
   world.nextPlayerId = 1;
+  if (world.cfg.features?.playable) {
+    resetPlayablePlayers(world);
+    return;
+  }
   for (const team of [Team.Blue, Team.Red]) {
-    const dir = team === Team.Blue ? 1 : -1;
     FORMATION.forEach((slot, index) => {
       const lat = team === Team.Blue ? slot.lat : 1 - slot.lat;
-      const pt = pointOnField(world.size, lat, slot.depth);
-      const isGk = slot.role === Role.GK;
-      const idle = isGk ? BodyAnim.GkIdle : dir > 0 ? BodyAnim.IdleFront : BodyAnim.IdleBack;
-      world.players.push({
-        id: world.nextPlayerId++,
-        name: `${TEAM_TAG[team]}-${index + 1}`,
-        team,
-        dir,
-        role: slot.role,
-        homeLat: lat,
-        homeDepth: slot.depth,
-        x: pt.x,
-        y: pt.y,
-        vx: 0,
-        vy: 0,
-        facing: dir,
-        lookX: dir,
-        lookY: 0,
-        desiredLookX: dir,
-        desiredLookY: 0,
-        facingLock: 0,
-        pendingFacing: dir,
-        pendingFacingTime: 0,
-        targetX: pt.x,
-        targetY: pt.y,
-        idleMode: idle,
-        modeLock: 0,
-        mode: idle,
-        think: Math.random() * 0.4,
-        action: PlayerAction.None,
-        actionTimer: 0,
-        actionElapsed: 0,
-        diveDir: dir,
-        diveStartX: pt.x,
-        diveStartY: pt.y,
-        saveCooldown: 0,
-        celebrationKind: CelebrationKind.None,
-        celebrationPhase: CelebrationPhase.None,
-        celebrationTimer: 0,
-        celebrationLift: 0,
-        brakeCooldown: 0,
-        prevSpeed: 0,
-        headerCooldown: 0,
-        headerHit: false,
-        receiveCooldown: 0,
-        receiveHit: false,
-        powerShotHit: false,
-      });
+      world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, `${TEAM_TAG[team]}-${index + 1}`));
     });
   }
 }
 
-export function nearestPlayerToBall(world: RealGkWorld, team: Team): RealGkPlayer {
+export function nearestPlayerToBall(world: RealGkWorld, team: Team): RealGkPlayer | null {
   const { ball } = world;
   const roster = world.players.filter((p) => p.team === team);
+  if (!roster.length) return null;
   return roster.reduce((best, p) => {
     const pd = Math.hypot(p.x - ball.x, p.y - ball.y);
     const bd = Math.hypot(best.x - ball.x, best.y - ball.y);
@@ -392,6 +411,9 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   const blueChaser = nearestPlayerToBall(world, Team.Blue);
   const redChaser = nearestPlayerToBall(world, Team.Red);
 
+  // Sandbox: control follows the Blue player who has the ball, so a pass hands control to the receiver.
+  if (world.cfg.features?.playable && owner && owner.team === Team.Blue) world.controlId = owner.id;
+
   for (const player of players) {
     if (match.celebration > 0) {
       if (player.celebrationPhase !== CelebrationPhase.None) {
@@ -434,6 +456,12 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       continue;
     }
 
+    // Keyboard-controlled player (sandbox) moves by held keys instead of AI.
+    if (isControlled(world, player)) {
+      updateControlledPlayer(world, player, dt);
+      continue;
+    }
+
     if (owner && owner.id === player.id) {
       const ratios = fieldRatios(size, player.x, player.y);
       const dribbleLat = clamp(ratios.lat + player.dir * 0.055, 0.06, 0.94);
@@ -449,11 +477,11 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     }
 
     const chaser = player.team === Team.Blue ? blueChaser : redChaser;
-    if (!owner && chaser.id === player.id) {
+    if (!owner && chaser && chaser.id === player.id) {
       moveToward(world, player, ball.x, ball.y, player.role === Role.GK ? 85 : 145, dt);
       continue;
     }
-    if (owner && player.team !== owner.team && chaser.id === player.id) {
+    if (owner && player.team !== owner.team && chaser && chaser.id === player.id) {
       moveToward(world, player, ball.x, ball.y, player.role === Role.GK ? 85 : 150, dt);
       continue;
     }

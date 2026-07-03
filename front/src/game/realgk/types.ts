@@ -76,6 +76,11 @@ export interface Ball {
   impact: number;
   /** Last player who kicked the ball — resolves the goal scorer for celebrations. */
   lastKickerId: number | null;
+  /** True while a lofted ball (cross / long ball) is in flight — gates the landing "×" marker. */
+  lofted: boolean;
+  /** Fixed predicted landing spot, computed once at the cross (so the "×" doesn't drift with the ball). */
+  landX: number;
+  landY: number;
 }
 
 export interface Referee {
@@ -125,6 +130,8 @@ export interface MatchState {
   phaseTimer: number;
   /** Player id celebrating the goal — camera target while the celebration runs. */
   celebrantId: number | null;
+  /** Team that scored the current goal (drives country-colored confetti). */
+  scorer: Team | null;
 }
 
 /** All mutable v2 state. Mutated by the loop; lives outside React. */
@@ -141,6 +148,18 @@ export interface RealGkWorld {
   view: Size;
   cfg: RealGkConfig;
   dpr: number;
+  /** Keyboard control for the playable sandbox (undefined = fully AI). */
+  control?: ControlInput;
+  /** Id of the player currently under keyboard control (follows possession). */
+  controlId: number;
+}
+
+/** Held movement keys for the controlled player (playable sandbox). */
+export interface ControlInput {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
 }
 
 /** HUD snapshot pushed to React on change. */
@@ -158,6 +177,8 @@ export interface RealGkHud {
   goalActive: boolean;
   replayActive: boolean;
   redCardActive: boolean;
+  /** Scoring team of the current goal ('blue' | 'red' | ''), for country-colored confetti. */
+  goalTeam: string;
   cameraLabel: string;
   targetLabel: string;
 }

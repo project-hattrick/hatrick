@@ -30,10 +30,17 @@ export function kickBall(world: RealGkWorld, player: RealGkPlayer, targetX: numb
   const curlSeed = clamp((player.vx * ny - player.vy * nx) * 0.012, -1, 1);
   ball.ownerId = null;
   ball.lastKickerId = player.id;
+  ball.lofted = lob; // only lofted balls (crosses / long balls) show the landing marker
   ball.cooldown = lob ? 0.42 : 0.26;
   ball.vx = nx * power;
   ball.vy = ny * power * 0.92;
   ball.vz = lob ? 300 : power > 340 ? 92 : 46;
+  if (lob) {
+    // Fix the landing marker once, at the cross (ballistic projection — it must not drift with the ball).
+    const flight = (ball.vz + Math.sqrt(ball.vz * ball.vz + 2 * BALL_GRAVITY * Math.max(0, ball.z))) / BALL_GRAVITY;
+    ball.landX = ball.x + ball.vx * flight;
+    ball.landY = ball.y + ball.vy * flight;
+  }
   ball.spin = (ball.spin + (lob ? 2.2 : 1.4)) % BALL_FRAME_COUNT;
   ball.spinRate = clamp((power / 115) * (lob ? 1.2 : 0.8) + curlSeed * 3.5, -9, 9);
   world.match.ballText = BallText.loose;
@@ -57,6 +64,7 @@ export function maybeClaimBall(world: RealGkWorld): void {
   }
   if (!best) return;
   ball.ownerId = best.id;
+  ball.lofted = false;
   ball.vx = 0;
   ball.vy = 0;
   ball.vz = 0;
@@ -86,6 +94,7 @@ function deadBall(world: RealGkWorld, lat: number, depth: number, note: { title:
   ball.spinRate = 0;
   ball.ownerId = null;
   ball.lastKickerId = null;
+  ball.lofted = false;
   // Brief dead-ball window so it isn't snapped up instantly — the nearest player runs on and restarts.
   ball.cooldown = 0.5;
   world.match.ballText = BallText.deadBall;
@@ -102,12 +111,11 @@ function throwInRestart(world: RealGkWorld, lastTeam: Team | null, topSide: bool
 
 /** Ball over a goal line (left/right, no goal) → corner (attacker last touched) or goal kick (defender). */
 function bylineRestart(world: RealGkWorld, goalOwner: Team, lastTeam: Team | null): void {
-  const { ball, size } = world;
   const attacker = opposite(goalOwner);
-  const topHalf = fieldRatios(size, ball.x, ball.y).depth < 0.5;
   if (lastTeam === attacker) {
-    const lat = goalOwner === Team.Blue ? 0.03 : 0.97; // attacking-side corner flag
-    deadBall(world, lat, topHalf ? 0.05 : 0.95, Status.corner(attacker));
+    // Corner right at the bottom (near-camera) corner flag on the goal-line side the ball crossed.
+    const lat = goalOwner === Team.Blue ? 0.015 : 0.985;
+    deadBall(world, lat, 0.94, Status.corner(attacker));
   } else {
     const lat = goalOwner === Team.Blue ? 0.14 : 0.86; // just inside the defended goal
     deadBall(world, lat, 0.5, Status.goalKick(goalOwner));
@@ -123,6 +131,7 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   ball.impact = Math.max(0, ball.impact - dt);
 
   if (owner) {
+    ball.lofted = false;
     const forward = forwardVector(owner);
     const footOffset = owner.role === Role.GK ? 10 : 16;
     const footX = owner.x + forward.x * footOffset;
