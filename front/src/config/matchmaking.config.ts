@@ -49,7 +49,7 @@ export const selfDuelist: Duelist = {
   wins: 128,
   losses: 74,
   streak: 'W5',
-  portraitSrc: '/cards/player-green.png',
+  portraitSrc: '/personas/p01.png',
 };
 
 /** The matched opponent. */
@@ -62,5 +62,5 @@ export const opponentDuelist: Duelist = {
   wins: 210,
   losses: 150,
   streak: 'W2',
-  portraitSrc: '/cards/player-93.png',
+  portraitSrc: '/personas/p07.png',
 };

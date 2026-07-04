@@ -37,11 +37,11 @@ export interface HeroMatch {
 export const heroMatch: HeroMatch = {
   home: {
     name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/hero-arg.png',
-    placement: { width: 150, x: 0, y: 0, scale: 1, flip: false, objectY: 0 },
+    placement: { width: 190, x: -7, y: 6, scale: 1, flip: false, objectY: 5 },
   },
   away: {
     name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png',
-    placement: { width: 150, x: 0, y: 0, scale: 1, flip: false, objectY: 0 },
+    placement: { width: 150, x: -2, y: 5, scale: 1, flip: false, objectY: 8 },
   },
   label: 'Sunday, 21 January',
   // Countdown target as a fixed remaining offset (days/hours/mins/secs) — mock, not wall-clock.

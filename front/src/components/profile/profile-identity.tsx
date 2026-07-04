@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Pencil, Wallet, Trophy, Coins, Package, Percent } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
-import { Avatar } from '@/components/ui/avatar';
 import { buttonVariants } from '@/components/ui/button';
 import { formatThousands, shortAddress } from '@/lib/format';
+import { selfProfile } from '@/config/duelists.config';
 import { useAuth } from '@/services/queries/use-auth';
 
 /** Profile header + stat row, driven by the real wallet session (useAuth). */
@@ -34,7 +35,16 @@ export function ProfileIdentity() {
         className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-center gap-4">
-          <Avatar name={displayName} className="size-16" />
+          <span className="grid size-16 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
+            <Image
+              src={selfProfile.portraitSrc}
+              alt={displayName}
+              width={64}
+              height={64}
+              className="translate-y-[6%] scale-110 object-contain object-bottom"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </span>
           <div className="flex flex-col gap-1">
             <span className="text-lg font-bold">{displayName}</span>
             <span className="text-sm text-muted-foreground">{handle}</span>

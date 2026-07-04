@@ -21,6 +21,8 @@ export function useWalletAuth() {
   const clear = useAuthStore((s) => s.clear);
   const signIn = useSignInMutation();
   const inFlight = useRef(false);
+  /** True once the adapter has connected in THIS page load — gates the disconnect-clear. */
+  const wasConnected = useRef(false);
 
   const { mutate } = signIn;
   const wallet = publicKey?.toBase58() ?? null;
@@ -28,10 +30,14 @@ export function useWalletAuth() {
 
   useEffect(() => {
     if (!connected) {
-      if (token) clear();
+      // On a fresh page load the adapter is still auto-reconnecting (connected=false), so the
+      // persisted session must survive — only a REAL disconnect (connected true → false) clears it.
+      // Clearing here used to wipe the stored JWT on every refresh and force a new Phantom sign-in.
+      if (wasConnected.current && token) clear();
       inFlight.current = false;
       return;
     }
+    wasConnected.current = true;
     if (!signMessage || !wallet) return;
     if (wallet === authedWallet && token) return; // already authenticated
     if (inFlight.current) return;
