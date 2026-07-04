@@ -1,11 +1,12 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
 import { IntroStage, MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
-import { centerSpot, pointOnField } from '../field';
+import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
 import { clearCelebrations } from './celebration';
 import { freshCoach, resetCoach, updateCoach } from './coach';
+import { maybeTriggerFoul } from './foul';
 import { updateIntro } from './intro';
 import { BallText, Status } from './messages';
 import { faceBall, placePlayersOffPitch, resetPlayers, updatePlayers } from './players';
@@ -36,6 +37,8 @@ const freshReferee = (): Referee => ({
   homeX: 0,
   homeY: 0,
   kickoff: false,
+  whistleOnly: false,
+  runSpeed: 124,
 });
 
 const freshMatch = (): MatchState => ({
@@ -54,12 +57,13 @@ const freshMatch = (): MatchState => ({
   introStage: IntroStage.Showcase,
   introTimer: 0,
   restart: null,
+  foulCooldown: 12,
 });
 
 /** Drops the ball at center and gives it to the kickoff team's most central outfielder. */
 export function resetBall(world: RealGkWorld, centerTeam: Team): void {
   const { ball, players, size } = world;
-  const center = pointOnField(size, 0.5, 0.5);
+  const center = centerSpot(size);
   ball.x = center.x;
   ball.y = center.y;
   ball.z = 0;
@@ -127,6 +131,8 @@ export function restartMatch(world: RealGkWorld): void {
   world.match.phaseTimer = 0;
   world.match.celebrantId = null;
   world.match.restart = null;
+  world.match.foulCooldown = 12;
+  world.sentOffNames = [];
   if (world.cfg.features?.matchIntro) {
     enterIntro(world);
     return;
@@ -153,6 +159,7 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     cfg,
     dpr: 1,
     controlId: 0,
+    sentOffNames: [],
   };
   restartMatch(world);
   return world;
@@ -206,6 +213,8 @@ export function step(world: RealGkWorld, dt: number): void {
   }
 
   match.time += dt * TIME_SCALE;
+  // v5 fouls: a contested challenge may stop play — the sanction flow runs via updateRestart next tick.
+  if (maybeTriggerFoul(world, dt)) return;
   updatePlayers(world, dt);
   updateBall(world, dt);
   faceBall(world);

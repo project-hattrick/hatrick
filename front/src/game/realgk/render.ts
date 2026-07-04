@@ -1,6 +1,6 @@
 import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
 import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
-import { fieldBounds, GOALS, metrics } from './field';
+import { centerSpot, cornerSpot, fieldBounds, goalKickSpot, metrics, penaltySpot, GOALS, PLAY_LINES } from './field';
 import { drawBillboards } from './billboards';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
@@ -416,6 +416,103 @@ function drawLandingMarker(ctx: CanvasRenderingContext2D, world: RealGkWorld): v
   ctx.restore();
 }
 
+/** Lat/depth → field px via the trapezoid (local mirror of field.ts pointOnField, kept render-side). */
+function fieldPoint(world: RealGkWorld, lat: number, depth: number): { x: number; y: number } {
+  const m = metrics(world.size);
+  const y = lerp(m.topY, m.bottomY, depth);
+  const b = fieldBounds(world.size, y);
+  return { x: lerp(b.left, b.right, lat), y };
+}
+
+function debugDot(ctx: CanvasRenderingContext2D, x: number, y: number, color: string): void {
+  ctx.beginPath();
+  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+/**
+ * Court-test overlay (`features.debugBounds`): pitch trapezoid (dashed cyan), calibrated out-of-play
+ * lines (yellow), center spot, goal mouths and restart spots — everything the field calibrator maps,
+ * verified live on the actual court.
+ */
+function drawDebugBounds(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
+  const m = metrics(world.size);
+  ctx.save();
+
+  // Outer trapezoid (the calibrated court corners).
+  ctx.setLineDash([10, 8]);
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(m.topLeft, m.topY);
+  ctx.lineTo(m.topRight, m.topY);
+  ctx.lineTo(m.bottomRight, m.bottomY);
+  ctx.lineTo(m.bottomLeft, m.bottomY);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Out-of-play lines (where the ball is called out) — the quad PLAY_LINES traces in ratio space.
+  const tlp = fieldPoint(world, PLAY_LINES.latLeft, PLAY_LINES.depthTop);
+  const trp = fieldPoint(world, PLAY_LINES.latRight, PLAY_LINES.depthTop);
+  const brp = fieldPoint(world, PLAY_LINES.latRight, PLAY_LINES.depthBottom);
+  const blp = fieldPoint(world, PLAY_LINES.latLeft, PLAY_LINES.depthBottom);
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.95)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(tlp.x, tlp.y);
+  ctx.lineTo(trp.x, trp.y);
+  ctx.lineTo(brp.x, brp.y);
+  ctx.lineTo(blp.x, blp.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Center spot + crosshair.
+  const c = centerSpot(world.size);
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(c.x - 16, c.y);
+  ctx.lineTo(c.x + 16, c.y);
+  ctx.moveTo(c.x, c.y - 16);
+  ctx.lineTo(c.x, c.y + 16);
+  ctx.stroke();
+
+  // Goal mouths (the scoring bands on each goal line).
+  for (const team of [Team.Blue, Team.Red]) {
+    const g = GOALS[team];
+    const top = fieldPoint(world, g.lat, g.depthTop);
+    const bottom = fieldPoint(world, g.lat, g.depthBottom);
+    ctx.strokeStyle = team === Team.Blue ? 'rgba(96,165,250,0.95)' : 'rgba(251,113,133,0.95)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(top.x, top.y);
+    ctx.lineTo(bottom.x, bottom.y);
+    ctx.stroke();
+  }
+
+  // Restart spots: corners (white), goal kicks (green), penalties (magenta).
+  for (const team of [Team.Blue, Team.Red]) {
+    for (const top of [true, false]) {
+      const corner = cornerSpot(world.size, team, top);
+      debugDot(ctx, corner.x, corner.y, '#ffffff');
+      const gk = goalKickSpot(world.size, team, top);
+      debugDot(ctx, gk.x, gk.y, '#4ade80');
+    }
+    const pen = penaltySpot(world.size, team);
+    debugDot(ctx, pen.x, pen.y, '#e879f9');
+  }
+
+  ctx.restore();
+}
+
 /** Paints the v1 court background under the follow-camera transform, then depth-sorts players/ref/ball. */
 export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: RealGkAssets, cam: RealGkCamera, now: number, flat = false): void {
   const { width, height } = world.size;
@@ -430,6 +527,7 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   ctx.setTransform(dpr * z, 0, 0, dpr * zy, dpr * (world.view.width / 2 - cam.x * z), dpr * (world.view.height / 2 - cam.y * zy));
   if (assets.court.complete && assets.court.naturalWidth) ctx.drawImage(assets.court, 0, 0, width, height);
   drawBillboards(ctx, world, now); // perimeter advertiser panels, behind the action
+  if (world.cfg.features?.debugBounds) drawDebugBounds(ctx, world); // court-test calibration overlay
   drawLandingMarker(ctx, world);
   drawGoalNet(ctx, world, assets, 'back'); // behind the players
 

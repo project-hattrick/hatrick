@@ -3,13 +3,14 @@ import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
-import { MatchPhase, RefPhase, RestartKind, Role, Team } from './enums';
+import { MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 import { pointOnField } from './field';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
 import { createRecorder, type ReplayRecorder } from './replay/recorder';
 import { resetCoach } from './sim/coach';
 import { controlPass, controlShoot } from './sim/control';
+import { startFoul } from './sim/foul';
 import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
@@ -18,9 +19,25 @@ import { spawnReferee } from './sim/referee';
 import { createWorld, enterIntro, resetBall, restartMatch, step } from './sim/world';
 import type { RealGkHandle, RealGkHudPatch } from './types';
 
-/** Broadcast banner copy per restart type (enum → label; empty when the ball is live). */
-const restartLabelFor = (kind: RestartKind): string =>
-  kind === RestartKind.Corner ? 'CORNER' : kind === RestartKind.GoalKick ? 'GOAL KICK' : kind === RestartKind.ThrowIn ? 'THROW-IN' : '';
+/** Broadcast banner copy per restart type/stage (enum → label; empty when the ball is live). */
+const restartLabelFor = (kind: RestartKind, stage: RestartStage): string => {
+  // During the sanction beat the call is still "foul" — the award (free kick / penalty) names itself at setup.
+  if (stage === RestartStage.FoulFreeze || stage === RestartStage.RefArrive) return 'FOUL';
+  switch (kind) {
+    case RestartKind.Corner:
+      return 'CORNER';
+    case RestartKind.GoalKick:
+      return 'GOAL KICK';
+    case RestartKind.ThrowIn:
+      return 'THROW-IN';
+    case RestartKind.FreeKick:
+      return 'FREE KICK';
+    case RestartKind.Penalty:
+      return 'PENALTY';
+    default:
+      return '';
+  }
+};
 
 export interface RealGkEngineOptions {
   onHud: (patch: RealGkHudPatch) => void;
@@ -96,6 +113,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   let flat = false;
   let raf = 0;
   let lastT = performance.now();
+  // Edge-trigger for the foul beat: lock the camera on the referee when his run-in starts.
+  let lastFoulStage: RestartStage | null = null;
   // Animation clock fed to render for looping sprite frames. It only advances while play runs, so a
   // pause / red-card freeze also freezes the walk/idle cycles (not just positions).
   let animClock = 0;
@@ -119,6 +138,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     introStage: 'x',
     restartActive: true,
     restartLabel: 'x',
+    restartTeam: 'x',
+    redCardName: 'x',
   };
 
   const syncHud = (): void => {
@@ -150,8 +171,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (introStage !== last.introStage) patch.introStage = last.introStage = introStage;
     const restartActive = match.restart !== null;
     if (restartActive !== last.restartActive) patch.restartActive = last.restartActive = restartActive;
-    const restartLabel = match.restart ? restartLabelFor(match.restart.kind) : '';
+    const restartLabel = match.restart ? restartLabelFor(match.restart.kind, match.restart.stage) : '';
     if (restartLabel !== last.restartLabel) patch.restartLabel = last.restartLabel = restartLabel;
+    const restartTeam = match.restart ? match.restart.team : '';
+    if (restartTeam !== last.restartTeam) patch.restartTeam = last.restartTeam = restartTeam;
+    const redCardName = redCardActive && match.restart?.foul?.card
+      ? world.players.find((p) => p.id === match.restart?.foul?.offenderId)?.name ?? ''
+      : '';
+    if (redCardName !== last.redCardName) patch.redCardName = last.redCardName = redCardName;
     if (Object.keys(patch).length) opts.onHud(patch);
   };
 
@@ -196,6 +223,10 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
           if (phase === MatchPhase.Live && world.match.celebration === 0) recorder.capture(world, now);
         }
       }
+      // Foul sanction beat: hand the camera to the referee focus the moment his run-in begins.
+      const foulStage = world.match.restart?.foul ? world.match.restart.stage : null;
+      if (foulStage === RestartStage.RefArrive && lastFoulStage !== RestartStage.RefArrive) triggerRefereeFocus(cam);
+      lastFoulStage = foulStage;
       const replayScene = director?.scene() ?? null;
       // Live camera follows play; the intro has its own choreography; the replay flow owns the camera (snap + track).
       if (!replayScene) {
@@ -206,7 +237,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       if (director) {
         const overlayState = director.overlay();
         if (overlayState.dressing) drawReplayDressing(ctx, world.view, world.dpr, now);
-        if (overlayState.wipeProgress !== null) drawBroadcastWipe(ctx, world.view, world.dpr, overlayState.wipeProgress);
+        if (overlayState.wipeProgress !== null) {
+          drawBroadcastWipe(ctx, world.view, world.dpr, overlayState.wipeProgress, [config.teams?.blue.flagId ?? '', config.teams?.red.flagId ?? '']);
+        }
       }
       syncHud();
     } catch (err) {
@@ -291,6 +324,32 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       director?.reset();
       recorder?.clear();
       enterIntro(world);
+    },
+    debugFoul: (kind) => {
+      // v5-only test hook: manufactures a challenge so the real sanction flow runs end-to-end.
+      if (!config.features?.fouls) return;
+      if (world.match.phase !== MatchPhase.Live || world.match.restart || world.match.celebration > 0) return;
+      const victim = world.players
+        .filter((p) => p.team === Team.Blue && p.role !== Role.GK)
+        .sort((a, b) => Math.hypot(a.x - world.ball.x, a.y - world.ball.y) - Math.hypot(b.x - world.ball.x, b.y - world.ball.y))[0];
+      if (!victim) return;
+      const offender = world.players
+        .filter((p) => p.team === Team.Red && p.role !== Role.GK)
+        .sort((a, b) => Math.hypot(a.x - victim.x, a.y - victim.y) - Math.hypot(b.x - victim.x, b.y - victim.y))[0];
+      if (!offender) return;
+      if (kind === 'penalty') {
+        // Stage the challenge inside Red's box so the detection awards the spot kick.
+        const p = pointOnField(world.size, 0.88, 0.42);
+        victim.x = p.x;
+        victim.y = p.y;
+        offender.x = p.x + 14;
+        offender.y = p.y + 8;
+        world.ball.x = p.x;
+        world.ball.y = p.y;
+        world.ball.z = 0;
+        world.ball.ownerId = victim.id;
+      }
+      startFoul(world, offender, victim, kind === 'red');
     },
     debugRestart: (kind) => {
       // v5-only test hook: nudges the ball out of play so the real detection places the correct restart.

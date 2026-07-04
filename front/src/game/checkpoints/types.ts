@@ -12,6 +12,7 @@ export enum CheckpointId {
   RealGkV4 = 'real-gk-v4',
   RealGkV5 = 'real-gk-v5',
   RealGkPlay = 'real-gk-play',
+  RealGkSolo = 'real-gk-solo',
   RealGkMatch = 'real-gk-match',
 }
 

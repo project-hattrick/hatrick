@@ -59,7 +59,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
       )}
     >
       <div
-        className="relative h-[224px] w-full overflow-hidden rounded-[20px] ring-1 ring-white/10 sm:h-[248px]"
+        className="relative h-[176px] w-full overflow-hidden rounded-[20px] ring-1 ring-white/10 sm:h-[224px] md:h-[248px]"
         aria-label={question}
       >
         <Image src="/prediction-goal.png" alt="" fill sizes="460px" className="object-cover object-center" />

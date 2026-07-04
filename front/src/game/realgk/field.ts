@@ -76,8 +76,8 @@ export interface GoalGeom {
 export const GOAL_MAX_Z = 24;
 
 export const GOALS: Record<Team, GoalGeom> = {
-  [Team.Blue]: { lat: 0.0, depthTop: 0.24, depthBottom: 0.548 },
-  [Team.Red]: { lat: 1.0, depthTop: 0.241, depthBottom: 0.539 },
+  [Team.Blue]: { lat: 0.0, depthTop: 0.36, depthBottom: 0.535 },
+  [Team.Red]: { lat: 1.0, depthTop: 0.36, depthBottom: 0.64 },
 };
 
 export function goalCenterForTeam(size: Size, team: Team): Vec2 {
@@ -103,9 +103,50 @@ export const RESTART = {
   goalKickDepthBottom: 0.6,
 };
 
-/** Halfway spot — the kickoff / mapping "center" reference. */
+/**
+ * Penalty geometry in field ratios (approximated to the painted box; `lat` measured from the
+ * defending team's OWN goal line, like RESTART).
+ */
+export const PENALTY = {
+  /** Penalty spot distance from the goal line. */
+  spotLat: 0.15,
+  /** Box edge distance from the goal line (fouls inside it award a penalty). */
+  boxLat: 0.25,
+  boxDepthTop: 0.12,
+  boxDepthBottom: 0.68,
+};
+
+/** Penalty spot in front of `defendTeam`'s own goal, aligned to the goal-mouth center. */
+export function penaltySpot(size: Size, defendTeam: Team): Vec2 {
+  const g = GOALS[defendTeam];
+  const lat = defendTeam === Team.Blue ? PENALTY.spotLat : 1 - PENALTY.spotLat;
+  return pointOnField(size, lat, (g.depthTop + g.depthBottom) * 0.5);
+}
+
+/** True when (x, y) sits inside `defendTeam`'s own penalty box. */
+export function inPenaltyBox(size: Size, defendTeam: Team, x: number, y: number): boolean {
+  const r = fieldRatios(size, x, y);
+  const latFromGoal = defendTeam === Team.Blue ? r.lat : 1 - r.lat;
+  return latFromGoal <= PENALTY.boxLat && r.depth >= PENALTY.boxDepthTop && r.depth <= PENALTY.boxDepthBottom;
+}
+
+/** Painted center spot in field ratios (calibrated via /sandbox/field-calibrator). */
+export const CENTER = { lat: 0.501, depth: 0.434 };
+
+/**
+ * Playing lines where the ball is OUT, in field ratios of the trapezoid (calibrated via
+ * /sandbox/field-calibrator). Defaults ≈ the old pixel fudge (goal lines ±6px, touchlines ±4px).
+ */
+export const PLAY_LINES = {
+  latLeft: 0.001,
+  latRight: 0.995,
+  depthTop: 0.01,
+  depthBottom: 0.99,
+};
+
+/** Halfway spot — the kickoff / mapping "center" reference (the painted center circle). */
 export function centerSpot(size: Size): Vec2 {
-  return pointOnField(size, 0.5, 0.5);
+  return pointOnField(size, CENTER.lat, CENTER.depth);
 }
 
 /** Throw-in restart point: lateral where the ball left, on the crossed touchline (top or bottom). */

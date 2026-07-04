@@ -190,15 +190,45 @@ export const howItWorksSteps: HowItWorksStep[] = [
   { step: '04', title: 'Get rewards', description: 'Trade your points for packs and prizes.', icon: Gift },
 ];
 
+export interface FooterLink {
+  label: string;
+  href: string;
+}
+
 export interface FooterColumn {
   title: string;
-  links: string[];
+  links: FooterLink[];
 }
 
 export const footerColumns: FooterColumn[] = [
-  { title: 'Navigation', links: ['Home', 'Matches', 'Fantasy', 'Predictions'] },
-  { title: 'Support', links: ['Help', 'Leaderboard', 'Store', 'Rewards'] },
-  { title: 'Legal', links: ['About', 'Contact', 'Terms of Use', 'Privacy Policy'] },
+  {
+    title: 'Navigation',
+    links: [
+      { label: 'Home', href: '/' },
+      { label: 'Live Mode', href: '/live' },
+      { label: 'Fantasy', href: '/fantasy' },
+      { label: 'Duelists', href: '/duelists' },
+    ],
+  },
+  {
+    title: 'Explore',
+    links: [
+      { label: 'Store', href: '/store' },
+      { label: 'Blog', href: '/blog' },
+      { label: 'FAQ', href: '/faq' },
+      { label: 'About', href: '/about' },
+      { label: 'Contact', href: '/contact' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'Terms of Use', href: '/legal/terms' },
+      { label: 'Privacy Policy', href: '/legal/privacy' },
+      { label: 'Responsible Gaming', href: '/legal/responsible-gaming' },
+      { label: 'Cookie Policy', href: '/legal/cookies' },
+    ],
+  },
 ];
 
 export interface AppBadge {

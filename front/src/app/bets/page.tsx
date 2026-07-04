@@ -11,7 +11,7 @@ const tabs = ['Open', 'Settled', 'Predictions'];
 export default function BetsPage() {
   return (
     <PageShell>
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
           <header className="flex items-center justify-between gap-4">
             <h1 className="text-2xl font-bold">My bets</h1>

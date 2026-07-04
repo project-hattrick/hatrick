@@ -3,11 +3,11 @@ import Image from 'next/image';
 import { AppleLogo, Globe, Envelope, ChatCircle, Play, PaperPlaneTilt, type Icon } from '@/components/common/icons';
 import { appBadges, footerColumns } from '@/config/home.config';
 
-const socials: { label: string; icon: Icon }[] = [
-  { label: 'Website', icon: Globe },
-  { label: 'Community', icon: ChatCircle },
-  { label: 'Telegram', icon: PaperPlaneTilt },
-  { label: 'Email', icon: Envelope },
+const socials: { label: string; icon: Icon; href: string }[] = [
+  { label: 'Website', icon: Globe, href: '/' },
+  { label: 'Community', icon: ChatCircle, href: '/faq' },
+  { label: 'Telegram', icon: PaperPlaneTilt, href: '/contact' },
+  { label: 'Email', icon: Envelope, href: '/contact' },
 ];
 
 const storeIcons: Record<string, Icon> = {
@@ -34,7 +34,7 @@ export function SiteFooter() {
               return (
                 <Link
                   key={social.label}
-                  href="#"
+                  href={social.href}
                   aria-label={social.label}
                   className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-surface-2 text-muted-foreground transition hover:border-neon/40 hover:text-neon"
                 >
@@ -48,9 +48,9 @@ export function SiteFooter() {
         {footerColumns.map((column) => (
           <div key={column.title} className="flex flex-col gap-3">
             <span className="text-eyebrow text-muted-foreground">{column.title}</span>
-            {column.links.map((label) => (
-              <Link key={label} href="#" className="text-sm text-foreground/80 transition hover:text-foreground">
-                {label}
+            {column.links.map((link) => (
+              <Link key={link.href} href={link.href} className="text-sm text-foreground/80 transition hover:text-foreground">
+                {link.label}
               </Link>
             ))}
           </div>

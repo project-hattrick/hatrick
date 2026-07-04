@@ -149,5 +149,6 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     cfg: live.cfg,
     dpr: live.dpr,
     controlId: live.controlId,
+    sentOffNames: live.sentOffNames,
   };
 }

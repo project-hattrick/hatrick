@@ -25,6 +25,8 @@ const FIFA_TO_ISO: Record<string, string> = {
   USA: 'us',
   NOR: 'no',
   CRO: 'hr',
+  URU: 'uy',
+  COL: 'co',
 };
 
 /** Map a FIFA/short code to an ISO alpha-2; falls back to a lowercased 2-letter code. */

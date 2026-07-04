@@ -16,13 +16,15 @@ interface LegalDocProps {
 const tabs = [
   { href: '/legal/privacy', label: 'Privacy' },
   { href: '/legal/terms', label: 'Terms' },
+  { href: '/legal/responsible-gaming', label: 'Responsible Gaming' },
+  { href: '/legal/cookies', label: 'Cookies' },
 ];
 
 /** Shared legal document layout: title, last-updated, tab switch and numbered sections. */
 export function LegalDoc({ title, updated, intro, sections }: LegalDocProps) {
   return (
     <PageShell>
-      <article className="mx-auto flex max-w-3xl flex-col gap-6">
+      <article className="flex flex-col gap-6">
         <header className="flex flex-col gap-3 border-b border-border/50 pb-4">
           <div className="flex items-center gap-2 text-xs">
             {tabs.map((tab) => (

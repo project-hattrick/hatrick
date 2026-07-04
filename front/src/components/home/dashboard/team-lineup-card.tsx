@@ -4,10 +4,10 @@ import { lineup } from '@/config/match-dashboard.config';
 /** "Team Line Up" — position badge with each side's player. */
 export function TeamLineupCard() {
   return (
-    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
+    <GlassPanel tone="surface" radius="xl" className="flex flex-1 flex-col gap-3 p-4">
       <span className="text-sm font-bold">Team Line Up</span>
 
-      <div className="flex flex-col">
+      <div className="flex flex-1 flex-col justify-between">
         {lineup.map((row, i) => (
           <div
             key={`${row.pos}-${row.home}`}

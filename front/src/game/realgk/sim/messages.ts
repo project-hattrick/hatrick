@@ -24,6 +24,10 @@ export const Status = {
   trap: (name: string): Note => ({ title: 'First touch', text: `${name} traps it and settles the play.` }),
   intercept: (name: string): Note => ({ title: 'Interception', text: `${name} cuts the lane and steals it.` }),
   powerShot: (name: string): Note => ({ title: 'Power shot', text: `${name} unloads on goal.` }),
+  foul: (offender: string, victim: string): Note => ({ title: 'Foul', text: `${offender} brings down ${victim}. The referee is coming over.` }),
+  freeKick: (team: Team): Note => ({ title: 'Free kick', text: `${team === Team.Blue ? 'Blue' : 'Red'} lines it up while the wall gets set.` }),
+  penalty: (team: Team): Note => ({ title: 'Penalty!', text: `${team === Team.Blue ? 'Blue' : 'Red'} steps up from the spot.` }),
+  sentOff: (name: string): Note => ({ title: 'Sent off', text: `Straight red — ${name} walks off the pitch.` }),
   throwIn: (team: Team): Note => ({ title: 'Throw-in', text: `${team === Team.Blue ? 'Blue' : 'Red'} restarts from the touchline.` }),
   corner: (team: Team): Note => ({ title: 'Corner', text: `${team === Team.Blue ? 'Blue' : 'Red'} wins a corner kick.` }),
   goalKick: (team: Team): Note => ({ title: 'Goal kick', text: `${team === Team.Blue ? 'Blue' : 'Red'} restarts with a goal kick.` }),
@@ -44,4 +48,5 @@ export const BallText = {
   wins: (name: string): string => `${name} wins it`,
   onBall: (name: string): string => `${name} on the ball`,
   deadBall: 'dead ball — restart',
+  foul: 'dead ball — foul',
 };

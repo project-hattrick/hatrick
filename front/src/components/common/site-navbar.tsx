@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Gift, Image as ImageIcon, Bell, Plus } from '@/components/common/icons';
+import { Gift, Image as ImageIcon, Bell, Plus, MagnifyingGlass } from '@/components/common/icons';
 import { navLinks } from '@/config/nav.config';
 import { IconButton } from './icon-button';
 import { formatThousands } from '@/lib/format';
 import { useAuth } from '@/services/queries/use-auth';
+import { useUiStore } from '@/store/ui.store';
 
 const COIN_BALANCE = 28_105_820;
 
@@ -16,6 +17,7 @@ const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.Walle
 /** Transparent top bar, centered on the same max width as the floating widgets. */
 export function SiteNavbar() {
   const { isAuthenticated, user } = useAuth();
+  const openSearch = useUiStore((s) => s.setSearchOpen);
   // Show the real devnet play-money balance from the DB once signed in.
   const coins = isAuthenticated && user ? Number(user.balance) : COIN_BALANCE;
 
@@ -46,6 +48,9 @@ export function SiteNavbar() {
         </Link>
 
         <div className="flex items-center justify-end gap-2 sm:gap-3 md:flex-1 md:gap-5">
+          <IconButton label="Search players" onClick={() => openSearch(true)}>
+            <MagnifyingGlass className="size-5" />
+          </IconButton>
           <IconButton label="Gallery" className="hidden sm:inline-flex">
             <ImageIcon className="size-5" />
           </IconButton>

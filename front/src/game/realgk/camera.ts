@@ -1,7 +1,7 @@
 import { BILLBOARDS } from './billboards';
 import type { CamPreset } from './config';
-import { IntroStage, RefPhase } from './enums';
-import { fieldRatios, metrics, pointOnField } from './field';
+import { IntroStage, RefPhase, RestartKind, RestartStage, Team } from './enums';
+import { fieldRatios, goalCenterForTeam, metrics, pointOnField } from './field';
 import type { RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 
@@ -39,8 +39,8 @@ const INTRO_SWEEP_SECONDS = 3.4;
 const SPONSOR_LIVE_SECONDS = 3.4;
 const SPONSOR_COOLDOWN_SECONDS = 80;
 
-/** Referee phases that keep the camera locked on him (spawn run-in → pause → red card). */
-const REF_EVENT_PHASES = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase.Card]);
+/** Referee phases that keep the camera locked on him (spawn run-in → pause → whistle / red card). */
+const REF_EVENT_PHASES = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase.Whistle, RefPhase.Card]);
 
 /** How long the camera lingers on the coach after the red card. */
 const COACH_FOCUS_SECONDS = 2.0;
@@ -232,6 +232,9 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
     }
   }
 
+  // v5 set-piece framing: hold the shot on the restart scene while it's being staged.
+  if (world.cfg.features?.deadBallSequence && updateRestartCamera(cam, world, dt)) return;
+
   // v5: periodic broadcast sponsor sweep during a calm, loose midfield ball — glide wide across the boards.
   if (world.cfg.features?.matchIntro) {
     // Never sweep during a goal, restart or referee beat — abort any in-flight sweep so the camera stays on play.
@@ -263,7 +266,8 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
     ty = (m.topY + m.bottomY) / 2;
     zt = preset.zoom;
   } else {
-    const target = cam.targetIdx >= 0 ? world.players[cam.targetIdx] : null;
+    // Bounds-checked: a send-off can shrink the roster under a stale target index.
+    const target = cam.targetIdx >= 0 && cam.targetIdx < world.players.length ? world.players[cam.targetIdx] : null;
     const subject = target ?? world.ball;
     tx = subject.x;
     ty = subject.y;
@@ -302,6 +306,55 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
 
   clampToField(cam, world);
   applyShake(cam, dt);
+}
+
+/**
+ * Frames an in-progress dead-ball restart: the fallen player on a foul, then the spot↔goal axis with
+ * per-kind tightness (penalty = tight on the spot, corner = the box, throw-in = the line) and a slow
+ * dolly-in once everyone is set. Returns true while it owns the camera; BallOut/Taking fall through so
+ * the regular follow tracks the rolling / struck ball.
+ */
+function updateRestartCamera(cam: RealGkCamera, world: RealGkWorld, dt: number): boolean {
+  const r = world.match.restart;
+  if (!r) return false;
+  if (r.stage === RestartStage.BallOut || r.stage === RestartStage.Taking) return false;
+  const preset = cam.presets[cam.presetIdx];
+
+  if (r.stage === RestartStage.FoulFreeze || r.stage === RestartStage.RefArrive) {
+    // The referee run-in is owned by the refFocus beat; until it starts, hold on the fallen player.
+    const at = r.foul?.at;
+    if (!at) return false;
+    cam.x += (at.x - cam.x) * 0.09;
+    cam.y += (at.y - cam.y) * 0.09;
+    cam.z += (preset.zoom * 1.7 - cam.z) * 0.07;
+    clampToField(cam, world);
+    applyShake(cam, dt);
+    return true;
+  }
+
+  let bias = 0.15; // how far the framing leans from the spot toward the attacked goal
+  let zoomMul = 1.1;
+  if (r.kind === RestartKind.Penalty) {
+    bias = 0.55;
+    zoomMul = 1.5;
+  } else if (r.kind === RestartKind.FreeKick) {
+    bias = 0.3;
+    zoomMul = 1.22;
+  } else if (r.kind === RestartKind.Corner) {
+    bias = 0.45;
+    zoomMul = 1.18;
+  } else if (r.kind === RestartKind.GoalKick) {
+    bias = 0.12;
+    zoomMul = 1.05;
+  }
+  const push = r.stage === RestartStage.Ready ? 0.06 : 0;
+  const goal = goalCenterForTeam(world.size, r.team === Team.Blue ? Team.Red : Team.Blue);
+  cam.x += (lerp(r.spot.x, goal.x, bias) - cam.x) * 0.05;
+  cam.y += (lerp(r.spot.y, goal.y, bias) - cam.y) * 0.05;
+  cam.z += (preset.zoom * (zoomMul + push) - cam.z) * 0.035;
+  clampToField(cam, world);
+  applyShake(cam, dt);
+  return true;
 }
 
 /** Decaying rattle applied after positioning — quick, punchy oscillation on both axes. */

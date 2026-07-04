@@ -23,7 +23,7 @@ export function HomeDashboard() {
     <div className="relative z-10">
       <div aria-hidden className="curtain-seam h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
       <div className="bg-background">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pt-4 pb-10 md:pt-6 md:pb-14">
         <MatchDashboard />
 
         <SquadSection />

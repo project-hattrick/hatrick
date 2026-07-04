@@ -7,6 +7,8 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import type { Adapter } from '@solana/wallet-adapter-base';
 import { IconContext, type IconProps } from '@/components/common/icons';
 import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
+import { SearchCommand } from '@/components/common/search-command';
+import { ChallengeMount } from '@/components/duel/challenge-mount';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 import { createQueryClient } from '@/lib/query-client';
@@ -27,7 +29,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>
             <WalletAuthSync />
-            <IconContext.Provider value={ICON_DEFAULTS}>{children}</IconContext.Provider>
+            <IconContext.Provider value={ICON_DEFAULTS}>
+              {children}
+              <SearchCommand />
+              <ChallengeMount />
+            </IconContext.Provider>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>

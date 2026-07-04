@@ -15,7 +15,7 @@ const fixtures = [
 export default function FixturesPage() {
   return (
     <PageShell>
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <header>
           <h1 className="text-2xl font-bold">Fixtures</h1>
           <p className="text-sm text-muted-foreground">Pick a match to watch live and bet.</p>

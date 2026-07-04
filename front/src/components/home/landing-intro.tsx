@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { HolofoteLoader } from '@/components/common/holofote-loader';
 
-// Matches the 3.3s intro-out animation plus a short tail before the overlay unmounts.
-const INTRO_DURATION_MS = 3400;
+// Matches the 2.2s intro-out animation plus a short tail before the overlay unmounts.
+const INTRO_DURATION_MS = 2300;
 
 /** One-shot pulsing holofote intro (same visual as the route loader), then reveals the landing. */
 export function LandingIntro() {

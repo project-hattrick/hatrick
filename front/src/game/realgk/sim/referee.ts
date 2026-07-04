@@ -1,5 +1,5 @@
 import { RefMode, RefPhase } from '../enums';
-import { pointOnField } from '../field';
+import { centerSpot, pointOnField } from '../field';
 import type { Referee, RealGkWorld } from '../types';
 import { Status } from './messages';
 import { setStatus } from './rules';
@@ -29,6 +29,8 @@ export function resetReferee(world: RealGkWorld): void {
   referee.patrolPause = 0.75;
   referee.nextPatrolPause = 1.8 + Math.random() * 1.7;
   referee.kickoff = false;
+  referee.whistleOnly = false;
+  referee.runSpeed = 124;
 }
 
 export function spawnReferee(world: RealGkWorld): void {
@@ -45,6 +47,8 @@ export function spawnReferee(world: RealGkWorld): void {
   referee.elapsed = 0;
   referee.patrolPause = 0;
   referee.kickoff = false;
+  referee.whistleOnly = false;
+  referee.runSpeed = 124;
   referee.nextPatrolPause = 1.5 + Math.random() * 1.8;
   referee.mirror = referee.targetX < referee.x;
   const note = Status.refereeCalled();
@@ -57,7 +61,7 @@ export function spawnRefereeKickoff(world: RealGkWorld): void {
   if (!referee.active) resetReferee(world);
   referee.startX = referee.x;
   referee.startY = referee.y;
-  const center = pointOnField(size, 0.5, 0.5);
+  const center = centerSpot(size);
   referee.targetX = center.x;
   referee.targetY = center.y;
   referee.active = true;
@@ -66,6 +70,27 @@ export function spawnRefereeKickoff(world: RealGkWorld): void {
   referee.elapsed = 0;
   referee.patrolPause = 0;
   referee.kickoff = true;
+  referee.whistleOnly = false;
+  referee.runSpeed = 124;
+  referee.mirror = referee.targetX < referee.x;
+}
+
+/** v5 fouls: the referee sprints to the foul, then whistles (free kick) or brandishes the red card. */
+export function spawnRefereeFoul(world: RealGkWorld, x: number, y: number, card: boolean): void {
+  const { referee } = world;
+  if (!referee.active) resetReferee(world);
+  referee.startX = referee.x;
+  referee.startY = referee.y;
+  referee.targetX = x;
+  referee.targetY = y;
+  referee.active = true;
+  referee.mode = RefMode.WalkSide;
+  referee.phase = RefPhase.RunCenter;
+  referee.elapsed = 0;
+  referee.patrolPause = 0;
+  referee.kickoff = false;
+  referee.whistleOnly = !card;
+  referee.runSpeed = 190;
   referee.mirror = referee.targetX < referee.x;
 }
 
@@ -145,7 +170,7 @@ export function updateReferee(world: RealGkWorld, dt: number): void {
 
   if (referee.phase === RefPhase.RunCenter) {
     referee.mode = RefMode.WalkSide;
-    if (moveRefereeTowards(referee, referee.targetX, referee.targetY, 124, dt)) {
+    if (moveRefereeTowards(referee, referee.targetX, referee.targetY, referee.runSpeed, dt)) {
       referee.x = referee.targetX;
       referee.y = referee.targetY;
       referee.mode = RefMode.Idle;
@@ -157,13 +182,15 @@ export function updateReferee(world: RealGkWorld, dt: number): void {
 
   if (referee.phase === RefPhase.Pause) {
     if (referee.elapsed >= 0.65) {
-      if (referee.kickoff) {
-        // Kickoff whistle beat instead of the red card.
+      if (referee.kickoff || referee.whistleOnly) {
+        // Whistle beat instead of the red card (kickoff, or a plain foul call).
         referee.mode = RefMode.Whistle;
         referee.phase = RefPhase.Whistle;
         referee.elapsed = 0;
-        const note = Status.kickoff();
-        setStatus(world, note.title, note.text);
+        if (referee.kickoff) {
+          const note = Status.kickoff();
+          setStatus(world, note.title, note.text);
+        }
       } else {
         referee.mode = RefMode.Red;
         referee.phase = RefPhase.Card;
@@ -179,6 +206,7 @@ export function updateReferee(world: RealGkWorld, dt: number): void {
     referee.mode = RefMode.Whistle;
     if (referee.elapsed >= 0.8) {
       referee.kickoff = false;
+      referee.whistleOnly = false;
       referee.mode = RefMode.WalkSide;
       referee.phase = RefPhase.ReturnPatrol;
       referee.elapsed = 0;

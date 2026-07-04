@@ -38,6 +38,16 @@
   animation: labelIn 0.5s ease-out 0.12s both;
 }
 
+.name {
+  font-size: clamp(14px, 2.2vw, 24px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: labelIn 0.5s ease-out 0.22s both;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

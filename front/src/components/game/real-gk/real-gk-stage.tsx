@@ -28,6 +28,8 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const introStage = useRealGkStore((s) => s.introStage);
   const restartActive = useRealGkStore((s) => s.restartActive);
   const restartLabel = useRealGkStore((s) => s.restartLabel);
+  const restartTeam = useRealGkStore((s) => s.restartTeam);
+  const redCardName = useRealGkStore((s) => s.redCardName);
   const teamBlueName = useRealGkStore((s) => s.teamBlueName);
   const teamRedName = useRealGkStore((s) => s.teamRedName);
   const teamBlueFlag = useRealGkStore((s) => s.teamBlueFlag);
@@ -72,6 +74,12 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         handle.debugRestart('throwin');
       } else if (k === 'k') {
         handle.debugRestart('goalkick');
+      } else if (k === 'f') {
+        handle.debugFoul('free');
+      } else if (k === 'p') {
+        handle.debugFoul('penalty');
+      } else if (k === '5') {
+        handle.debugFoul('red');
       }
     };
     window.addEventListener('keydown', onKey);
@@ -89,8 +97,13 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
       <GoalBurst active={goalActive} />
       <ConfettiBurst active={goalActive} team={goalTeam} />
-      <RedCardOverlay active={redCardActive} />
-      <RestartBanner active={restartActive} label={restartLabel} />
+      <RedCardOverlay active={redCardActive} playerName={redCardName} />
+      <RestartBanner
+        active={restartActive}
+        label={restartLabel}
+        team={restartTeam}
+        teamName={restartTeam === 'blue' ? teamBlueName : restartTeam === 'red' ? teamRedName : ''}
+      />
       <MatchIntroOverlay
         active={introActive}
         stage={introStage}

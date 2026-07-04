@@ -116,14 +116,24 @@ export enum RestartKind {
   ThrowIn = 'throw_in',
   Corner = 'corner',
   GoalKick = 'goal_kick',
+  /** Awarded for a foul outside the box (v5 fouls). */
+  FreeKick = 'free_kick',
+  /** Awarded for a foul inside the offender's own box (v5 fouls). */
+  Penalty = 'penalty',
 }
 
 /** Stages of a v5 dead-ball restart: the ball rolls out, a taker is set up, then it's put back in play. */
 export enum RestartStage {
+  /** Play frozen at the foul: the victim goes down, everyone stops (fouls only). */
+  FoulFreeze = 'foul_freeze',
+  /** Referee runs to the foul and whistles or brandishes the red card (fouls only). */
+  RefArrive = 'ref_arrive',
   /** Ball keeps rolling off the pitch (no teleport) while the banner shows. */
   BallOut = 'ball_out',
-  /** Ball placed at the correct spot; the taker walks over, opponents give space. */
+  /** Ball placed at the correct spot; the taker walks over, everyone takes set-piece positions. */
   Setup = 'setup',
+  /** Everyone is set — a short broadcast hold; the penalty run-up happens here. */
+  Ready = 'ready',
   /** Taker strikes the ball back into play; the match resumes. */
   Taking = 'taking',
 }

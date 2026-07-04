@@ -71,12 +71,11 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
   };
 }
 
-/** Playable sandbox roster: two Blue teammates near center — no opponents, no keepers. */
+/** Playable sandbox roster: `playableRoster` Blue teammates near center (1 = solo court test). */
 function resetPlayablePlayers(world: RealGkWorld): void {
-  world.players = [
-    createPlayer(world, Team.Blue, Role.ST, 0.42, 0.5, 'YOU-1'),
-    createPlayer(world, Team.Blue, Role.MID, 0.58, 0.5, 'YOU-2'),
-  ];
+  const roster = Math.max(1, Math.min(2, Math.round(world.cfg.playableRoster ?? 2)));
+  world.players = [createPlayer(world, Team.Blue, Role.ST, roster > 1 ? 0.42 : 0.5, 0.5, 'YOU-1')];
+  if (roster > 1) world.players.push(createPlayer(world, Team.Blue, Role.MID, 0.58, 0.5, 'YOU-2'));
   world.controlId = world.players[0].id;
 }
 
@@ -93,6 +92,10 @@ export function resetPlayers(world: RealGkWorld): void {
       const lat = team === Team.Blue ? slot.lat : 1 - slot.lat;
       world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, `${TEAM_TAG[team]}-${index + 1}`));
     });
+  }
+  // A red card holds across kickoff resets — the sent-off player stays in the dressing room (v5 fouls).
+  if (world.sentOffNames.length) {
+    world.players = world.players.filter((p) => !world.sentOffNames.includes(p.name));
   }
 }
 

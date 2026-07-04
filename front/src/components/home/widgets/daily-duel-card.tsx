@@ -1,8 +1,6 @@
-import Link from 'next/link';
-
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Sword } from '@/components/common/icons';
-import { AppMode } from '@/enums/app-mode.enum';
+import { DuelLauncher } from '@/components/fantasy/duel-launcher';
 import { dailyDuel } from '@/config/formation.config';
 
 /** "Daily duel" — your squad rating vs today's opponent, with a jump-in CTA. */
@@ -33,12 +31,9 @@ export function DailyDuelCard() {
         <div className="h-full rounded-full bg-neon" style={{ width: `${youShare}%` }} />
       </div>
 
-      <Link
-        href={`/${AppMode.Fantasy}`}
-        className="rounded-xl bg-neon py-3 text-center text-sm font-bold text-primary-foreground transition hover:bg-neon-hover"
-      >
+      <DuelLauncher className="w-full rounded-xl bg-neon py-3 text-center text-sm font-bold text-primary-foreground transition hover:bg-neon-hover">
         Enter duel
-      </Link>
+      </DuelLauncher>
     </GlassPanel>
   );
 }

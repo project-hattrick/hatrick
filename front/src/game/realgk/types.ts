@@ -110,6 +110,10 @@ export interface Referee {
   homeY: number;
   /** True while running the v5 kickoff whistle (Pause → Whistle instead of the red card). */
   kickoff: boolean;
+  /** v5 fouls: whistle at the pause without the kickoff status (a plain foul call, no card). */
+  whistleOnly: boolean;
+  /** Run-in speed for the RunCenter phase (bumped for foul sprints). */
+  runSpeed: number;
 }
 
 /** Sideline coach that flips between idle and angry during intense play near the bench. */
@@ -121,6 +125,16 @@ export interface Coach {
   timer: number;
   cooldown: number;
   angryDuration: number;
+}
+
+/** The foul behind a free kick / penalty restart (v5 fouls). */
+export interface FoulInfo {
+  offenderId: number;
+  victimId: number;
+  /** True = straight red: play freezes on the card and the offender is sent off. */
+  card: boolean;
+  /** Where the foul happened — the referee runs here (the kick spot may differ for penalties). */
+  at: Vec2;
 }
 
 /** In-progress dead-ball restart (v5 deadBallSequence). Null while the ball is live. */
@@ -135,6 +149,10 @@ export interface RestartState {
   spot: Vec2;
   /** Player assigned to take the restart (set when the ball is placed). */
   takerId: number | null;
+  /** Per-player set-piece positions, computed once when the ball is placed (stable targets). */
+  targets?: Record<number, Vec2>;
+  /** Present when the restart came from a foul (free kick / penalty). */
+  foul?: FoulInfo;
 }
 
 export interface MatchState {
@@ -158,6 +176,8 @@ export interface MatchState {
   introTimer: number;
   /** Active out-of-play restart (v5 deadBallSequence; null while the ball is live). */
   restart: RestartState | null;
+  /** Real seconds until the next foul may be called (v5 fouls; inert otherwise). */
+  foulCooldown: number;
 }
 
 /** All mutable v2 state. Mutated by the loop; lives outside React. */
@@ -178,6 +198,8 @@ export interface RealGkWorld {
   control?: ControlInput;
   /** Id of the player currently under keyboard control (follows possession). */
   controlId: number;
+  /** Names of players sent off this match — kept off the pitch across kickoff resets (v5 fouls). */
+  sentOffNames: string[];
 }
 
 /** Held movement keys for the controlled player (playable sandbox). */
@@ -208,9 +230,13 @@ export interface RealGkHud {
   /** v5 match intro: overlay visibility + current stage (empty when not in the intro). */
   introActive: boolean;
   introStage: string;
-  /** v5 dead-ball restart: banner visibility + label ('CORNER' | 'THROW-IN' | 'GOAL KICK' | ''). */
+  /** v5 dead-ball restart: banner visibility + label ('CORNER' | 'THROW-IN' | 'GOAL KICK' | 'FREE KICK' | 'PENALTY' | 'FOUL' | ''). */
   restartActive: boolean;
   restartLabel: string;
+  /** Team taking the current restart ('blue' | 'red' | '') — colors the banner. */
+  restartTeam: string;
+  /** Name of the player shown the red card ('' when none / not a foul card). */
+  redCardName: string;
   /** v5 team brands for the intro card (name + flag id per side; empty → generic). */
   teamBlueName: string;
   teamRedName: string;
@@ -239,6 +265,8 @@ export interface RealGkHandle {
   playIntro: () => void;
   /** v5: forces a dead-ball restart so the corner / throw-in / goal-kick flow can be tested on demand. */
   debugRestart: (kind: 'throwin' | 'corner' | 'goalkick') => void;
+  /** v5: forces a foul (free kick / penalty / straight red) so the sanction flow can be tested on demand. */
+  debugFoul: (kind: 'free' | 'penalty' | 'red') => void;
   resize: () => void;
   destroy: () => void;
 }

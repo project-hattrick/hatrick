@@ -20,6 +20,8 @@ interface RealGkStore {
   introStage: string;
   restartActive: boolean;
   restartLabel: string;
+  restartTeam: string;
+  redCardName: string;
   teamBlueName: string;
   teamRedName: string;
   teamBlueFlag: string;
@@ -51,6 +53,8 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   introStage: '',
   restartActive: false,
   restartLabel: '',
+  restartTeam: '',
+  redCardName: '',
   teamBlueName: 'Blue',
   teamRedName: 'Red',
   teamBlueFlag: '',

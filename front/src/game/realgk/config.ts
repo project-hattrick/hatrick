@@ -29,6 +29,12 @@ export interface RealGkFeatures {
   matchIntro: boolean;
   /** v5 dead balls: the ball rolls out of play, a banner names the restart, a taker walks over and restarts. */
   deadBallSequence: boolean;
+  /** v5 fouls: contested challenges can stop play — referee run-in, whistle or red card + send-off,
+   *  then a free kick with a wall or a penalty with the full box staging. Requires deadBallSequence. */
+  fouls: boolean;
+  /** Court-test overlay: draws the pitch trapezoid, out-of-play lines, center spot, goal mouths and
+   *  restart spots on the canvas so the field calibration can be verified in-game. */
+  debugBounds: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -60,6 +66,8 @@ export interface RealGkConfig {
   cinematic: boolean;
   /** v4 feature gates — leave unset to keep the exact legacy behavior. */
   features?: RealGkFeatures;
+  /** How many controllable players the playable sandbox spawns (1 = solo court test; default 2). */
+  playableRoster?: number;
   /** Per-actor height multipliers; unset falls back to the legacy constants (referee 0.9, coach 1.06). */
   actorScale?: { referee?: number; coach?: number };
   /** Max cinematic zoom push near a goal (legacy default 1.32). */
@@ -96,7 +104,7 @@ export const REAL_GK_HERO_CONFIG: RealGkConfig = {
   ],
   cinematic: true,
   // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -127,7 +135,7 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -149,8 +157,30 @@ export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false },
+  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
   actorScale: { referee: 0.95, coach: 0.95 },
+};
+
+/**
+ * Solo court test — ONE controllable player on the empty court with the calibration overlay on:
+ * pitch trapezoid, out-of-play lines, center spot, goal mouths and restart spots drawn in-game.
+ * Dead-ball flow stays on so kicking the ball out shows exactly where the lines catch it.
+ */
+export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
+  fieldScale: 1.5,
+  spriteMinH: 26,
+  spriteMaxH: 44,
+  ballScale: 0.62,
+  presets: [
+    { label: 'Broadcast', zoom: 1.7, follow: true },
+    { label: 'Close', zoom: 2.2, follow: true },
+    { label: 'Wide', zoom: 1.3, follow: true },
+    { label: 'Full pitch', zoom: 0.7, follow: false },
+  ],
+  cinematic: true,
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true },
+  actorScale: { referee: 0.95, coach: 0.95 },
+  playableRoster: 1,
 };
 
 /** Auto full match — identical look/assets to the sandbox, but 11-a-side AI with goal replays. */
@@ -166,7 +196,7 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false },
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -188,7 +218,7 @@ export const REAL_GK_V5_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true, fouls: true, debugBounds: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
   teams: {
@@ -200,6 +230,7 @@ export const REAL_GK_V5_CONFIG: RealGkConfig = {
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
   if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
+  if (id === CheckpointId.RealGkSolo) return REAL_GK_SOLO_CONFIG;
   if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;
   if (id === CheckpointId.RealGkV5) return REAL_GK_V5_CONFIG;
   if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;

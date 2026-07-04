@@ -1,6 +1,6 @@
 import { BALL_FRAME_COUNT, BALL_GRAVITY } from '../constants';
 import { BodyAnim, PlayerAction, RestartKind, RestartStage, Role, Team } from '../enums';
-import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throwInSpot, GOAL_MAX_Z, GOALS } from '../field';
+import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throwInSpot, GOAL_MAX_Z, GOALS, PLAY_LINES } from '../field';
 import type { Ball, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
 import { BallText, Status } from './messages';
@@ -224,8 +224,14 @@ export function updateBall(world: RealGkWorld, dt: number): void {
 
   const lastTeam = world.players.find((p) => p.id === ball.lastKickerId)?.team ?? null;
 
+  // Out-of-play lines come from the calibrated PLAY_LINES ratios (not the raw trapezoid edges).
+  const leftLineX = lerp(bounds.left, bounds.right, PLAY_LINES.latLeft);
+  const rightLineX = lerp(bounds.left, bounds.right, PLAY_LINES.latRight);
+  const topLineY = lerp(bounds.topY, bounds.bottomY, PLAY_LINES.depthTop);
+  const bottomLineY = lerp(bounds.topY, bounds.bottomY, PLAY_LINES.depthBottom);
+
   // Goal lines (left/right) take priority: goal in the mouth, else corner / goal kick.
-  if (ball.x < bounds.left + 6) {
+  if (ball.x < leftLineX) {
     if (inLeftMouth) {
       goal(world, Team.Red);
       return;
@@ -233,7 +239,7 @@ export function updateBall(world: RealGkWorld, dt: number): void {
     bylineRestart(world, Team.Blue, lastTeam);
     return;
   }
-  if (ball.x > bounds.right - 6) {
+  if (ball.x > rightLineX) {
     if (inRightMouth) {
       goal(world, Team.Blue);
       return;
@@ -242,11 +248,11 @@ export function updateBall(world: RealGkWorld, dt: number): void {
     return;
   }
   // Touchlines (top/bottom) → throw-in.
-  if (ball.y < bounds.topY + 4) {
+  if (ball.y < topLineY) {
     throwInRestart(world, lastTeam, true);
     return;
   }
-  if (ball.y > bounds.bottomY - 4) {
+  if (ball.y > bottomLineY) {
     throwInRestart(world, lastTeam, false);
     return;
   }

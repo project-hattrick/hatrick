@@ -7,9 +7,42 @@ export interface DashTeam {
   portraitSrc: string;
 }
 
-export const heroMatch = {
-  home: { name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/hero-arg.png' } as DashTeam,
-  away: { name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png' } as DashTeam,
+/** Placement of a pixel-art hero figure on the match card. Tune it in /sandbox/hero-figures. */
+export interface HeroFigurePlacement {
+  /** Rendered width of the figure in px. */
+  width: number;
+  /** Horizontal translate in px from the anchored side edge. */
+  x: number;
+  /** Vertical translate in px (+ moves down). */
+  y: number;
+  /** Uniform scale multiplier. */
+  scale: number;
+  /** Mirror the figure horizontally. */
+  flip: boolean;
+  /** object-position Y in % (0 = top of the art, 100 = bottom). */
+  objectY: number;
+}
+
+export interface HeroTeam extends DashTeam {
+  placement: HeroFigurePlacement;
+}
+
+export interface HeroMatch {
+  home: HeroTeam;
+  away: HeroTeam;
+  label: string;
+  countdown: { days: number; hours: number; minutes: number; seconds: number };
+}
+
+export const heroMatch: HeroMatch = {
+  home: {
+    name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/hero-arg.png',
+    placement: { width: 150, x: 0, y: 0, scale: 1, flip: false, objectY: 0 },
+  },
+  away: {
+    name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png',
+    placement: { width: 150, x: 0, y: 0, scale: 1, flip: false, objectY: 0 },
+  },
   label: 'Sunday, 21 January',
   // Countdown target as a fixed remaining offset (days/hours/mins/secs) — mock, not wall-clock.
   countdown: { days: 3, hours: 12, minutes: 43, seconds: 14 },

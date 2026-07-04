@@ -1,0 +1,46 @@
+---
+title: "1v1 duels explained"
+description: "Ranked duels match you by MMR, pit your squad against another user's in a 2D simulation, and move you up the ladder. Here's how they work."
+date: "2026-07-01"
+tag: "Guide"
+readingMinutes: 5
+---
+
+## What is a 1v1 duel?
+
+A duel is the competitive core of Fantasy Mode on Hat-trick. You pit your squad of World Cup players against another user's in a real-time 2D simulation — and the winner is decided by player attributes drawn directly from live match data.
+
+Every duel is head-to-head, Best-of-1, and rated. There are no CPU opponents and no artificial handicaps. Your squad either wins or loses based on how well you built it and how your players have been performing in the actual World Cup.
+
+## How to start a duel
+
+There are two ways to enter a duel:
+
+**Ranked matchmaking** — Hit **Enter duel** on the dashboard and the system finds an opponent whose MMR rating is close to yours. When a match is found, a VS screen shows both squads, ratings, and records. You have a few seconds to accept. Once both sides confirm, the simulation begins.
+
+**Friend challenge** — Go to the Duelists directory, find a player you know, and hit **Challenge**. Instead of matchmaking, you skip straight to the VS screen with that specific opponent. Friend duels are still rated — no stakes removed for knowing your rival.
+
+## The simulation engine
+
+When a duel begins, the 2D arena loads both squads with their current attribute scores. Pace, shooting, passing, defending, and goalkeeping are the primary stats. Player positions and formation choices determine how those stats interact during the simulation.
+
+The engine is deterministic given the same input but uses weighted randomisation seeded by the attribute differential — so a squad with a 91-rated striker will not score every time, but will score significantly more often than a squad with a 72-rated striker in the same position. Form matters. Building a coherent squad matters.
+
+## How attributes reflect real performance
+
+This is where Fantasy Mode's connection to Live Mode becomes visible. Every time a player on your squad scores, assists, makes a key tackle, or earns a save in a real World Cup match, TxLINE sends the confirmed event to Hat-trick's backend. The attribute recalculation runs within minutes.
+
+A goalkeeper who has kept three clean sheets in the group stage will have materially better reflexes and positioning scores than one who shipped four goals in two games. That difference is felt in every duel.
+
+## Rating and MMR
+
+Win a duel and you gain MMR. Lose and you drop some. The amount gained or lost depends on the rating gap between you and your opponent — beating a higher-rated player earns more, losing to a lower-rated player costs more. The system is designed to push players toward equally skilled opponents over time.
+
+There are no placement matches and no season resets in the current demo. Your rating starts at 1000 and moves from there. The Duelists directory shows the current leaderboard and each player's record.
+
+## Tips for building a strong squad
+
+- **Prioritise in-form players.** A player who has scored twice in the last fixture will have elevated shooting and impact scores. Check the attribute scores on your cards before finalising your lineup.
+- **Cover all positions.** A strong striker does nothing if your midfield cannot create. Attribute scores compound when a well-rounded squad generates multiple high-scoring events in the simulation.
+- **Scout your opponent.** The Duelists directory shows each player's squad composition. If you know your rival is weak in defence, build an attack-heavy lineup to exploit it.
+- **Watch Live Mode for data.** Watching matches in Live Mode gives you early insight into which players are performing well before their attribute scores update. It is the most direct edge available.

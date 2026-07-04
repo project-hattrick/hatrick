@@ -8,7 +8,7 @@ import { ProfileIdentity } from '@/components/profile/profile-identity';
 export default function ProfilePage() {
   return (
     <PageShell>
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <ProfileIdentity />
 
         <div className="grid gap-4 lg:grid-cols-2">
