@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +11,7 @@ import { PublicKey } from '@solana/web3.js';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { assertWalletOwner } from '../auth/wallet-owner.util';
 import { FaucetGrant, FaucetService } from './faucet.service';
 
 interface FaucetRequestBody {
@@ -31,9 +31,7 @@ export class FaucetController {
     @Body() body: FaucetRequestBody,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<FaucetGrant> {
-    if (body?.walletAddress && body.walletAddress !== user.walletAddress) {
-      throw new ForbiddenException('walletAddress must match the signed-in wallet');
-    }
+    if (body?.walletAddress) assertWalletOwner(user, body.walletAddress);
     try {
       new PublicKey(user.walletAddress);
     } catch {

@@ -35,7 +35,7 @@ export function FeaturedLiveCard() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-overlay/55 via-transparent to-overlay/90" />
 
-        <span className="absolute top-3 left-3.5 inline-flex items-center gap-1.5 rounded-full border border-live/40 bg-overlay/55 px-2.5 py-1 text-[10px] font-bold text-live">
+        <span className="absolute top-3 left-3.5 inline-flex items-center gap-1.5 rounded-full border border-live/40 bg-overlay/55 px-2.5 py-1 text-micro font-bold text-live">
           <span className="size-1.5 animate-pulse rounded-full bg-live" />
           {match.minute}&apos; · {match.halfLabel}
         </span>
@@ -52,7 +52,7 @@ export function FeaturedLiveCard() {
           </span>
           <span className="text-lg font-bold text-white">{match.away.code}</span>
           <span className="text-xl leading-none" aria-hidden>{match.away.flag}</span>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-overlay/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-overlay/60 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
             <span className="size-1.5 rounded-full bg-neon" />
             {match.spotlight}
           </span>

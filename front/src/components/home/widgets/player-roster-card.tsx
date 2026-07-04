@@ -10,7 +10,7 @@ function Stat({ value, label }: { value: string | number; label: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5 rounded-lg bg-surface-3/50 py-2">
       <span className="text-base font-bold tabular-nums">{value}</span>
-      <span className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</span>
+      <span className="text-eyebrow text-muted-foreground">{label}</span>
     </div>
   );
 }

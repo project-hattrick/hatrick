@@ -12,7 +12,7 @@ interface MyPredictionsProps {
 function MyPredictions({ items, summary }: MyPredictionsProps) {
   return (
     <GlassPanel tone="surface" radius="xl" className="flex w-full flex-col overflow-hidden">
-      <SectionHeader title="My Predictions" action={summary} className="border-b border-border/60 bg-surface-1/60" />
+      <SectionHeader title="My Predictions" action={summary} className="border-b border-border bg-surface-1/60" />
       <ul className="flex flex-col divide-y divide-border/50">
         {items.map((item) => (
           <li key={item.id}>

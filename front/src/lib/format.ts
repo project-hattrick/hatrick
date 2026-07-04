@@ -26,6 +26,11 @@ export function formatPoints(points: number): string {
   return points > 0 ? `+${points}` : `${points}`;
 }
 
+/** "7xKXtg2C…sgAsU" -> "7xKX…gAsU" — truncated wallet address for display. */
+export function shortAddress(address: string): string {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}
+
 /** Short age label: "30s", "2m", "1h". */
 export function formatRelativeTime(fromTs: number, nowTs: number): string {
   const seconds = Math.max(0, Math.round((nowTs - fromTs) / 1000));

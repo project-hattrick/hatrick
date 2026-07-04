@@ -20,7 +20,7 @@ export function EventTicker() {
   if (recent.length === 0) return null;
 
   return (
-    <GlassPanel radius="pill" className="hidden items-center gap-4 px-5 py-1.5 text-[11px] text-muted-foreground md:flex">
+    <GlassPanel radius="pill" className="hidden items-center gap-4 px-5 py-1.5 text-xs text-muted-foreground md:flex">
       {recent.map((event, index) => {
         const meta = lookup(matchActionConfig, event.action, matchActionFallback);
         const teamCode = event.participant === 1 ? match.home.code : match.away.code;

@@ -6,7 +6,7 @@ function StepCard({ data }: { data: HowItWorksStep }) {
   const Icon = data.icon;
 
   return (
-    <GlassPanel tone="surface" className="flex h-full flex-col gap-3 p-6">
+    <GlassPanel tone="surface" className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <span className="inline-flex size-11 items-center justify-center rounded-xl bg-surface-deep text-neon">
           <Icon className="size-5" />

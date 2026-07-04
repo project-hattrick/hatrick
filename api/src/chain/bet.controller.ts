@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +11,7 @@ import { PublicKey } from '@solana/web3.js';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { assertWalletOwner } from '../auth/wallet-owner.util';
 import { MarketType } from '../events/enums/market-type.enum';
 import { BetService } from './bet.service';
 
@@ -44,9 +44,7 @@ export class BetController {
     if (!Object.values(MarketType).includes(market)) {
       throw new BadRequestException(`unknown market type: ${market}`);
     }
-    if (walletAddress !== user.walletAddress) {
-      throw new ForbiddenException('walletAddress must match the signed-in wallet');
-    }
+    assertWalletOwner(user, walletAddress);
     try {
       new PublicKey(walletAddress);
     } catch {

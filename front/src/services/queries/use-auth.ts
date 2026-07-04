@@ -13,10 +13,12 @@ export function useAuth() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const authenticating = useAuthStore((s) => s.authenticating);
+  const error = useAuthStore((s) => s.error);
 
   return {
     user,
     token,
+    error,
     isConnected: connected,
     isConnecting: connecting,
     isAuthenticated: Boolean(token),

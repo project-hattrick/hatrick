@@ -7,7 +7,7 @@ import { AppMode } from '@/enums/app-mode.enum';
 export function GreetingBanner() {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Good to see you again 👋</h1>
+      <h1 className="text-display">Good to see you again 👋</h1>
       <Link
         href={`/${AppMode.Live}`}
         className={buttonVariants({ size: 'lg', className: 'h-11 shrink-0 gap-2 px-6 text-base font-semibold' })}

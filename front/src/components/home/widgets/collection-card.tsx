@@ -34,8 +34,8 @@ function CollectionCard() {
           ))}
           <div className="flex h-[168px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neon/25 bg-surface-deep p-2 text-center">
             <Sparkle className="size-6 text-neon" />
-            <span className="text-[9px] font-bold tracking-wide text-neon uppercase">Epic Pack</span>
-            <Link href="/fantasy" className={buttonVariants({ variant: 'default', size: 'xs', className: 'h-6 px-2 text-[10px]' })}>
+            <span className="text-eyebrow text-neon">Epic Pack</span>
+            <Link href="/fantasy" className={buttonVariants({ variant: 'default', size: 'xs', className: 'h-6 px-2 text-micro' })}>
               Open pack
             </Link>
           </div>

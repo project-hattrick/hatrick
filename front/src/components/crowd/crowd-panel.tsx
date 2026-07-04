@@ -18,9 +18,9 @@ export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
     <GlassPanel tone="surface" className="flex h-full w-full flex-col overflow-hidden">
       <SectionHeader
         title="Live Crowd"
-        className="border-b border-border/60 bg-surface-1/60"
+        className="border-b border-border bg-surface-1/60"
         action={
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
             <Users className="size-3.5" /> {formatCompact(VIEWERS)}
           </span>
         }
@@ -30,7 +30,7 @@ export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
           <CrowdMessage key={message.id} message={message} />
         ))}
       </div>
-      <div className="border-t border-border/60 bg-surface-1/70">
+      <div className="border-t border-border bg-surface-1/70">
         <CrowdComposer fixtureId={fixtureId} />
       </div>
     </GlassPanel>

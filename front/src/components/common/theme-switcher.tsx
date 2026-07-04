@@ -3,16 +3,14 @@
 import { useEffect, useState } from 'react';
 import { Palette, CaretDown } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
-import { Theme, DEFAULT_THEME, parseTheme } from '@/enums/theme.enum';
+import { Theme, parseTheme } from '@/enums/theme.enum';
 import { themeCategories, themeConfig } from '@/config/theme.config';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
 
-/** Write the palette to <html> — the default clears the attribute so the baseline `.dark` block wins. */
+/** Write the palette to <html data-theme> — every theme is applied explicitly (default included). */
 function applyTheme(theme: Theme): void {
-  const root = document.documentElement;
-  if (theme === DEFAULT_THEME) root.removeAttribute('data-theme');
-  else root.dataset.theme = theme;
+  document.documentElement.dataset.theme = theme;
 }
 
 /**

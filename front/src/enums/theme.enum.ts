@@ -1,28 +1,15 @@
 /** Selectable home palette — all dark, differing in black tone (accent stays constant). */
 export enum Theme {
   NeonTurf = 'neon-turf',
-  Obsidian = 'obsidian',
   Void = 'void',
-  Ink = 'ink',
-  Sable = 'sable',
-  Jet = 'jet',
   Onyx = 'onyx',
-  Abyss = 'abyss',
-  Midnight = 'midnight',
-  Carbon = 'carbon',
-  Espresso = 'espresso',
-  Slate = 'slate',
-  Graphite = 'graphite',
-  Ash = 'ash',
-  Fog = 'fog',
-  Stone = 'stone',
-  Mist = 'mist',
   MonoLive = 'mono-live',
   Platinum = 'platinum',
   Bronze = 'bronze',
 }
 
-/** Baseline palette — rendered by the default `.dark` block (no `data-theme` attribute). */
+/** Default palette applied on load (each theme is applied as its own `data-theme`).
+ *  `neon-turf` has no override block — it falls through to the baseline `.dark`/`@theme` identity. */
 export const DEFAULT_THEME = Theme.NeonTurf;
 
 const THEME_VALUES = new Set<string>(Object.values(Theme));

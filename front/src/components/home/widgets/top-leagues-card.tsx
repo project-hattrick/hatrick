@@ -13,10 +13,10 @@ function TopLeaguesCard() {
         {topLeagues.map((league, index) => (
           <div key={league.name} className="flex items-center justify-between py-0.5">
             <div className="flex items-center gap-2 text-xs font-medium">
-              <span className="w-4 text-center text-[11px] font-bold text-neon">{index + 1}</span>
+              <span className="w-4 text-center text-xs font-bold text-neon">{index + 1}</span>
               <span>{league.name}</span>
             </div>
-            <span className="text-[11px] font-semibold text-muted-foreground">{formatCompact(league.followers)}</span>
+            <span className="text-xs font-semibold text-muted-foreground">{formatCompact(league.followers)}</span>
           </div>
         ))}
         <SectionLink href="/live" label="View all leagues" className="self-start pt-1" />

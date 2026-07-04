@@ -5,11 +5,8 @@ import { Pencil, Wallet, Trophy, Coins, Package, Percent } from '@/components/co
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Avatar } from '@/components/ui/avatar';
 import { buttonVariants } from '@/components/ui/button';
-import { formatThousands } from '@/lib/format';
+import { formatThousands, shortAddress } from '@/lib/format';
 import { useAuth } from '@/services/queries/use-auth';
-
-const shortWallet = (address: string): string =>
-  `${address.slice(0, 4)}…${address.slice(-4)}`;
 
 /** Profile header + stat row, driven by the real wallet session (useAuth). */
 export function ProfileIdentity() {
@@ -17,8 +14,8 @@ export function ProfileIdentity() {
 
   const wallet = user?.walletAddress ?? null;
   const displayName =
-    user?.displayName ?? (wallet ? shortWallet(wallet) : 'Guest');
-  const handle = wallet ? `@${shortWallet(wallet)}` : 'Not signed in';
+    user?.displayName ?? (wallet ? shortAddress(wallet) : 'Guest');
+  const handle = wallet ? `@${shortAddress(wallet)}` : 'Not signed in';
   const coins =
     isAuthenticated && user ? formatThousands(Number(user.balance)) : '—';
 
@@ -44,7 +41,7 @@ export function ProfileIdentity() {
             <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <Wallet className="size-3.5" />{' '}
               {wallet
-                ? `${shortWallet(wallet)} · devnet`
+                ? `${shortAddress(wallet)} · devnet`
                 : 'Connect your wallet to sign in'}
             </span>
           </div>

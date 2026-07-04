@@ -71,10 +71,10 @@ export function PlayerFocusCard() {
       {/* Always-visible minimalist header. */}
       <div className="flex items-center gap-2">
         <span className={cn('size-1.5 rounded-full', player.onBall ? 'bg-neon' : 'bg-muted-foreground')} />
-        <span className="mr-auto font-mono text-[9px] font-bold tracking-wider text-muted-foreground">
+        <span className="mr-auto font-mono text-micro font-bold tracking-wider text-muted-foreground">
           {player.onBall ? 'ON THE BALL' : 'FOCUS'}
         </span>
-        <span className="font-mono text-[9px] font-bold text-muted-foreground/70">{player.code}</span>
+        <span className="font-mono text-micro font-bold text-muted-foreground/70">{player.code}</span>
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
@@ -103,7 +103,7 @@ export function PlayerFocusCard() {
         ) : null}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-foreground">{player.name}</div>
-          <div className="truncate text-[9px] font-semibold text-muted-foreground">{player.team} · {player.position}</div>
+          <div className="truncate text-micro font-semibold text-muted-foreground">{player.team} · {player.position}</div>
         </div>
         {!expanded ? (
           <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-neon bg-surface-1 font-mono text-xs font-bold text-neon">
@@ -139,7 +139,7 @@ export function PlayerFocusCard() {
             >
               <CaretLeft className="size-4" />
             </button>
-            <span className="font-mono text-[10px] font-bold tracking-wider text-muted-foreground">
+            <span className="font-mono text-micro font-bold tracking-wider text-muted-foreground">
               {position} / {total}
             </span>
             <button

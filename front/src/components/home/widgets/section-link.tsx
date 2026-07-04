@@ -14,7 +14,7 @@ function SectionLink({ href, label, className }: SectionLinkProps) {
     <Link
       href={href}
       className={cn(
-        'inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground transition hover:text-neon',
+        'inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-neon',
         className,
       )}
     >

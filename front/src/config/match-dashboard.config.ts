@@ -8,8 +8,8 @@ export interface DashTeam {
 }
 
 export const heroMatch = {
-  home: { name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/player-93.png' } as DashTeam,
-  away: { name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/player-green.png' } as DashTeam,
+  home: { name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/hero-arg.png' } as DashTeam,
+  away: { name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png' } as DashTeam,
   label: 'Sunday, 21 January',
   // Countdown target as a fixed remaining offset (days/hours/mins/secs) — mock, not wall-clock.
   countdown: { days: 3, hours: 12, minutes: 43, seconds: 14 },

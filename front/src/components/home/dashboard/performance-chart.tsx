@@ -55,8 +55,8 @@ export function PerformanceChart() {
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-[13px] font-bold">Graphic Performance</span>
-        <span className="rounded-md border border-white/10 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+        <span className="text-sm font-bold">Graphic Performance</span>
+        <span className="rounded-md border border-white/10 px-2 py-0.5 text-micro font-semibold text-muted-foreground">
           Full time
         </span>
       </div>

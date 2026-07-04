@@ -11,7 +11,7 @@ export function SquadSection() {
     <div className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold tracking-tight md:text-2xl">Your fantasy squad</h2>
+          <h2 className="text-title">Your fantasy squad</h2>
           <p className="text-sm text-muted-foreground">Your XI on the pitch · ready for the next 1v1</p>
         </div>
         <SectionLink href={`/${AppMode.Fantasy}`} label="Edit formation" className="mt-2" />

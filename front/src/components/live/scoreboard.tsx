@@ -15,7 +15,7 @@ function TeamColumn({ code }: { code: string }) {
   return (
     <div className="flex flex-col items-center gap-1 sm:gap-1.5">
       <Flag code={fifaToIso(code)} className="text-lg sm:text-2xl" />
-      <span className="text-[10px] font-semibold tracking-[0.1em] text-foreground/90 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-xs">
+      <span className="text-micro font-semibold tracking-[0.1em] text-foreground/90 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-xs">
         {code}
       </span>
     </div>
@@ -35,7 +35,7 @@ export function Scoreboard() {
     <div className="flex flex-col items-center gap-2 sm:gap-3">
       <div className="inline-flex items-center gap-2 rounded-full border border-live/30 bg-overlay/45 px-3 py-1 backdrop-blur-md">
         <span className="size-1.5 animate-pulse rounded-full bg-live" />
-        <span className="font-mono text-[10px] font-bold tracking-[0.16em] text-live uppercase">
+        <span className="font-mono text-eyebrow text-live">
           LIVE {formatMinute(match.minute)} · {phase.label}
         </span>
       </div>
@@ -58,7 +58,7 @@ export function Scoreboard() {
             return (
               <span
                 key={event.seq}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-overlay/40 px-2 py-1 text-[11px] font-semibold text-foreground/80 backdrop-blur-md"
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-overlay/40 px-2 py-1 text-xs font-semibold text-foreground/80 backdrop-blur-md"
               >
                 <span className={cn('size-1.5 rounded-full', meta.dotClass)} />
                 {formatMinute(event.minute ?? match.minute)} {meta.label}

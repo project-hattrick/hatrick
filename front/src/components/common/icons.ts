@@ -39,6 +39,7 @@ export {
   GameController,
   Gift,
   Globe,
+  GoogleLogo,
   Hash,
   Image,
   Info,

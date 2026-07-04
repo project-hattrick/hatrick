@@ -34,7 +34,7 @@ function MatchCard({ match }: { match: BracketMatch }) {
       <div className="mx-2.5 my-0.5 border-t border-border/50" />
       <TeamRow team={away} score={awayScore} win={winner === 'away'} dim={upcoming} />
       {upcoming ? (
-        <p className="px-2.5 pt-1 text-center text-[10px] font-bold uppercase tracking-widest text-neon/80">Up next</p>
+        <p className="px-2.5 pt-1 text-center text-eyebrow text-neon/80">Up next</p>
       ) : null}
     </GlassPanel>
   );
@@ -45,7 +45,7 @@ export function CupBracketSection() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Road to the final</h2>
+        <h2 className="text-display">Road to the final</h2>
         <p className="text-sm text-muted-foreground">Knockout bracket — predict who lifts the trophy.</p>
       </div>
 
@@ -67,7 +67,7 @@ export function CupBracketSection() {
             <GlassPanel className="flex w-40 flex-col items-center gap-2 p-5 text-center">
               <Trophy className="size-8 text-neon" />
               <span className="text-sm font-bold">TBD</span>
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Lift the cup</span>
+              <span className="text-eyebrow text-muted-foreground">Lift the cup</span>
             </GlassPanel>
           </div>
         </div>

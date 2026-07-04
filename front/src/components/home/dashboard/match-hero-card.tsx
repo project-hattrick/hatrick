@@ -16,7 +16,7 @@ function CountUnit({ value, label }: { value: number; label: string }) {
       <span className="font-mono text-2xl font-bold tabular-nums text-white sm:text-[28px]">
         {String(value).padStart(2, '0')}
       </span>
-      <span className="text-[9px] font-semibold tracking-wider text-white/60 uppercase">{label}</span>
+      <span className="text-eyebrow text-white/60">{label}</span>
     </div>
   );
 }
@@ -65,7 +65,7 @@ export function MatchHeroCard() {
           </span>
           <Flag code={heroMatch.away.code} className="text-sm" />
         </div>
-        <div className="text-[11px] text-white/50">{heroMatch.label}</div>
+        <div className="text-xs text-white/50">{heroMatch.label}</div>
 
         <div className="mt-2 flex items-start gap-3 rounded-xl bg-overlay/40 px-4 py-2 backdrop-blur-sm">
           <CountUnit value={d} label="Days" />

@@ -40,7 +40,7 @@ export function PlaybackControls() {
           type="button"
           onClick={toggleHeroLayout}
           aria-pressed={heroLayout === HeroLayout.Split}
-          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground transition hover:text-foreground"
+          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-bold text-muted-foreground transition hover:text-foreground"
         >
           <Rectangle className="size-4" />
           {heroLayout === HeroLayout.Split ? 'Immersive' : 'Split view'}

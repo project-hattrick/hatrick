@@ -71,7 +71,7 @@ export function MatchSelector() {
   return (
     <GlassPanel tone="dark" radius="xl" className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="flex items-center gap-2 text-[13px] font-bold tracking-wide">
+        <span className="flex items-center gap-2 text-sm font-bold tracking-wide">
           <Broadcast className="size-4 text-neon" />
           Live matches
         </span>

@@ -38,14 +38,14 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
               />
             ) : null}
           </span>
-          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-[10px] font-bold text-neon tabular-nums shadow">
+          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-micro font-bold text-neon tabular-nums shadow">
             {slot.rating}
           </span>
         </span>
       )}
       <span
         className={cn(
-          'max-w-[80px] truncate rounded bg-black/50 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase backdrop-blur-sm',
+          'max-w-[80px] truncate rounded bg-black/50 px-1.5 py-0.5 text-eyebrow backdrop-blur-sm',
           open ? 'text-neon/80' : 'text-white/90',
         )}
       >
@@ -70,7 +70,7 @@ export function FormationPitch() {
       <div className="pointer-events-none absolute top-3 left-1/2 h-12 w-2/5 -translate-x-1/2 rounded-b-md border-x border-b border-white/10" />
       <div className="pointer-events-none absolute bottom-3 left-1/2 h-16 w-1/2 -translate-x-1/2 rounded-t-md border-x border-t border-white/10" />
 
-      <span className="absolute top-4 left-4 z-10 font-mono text-[10px] font-bold tracking-[0.14em] text-white/70">
+      <span className="absolute top-4 left-4 z-10 font-mono text-micro font-bold tracking-[0.14em] text-white/70">
         {formation.shape} · {formation.filled}/{formation.total} LINED UP
       </span>
 

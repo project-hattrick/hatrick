@@ -9,7 +9,7 @@ export function CheckpointsSection() {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2.5">
-        <h2 className="text-sm font-bold tracking-wider uppercase">Game checkpoints</h2>
+        <h2 className="text-eyebrow">Game checkpoints</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {CHECKPOINTS.map((cp) => {
@@ -20,7 +20,7 @@ export function CheckpointsSection() {
                 <span className="inline-flex size-10 items-center justify-center rounded-xl bg-surface-deep text-neon">
                   <GameController className="size-5" />
                 </span>
-                <span className="rounded-full bg-surface-3/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span className="rounded-full bg-surface-3/80 px-2.5 py-1 text-eyebrow text-muted-foreground">
                   {cp.version}
                 </span>
               </div>

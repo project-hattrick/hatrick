@@ -24,8 +24,8 @@ export function SquadMiniStrip() {
             />
           </div>
           <div className="flex flex-col gap-0.5 p-2">
-            <span className="truncate text-[11px] leading-tight font-bold text-white">{player.name}</span>
-            <span className="flex items-center gap-1 text-[9px] font-semibold text-muted-foreground">
+            <span className="truncate text-xs leading-tight font-bold text-white">{player.name}</span>
+            <span className="flex items-center gap-1 text-micro font-semibold text-muted-foreground">
               <Flag code={player.code} className="text-[10px]" />
               <span className="truncate">{player.position}</span>
             </span>

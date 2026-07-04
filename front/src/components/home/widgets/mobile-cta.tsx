@@ -12,7 +12,7 @@ export function MobileCta() {
     <div className="flex flex-col items-center gap-8 rounded-2xl border border-neon/20 bg-surface-deep px-8 py-10 text-center md:flex-row md:justify-between md:text-left">
       <div className="flex flex-col items-center gap-3 md:items-start">
         <span className="text-eyebrow text-neon">Continue on your phone</span>
-        <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+        <h2 className="text-display">
           The game won&apos;t wait. <span className="text-neon">Take it with you.</span>
         </h2>
         <p className="max-w-sm text-sm text-muted-foreground">

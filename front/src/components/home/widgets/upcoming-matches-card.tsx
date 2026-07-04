@@ -16,13 +16,13 @@ function UpcomingMatchesCard() {
                 <span className="text-lg leading-none" aria-hidden>{match.home.flag}</span>
                 {match.home.code}
               </span>
-              <span className="text-[11px] font-medium text-muted-foreground">vs</span>
+              <span className="text-xs font-medium text-muted-foreground">vs</span>
               <span className="flex items-center gap-1.5 text-sm font-semibold">
                 <span className="text-lg leading-none" aria-hidden>{match.away.flag}</span>
                 {match.away.code}
               </span>
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground">{match.kickoff}</span>
+            <span className="text-xs font-medium text-muted-foreground">{match.kickoff}</span>
           </div>
         ))}
       </div>

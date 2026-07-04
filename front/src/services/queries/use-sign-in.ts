@@ -19,6 +19,7 @@ export function useSignInMutation() {
   const { publicKey, signMessage } = useWallet();
   const setSession = useAuthStore((s) => s.setSession);
   const setAuthenticating = useAuthStore((s) => s.setAuthenticating);
+  const setError = useAuthStore((s) => s.setError);
 
   return useMutation({
     mutationFn: async (): Promise<void> => {
@@ -31,7 +32,11 @@ export function useSignInMutation() {
       const session = await authService.verify(walletAddress, toBase64(signature));
       setSession(session.token, session.user);
     },
-    onMutate: () => setAuthenticating(true),
+    onMutate: () => {
+      setAuthenticating(true);
+      setError(null);
+    },
+    onError: (e) => setError((e as Error)?.message ?? 'Sign-in failed'),
     onSettled: () => setAuthenticating(false),
   });
 }

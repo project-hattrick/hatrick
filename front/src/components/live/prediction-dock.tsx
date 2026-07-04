@@ -101,7 +101,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
               className="w-full cursor-pointer justify-between gap-1 px-3.5 py-3 text-sm font-bold text-primary-foreground"
             >
               <span>{yes.label}</span>
-              <span className="truncate font-mono text-[10px] font-semibold text-primary-foreground/80">×{yes.odds} · +{yes.points}</span>
+              <span className="truncate font-mono text-micro font-semibold text-primary-foreground/80">×{yes.odds} · +{yes.points}</span>
             </MetalButton>
             <button
               type="button"
@@ -109,7 +109,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
               className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-1 rounded-[15px] border border-white/15 bg-white/10 px-3.5 py-3 text-foreground backdrop-blur-sm transition hover:bg-white/15 active:scale-[0.98]"
             >
               <span className="text-sm font-semibold">{no.label}</span>
-              <span className="truncate font-mono text-[10px] font-semibold text-muted-foreground">×{no.odds} · +{no.points}</span>
+              <span className="truncate font-mono text-micro font-semibold text-muted-foreground">×{no.odds} · +{no.points}</span>
             </button>
           </div>
         </div>

@@ -8,8 +8,11 @@ interface AuthStore {
   user: AuthUser | null;
   /** True while the sign-in mutation is running (shared across UI). */
   authenticating: boolean;
+  /** Last sign-in failure, so the login dialog can surface the headless driver's error. */
+  error: string | null;
   setSession: (token: string, user: AuthUser) => void;
   setAuthenticating: (value: boolean) => void;
+  setError: (error: string | null) => void;
   clear: () => void;
 }
 
@@ -28,9 +31,11 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       user: null,
       authenticating: false,
-      setSession: (token, user) => set({ token, user, authenticating: false }),
+      error: null,
+      setSession: (token, user) => set({ token, user, authenticating: false, error: null }),
       setAuthenticating: (authenticating) => set({ authenticating }),
-      clear: () => set({ token: null, user: null, authenticating: false }),
+      setError: (error) => set({ error }),
+      clear: () => set({ token: null, user: null, authenticating: false, error: null }),
     }),
     {
       name: 'hat-trick-auth',

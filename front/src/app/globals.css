@@ -148,31 +148,7 @@
    glass `overlay`, the pitch and the fade — while the accent (neon/live) inherits the
    baseline, so switching a theme re-skins the whole landing without changing the colors. */
 
-/* Obsidian — true black, OLED, maximum contrast. */
-.dark[data-theme='obsidian'] {
-  --color-surface-1: #0a0a0c;
-  --color-surface-2: #101013;
-  --color-surface-3: #191a1e;
-  --color-surface-deep: #000000;
-  --color-overlay: #000000;
-  --color-pitch: #08160d;
-  --pitch-stripe-a: #123021;
-  --pitch-stripe-b: #0d2417;
-
-  --background: #000000;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 13%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 9%);
-}
-
-/* Onyx — cool blue-black. */
+/* Onyx — cool blue-black (default). */
 .dark[data-theme='onyx'] {
   --color-surface-1: #0f131b;
   --color-surface-2: #151a24;
@@ -220,366 +196,6 @@
   --sidebar: var(--color-surface-1);
   --sidebar-accent: var(--color-surface-3);
   --sidebar-border: oklch(1 0 0 / 8%);
-}
-
-/* Ink — pure black with a cool blue tint in the surfaces. */
-.dark[data-theme='ink'] {
-  --color-surface-1: #07090f;
-  --color-surface-2: #0d1017;
-  --color-surface-3: #171b24;
-  --color-surface-deep: #000000;
-  --color-overlay: #000103;
-  --color-pitch: #071710;
-  --pitch-stripe-a: #113022;
-  --pitch-stripe-b: #0c2618;
-
-  --background: #000000;
-  --muted-foreground: #868fa2;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 13%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 9%);
-}
-
-/* Sable — pure black with a warm brown tint in the surfaces. */
-.dark[data-theme='sable'] {
-  --color-surface-1: #0d0a07;
-  --color-surface-2: #14100b;
-  --color-surface-3: #201914;
-  --color-surface-deep: #000000;
-  --color-overlay: #030100;
-  --color-pitch: #101a0b;
-  --pitch-stripe-a: #23311a;
-  --pitch-stripe-b: #1c2915;
-
-  --background: #000000;
-  --foreground: #f5efe8;
-  --muted-foreground: #a1968a;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 13%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 9%);
-}
-
-/* Jet — pure black, neutral with crisper surface separation than Obsidian. */
-.dark[data-theme='jet'] {
-  --color-surface-1: #0c0c0e;
-  --color-surface-2: #131316;
-  --color-surface-3: #202024;
-  --color-surface-deep: #000000;
-  --color-overlay: #000000;
-  --color-pitch: #08160d;
-  --pitch-stripe-a: #123021;
-  --pitch-stripe-b: #0d2417;
-
-  --background: #000000;
-  --muted-foreground: #9096a1;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 13%);
-  --input: oklch(1 0 0 / 16%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 11%);
-}
-
-/* Abyss — deep petrol/teal near-black (a cool "ocean at night", greener than Onyx/Midnight). */
-.dark[data-theme='abyss'] {
-  --color-surface-1: #0a1416;
-  --color-surface-2: #0f1c1f;
-  --color-surface-3: #18292d;
-  --color-surface-deep: #060e10;
-  --color-overlay: #030809;
-  --color-pitch: #08201a;
-  --pitch-stripe-a: #113228;
-  --pitch-stripe-b: #0c2820;
-
-  --background: #060e10;
-  --muted-foreground: #86a0a2;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 8%);
-}
-
-/* Midnight — deep night-blue black (cooler and deeper than Onyx). */
-.dark[data-theme='midnight'] {
-  --color-surface-1: #0c1120;
-  --color-surface-2: #12182c;
-  --color-surface-3: #1c2440;
-  --color-surface-deep: #070b16;
-  --color-overlay: #04060f;
-  --color-pitch: #0a1e1a;
-  --pitch-stripe-a: #123024;
-  --pitch-stripe-b: #0d271d;
-
-  --background: #070b16;
-  --muted-foreground: #808bad;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 8%);
-}
-
-/* Carbon — warm charcoal-black. */
-.dark[data-theme='carbon'] {
-  --color-surface-1: #151210;
-  --color-surface-2: #1c1815;
-  --color-surface-3: #28221d;
-  --color-surface-deep: #0c0a09;
-  --color-overlay: #070503;
-  --color-pitch: #14200f;
-  --pitch-stripe-a: #22301a;
-  --pitch-stripe-b: #1b2915;
-
-  --background: #0c0a09;
-  --foreground: #f5efe8;
-  --muted-foreground: #a3988c;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 8%);
-}
-
-/* Espresso — deep warm coffee-black (richer and warmer than Carbon). */
-.dark[data-theme='espresso'] {
-  --color-surface-1: #17110d;
-  --color-surface-2: #1f1812;
-  --color-surface-3: #2b211a;
-  --color-surface-deep: #0d0805;
-  --color-overlay: #080402;
-  --color-pitch: #15200e;
-  --pitch-stripe-a: #24301a;
-  --pitch-stripe-b: #1d2915;
-
-  --background: #0d0805;
-  --foreground: #f6ede2;
-  --muted-foreground: #a89586;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 12%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 8%);
-}
-
-/* Slate — softer, lighter dark gray (lower contrast). */
-.dark[data-theme='slate'] {
-  --color-surface-1: #181b21;
-  --color-surface-2: #20242c;
-  --color-surface-3: #2b303a;
-  --color-surface-deep: #101216;
-  --color-overlay: #0a0c10;
-  --color-pitch: #132a1c;
-  --pitch-stripe-a: #1c3a28;
-  --pitch-stripe-b: #163021;
-
-  --background: #101216;
-  --muted-foreground: #969cab;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 14%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 10%);
-}
-
-/* Graphite — neutral soft gray (the neutral counterpart to Slate). */
-.dark[data-theme='graphite'] {
-  --color-surface-1: #17181b;
-  --color-surface-2: #1f2024;
-  --color-surface-3: #2a2b30;
-  --color-surface-deep: #0f1012;
-  --color-overlay: #0a0a0c;
-  --color-pitch: #14261a;
-  --pitch-stripe-a: #1e3626;
-  --pitch-stripe-b: #182f20;
-
-  --background: #0f1012;
-  --muted-foreground: #9a9aa2;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 14%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 10%);
-}
-
-/* Ash — soft warm gray (the warm counterpart to Slate). */
-.dark[data-theme='ash'] {
-  --color-surface-1: #1a1815;
-  --color-surface-2: #23201c;
-  --color-surface-3: #2f2b25;
-  --color-surface-deep: #121110;
-  --color-overlay: #0c0a08;
-  --color-pitch: #16250f;
-  --pitch-stripe-a: #24331b;
-  --pitch-stripe-b: #1e2c16;
-
-  --background: #121110;
-  --foreground: #f4efe9;
-  --muted-foreground: #a49a8d;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 14%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 10%);
-}
-
-/* Fog — soft cool gray, the lightest cool variant (misty, low contrast). */
-.dark[data-theme='fog'] {
-  --color-surface-1: #1c2027;
-  --color-surface-2: #242932;
-  --color-surface-3: #30363f;
-  --color-surface-deep: #141821;
-  --color-overlay: #0e1116;
-  --color-pitch: #163020;
-  --pitch-stripe-a: #21402c;
-  --pitch-stripe-b: #1a3625;
-
-  --background: #141821;
-  --muted-foreground: #a2a9b6;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 11%);
-}
-
-/* Stone — soft warm-neutral gray (a light, earthy counterpart to Fog). */
-.dark[data-theme='stone'] {
-  --color-surface-1: #1c1a18;
-  --color-surface-2: #24211d;
-  --color-surface-3: #302b26;
-  --color-surface-deep: #141210;
-  --color-overlay: #0d0b09;
-  --color-pitch: #172611;
-  --pitch-stripe-a: #26331d;
-  --pitch-stripe-b: #1f2b17;
-
-  --background: #141210;
-  --foreground: #f4f0ec;
-  --muted-foreground: #a49c92;
-  --card: var(--color-surface-2);
-  --card-foreground: var(--foreground);
-  --popover: var(--color-surface-1);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--color-surface-3);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --accent-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(1 0 0 / 11%);
-}
-
-/* Mist — the lightest, airiest soft gray (lowest contrast, cool-neutral). */
-.dark[data-theme='mist'] {
-  --color-surface-1: #21242b;
-  --color-surface-2: #2a2e36;
-  --color-surface-3: #373c46;
-  --color-surface-deep: #191c23;
-  --color-overlay: #12151b;
-  --color-pitch: #17311f;
-  --pitch-stripe-a: #22412d;
-  --pitch-stripe-b: #1b3726;
-
-  --background: #191c23;
-  --muted-foreground: #a6acb8;
-  --card: var(--color-surface-2);
-  --popover: var(--color-surface-1);
-  --secondary: var(--color-surface-3);
-  --muted: var(--color-surface-2);
-  --accent: var(--color-surface-3);
-  --border: oklch(1 0 0 / 13%);
-  --input: oklch(1 0 0 / 16%);
-  --sidebar: var(--color-surface-1);
-  --sidebar-accent: var(--color-surface-3);
-  --sidebar-border: oklch(1 0 0 / 12%);
 }
 
 /* Mono Live — near-black surfaces + silver/white accent + a single red live accent. */
@@ -778,13 +394,41 @@
   .neon-text {
     text-shadow: 0 0 10px color-mix(in oklch, var(--color-neon) 45%, transparent);
   }
-  /* Shared eyebrow/label type step — replaces scattered inline text-[10px] uppercase. */
+  /* ── Type scale — semantic roles. Use these instead of ad-hoc text-[Npx] / size+weight
+     combos so the landing has ONE heading/label system. Colour stays a separate utility
+     (text-muted-foreground etc.) so it composes. Body copy = default text-sm/base.        */
+  .text-display {
+    font-size: 1.5rem; /* 24 → 30 */
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .text-title {
+    font-size: 1.25rem; /* 20 → 24 */
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  @media (min-width: 768px) {
+    .text-display {
+      font-size: 1.875rem;
+    }
+    .text-title {
+      font-size: 1.5rem;
+    }
+  }
+  /* Uppercase kicker/label (replaces scattered inline text-[10px] uppercase). */
   .text-eyebrow {
     font-size: 0.625rem;
     line-height: 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+  /* Dense 10px label that is NOT uppercase (replaces text-[9px]/text-[10px]). */
+  .text-micro {
+    font-size: 0.625rem;
+    line-height: 0.85rem;
   }
   /* Ambient accent glow behind the hero — follows the active palette's accent. */
   .hero-ambient {

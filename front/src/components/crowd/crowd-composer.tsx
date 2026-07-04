@@ -24,7 +24,7 @@ export function CrowdComposer({ fixtureId }: { fixtureId: number }) {
           {...form.register('text')}
           placeholder="Write a message..."
           autoComplete="off"
-          className="w-full bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
       </div>
     </form>

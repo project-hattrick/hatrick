@@ -34,7 +34,7 @@ export function GroupStageTable() {
   const group = groupStage.find((g) => g.key === active) ?? groupStage[0];
 
   return (
-    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-5 p-5 md:p-6">
+    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="flex items-center gap-2 text-base font-bold">🌍 Group stage</span>

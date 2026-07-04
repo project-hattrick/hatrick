@@ -9,7 +9,7 @@ function UpcomingSummaryCard() {
     <GlassPanel tone="surface" className="flex h-full flex-col">
       <SectionHeader
         title="Upcoming games"
-        action={<span className="text-[11px] font-semibold text-neon">{upcomingSummary.total} games</span>}
+        action={<span className="text-xs font-semibold text-neon">{upcomingSummary.total} games</span>}
       />
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4">
         {upcomingSummary.fixtures.map((fixture) => (
@@ -24,7 +24,7 @@ function UpcomingSummaryCard() {
               <span aria-hidden>{fixture.away.flag}</span>
               <span>{fixture.away.code}</span>
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground">{fixture.kickoff}</span>
+            <span className="text-xs font-medium text-muted-foreground">{fixture.kickoff}</span>
           </div>
         ))}
         <SectionLink href="/live" label="View full schedule" className="mt-auto self-start pt-1" />

@@ -12,7 +12,7 @@ function PackStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5 rounded-lg bg-surface-3/40 py-2">
       <span className="text-base font-bold">{value}</span>
-      <span className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</span>
+      <span className="text-eyebrow text-muted-foreground">{label}</span>
     </div>
   );
 }

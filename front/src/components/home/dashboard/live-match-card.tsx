@@ -8,8 +8,8 @@ export function LiveMatchCard() {
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-[13px] font-bold">Live Match</span>
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold text-live">
+        <span className="text-sm font-bold">Live Match</span>
+        <span className="inline-flex items-center gap-1.5 font-mono text-micro font-bold text-live">
           <span className="size-1.5 animate-pulse rounded-full bg-live" />
           {liveMatch.minute}&apos;
         </span>

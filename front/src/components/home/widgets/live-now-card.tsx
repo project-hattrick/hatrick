@@ -11,7 +11,7 @@ import { liveNow } from '@/config/home.config';
 function LiveNowCard() {
   return (
     <GlassPanel tone="surface" className="flex flex-col">
-      <SectionHeader title="Live now" action={<LiveBadge className="text-[11px]" />} />
+      <SectionHeader title="Live now" action={<LiveBadge className="text-xs" />} />
       <div className="flex flex-col gap-3 px-4 pb-4">
         <div className="flex items-end justify-between">
           <div>

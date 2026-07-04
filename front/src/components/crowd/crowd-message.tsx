@@ -42,9 +42,9 @@ export function CrowdMessage({ message }: { message: CrowdMessageModel }) {
               <SourceIcon weight="bold" className="size-2.5" />
             </span>
           </div>
-          <span className="shrink-0 text-[9px] font-medium text-muted-foreground">{message.ageLabel}</span>
+          <span className="shrink-0 text-micro font-medium text-muted-foreground">{message.ageLabel}</span>
         </div>
-        <span className="mt-1 text-[13px] text-foreground/90">{message.text}</span>
+        <span className="mt-1 text-sm text-foreground/90">{message.text}</span>
       </div>
     </div>
   );

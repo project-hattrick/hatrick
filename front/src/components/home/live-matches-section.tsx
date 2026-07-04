@@ -40,7 +40,7 @@ export function LiveMatchesSection() {
     <section className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight md:text-2xl">
+          <h2 className="flex items-center gap-2 text-title">
             <span className="size-2 animate-pulse rounded-full bg-live" />
             Live right now
           </h2>

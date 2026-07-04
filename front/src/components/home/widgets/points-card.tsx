@@ -14,7 +14,7 @@ function PointsCard() {
     <GlassPanel tone="surface" className="flex h-full flex-col">
       <SectionHeader
         title="Your points"
-        action={<span className="text-[11px] font-semibold text-neon">{userPoints.tier}</span>}
+        action={<span className="text-xs font-semibold text-neon">{userPoints.tier}</span>}
       />
       <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-center gap-2">
@@ -23,7 +23,7 @@ function PointsCard() {
           <span className="pb-1 text-xs text-muted-foreground">pts</span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Next reward</span>
             <span>
               {formatThousands(userPoints.rewardFrom)} / {formatThousands(userPoints.nextReward)}
