@@ -10,5 +10,4 @@ export { HeroLayout } from './hero-layout.enum';
 export { CrowdSource } from './crowd-source.enum';
 export { PredictionStatus } from './prediction-status.enum';
 export { TeamSide } from './team-side.enum';
-export { Theme, DEFAULT_THEME, parseTheme } from './theme.enum';
 export { Tone } from './tone.enum';

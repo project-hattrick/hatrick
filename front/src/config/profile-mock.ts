@@ -47,6 +47,12 @@ export const statTiles = (p: PlayerProfile): StatTile[] => [
   { label: 'Cards', value: String(40 + (hash(p.username) % 160)) },
 ];
 
+/** Selectable persona portraits for the own-profile avatar picker. */
+export const avatarOptions: string[] = Array.from(
+  { length: 11 },
+  (_, i) => `/personas/p${String(i + 1).padStart(2, '0')}.png`,
+);
+
 export interface Achievement {
   icon: Icon;
   label: string;

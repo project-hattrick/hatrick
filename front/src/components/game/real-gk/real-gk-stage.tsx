@@ -8,6 +8,7 @@ import { CheckpointId } from '@/game/checkpoints/registry';
 import { useRealGkStore } from '@/store/real-gk.store';
 import { GoalBurst } from '../goal-burst';
 import { ConfettiBurst } from './confetti-burst';
+import { CrtOverlay } from './crt-overlay';
 import { MatchIntroOverlay } from './match-intro-overlay';
 import { RealGkControls } from './real-gk-controls';
 import { RealGkHud } from './real-gk-hud';
@@ -97,6 +98,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
       <GoalBurst active={goalActive} />
       <ConfettiBurst active={goalActive} team={goalTeam} />
+      {realGkConfigFor(checkpoint).crtFilter && <CrtOverlay />}
       <RedCardOverlay active={redCardActive} playerName={redCardName} />
       <RestartBanner
         active={restartActive}

@@ -12,7 +12,7 @@ import { fifaToIso } from '@/lib/country';
 import { formatThousands, shortAddress } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { selfProfile } from '@/config/duelists.config';
-import { formatJoined, rankFromRating } from '@/config/profile-mock';
+import { avatarOptions, formatJoined, rankFromRating } from '@/config/profile-mock';
 import { useAuth } from '@/services/queries/use-auth';
 import { useProfileStore, type ProfileDraft } from '@/store/profile.store';
 
@@ -36,6 +36,7 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
       username: s.username,
       country: s.country,
       bio: s.bio,
+      portraitSrc: s.portraitSrc,
     };
   });
 
@@ -53,6 +54,35 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
 
   return (
     <div className="mt-3 flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Avatar</span>
+        <div className="flex flex-wrap gap-2">
+          {avatarOptions.map((src) => {
+            const selected = src === (draft.portraitSrc || selfProfile.portraitSrc);
+            return (
+              <button
+                key={src}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setField('portraitSrc', src)}
+                className={cn(
+                  'grid size-12 place-items-end overflow-hidden rounded-lg bg-gradient-to-b from-surface-3 to-surface-deep ring-2 transition',
+                  selected ? 'ring-neon' : 'ring-transparent hover:ring-neon/40',
+                )}
+              >
+                <Image
+                  src={src}
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="translate-y-[6%] scale-110 object-contain object-bottom"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </button>
+            );
+          })}
+        </div>
+      </div>
       {fields.map((field) => (
         <label key={field.id} className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">{field.label}</span>
@@ -103,9 +133,9 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
 
   return (
     <div className="flex flex-col">
-      <span className="-mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl ring-2 ring-neon/30">
+      <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl ring-2 ring-neon/30">
         <Image
-          src={selfProfile.portraitSrc}
+          src={draft.portraitSrc || selfProfile.portraitSrc}
           alt={displayName}
           width={96}
           height={96}

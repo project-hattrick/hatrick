@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { CaretRight, X } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Button } from '@/components/ui/button';
-import { HoloPlayerCard, type HoloPlayerCardProps, type CardStat } from '@/components/store/holo-player-card';
+import { HoloPlayerCard } from '@/components/store/holo-player-card';
 import { playRevealSound, playSwipeSound, playTearSound } from '@/components/store/pack-sounds';
+import { drawPack, type PackCard } from '@/config/pack-pool.config';
 import styles from './pack-opening.module.css';
 import { cn } from '@/lib/utils';
 
@@ -29,20 +30,19 @@ const SWIPE_THRESHOLD_PX = 90;
 const CARD_WIDTH = 400;
 const SUMMARY_CARD_WIDTH = 210;
 
-const STAT_LABELS = ['DIV', 'HAN', 'KIC', 'REF', 'SPD', 'POS'] as const;
-const statLine = (value: number): CardStat[] => STAT_LABELS.map((label) => ({ value, label }));
+/** Default cards per pack — each opening draws them at random from the FULL character pool (pack-pool.config). */
+const DEFAULT_PACK_SIZE = 5;
 
-/** Placeholder pull until packs come from the API — varied identity and portraits.
- *  holoColors = country flag colors, driving each card's hover refraction. */
-const PACK_CARDS: HoloPlayerCardProps[] = [
-  { number: 93, flag: '🇱🇺', stats: statLine(91), holoColors: ['#ef2b3d', '#f5f5f5', '#00a2e1'], portraitSrc: '/cards/player-93.png' },
-  { number: 10, flag: '🇧🇷', stats: statLine(88), holoColors: ['#009739', '#fedd00', '#012169'], portraitSrc: '/cards/player-green.png' },
-  { number: 1, flag: '🇯🇵', stats: statLine(84), holoColors: ['#bc002d', '#ffffff', '#bc002d'], portraitSrc: '/cards/player-keeper.png' },
-  { number: 21, flag: '🇫🇷', stats: statLine(79), holoColors: ['#0055a4', '#ffffff', '#ef4135'], portraitSrc: '/cards/player-green.png' },
-  { number: 4, flag: '🇬🇭', stats: statLine(75), holoColors: ['#ce1126', '#fcd116', '#006b3f'], portraitSrc: '/cards/player-93.png' },
-];
-
-const bestCard = PACK_CARDS.reduce((best, card) => ((card.number ?? 0) > (best.number ?? 0) ? card : best));
+interface PackOpeningProps {
+  packName: string;
+  /** Cards drawn per opening. */
+  packSize?: number;
+  /** Trigger button content — defaults to "Buy pack" + caret. */
+  cta?: ReactNode;
+  ctaClassName?: string;
+  ctaSize?: ComponentProps<typeof Button>['size'];
+  ctaVariant?: ComponentProps<typeof Button>['variant'];
+}
 
 /** Foil card back shown before each reveal. */
 function CardBack() {
@@ -60,8 +60,16 @@ function CardBack() {
  * sealed foil pack on the podium -> tear -> face-down card rises -> flip reveal
  * (flash + chime, advance by button / swipe / SPACE) -> pull summary.
  */
-function PackOpening({ packName }: { packName: string }) {
+function PackOpening({
+  packName,
+  packSize = DEFAULT_PACK_SIZE,
+  cta,
+  ctaClassName,
+  ctaSize,
+  ctaVariant,
+}: PackOpeningProps) {
   const [stage, setStage] = useState<PackStage | null>(null);
+  const [packCards, setPackCards] = useState<PackCard[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [exitDir, setExitDir] = useState(0);
   const [flashing, setFlashing] = useState(false);
@@ -70,7 +78,17 @@ function PackOpening({ packName }: { packName: string }) {
   const dragStart = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const isLastCard = cardIndex === PACK_CARDS.length - 1;
+  const isLastCard = cardIndex === packCards.length - 1;
+  const currentCard = packCards[cardIndex] ?? null;
+  const bestCard = packCards.length
+    ? packCards.reduce((best, card) => ((card.number ?? 0) > (best.number ?? 0) ? card : best))
+    : null;
+
+  /** Buy: draw a fresh random hand from the full character pool, then present the sealed pack. */
+  const buyPack = () => {
+    setPackCards(drawPack(packSize));
+    setStage(PackStage.Sealed);
+  };
 
   const close = () => {
     if (timer.current) clearTimeout(timer.current);
@@ -176,9 +194,13 @@ function PackOpening({ packName }: { packName: string }) {
 
   return (
     <>
-      <Button className="w-full" onClick={() => setStage(PackStage.Sealed)}>
-        Buy pack
-        <CaretRight className="size-4" />
+      <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
+        {cta ?? (
+          <>
+            Buy pack
+            <CaretRight className="size-4" />
+          </>
+        )}
       </Button>
 
       {stage !== null &&
@@ -200,7 +222,7 @@ function PackOpening({ packName }: { packName: string }) {
             <div className="absolute inset-x-0 top-20 z-10 px-14 text-center">
               <span className="font-mono text-xs font-bold tracking-[0.35em] text-white/80 uppercase">
                 {packName}
-                {onCard && ` · card ${cardIndex + 1}/${PACK_CARDS.length}`}
+                {onCard && ` · card ${cardIndex + 1}/${packCards.length}`}
                 {stage === PackStage.Summary && ' · summary'}
               </span>
             </div>
@@ -213,7 +235,7 @@ function PackOpening({ packName }: { packName: string }) {
               >
                 <div className="border-b border-border/60 px-4 py-3">
                   <div className="text-sm font-bold tracking-wide text-white uppercase">{packName}</div>
-                  <div className="text-xs text-muted-foreground">{PACK_CARDS.length} cards</div>
+                  <div className="text-xs text-muted-foreground">{packCards.length} cards</div>
                 </div>
                 <div className="p-3">
                   <div className={cn(styles.foil, 'flex w-full flex-col items-center justify-center gap-1.5 rounded-lg py-5')}>
@@ -268,7 +290,7 @@ function PackOpening({ packName }: { packName: string }) {
                     </div>
                     <div className={styles.flipFace}>
                       {/* Mounted only at reveal — nested preserve-3d ignores backface-visibility */}
-                      {stage === PackStage.Revealed && <HoloPlayerCard {...PACK_CARDS[cardIndex]} width={CARD_WIDTH} />}
+                      {stage === PackStage.Revealed && currentCard && <HoloPlayerCard {...currentCard} width={CARD_WIDTH} />}
                     </div>
                   </div>
                 </div>
@@ -278,6 +300,11 @@ function PackOpening({ packName }: { packName: string }) {
             {/* Bottom controls */}
             {(stage !== PackStage.Summary && (
               <div className="absolute inset-x-0 bottom-[max(7svh,calc(env(safe-area-inset-bottom)+16px))] z-10 flex flex-col items-center gap-2 px-4 text-center">
+                {stage === PackStage.Revealed && currentCard && (
+                  <span className="text-lg font-bold text-white drop-shadow">
+                    {currentCard.name} <span className="text-white/70">{currentCard.flag}</span>
+                  </span>
+                )}
                 {stage === PackStage.FaceDown && (
                   <Button size="lg" className="px-10 text-base" onClick={reveal}>
                     Reveal card
@@ -301,15 +328,20 @@ function PackOpening({ packName }: { packName: string }) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/55">
                 <div className="flex max-h-full w-full flex-col items-center gap-8 overflow-y-auto p-6 pt-24">
                   <div className="flex flex-col items-center gap-1.5">
-                    <h2 className="text-4xl font-bold text-white md:text-5xl">You pulled {PACK_CARDS.length} cards</h2>
-                    <span className="text-base text-muted-foreground">
-                      Best pull: {bestCard.number} {bestCard.flag}
-                    </span>
+                    <h2 className="text-4xl font-bold text-white md:text-5xl">You pulled {packCards.length} cards</h2>
+                    {bestCard && (
+                      <span className="text-base text-muted-foreground">
+                        Best pull: {bestCard.name} {bestCard.flag} · {bestCard.number}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-6">
-                    {PACK_CARDS.map((card, index) => (
-                      <div key={index} className={styles.cardReveal} style={{ animationDelay: `${index * 0.12}s` }}>
-                        <HoloPlayerCard {...card} width={SUMMARY_CARD_WIDTH} />
+                    {packCards.map((card, index) => (
+                      <div key={card.name} className={styles.cardReveal} style={{ animationDelay: `${index * 0.12}s` }}>
+                        <div className="flex flex-col items-center gap-2">
+                          <HoloPlayerCard {...card} width={SUMMARY_CARD_WIDTH} />
+                          <span className="text-sm font-semibold text-white/90">{card.name}</span>
+                        </div>
                       </div>
                     ))}
                   </div>

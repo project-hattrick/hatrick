@@ -3,8 +3,8 @@ import { PageShell } from '@/components/common/page-shell';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { WireBlock } from '@/components/common/wire-block';
-import { PlayerCard } from '@/components/fantasy/player-card';
 import { DuelHistoryList } from '@/components/duelists/duel-history-list';
+import { CollectionCarousel } from '@/components/profile/collection-carousel';
 import { ProfileBets } from '@/components/profile/profile-bets';
 import { ProfileHero } from '@/components/profile/profile-hero';
 import { userCards } from '@/config/fantasy-cards.config';
@@ -26,20 +26,18 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <div className="flex flex-col gap-6">
         <ProfileHero initialEdit={edit === '1'} />
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
-            <SectionHeader
-              title="Collection"
-              action={<span className="text-[10px] text-muted-foreground">{userCards.length} players</span>}
-            />
-            <div className="flex gap-3 overflow-x-auto p-4 pt-0">
-              {userCards.map((card) => (
-                <PlayerCard key={card.id} card={card} />
-              ))}
-            </div>
-          </GlassPanel>
+        <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+          <SectionHeader
+            title="Collection"
+            action={<span className="text-[10px] text-muted-foreground">{userCards.length} players</span>}
+          />
+          <CollectionCarousel />
+        </GlassPanel>
 
-          <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <DuelHistoryList profile={selfProfile} />
+          <ProfileBets />
+          <GlassPanel radius="xl" tone="surface" className="overflow-hidden lg:col-span-2 xl:col-span-1">
             <SectionHeader
               title="Starting XI"
               action={
@@ -50,11 +48,6 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             />
             <WireBlock label="Formation pitch · 11 player slots" className="m-4 h-44" />
           </GlassPanel>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <DuelHistoryList profile={selfProfile} />
-          <ProfileBets />
         </div>
       </div>
     </PageShell>

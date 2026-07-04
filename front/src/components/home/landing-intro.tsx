@@ -3,29 +3,59 @@
 import { useEffect, useState } from 'react';
 
 import { HolofoteLoader } from '@/components/common/holofote-loader';
+import { useLandingReady } from '@/hooks/use-landing-ready';
+import { cn } from '@/lib/utils';
 
-// Matches the 2.2s intro-out animation plus a short tail before the overlay unmounts.
-const INTRO_DURATION_MS = 2300;
+/** Overlay pulses at least this long so a warm cache doesn't flash-skip the brand beat. */
+const MIN_HOLD_MS = 900;
+/** Matches the .landing-intro--out fade in globals.css, plus a short tail before unmount. */
+const OUT_DURATION_MS = 900;
 
-/** One-shot pulsing holofote intro (same visual as the route loader), then reveals the landing. */
+enum IntroPhase {
+  Hold = 'hold',
+  Out = 'out',
+  Done = 'done',
+}
+
+/**
+ * Holofote intro that stays up until the landing underneath is actually ready
+ * (hero engine sprites, fonts, page load — see useLandingReady), then fades out.
+ */
 export function LandingIntro() {
-  // Start visible so the overlay is painted on the very first frame (SSR + hydration),
-  // ahead of the landing. The effect then plays it out, or removes it for reduced motion.
-  const [visible, setVisible] = useState(true);
+  // Start on Hold so the overlay is painted on the very first frame (SSR + hydration),
+  // ahead of the landing revealing beneath it.
+  const [phase, setPhase] = useState(IntroPhase.Hold);
+  const [held, setHeld] = useState(false);
+  const ready = useLandingReady();
 
   useEffect(() => {
-    // Reduced motion skips the animation — hide on the next tick (0ms) instead of
-    // synchronously, so the effect never sets state in its own body.
+    // Reduced motion skips the minimum brand beat — the overlay is then purely a readiness gate.
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer = window.setTimeout(() => setVisible(false), reduced ? 0 : INTRO_DURATION_MS);
+    const timer = window.setTimeout(() => setHeld(true), reduced ? 0 : MIN_HOLD_MS);
     return () => window.clearTimeout(timer);
   }, []);
 
-  if (!visible) return null;
+  // Only fade once the landing is painted AND the minimum beat has played.
+  useEffect(() => {
+    if (!ready || !held || phase !== IntroPhase.Hold) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setPhase(reduced ? IntroPhase.Done : IntroPhase.Out);
+  }, [ready, held, phase]);
 
-  // The wrapper's opacity fade (intro-out) applies to the fixed holofote layers underneath.
+  useEffect(() => {
+    if (phase !== IntroPhase.Out) return;
+    const timer = window.setTimeout(() => setPhase(IntroPhase.Done), OUT_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  if (phase === IntroPhase.Done) return null;
+
   return (
-    <div className="landing-intro" role="status" aria-label="Loading">
+    <div
+      className={cn('landing-intro', phase === IntroPhase.Out && 'landing-intro--out')}
+      role="status"
+      aria-label="Loading"
+    >
       <HolofoteLoader />
     </div>
   );

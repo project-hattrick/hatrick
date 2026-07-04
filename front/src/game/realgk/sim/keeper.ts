@@ -1,4 +1,4 @@
-import { DIVE_DURATION, DIVE_FORWARD, DIVE_LIFT, DIVE2_FLIGHT, DIVE2_LAUNCH } from '../constants';
+import { DIVE_DURATION, DIVE_FORWARD, DIVE_LIFT, DIVE2_FLIGHT, DIVE2_LAUNCH, DIVE2_TRIGGER_RANGE } from '../constants';
 import { BodyAnim, HeadView, PlayerAction, Role, Team } from '../enums';
 import { goalCenterForTeam } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
@@ -18,15 +18,15 @@ export function keeperConfigFor(mode: BodyAnim, frameIdx: number): FrameCfg {
  * in-game reaction time: two anticipation holds, a smeared launch (frame 1 → 2), extension and recovery.
  */
 const DIVE2_STEPS: { frame: number; duration: number; smearFrom?: number }[] = [
-  { frame: 0, duration: 0.1 },
-  { frame: 1, duration: 0.08 },
-  { frame: 2, duration: 0.14, smearFrom: 1 },
-  { frame: 2, duration: 0.08 },
-  { frame: 3, duration: 0.06 },
-  { frame: 4, duration: 0.07 },
-  { frame: 5, duration: 0.07 },
-  { frame: 6, duration: 0.08 },
-  { frame: 7, duration: 0.08 },
+  { frame: 0, duration: 0.22 },
+  { frame: 1, duration: 0.2 },
+  { frame: 2, duration: 0.26, smearFrom: 1 },
+  { frame: 2, duration: 0.16 },
+  { frame: 3, duration: 0.11 },
+  { frame: 4, duration: 0.11 },
+  { frame: 5, duration: 0.11 },
+  { frame: 6, duration: 0.11 },
+  { frame: 7, duration: 0.12 },
 ];
 
 export const DIVE2_DURATION = DIVE2_STEPS.reduce((sum, s) => sum + s.duration, 0);
@@ -93,7 +93,11 @@ export function updateKeeperDive(player: RealGkPlayer, dt: number): boolean {
   const flightT = isV2 ? clamp((player.actionElapsed - DIVE2_LAUNCH) / DIVE2_FLIGHT, 0, 1) : t;
   const forward = lerp(0, DIVE_FORWARD, easeOutCubic(flightT));
   const lift = Math.sin(flightT * Math.PI) * DIVE_LIFT;
-  const settleY = (player.targetY - player.diveStartY) * t * 0.35;
+  // v2 dives to the ball's crossing line (full lateral tracking, so the keeper visibly picks the right
+  // side); legacy keeps its subtle drift.
+  const settleY = isV2
+    ? (player.targetY - player.diveStartY) * easeOutCubic(flightT)
+    : (player.targetY - player.diveStartY) * t * 0.35;
   player.x = player.diveStartX + forward * player.diveDir;
   player.y = player.diveStartY - lift + settleY;
   player.vx = 0;
@@ -108,16 +112,20 @@ export function updateKeeperDive(player: RealGkPlayer, dt: number): boolean {
 
 export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer): boolean {
   const { ball, size } = world;
+  const isV2 = world.cfg.features?.keeperDiveV2 === true;
   if (player.role !== Role.GK || player.actionTimer > 0 || player.saveCooldown > 0 || ball.ownerId || ball.z > 32) {
     return false;
   }
   const goalCenter = goalCenterForTeam(size, player.team);
   const towardGoal = player.team === Team.Blue ? ball.vx < -80 : ball.vx > 80;
   const closeLane = Math.abs(ball.y - goalCenter.y) < 82;
-  const approachingKeeper = Math.abs(ball.x - player.x) < 150;
+  const approachingKeeper = Math.abs(ball.x - player.x) < (isV2 ? DIVE2_TRIGGER_RANGE : 150);
   if (!towardGoal || !closeLane || !approachingKeeper) return false;
 
-  const lead = clamp(0.1 + Math.abs(ball.vx) / 900, 0.1, 0.2);
+  // v2 aims at where the ball will actually cross the keeper's line; legacy uses the short fixed lead.
+  const lead = isV2
+    ? clamp(Math.abs(ball.x - player.x) / Math.max(120, Math.abs(ball.vx)), 0.08, 0.5)
+    : clamp(0.1 + Math.abs(ball.vx) / 900, 0.1, 0.2);
   const targetX = ball.x + ball.vx * lead;
   const targetY = ball.y + ball.vy * lead;
   if (Math.abs(targetY - player.y) > 54) return false;

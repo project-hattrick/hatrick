@@ -1,18 +1,18 @@
 import {
   Pulse,
   CalendarDots,
-  Crown,
+  ChatCircle,
   GameController,
   Gift,
   Package,
   Play,
-  Sparkle,
+  Sword,
   Target,
   Trophy,
+  Users,
   type Icon,
 } from '@/components/common/icons';
 import { AppMode } from '@/enums/app-mode.enum';
-import { Tone } from '@/enums/tone.enum';
 
 export interface Team {
   code: string;
@@ -122,57 +122,56 @@ export const topPlayers: RankedPlayer[] = [
   { rank: 128, name: 'You', flag: '🇧🇷', points: 2490, you: true },
 ];
 
-export interface PackData {
-  id: string;
-  name: string;
-  tagline: string;
-  players: number;
-  rares: number;
-  topRating: string;
-  price: number;
-  tone: Tone;
+export interface PlayModeFeature {
+  label: string;
   icon: Icon;
 }
-
-export const featuredPacks: PackData[] = [
-  { id: 'gold', name: 'Gold Pack', tagline: 'Start your collection', players: 6, rares: 1, topRating: '80+', price: 900, tone: Tone.Warning, icon: Package },
-  { id: 'epic', name: 'Epic Pack', tagline: 'Guaranteed top players', players: 12, rares: 3, topRating: '85+', price: 1000, tone: Tone.Info, icon: Sparkle },
-  { id: 'legend', name: 'Legendary Pack', tagline: 'The best in the world', players: 20, rares: 5, topRating: '90+', price: 2000, tone: Tone.Primary, icon: Crown },
-];
 
 export interface PlayMode {
   key: string;
   title: string;
   description: string;
-  features: string[];
+  features: PlayModeFeature[];
   href: string;
   cta: string;
   icon: Icon;
-  tone: Tone;
   badge?: string;
+  art: string;
+  emblem?: string;
 }
 
 export const playModes: PlayMode[] = [
   {
     key: 'live',
-    title: 'Live Mode',
+    title: 'Live',
     description: 'Follow real matches in real time, predict and bet every single minute.',
-    features: ['Instant predictions', 'Real-time chat & community', 'Rewards as it happens'],
+    features: [
+      { label: 'Real-time', icon: Pulse },
+      { label: 'Predictions', icon: Target },
+      { label: 'Crowd chat', icon: ChatCircle },
+      { label: 'Rewards', icon: Gift },
+    ],
     href: `/${AppMode.Live}`,
     cta: 'Enter Live',
     icon: Pulse,
-    tone: Tone.Danger,
     badge: 'Live',
+    art: '/prediction-goal.png',
   },
   {
     key: 'fantasy',
-    title: 'Fantasy Mode',
+    title: 'Fantasy',
     description: 'Build your dream XI and face other users in 3D simulated matches.',
-    features: ['Open packs & collect', 'Challenge your friends', 'Win epic rewards'],
+    features: [
+      { label: 'Open packs', icon: Package },
+      { label: '1v1 duels', icon: Sword },
+      { label: 'Vs friends', icon: Users },
+      { label: 'Epic prizes', icon: Trophy },
+    ],
     href: `/${AppMode.Fantasy}`,
     cta: 'Play Fantasy',
     icon: GameController,
-    tone: Tone.Info,
+    art: '/cards/card-texture.png',
+    emblem: '/cards/fade-logo.png',
   },
 ];
 

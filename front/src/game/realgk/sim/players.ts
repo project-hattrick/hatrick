@@ -112,15 +112,20 @@ const INTRO_ROLE_DELAY: Record<Role, number> = {
  * and the formation shape is preserved (spawning everyone on one depth line collapsed same-lat players onto
  * one point). Staggered walk-on delays by line (back-to-front).
  */
+// Deepest intro spawn as a ratio of world height: the pink apron below the pitch (grass ends ≈ 0.697,
+// the perimeter wall starts ≈ 0.74 on the court image) — players must never park beyond the wall.
+const INTRO_APRON_MAX_DEPTH = 0.725;
+
 export function placePlayersOffPitch(world: RealGkWorld): void {
   const rise = world.size.height * 0.3; // how far below home each player starts
+  const apronMaxY = world.size.height * INTRO_APRON_MAX_DEPTH;
   let blueIdx = 0;
   let redIdx = 0;
   for (const p of world.players) {
     const idx = p.team === Team.Blue ? blueIdx++ : redIdx++;
     const home = pointOnField(world.size, p.homeLat, p.homeDepth);
     p.spawnX = home.x;
-    p.spawnY = home.y + rise;
+    p.spawnY = Math.min(home.y + rise, apronMaxY);
     p.x = p.spawnX;
     p.y = p.spawnY;
     p.vx = 0;

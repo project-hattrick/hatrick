@@ -7,6 +7,8 @@ export interface ProfileDraft {
   username: string;
   country: string;
   bio: string;
+  /** `/personas/*` path; empty = default portrait. */
+  portraitSrc: string;
 }
 
 interface ProfileStore extends ProfileDraft {
@@ -32,6 +34,7 @@ export const useProfileStore = create<ProfileStore>()(
       username: '',
       country: '',
       bio: '',
+      portraitSrc: '',
       save: (draft) => set(draft),
     }),
     {

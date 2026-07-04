@@ -29,8 +29,11 @@ export const DIVE_LIFT = 20;
  * v6 keeper dive (candidate_01 pack): crouch anticipation → smeared launch → prone slide → recovery.
  * The launch delay + flight window drive the motion profile; the frame timeline lives in sim/keeper.ts.
  */
-export const DIVE2_LAUNCH = 0.18;
-export const DIVE2_FLIGHT = 0.28;
+export const DIVE2_LAUNCH = 0.42;
+export const DIVE2_FLIGHT = 0.53;
+
+/** v6 dive trigger distance — earlier than legacy so the crouch anticipation plays out before the ball arrives. */
+export const DIVE2_TRIGGER_RANGE = 240;
 
 /**
  * Diving-keeper footprint. The dive frames are horizontal poses (wide, short bboxes), so sizing them by

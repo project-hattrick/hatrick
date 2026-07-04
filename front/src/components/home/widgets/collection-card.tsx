@@ -1,9 +1,6 @@
-import Link from 'next/link';
-import { Sparkle } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { HoloPlayerCard, type CardStat } from '@/components/store/holo-player-card';
-import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SectionLink } from './section-link';
 import { statOrder, userCards, type PlayerCardData } from '@/config/fantasy-cards.config';
@@ -13,7 +10,7 @@ const previewCards = userCards.slice(0, 3);
 const toCardStats = (card: PlayerCardData): CardStat[] =>
   statOrder.map(([label, key]) => ({ value: card.stats[key], label }));
 
-/** Board column: a peek at the player's card collection + a pack teaser. */
+/** Board column: a peek at the player's card collection. */
 function CollectionCard() {
   return (
     <GlassPanel tone="surface" className="flex h-full flex-col">
@@ -32,13 +29,6 @@ function CollectionCard() {
               />
             </div>
           ))}
-          <div className="flex h-[168px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neon/25 bg-surface-deep p-2 text-center">
-            <Sparkle className="size-6 text-neon" />
-            <span className="text-eyebrow text-neon">Epic Pack</span>
-            <Link href="/fantasy" className={buttonVariants({ variant: 'default', size: 'xs', className: 'h-6 px-2 text-micro' })}>
-              Open pack
-            </Link>
-          </div>
         </div>
         <div className="flex items-center justify-center gap-1.5">
           {Array.from({ length: 8 }).map((_, index) => (

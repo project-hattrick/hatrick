@@ -77,6 +77,8 @@ export interface RealGkConfig {
   nearGoalPush?: number;
   /** Team brands for the v5 intro showcase (flags + names). Unset → generic Blue/Red. */
   teams?: { blue: TeamBrand; red: TeamBrand };
+  /** Light retro-TV overlay on the stage (faint scanlines + RGB mask + vignette). */
+  crtFilter?: boolean;
 }
 
 /** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
@@ -202,6 +204,7 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
   features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
+  crtFilter: true,
 };
 
 /**
