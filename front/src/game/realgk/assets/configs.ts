@@ -30,6 +30,18 @@ export const KEEPER_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
     { headView: HeadView.Front, bodyScale: 0.56, headScale: 0.61, offsetXRatio: 0.37489901047884805, offsetYRatio: 0.3 },
     { headView: HeadView.Side, bodyScale: 0.56, headScale: 0.61, offsetXRatio: 0.2416619439589105, offsetYRatio: 0.26133708352420804 },
   ],
+  // v6 dive (candidate_01): crouch anticipation (front), smeared side launch, prone slide, kneel recovery.
+  // headScale compensates each frame's height ratio so the composited head stays a constant pixel size.
+  [BodyAnim.GkDiveV2]: [
+    { headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0, offsetYRatio: 0.12 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.48, offsetXRatio: 0.1, offsetYRatio: 0.14 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.84, offsetXRatio: 0.3, offsetYRatio: 0.55 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 1.24, offsetXRatio: 0.38, offsetYRatio: 0.75 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.55, offsetXRatio: 0.34, offsetYRatio: 0.35 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.72, offsetXRatio: 0.3, offsetYRatio: 0.5 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.63, offsetXRatio: 0.15, offsetYRatio: 0.4 },
+    { headView: HeadView.Front, bodyScale: 0.68, headScale: 0.63, offsetXRatio: 0.02, offsetYRatio: 0.25 },
+  ],
 };
 
 /** Static open-arms pose: front head over frame 2 of the back-view arms-up body (playground call). */

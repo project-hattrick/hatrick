@@ -9,7 +9,7 @@ import { outfieldConfigFor, type FrameCfg } from './assets/configs';
 import { ITEM_MAP } from './assets/items';
 import type { HeadKey, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
-import { keeperConfigFor } from './sim/keeper';
+import { DIVE2_HEIGHT_RATIO, dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
 
 interface SpriteRect {
@@ -21,7 +21,7 @@ interface SpriteRect {
   sourceH: number;
 }
 
-const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive, BodyAnim.PowerShotSide]);
+const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive, BodyAnim.GkDiveV2, BodyAnim.PowerShotSide]);
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
@@ -159,11 +159,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
   // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
   // the stretched sprite reads like a normal player instead of inflating off its short height.
-  const diveBox = diving ? modeItem?.bboxes[frameIdx] : null;
-  const spriteHeight = diveBox
-    ? (lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * DIVE_LENGTH) /
-      Math.max(1, (diveBox[2] - diveBox[0]) / Math.max(1, diveBox[3] - diveBox[1]))
-    : spriteHeightFor(world, depth, sizeCfg);
+  // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.
+  const diveV2 = diving && player.mode === BodyAnim.GkDiveV2;
+  const diveBox = diving && !diveV2 ? modeItem?.bboxes[frameIdx] : null;
+  const spriteHeight = diveV2
+    ? spriteHeightFor(world, depth, sizeCfg) * DIVE2_HEIGHT_RATIO[frameIdx]
+    : diveBox
+      ? (lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * DIVE_LENGTH) /
+        Math.max(1, (diveBox[2] - diveBox[0]) / Math.max(1, diveBox[3] - diveBox[1]))
+      : spriteHeightFor(world, depth, sizeCfg);
   const footY = player.y - player.celebrationLift;
 
   const liftShrink = 1 - Math.min(0.38, player.celebrationLift / 60);
@@ -252,6 +256,31 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
       ctx.fillRect(dx - 1, dy - 1, 2, 2);
     }
     ctx.restore();
+  }
+
+  // v6 dive launch smear: ghost copies of the launch frames trail the keeper along the dive path
+  // (the approved save effect from the candidates preview), drawn under the full-alpha sprite.
+  if (diveV2) {
+    const smear = dive2SmearAt(player.actionElapsed);
+    if (smear) {
+      const baseH = spriteHeightFor(world, depth, sizeCfg);
+      const paintGhost = (idx: number, k: number, alpha: number): void => {
+        const ghostFrame = assets.body[player.mode][idx];
+        const ghostBox = modeItem?.bboxes[idx];
+        if (!ghostFrame || !ghostBox) return;
+        const gx = lerp(player.diveStartX, player.x, k);
+        const gy = lerp(player.diveStartY, player.y, k);
+        const cfg = keeperConfigFor(player.mode, idx);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const rect = drawTrimmedSprite(ctx, ghostFrame, ghostBox, gx, gy, baseH * DIVE2_HEIGHT_RATIO[idx], mirror);
+        if (rect) drawComposedHead(ctx, assets.heads[gkHead(cfg.headView)], gx, rect, mirror, cfg);
+        ctx.restore();
+      };
+      paintGhost(smear.from, 0, 0.28 * (1 - smear.t * 0.5));
+      paintGhost(smear.from, 0.35 * smear.t, 0.18);
+      paintGhost(smear.to, 0.7 * smear.t, 0.24);
+    }
   }
 
   paintSprite();

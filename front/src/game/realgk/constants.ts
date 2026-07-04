@@ -26,6 +26,13 @@ export const DIVE_FORWARD = 104;
 export const DIVE_LIFT = 20;
 
 /**
+ * v6 keeper dive (candidate_01 pack): crouch anticipation → smeared launch → prone slide → recovery.
+ * The launch delay + flight window drive the motion profile; the frame timeline lives in sim/keeper.ts.
+ */
+export const DIVE2_LAUNCH = 0.18;
+export const DIVE2_FLIGHT = 0.28;
+
+/**
  * Diving-keeper footprint. The dive frames are horizontal poses (wide, short bboxes), so sizing them by
  * height — like a standing sprite — inflates their width off-screen. Instead the dive's longest side is
  * normalized to the standing height × this factor, so a stretched-out keeper reads like a normal player.

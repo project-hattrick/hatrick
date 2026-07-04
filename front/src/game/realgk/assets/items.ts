@@ -37,6 +37,15 @@ const RAW: RawItem[] = [
     loop: false,
     bboxes: [[142, 123, 354, 332], [56, 131, 512, 337], [0, 133, 398, 300], [1, 182, 441, 285], [83, 104, 451, 273], [58, 148, 389, 283], [65, 147, 357, 280], [74, 120, 327, 283]],
   },
+  // v6 dive pack (candidate_01, approved in the dive-candidates editor). Frames ship pre-trimmed;
+  // bboxes are the full frame dims. Index timing is the non-uniform DIVE2_TIMELINE, not this fps.
+  {
+    id: BodyAnim.GkDiveV2,
+    fps: 11.0,
+    frameCount: 8,
+    loop: false,
+    bboxes: [[0, 0, 65, 82], [0, 0, 82, 84], [0, 0, 296, 90], [0, 0, 318, 61], [0, 0, 260, 139], [0, 0, 231, 105], [0, 0, 214, 121], [0, 0, 187, 120]],
+  },
   // v4 pack — timings ported from the assets playground.
   { id: BodyAnim.TurnSide, fps: 8.0, frameCount: 4, loop: false },
   { id: BodyAnim.StopBrake, fps: 8.0, frameCount: 4, loop: false },
@@ -73,8 +82,9 @@ export const ITEMS: BodyItem[] = RAW.map((r) => ({
 
 export const ITEM_MAP = Object.fromEntries(ITEMS.map((i) => [i.id, i])) as Record<BodyAnim, BodyItem>;
 
-/** v4-only anims (turn/brake/celebrations) — only these need loading when features are enabled. */
+/** Feature-gated anims (v4 packs + v6 dive) — only these need loading when features are enabled. */
 export const V4_ANIMS = new Set<BodyAnim>([
+  BodyAnim.GkDiveV2,
   BodyAnim.TurnSide,
   BodyAnim.StopBrake,
   BodyAnim.ArmsUpRun,

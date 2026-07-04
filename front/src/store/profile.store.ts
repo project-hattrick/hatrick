@@ -21,9 +21,9 @@ const noopStorage = {
 };
 
 /**
- * Locally-persisted profile customizations (display name, handle, country, bio) edited at
- * /profile/edit. The api session only carries walletAddress/displayName, so this store is the
- * source of truth the UI prefers — same persistence pattern as auth.store.
+ * Locally-persisted profile customizations (display name, handle, country, bio) edited inline on
+ * /profile. The api session only carries walletAddress/displayName, so this store is the source
+ * of truth the UI prefers — same persistence pattern as auth.store.
  */
 export const useProfileStore = create<ProfileStore>()(
   persist(

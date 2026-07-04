@@ -35,6 +35,9 @@ export interface RealGkFeatures {
   /** Court-test overlay: draws the pitch trapezoid, out-of-play lines, center spot, goal mouths and
    *  restart spots on the canvas so the field calibration can be verified in-game. */
   debugBounds: boolean;
+  /** v6 keeper: the approved candidate_01 dive pack — crouch anticipation, smeared ghost-trail launch,
+   *  prone slide and kneel recovery — instead of the legacy 8-frame dive. */
+  keeperDiveV2: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -104,7 +107,7 @@ export const REAL_GK_HERO_CONFIG: RealGkConfig = {
   ],
   cinematic: true,
   // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -135,7 +138,7 @@ export const REAL_GK_V4_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -157,7 +160,7 @@ export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
+  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
 };
 
@@ -178,7 +181,7 @@ export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   playableRoster: 1,
 };
@@ -196,7 +199,7 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false },
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
 };
@@ -218,7 +221,7 @@ export const REAL_GK_V5_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true, fouls: true, debugBounds: false },
+  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true, fouls: true, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
   teams: {
@@ -227,8 +230,18 @@ export const REAL_GK_V5_CONFIG: RealGkConfig = {
   },
 };
 
+/**
+ * Checkpoint 7 — "Reflex": Matchday plus the new keeper dive pack (candidate_01) — crouch anticipation,
+ * a smeared ghost-trail launch (the approved save effect), prone slide and kneel recovery.
+ */
+export const REAL_GK_V6_CONFIG: RealGkConfig = {
+  ...REAL_GK_V5_CONFIG,
+  features: { ...(REAL_GK_V5_CONFIG.features as RealGkFeatures), keeperDiveV2: true },
+};
+
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkV6) return REAL_GK_V6_CONFIG;
   if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
   if (id === CheckpointId.RealGkSolo) return REAL_GK_SOLO_CONFIG;
   if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;

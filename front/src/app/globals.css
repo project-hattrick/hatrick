@@ -430,6 +430,19 @@
     font-size: 0.625rem;
     line-height: 0.85rem;
   }
+  /* Body copy roles — pair with a colour utility (text-foreground / text-muted-foreground). */
+  .text-lead {
+    font-size: 1rem; /* 16 — intros / lead paragraphs */
+    line-height: 1.6;
+  }
+  .text-body {
+    font-size: 0.875rem; /* 14 — default body */
+    line-height: 1.55;
+  }
+  .text-caption {
+    font-size: 0.75rem; /* 12 — meta / helper text */
+    line-height: 1.45;
+  }
   /* Ambient accent glow behind the hero — follows the active palette's accent. */
   .hero-ambient {
     background:
@@ -535,6 +548,12 @@
   --duration-fast: 140ms;
   --duration-base: 240ms;
   --duration-slow: 420ms;
+
+  /* Elevation ramp — the DS shadow scale (dark-UI tuned). Use shadow-e1…e4, not ad-hoc box-shadows. */
+  --shadow-e1: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-e2: 0 2px 6px rgb(0 0 0 / 0.34), 0 1px 2px rgb(0 0 0 / 0.28);
+  --shadow-e3: 0 10px 24px -8px rgb(0 0 0 / 0.46), 0 2px 6px rgb(0 0 0 / 0.3);
+  --shadow-e4: 0 24px 56px -14px rgb(0 0 0 / 0.58), 0 6px 16px -8px rgb(0 0 0 / 0.42);
 }
 
 /* Resolve reveal — pending prediction settles into won/lost. */

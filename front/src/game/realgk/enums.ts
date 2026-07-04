@@ -39,6 +39,7 @@ export enum BodyAnim {
   GkShuffle = 'gk_shuffle_34',
   GkRunSide = 'gk_run_side',
   GkDive = 'gk_dive_save',
+  GkDiveV2 = 'gk_dive_v2',
 }
 
 export enum HeadView {

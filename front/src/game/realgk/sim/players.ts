@@ -10,7 +10,7 @@ import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { startPowerShot, updatePowerShot } from './shot';
-import { maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
+import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { setStatus } from './rules';
 
@@ -148,7 +148,9 @@ export function chooseMode(player: RealGkPlayer): BodyAnim {
   const dy = player.vy;
   const speed = Math.hypot(dx, dy);
   if (player.role === Role.GK) {
-    if (player.action === PlayerAction.Dive && player.actionTimer > 0) return BodyAnim.GkDive;
+    if (player.action === PlayerAction.Dive && player.actionTimer > 0) {
+      return player.mode === BodyAnim.GkDiveV2 ? BodyAnim.GkDiveV2 : BodyAnim.GkDive;
+    }
     if (speed < 12) return player.idleMode;
     if (Math.abs(dx) > Math.abs(dy) * 1.18 && Math.abs(dx) > 18) return BodyAnim.GkRunSide;
     return BodyAnim.GkShuffle;
@@ -171,6 +173,8 @@ export function frameIndexFor(player: RealGkPlayer, now: number): number {
     // Celebration anims cycle off the phase clock (playground: phaseAnimTime modulo).
     return Math.floor(player.actionElapsed * item.fps) % item.frames.length;
   }
+  // The v6 dive plays a non-uniform timeline (anticipation holds + smeared launch), not a flat fps.
+  if (player.mode === BodyAnim.GkDiveV2) return dive2FrameAt(player.actionElapsed);
   // Non-looping actions (dive, turn, brake) play once off their own clock.
   if (!item.loop) return Math.min(item.frames.length - 1, Math.floor(player.actionElapsed * item.fps));
   return Math.floor((now / 1000) * item.fps) % item.frames.length;

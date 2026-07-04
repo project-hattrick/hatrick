@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Check, Copy, Pencil, SignOut, UserCircle, Wallet } from '@/components/common/icons';
+import { Check, Copy, SignOut, UserCircle, Wallet } from '@/components/common/icons';
 import { TierBadge } from '@/components/duelists/tier-badge';
 import { formatThousands, shortAddress } from '@/lib/format';
 import { selfProfile } from '@/config/duelists.config';
@@ -59,7 +59,9 @@ export function AccountStep({ user, onClose, onSignOut }: AccountStepProps) {
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="truncate font-semibold">{name}</span>
             <span className="truncate text-xs text-muted-foreground">{handle}</span>
-            <TierBadge tier={selfProfile.tier} division={selfProfile.division} />
+            <span className="mt-0.5 self-start">
+              <TierBadge tier={selfProfile.tier} division={selfProfile.division} />
+            </span>
           </div>
         </div>
 
@@ -85,15 +87,10 @@ export function AccountStep({ user, onClose, onSignOut }: AccountStepProps) {
         </div>
       </div>
 
-      {/* Profile shortcuts */}
-      <div className="grid grid-cols-2 gap-2">
-        <Link href="/profile" onClick={onClose} className={buttonVariants({ shape: 'pill' })}>
-          <UserCircle className="size-4" /> View profile
-        </Link>
-        <Link href="/profile/edit" onClick={onClose} className={buttonVariants({ variant: 'outline', shape: 'pill' })}>
-          <Pencil className="size-4" /> Edit profile
-        </Link>
-      </div>
+      {/* One destination: the profile page views AND edits (inline form). */}
+      <Link href="/profile" onClick={onClose} className={buttonVariants({ shape: 'pill', className: 'w-full' })}>
+        <UserCircle className="size-4" /> My profile
+      </Link>
 
       <Button variant="ghost" shape="pill" className="w-full text-live hover:text-live" onClick={onSignOut}>
         <SignOut className="size-4" /> Sign out

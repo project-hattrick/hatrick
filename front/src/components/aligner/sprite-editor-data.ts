@@ -45,6 +45,7 @@ const GK: [BodyAnim, string][] = [
   [BodyAnim.GkShuffle, 'GK Shuffle'],
   [BodyAnim.GkRunSide, 'GK Run'],
   [BodyAnim.GkDive, 'GK Dive'],
+  [BodyAnim.GkDiveV2, 'GK Dive v2'],
 ];
 
 const OUT: [BodyAnim, string][] = [
