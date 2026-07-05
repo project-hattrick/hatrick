@@ -10,6 +10,7 @@ import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import { SearchCommand } from '@/components/common/search-command';
 import { ChallengeMount } from '@/components/duel/challenge-mount';
 import { OnboardingMount } from '@/components/onboarding/onboarding-mount';
+import { BetSettlementMount } from '@/components/live/bet-settlement-mount';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 import { createQueryClient } from '@/lib/query-client';
@@ -35,6 +36,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <SearchCommand />
               <ChallengeMount />
               <OnboardingMount />
+              <BetSettlementMount />
             </IconContext.Provider>
           </WalletModalProvider>
         </WalletProvider>

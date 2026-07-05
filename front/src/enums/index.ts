@@ -1,6 +1,8 @@
 export { AppMode } from './app-mode.enum';
 export { EmissionState } from './emission-state.enum';
 export { MarketType } from './market-type.enum';
+export { BetStatus } from './bet-status.enum';
+export { NotificationType } from './notification-type.enum';
 export { MatchAction } from './match-action.enum';
 export { MatchPhase } from './match-phase.enum';
 export { RankTier } from './rank-tier.enum';

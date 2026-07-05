@@ -1,10 +1,10 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   ArrowRight,
   ArrowsLeftRight,
   CheckCircle,
   Package,
-  Plus,
   ShieldCheck,
   Sparkle,
   Ticket,
@@ -16,10 +16,11 @@ import { SiteNavbar } from '@/components/common/site-navbar';
 import { SiteFooter } from '@/components/home/site-footer';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
+import { CoinBalance } from '@/components/common/coin-balance';
 import { MiniHoloCard } from '@/components/fantasy/mini-holo-card';
 import { PackOpening } from '@/components/store/pack-opening';
 import { userCards } from '@/config/fantasy-cards.config';
-import { formatThousands } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const featuredDrop = {
@@ -88,13 +89,7 @@ export default function StorePage() {
               <h1 className="text-display">Store</h1>
               <p className="mt-1 text-body text-muted-foreground">Build your squad. Open packs. Find legends.</p>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface-2/80 py-1.5 pr-1.5 pl-3">
-              <Image src="/coin.png" alt="Coins" width={18} height={18} className="size-4" />
-              <span className="text-sm font-bold tabular-nums">{formatThousands(28_105_820)}</span>
-              <span className="grid size-6 place-items-center rounded-full bg-neon text-black">
-                <Plus className="size-3.5" />
-              </span>
-            </div>
+            <CoinBalance />
           </header>
 
           {/* Drop of the week — the featured pack hero */}
@@ -202,7 +197,7 @@ export default function StorePage() {
             <div className="flex flex-1 flex-col gap-3">
               <div>
                 <h2 className="text-title">Player market</h2>
-                <p className="text-body text-muted-foreground">Trade players peer-to-peer. Coming in a later phase.</p>
+                <p className="text-body text-muted-foreground">Trade players peer-to-peer with play-money coins.</p>
               </div>
               <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
                 {marketFeatures.map((feature) => (
@@ -213,9 +208,9 @@ export default function StorePage() {
                 ))}
               </div>
             </div>
-            <span className="self-start rounded-full border border-border/60 bg-surface-2/70 px-3 py-1 text-caption text-muted-foreground md:self-center">
-              Soon
-            </span>
+            <Link href="/fantasy/market" className={cn(buttonVariants({ variant: 'default' }), 'self-start md:self-center')}>
+              Open market
+            </Link>
           </GlassPanel>
         </div>
       </main>

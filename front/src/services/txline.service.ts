@@ -16,5 +16,11 @@ export interface FixtureDto {
 /** Talks to our backend (which proxies TxLINE). Base seam — adjust paths as the API firms up. */
 export const txlineService = {
   getHealth: () => get<{ status: string; service: string }>('/health'),
-  getFixtures: () => get<FixtureDto[]>('/fixtures'),
+  getFixtures: async (): Promise<FixtureDto[]> => {
+    if (env.useMock) {
+      const { MOCK_FIXTURES } = await import('@/services/mock/fixtures.mock');
+      return MOCK_FIXTURES;
+    }
+    return get<FixtureDto[]>('/fixtures');
+  },
 };

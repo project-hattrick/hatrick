@@ -1,14 +1,33 @@
+'use client';
+
 import Link from 'next/link';
-import { Ticket, Clock } from '@/components/common/icons';
+import { Clock } from '@/components/common/icons';
 import { PageShell } from '@/components/common/page-shell';
 import { GlassPanel } from '@/components/common/glass-panel';
-import { SectionHeader } from '@/components/common/section-header';
-import { WireBlock } from '@/components/common/wire-block';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { buttonVariants } from '@/components/ui/button';
+import { BetRow } from '@/components/live/bet-row';
+import { MarketsPanel } from '@/components/live/markets-panel';
+import { BetSlip } from '@/components/live/bet-slip';
+import { PredictionsList } from '@/components/live/predictions-list';
+import { useOpenBets, useSettledBets } from '@/store/bets.store';
+import type { Bet } from '@/types/bet';
 
-const tabs = ['Open', 'Settled', 'Predictions'];
+function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
+  if (!bets.length) return <p className="px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>;
+  return (
+    <div className="flex flex-col divide-y divide-border/30">
+      {bets.map((bet) => (
+        <BetRow key={bet.id} bet={bet} />
+      ))}
+    </div>
+  );
+}
 
 export default function BetsPage() {
+  const open = useOpenBets();
+  const settled = useSettledBets();
+
   return (
     <PageShell>
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -20,45 +39,34 @@ export default function BetsPage() {
             </Link>
           </header>
 
-          <div className="flex gap-2">
-            {tabs.map((tab, i) => (
-              <span
-                key={tab}
-                className={
-                  i === 0
-                    ? 'rounded-full bg-neon px-3 py-1 text-xs font-bold text-primary-foreground'
-                    : 'rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground'
-                }
-              >
-                {tab}
-              </span>
-            ))}
-          </div>
+          <Tabs defaultValue="open">
+            <TabsList>
+              <TabsTrigger value="open">Open · {open.length}</TabsTrigger>
+              <TabsTrigger value="settled">Settled · {settled.length}</TabsTrigger>
+              <TabsTrigger value="predictions">Predictions</TabsTrigger>
+            </TabsList>
 
-          <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
-            <SectionHeader title="Open bets" action={<Ticket className="size-3.5 text-neon" />} />
-            <div className="flex flex-col gap-2 p-4 pt-0">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <WireBlock key={i} label="Bet row — match · market · selection · stake · odds · potential return" className="h-14" />
-              ))}
-            </div>
-          </GlassPanel>
+            <TabsContent value="open">
+              <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+                <BetList bets={open} empty="No open bets — pick a selection to get started." />
+              </GlassPanel>
+            </TabsContent>
+            <TabsContent value="settled">
+              <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+                <BetList bets={settled} empty="No settled bets yet." />
+              </GlassPanel>
+            </TabsContent>
+            <TabsContent value="predictions">
+              <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+                <PredictionsList />
+              </GlassPanel>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <div className="flex flex-col gap-4">
-          <GlassPanel radius="xl" tone="dark" className="overflow-hidden">
-            <SectionHeader title="Bet slip" />
-            <div className="flex flex-col gap-3 p-4 pt-0">
-              <WireBlock label="Selection · odds" className="h-12" />
-              <WireBlock label="Stake input" className="h-10" />
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Potential return</span>
-                <span className="font-bold text-neon">—</span>
-              </div>
-              <button className={buttonVariants({ variant: 'default', className: 'w-full' })}>Place bet</button>
-            </div>
-          </GlassPanel>
-
+          <BetSlip />
+          <MarketsPanel />
           <GlassPanel radius="lg" tone="surface" className="flex items-start gap-2 p-4 text-xs text-muted-foreground">
             <Clock className="mt-0.5 size-4 shrink-0" />
             Bets settle automatically on the authoritative match event. Devnet · play-money only.

@@ -4,17 +4,20 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Gift, Image as ImageIcon, Bell, Plus, MagnifyingGlass } from '@/components/common/icons';
+import { toast } from 'sonner';
+import { Plus, MagnifyingGlass } from '@/components/common/icons';
 import { navLinks } from '@/config/nav.config';
 import { IconButton } from './icon-button';
 import { formatThousands } from '@/lib/format';
-import { useAuth } from '@/services/queries/use-auth';
 import { useUiStore } from '@/store/ui.store';
+import { useBalance, useWalletStore } from '@/store/wallet.store';
 import { cn } from '@/lib/utils';
 
-const COIN_BALANCE = 28_105_820;
+/** Coins granted by the navbar "+" top-up (mock play-money). */
+const TOP_UP_AMOUNT = 1_000_000;
 
 const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.WalletAvatar), { ssr: false });
+const NotificationsMenu = dynamic(() => import('./notifications-menu').then((m) => m.NotificationsMenu), { ssr: false });
 
 /**
  * Top bar. Transparent at the very top of the page and gains its background as soon as the page is
@@ -22,10 +25,14 @@ const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.Walle
  * kept for call-site clarity but no longer changes behaviour.
  */
 export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
-  const { isAuthenticated, user } = useAuth();
   const openSearch = useUiStore((s) => s.setSearchOpen);
-  // Show the real devnet play-money balance from the DB once signed in.
-  const coins = isAuthenticated && user ? Number(user.balance) : COIN_BALANCE;
+  const coins = useBalance();
+  const credit = useWalletStore((s) => s.credit);
+
+  const topUp = () => {
+    credit(TOP_UP_AMOUNT);
+    toast.success(`+${formatThousands(TOP_UP_AMOUNT)} coins added.`);
+  };
 
   // Transparent at the very top; the background comes in as soon as you scroll (hysteresis avoids
   // flicker). Start transparent to match the first paint before the scroll position is read.
@@ -66,12 +73,6 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
               {link.label}
             </Link>
           ))}
-          <span className="hidden items-center gap-2 lg:flex">
-            <Gift className="size-4 text-warning" />
-            <span className="text-warning">5 Months</span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-neon">Free Access</span>
-          </span>
         </div>
 
         <Link href="/" aria-label="Hat-trick home" className="shrink-0">
@@ -82,21 +83,18 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
           <IconButton label="Search players" onClick={() => openSearch(true)}>
             <MagnifyingGlass className="size-5" />
           </IconButton>
-          <IconButton label="Gallery" className="hidden sm:inline-flex">
-            <ImageIcon className="size-5" />
-          </IconButton>
-          <span className="relative hidden sm:inline-flex">
-            <IconButton label="Notifications">
-              <Bell className="size-5" />
-            </IconButton>
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full border-2 border-background bg-live" />
+          <span className="hidden sm:inline-flex">
+            <NotificationsMenu />
           </span>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Image src="/coin.png" alt="Coins" width={22} height={22} className="size-4 sm:size-5" />
-            <span className="text-xs font-bold text-foreground sm:text-sm">{formatThousands(coins)}</span>
+            <span suppressHydrationWarning className="text-xs font-bold text-foreground tabular-nums sm:text-sm">
+              {formatThousands(coins)}
+            </span>
             <button
               type="button"
               aria-label="Add coins"
+              onClick={topUp}
               className="flex size-5 items-center justify-center rounded-full bg-neon text-primary-foreground transition hover:bg-neon-hover sm:size-6"
             >
               <Plus className="size-3" />

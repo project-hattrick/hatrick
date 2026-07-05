@@ -10,6 +10,8 @@ interface FantasyStore {
   setSquad: (ids: number[]) => void;
   /** Merge freshly pulled cards into the collection, de-duped by name. */
   addToCollection: (cards: PackCard[]) => void;
+  /** Remove a card by name (market sale). */
+  removeFromCollection: (name: string) => void;
 }
 
 /** No-op storage on the server so persist doesn't touch localStorage during SSR. */
@@ -32,6 +34,8 @@ export const useFantasyStore = create<FantasyStore>()(
           const fresh = cards.filter((card) => !owned.has(card.name));
           return fresh.length ? { collection: [...state.collection, ...fresh] } : state;
         }),
+      removeFromCollection: (name) =>
+        set((state) => ({ collection: state.collection.filter((card) => card.name !== name) })),
     }),
     {
       name: 'hat-trick-fantasy',
