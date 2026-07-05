@@ -1,6 +1,7 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
 import { IntroStage, MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
+import { clearBallEffects, updateBallEffects } from '../effects';
 import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
@@ -74,6 +75,7 @@ export function resetBall(world: RealGkWorld, centerTeam: Team): void {
   ball.spinRate = 0;
   ball.cooldown = 0.25;
   ball.impact = 0;
+  clearBallEffects(world);
   ball.ownerId = null;
   ball.lastKickerId = null;
 
@@ -151,6 +153,7 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     players: [],
     nextPlayerId: 1,
     ball: freshBall(),
+    ballEffects: { particles: [] },
     referee: freshReferee(),
     coach: freshCoach(),
     match: freshMatch(),
@@ -177,6 +180,7 @@ export function kickoffReset(world: RealGkWorld): void {
 /** Advances the whole simulation by `dt` seconds (already scaled by speed). */
 export function step(world: RealGkWorld, dt: number): void {
   const { match } = world;
+  updateBallEffects(world, dt);
   // v5 pre-match entrance owns the tick until it kicks off.
   if (match.phase === MatchPhase.Intro) {
     updateIntro(world, dt);

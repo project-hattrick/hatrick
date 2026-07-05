@@ -1,19 +1,23 @@
 'use client';
 
+import { useState } from 'react';
+
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Gift, Lightning, Sword, House } from '@/components/common/icons';
+import { MetalButton } from '@/components/ui/metal-button';
+import { Gift, Lightning, Sword, Broadcast } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
 import { OnboardingStep, ONBOARDING_ORDER } from '@/enums/onboarding-step.enum';
 
 import { PackStep } from './steps/pack-step';
 import { SquadStep } from './steps/squad-step';
 import { DoneStep } from './steps/done-step';
+import { KickBurst } from './kick-burst';
 import type { OnboardingController } from './use-onboarding-controller';
 
 const HEADINGS: Record<OnboardingStep, { title: string; description: string }> = {
-  [OnboardingStep.Pack]: { title: 'Open your Starter Pack', description: 'Five real cards to start your collection.' },
-  [OnboardingStep.Squad]: { title: 'Set your formation', description: 'We lined up your best cards — lock it in.' },
+  [OnboardingStep.Pack]: { title: 'Open your Starter Pack', description: 'A full eleven to start your collection.' },
+  [OnboardingStep.Squad]: { title: 'Set your formation', description: 'Swap players and pick a shape, then lock it.' },
   [OnboardingStep.Done]: { title: "You're in", description: 'Your squad is ready to play.' },
 };
 
@@ -35,7 +39,7 @@ function StepDots({ index }: { index: number }) {
 }
 
 interface OnboardingFlowProps {
-  /** Step machine + collection, owned by the host (see useOnboardingController). */
+  /** Step machine + collection + formation editor state, owned by the host. */
   controller: OnboardingController;
   /** Leave the flow: mark onboarded, optionally navigate, and close the host dialog. */
   onExit: (path?: string) => void;
@@ -43,13 +47,17 @@ interface OnboardingFlowProps {
 
 /**
  * The onboarding steps, rendered inside a host DialogContent (the login dialog on first sign-in,
- * or the dev/forced dialog). Presentational — the host owns the pack overlay and step state so
- * hiding the dialog for the cinematic pull doesn't wipe progress. Reward first: pack → formation → done.
+ * or the dev/forced dialog). Presentational — the host owns the pack overlay and step state.
+ * Reward first: pack → formation editor → done.
  */
 export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
-  const { collection, squad, step, openPack, lockFormation } = controller;
+  const { collection, step, order, formations, formationIndex, formation, openPack, setFormation, swap, lockFormation } =
+    controller;
   const heading = HEADINGS[step];
   const stepIndex = ONBOARDING_ORDER.indexOf(step);
+
+  // "Kick" shockwave when locking the squad — plays, then advances to the final step.
+  const [kicking, setKicking] = useState(false);
 
   return (
     <>
@@ -59,43 +67,76 @@ export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
         <StepDots index={stepIndex} />
       </DialogHeader>
 
-      <div key={step} className="flex min-h-[300px] flex-col justify-center animate-in fade-in-0 zoom-in-95 duration-300">
+      <div key={step} className="relative flex min-h-[300px] flex-col justify-center animate-in fade-in-0 zoom-in-95 duration-300">
         {step === OnboardingStep.Pack && <PackStep />}
-        {step === OnboardingStep.Squad && <SquadStep collection={collection} />}
-        {step === OnboardingStep.Done && <DoneStep collection={collection} squadCount={squad.length} />}
+        {step === OnboardingStep.Squad && (
+          <SquadStep
+            collection={collection}
+            order={order}
+            formations={formations}
+            formationIndex={formationIndex}
+            formation={formation}
+            onSwap={swap}
+            onSelectFormation={setFormation}
+          />
+        )}
+        {step === OnboardingStep.Done && <DoneStep collection={collection} squadCount={order.length} />}
+        {kicking && (
+          <KickBurst
+            onDone={() => {
+              setKicking(false);
+              lockFormation();
+            }}
+          />
+        )}
       </div>
 
-      <DialogFooter className="items-center justify-between sm:justify-between">
-        {step === OnboardingStep.Done ? (
-          <>
-            <Button variant="outline" shape="pill" className="w-full gap-2 sm:w-auto" onClick={() => onExit('/')}>
-              <House className="size-4" weight="fill" />
-              Explore
-            </Button>
-            <Button shape="pill" className="w-full gap-2 sm:w-auto" onClick={() => onExit('/duelists')}>
-              <Sword className="size-4" weight="fill" />
-              Challenge a friend
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onExit()}>
-              Skip for now
-            </Button>
-            {step === OnboardingStep.Pack ? (
-              <Button shape="pill" className="gap-2" onClick={openPack}>
-                <Gift className="size-4" weight="fill" />
-                Open pack
-              </Button>
-            ) : (
-              <Button shape="pill" className="gap-2" onClick={lockFormation} disabled={!collection.length}>
-                <Lightning className="size-4" weight="fill" />
-                Lock formation
-              </Button>
-            )}
-          </>
-        )}
-      </DialogFooter>
+      {step === OnboardingStep.Done ? (
+        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button variant="outline" shape="pill" size="lg" className="h-12 w-full gap-2 text-base" onClick={() => onExit('/live')}>
+            <Broadcast className="size-5" weight="fill" />
+            Watch Live
+          </Button>
+          <MetalButton
+            shape="pill"
+            size="lg"
+            strength={1}
+            ringCssPx={3}
+            metalFxClassName="w-full"
+            className="h-12 w-full gap-2 text-base font-bold"
+            onClick={() => onExit('/duelists')}
+          >
+            <Sword className="size-5" weight="fill" />
+            Challenge a player
+          </MetalButton>
+        </DialogFooter>
+      ) : (
+        <DialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch">
+          {step === OnboardingStep.Pack ? (
+            <MetalButton shape="pill" size="lg" strength={1} ringCssPx={3} metalFxClassName="w-full" className="h-12 w-full gap-2 text-base font-bold" onClick={openPack}>
+              <Gift className="size-4" weight="fill" />
+              Open pack
+            </MetalButton>
+          ) : (
+            <MetalButton
+              shape="pill"
+              size="lg"
+              strength={1}
+              ringCssPx={3}
+              metalFxClassName="w-full"
+              className="h-12 w-full gap-2 text-base font-bold"
+              onClick={() => setKicking(true)}
+              disabled={!order.length || kicking}
+            >
+              <Lightning className="size-4" weight="fill" />
+              Lock formation
+            </MetalButton>
+          )}
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onExit()}>
+            Skip for now
+          </Button>
+        </DialogFooter>
+      )}
     </>
   );
 }

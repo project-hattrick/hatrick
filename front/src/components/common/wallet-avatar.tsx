@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/services/queries/use-auth';
+import { useOnboardingStore } from '@/store/onboarding.store';
 import { LoginDialog } from './login-dialog';
 
 const PROFILE_PIC = 'https://i.pravatar.cc/80?img=12';
@@ -14,8 +15,22 @@ const PROFILE_PIC = 'https://i.pravatar.cc/80?img=12';
  */
 export function WalletAvatar() {
   const [open, setOpen] = useState(false);
+  const [autoOpened, setAutoOpened] = useState(false);
   const { isConnected, isConnecting, isAuthenticated, isAuthenticating } = useAuth();
+  const hasOnboarded = useOnboardingStore((s) => s.hasOnboarded);
+  const hydrated = useOnboardingStore((s) => s.hydrated);
   const busy = isConnecting || isAuthenticating;
+
+  // Post-login: first-timers get the onboarding automatically (the login dialog hosts it).
+  // Fires whether they signed in via this dialog or via auto-connect on reload. Adjusted during
+  // render (a latch, not an effect) so it triggers exactly once per first-login.
+  const shouldAutoOpen = hydrated && isAuthenticated && !hasOnboarded;
+  if (shouldAutoOpen && !autoOpened) {
+    setAutoOpened(true);
+    setOpen(true);
+  } else if (!shouldAutoOpen && autoOpened) {
+    setAutoOpened(false);
+  }
 
   const label = isAuthenticated
     ? 'Account'

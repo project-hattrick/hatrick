@@ -10,7 +10,7 @@ const controlClass =
   'inline-flex h-9 items-center gap-1.5 rounded-md border border-border/60 bg-surface-1/80 px-3 text-xs font-bold uppercase tracking-wide transition hover:bg-surface-2 active:translate-y-px';
 
 /** Bottom control bar for the v2 runtime. Stays visible so "Show UI" can bring the HUD back. */
-export function RealGkControls({ handle }: { handle: RefObject<RealGkHandle | null> }) {
+export function RealGkControls({ handle, effectsLab = false }: { handle: RefObject<RealGkHandle | null>; effectsLab?: boolean }) {
   const paused = useRealGkStore((s) => s.paused);
   const speed = useRealGkStore((s) => s.speed);
   const cameraLabel = useRealGkStore((s) => s.cameraLabel);
@@ -42,6 +42,11 @@ export function RealGkControls({ handle }: { handle: RefObject<RealGkHandle | nu
       <button type="button" className={controlClass} onClick={() => handle.current?.spawnReferee()}>
         Spawn referee
       </button>
+      {effectsLab && (
+        <button type="button" className={controlClass} onClick={() => handle.current?.debugBallDrop()}>
+          Drop ball (L)
+        </button>
+      )}
       <button type="button" className={controlClass} onClick={toggleUi}>
         {uiHidden ? 'Show UI' : 'Hide UI'}
       </button>

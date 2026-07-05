@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Broadcast,
   GameController,
@@ -12,6 +13,7 @@ import {
 } from '@/components/common/icons';
 import { BetSelector } from '@/components/fantasy/bet-selector';
 import { ChallengePicker } from '@/components/home/challenge-picker';
+import { DuelSetup } from '@/components/duel/duel-setup';
 import { MatchmakingDialog } from '@/components/fantasy/matchmaking-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -25,6 +27,7 @@ import { featuredLiveMatch } from '@/config/home.config';
 import { AppMode } from '@/enums/app-mode.enum';
 import { useHomeEntryStore } from '@/store/home-entry.store';
 import { useUiStore } from '@/store/ui.store';
+import { useDuelStore } from '@/store/duel.store';
 import { cn } from '@/lib/utils';
 
 interface EntryOptionProps {
@@ -60,6 +63,7 @@ function EntryOption({ icon: Icon, eyebrow, title, description, action, featured
 }
 
 export function HomeModeDialogs() {
+  const router = useRouter();
   const activeMode = useHomeEntryStore((state) => state.activeMode);
   const closeMode = useHomeEntryStore((state) => state.closeMode);
   const startMatchmaking = useHomeEntryStore((state) => state.startMatchmaking);
@@ -67,26 +71,49 @@ export function HomeModeDialogs() {
   const setMatchmakingOpen = useHomeEntryStore((state) => state.setMatchmakingOpen);
   const challengeBet = useUiStore((state) => state.challengeBet);
   const setChallengeBet = useUiStore((state) => state.setChallengeBet);
+  const duelId = useDuelStore((state) => state.duelId);
+  const inSetup = useDuelStore((state) => state.inSetup);
+  const resetDuel = useDuelStore((state) => state.reset);
   const isFantasy = activeMode === AppMode.Fantasy;
+  const showDuelSetup = isFantasy && inSetup && duelId !== null;
   const Icon = isFantasy ? GameController : Broadcast;
+
+  const closeEntry = () => {
+    if (showDuelSetup) resetDuel();
+    closeMode();
+  };
+
+  const enterDuel = () => {
+    if (!duelId) return;
+    closeMode();
+    router.push(`/duel/${duelId}`);
+  };
 
   return (
     <>
-      <Dialog open={activeMode !== null} onOpenChange={(open) => !open && closeMode()}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Icon className="size-5 text-neon" weight="fill" />
-              {isFantasy ? 'Choose your opponent' : 'How do you want to watch?'}
-            </DialogTitle>
-            <DialogDescription>
-              {isFantasy
-                ? 'Jump into the ranked queue or challenge a specific player.'
-                : 'Join the match happening now or start an invite-only room.'}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={activeMode !== null} onOpenChange={(open) => !open && closeEntry()}>
+        <DialogContent
+          className={cn(
+            showDuelSetup ? 'max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl' : 'sm:max-w-xl',
+          )}
+        >
+          {showDuelSetup ? (
+            <DuelSetup embedded onConfirm={enterDuel} />
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Icon className="size-5 text-neon" weight="fill" />
+                  {isFantasy ? 'Choose your opponent' : 'How do you want to watch?'}
+                </DialogTitle>
+                <DialogDescription>
+                  {isFantasy
+                    ? 'Jump into the ranked queue or challenge a specific player.'
+                    : 'Join the match happening now or start an invite-only room.'}
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+              <div className={cn('gap-3', isFantasy ? 'flex flex-col' : 'grid sm:grid-cols-2')}>
             {isFantasy ? (
               <>
                 <EntryOption
@@ -110,7 +137,7 @@ export function HomeModeDialogs() {
                   action={
                     <div className="flex flex-col gap-3">
                       <BetSelector amount={challengeBet} onSelect={setChallengeBet} />
-                      <ChallengePicker onPick={closeMode} />
+                      <ChallengePicker />
                     </div>
                   }
                 />
@@ -152,7 +179,9 @@ export function HomeModeDialogs() {
                 />
               </>
             )}
-          </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 

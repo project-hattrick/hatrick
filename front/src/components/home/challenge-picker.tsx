@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useDeferredValue } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 import { Flag } from '@/components/common/flag';
@@ -17,17 +16,16 @@ import { useUiStore } from '@/store/ui.store';
 const SUGGESTION_COUNT = 3;
 
 interface ChallengePickerProps {
-  /** Called after an opponent is picked, right before routing to the duel. */
+  /** Called after an opponent is picked and the duel setup is initialized. */
   onPick?: () => void;
 }
 
 /**
  * Inline opponent picker for the direct-challenge card — a search box with a few
  * suggested players always visible (8-ball-pool style). Picking one starts the
- * duel with the currently selected token stake and routes to the XI setup step.
+ * duel with the currently selected token stake and reveals the XI setup step.
  */
 export function ChallengePicker({ onPick }: ChallengePickerProps) {
-  const router = useRouter();
   const bet = useUiStore((s) => s.challengeBet);
   const startDuel = useDuelStore((s) => s.start);
 
@@ -39,9 +37,8 @@ export function ChallengePicker({ onPick }: ChallengePickerProps) {
   const players = (hasQuery ? results : duelists).slice(0, SUGGESTION_COUNT);
 
   const pick = (player: PlayerProfile) => {
-    onPick?.();
     startDuel(player.username, player, bet);
-    router.push(`/duel/${player.username}`);
+    onPick?.();
   };
 
   return (

@@ -1,5 +1,6 @@
 import { ARENA_V1 } from './arena-v1';
 import { CHUVA_V1 } from './chuva-v1';
+import { EFFECTS_LAB_META } from './effects-lab';
 import { REAL_GK_V2_META } from './real-gk-v2';
 import { REAL_GK_V3_META } from './real-gk-v3';
 import { REAL_GK_V4_META } from './real-gk-v4';
@@ -20,7 +21,7 @@ const SHARED_DEFS: Partial<Record<CheckpointId, CheckpointDef>> = {
 };
 
 /** All checkpoint metadata — every version stays selectable (history). */
-export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META, REAL_GK_V4_META, REAL_GK_V5_META, REAL_GK_V6_META, REAL_GK_PLAY_META, REAL_GK_SOLO_META, REAL_GK_MATCH_META];
+export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META, REAL_GK_V4_META, REAL_GK_V5_META, REAL_GK_V6_META, REAL_GK_PLAY_META, REAL_GK_SOLO_META, EFFECTS_LAB_META, REAL_GK_MATCH_META];
 
 const META = Object.fromEntries(CHECKPOINTS.map((m) => [m.id, m])) as Record<CheckpointId, CheckpointMeta>;
 

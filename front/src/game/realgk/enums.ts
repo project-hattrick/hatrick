@@ -86,6 +86,11 @@ export enum CoachMode {
   Angry = 'angry',
 }
 
+export enum BallEffectKind {
+  Dust = 'dust',
+  Turf = 'turf',
+}
+
 /** Top-level match flow. v2/v3 never leave Live; v4's goal flow walks the replay ring; v5 opens on Intro. */
 export enum MatchPhase {
   /** Pre-match entrance: team+flag showcase, players walking on, referee whistle (v5 matchIntro only). */

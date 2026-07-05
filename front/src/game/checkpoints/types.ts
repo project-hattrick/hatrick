@@ -15,6 +15,7 @@ export enum CheckpointId {
   RealGkPlay = 'real-gk-play',
   RealGkSolo = 'real-gk-solo',
   RealGkMatch = 'real-gk-match',
+  EffectsLab = 'effects-lab',
 }
 
 /** Which engine a checkpoint runs on. The sandbox picks a Stage component per runtime. */

@@ -1,5 +1,5 @@
 import type { RealGkConfig } from './config';
-import type { BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 
 export interface Vec2 {
   x: number;
@@ -86,6 +86,24 @@ export interface Ball {
   /** Fixed predicted landing spot, computed once at the cross (so the "×" doesn't drift with the ball). */
   landX: number;
   landY: number;
+}
+
+export interface BallEffectParticle {
+  kind: BallEffectKind;
+  x: number;
+  y: number;
+  lift: number;
+  vx: number;
+  vy: number;
+  vlift: number;
+  age: number;
+  life: number;
+  size: number;
+  color: string;
+}
+
+export interface BallEffectsState {
+  particles: BallEffectParticle[];
 }
 
 export interface Referee {
@@ -185,6 +203,7 @@ export interface RealGkWorld {
   players: RealGkPlayer[];
   nextPlayerId: number;
   ball: Ball;
+  ballEffects: BallEffectsState;
   referee: Referee;
   coach: Coach;
   match: MatchState;
@@ -259,6 +278,8 @@ export interface RealGkHandle {
   spawnReferee: () => void;
   /** Debug helper: fires the ball into the right goal so the goal/replay flow can be tested on demand. */
   debugGoal: () => void;
+  /** Effects lab helper: releases a high ball at midfield to exercise repeated ground impacts. */
+  debugBallDrop: () => void;
   /** Debug helper: forces an action anim on the nearest outfielder to review sprite sizes on demand. */
   debugAction: (kind: 'header' | 'receive' | 'intercept' | 'powershot') => void;
   /** v5: replays the pre-match entrance (teams walk on, referee whistle, kickoff). */

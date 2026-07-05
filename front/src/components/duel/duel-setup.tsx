@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { fifaToIso } from '@/lib/country';
 import { selfProfile, type PlayerProfile } from '@/config/duelists.config';
 import { useDuelStore } from '@/store/duel.store';
+import { cn } from '@/lib/utils';
 
 function SideIdentity({ player, align }: { player: PlayerProfile; align: 'left' | 'right' }) {
   return (
@@ -39,15 +40,25 @@ function SideIdentity({ player, align }: { player: PlayerProfile; align: 'left' 
  * Pre-match setup step on /duel/[id] — build your XI and lock the formation
  * before the arena spins up. Shown while duel.store.inSetup is true.
  */
-export function DuelSetup() {
+interface DuelSetupProps {
+  embedded?: boolean;
+  onConfirm?: () => void;
+}
+
+export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
   const opponent = useDuelStore((s) => s.opponent);
   const bet = useDuelStore((s) => s.bet);
   const confirmSetup = useDuelStore((s) => s.confirmSetup);
 
   if (!opponent) return null;
 
+  const handleConfirm = () => {
+    confirmSetup();
+    onConfirm?.();
+  };
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
+    <div className={cn('mx-auto flex w-full max-w-2xl flex-col gap-4', embedded ? 'py-1' : 'px-4 py-6')}>
       <header className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <SideIdentity player={selfProfile} align="left" />
@@ -70,7 +81,7 @@ export function DuelSetup() {
 
       <FormationPitch />
 
-      <Button size="lg" shape="pill" className="w-full gap-2 font-semibold" onClick={confirmSetup}>
+      <Button size="lg" shape="pill" className="w-full gap-2 font-semibold" onClick={handleConfirm}>
         <Lightning className="size-4" weight="fill" />
         Lock XI & enter the pitch
       </Button>

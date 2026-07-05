@@ -1,6 +1,7 @@
 import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
 import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
 import { centerSpot, cornerSpot, fieldBounds, goalKickSpot, metrics, penaltySpot, GOALS, PLAY_LINES } from './field';
+import { drawBallEffects } from './effects';
 import { drawBillboards } from './billboards';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
@@ -558,6 +559,7 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   drawBillboards(ctx, world, now); // perimeter advertiser panels, behind the action
   if (world.cfg.features?.debugBounds) drawDebugBounds(ctx, world); // court-test calibration overlay
   drawLandingMarker(ctx, world);
+  drawBallEffects(ctx, world);
   drawGoalNet(ctx, world, assets, 'back'); // behind the players
 
   const renderables: { sortY: number; draw: () => void }[] = world.players.map((player) => ({

@@ -359,16 +359,20 @@
 }
 
 /* Embedded (inside an expanded modal): measure against the container, not the viewport,
-   so the stage and summary stay centered within the modal instead of the full screen. */
+   so the stage and summary stay centered within the modal instead of the full screen.
+   Only the sealed-pack podium is overridden — the reveal stage (.cardStage) is already
+   centered via top:50%, so we must NOT touch the generic .stage here or it fights that. */
 .embedded .summaryLayout {
   height: 100%;
-  padding: 60px 24px 24px;
-}
-
-.embedded .stage {
-  bottom: 20%;
+  padding: 24px;
+  justify-content: center;
 }
 
 .embedded .stagePack {
-  bottom: 28%;
+  bottom: 26%;
+}
+
+/* Lift the rising/revealed card to the visual centre of the modal (a touch above middle). */
+.embedded .cardStage {
+  top: 46%;
 }

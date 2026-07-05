@@ -15,7 +15,8 @@ import { WalletStep } from '@/components/common/login/wallet-step';
 import { SignStep } from '@/components/common/login/sign-step';
 import { PackOpening } from '@/components/store/pack-opening';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
-import { useOnboardingController } from '@/components/onboarding/use-onboarding-controller';
+import { useOnboardingController, STARTER_PACK_SIZE } from '@/components/onboarding/use-onboarding-controller';
+import { OnboardingStep } from '@/enums/onboarding-step.enum';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/services/queries/use-auth';
 import { useOnboardingStore } from '@/store/onboarding.store';
@@ -73,6 +74,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     if (path) router.push(path);
   };
 
+  // Closing the dialog (X / ESC / outside) mid-onboarding counts as "done" — otherwise the
+  // post-login auto-open would immediately reopen it in a loop.
+  const handleOpenChange = (next: boolean) => {
+    if (!next && onboarding) dismiss();
+    onOpenChange(next);
+  };
+
   const step =
     isAuthenticated && user
       ? LoginStep.Account
@@ -83,13 +91,14 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const packing = onboarding && controller.packOpen;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={!packing}
         className={cn(
           'transition-[width,height,max-width,padding] duration-300 ease-soft',
           packing && PACK_EXPANDED,
           onboarding && !packing && 'max-h-[calc(100dvh-2rem)] overflow-y-auto',
+          onboarding && !packing && controller.step === OnboardingStep.Squad && 'sm:max-w-3xl',
         )}
       >
         {packing ? (
@@ -101,6 +110,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               hideTrigger
               open
               packName="Starter Pack"
+              packSize={STARTER_PACK_SIZE}
               onClose={controller.closePack}
               onComplete={controller.completePack}
             />

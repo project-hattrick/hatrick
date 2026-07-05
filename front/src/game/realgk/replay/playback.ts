@@ -141,6 +141,7 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     players: sample.players.map(playerFromSnap),
     nextPlayerId: live.nextPlayerId,
     ball,
+    ballEffects: { particles: [] },
     referee,
     coach,
     match: live.match,

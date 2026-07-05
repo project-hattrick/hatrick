@@ -61,6 +61,21 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   const config = opts.config ?? REAL_GK_V2_CONFIG;
   const assets = loadRealGkAssets(config.features !== undefined);
   const world = createWorld({ width: canvas.clientWidth || 800, height: canvas.clientHeight || 600 }, config);
+  const dropTestBall = (): void => {
+    if (!config.features?.ballEffects) return;
+    const start = pointOnField(world.size, 0.58, 0.42);
+    world.ball.ownerId = null;
+    world.ball.lastKickerId = null;
+    world.ball.x = start.x;
+    world.ball.y = start.y;
+    world.ball.z = 150;
+    world.ball.vx = 82;
+    world.ball.vy = 18;
+    world.ball.vz = 10;
+    world.ball.spinRate = 4;
+    world.ball.cooldown = 3;
+    world.ball.lofted = false;
+  };
   const cam = createCamera(world);
   const recorder: ReplayRecorder | null = config.features?.replay ? createRecorder() : null;
   const director: ReplayDirector | null = recorder ? createDirector(world, recorder, cam) : null;
@@ -249,6 +264,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   };
 
   resize();
+  dropTestBall();
   lastT = performance.now();
   raf = requestAnimationFrame(frame);
   syncHud();
@@ -319,6 +335,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.spinRate = 0;
       ball.cooldown = 1.0;
     },
+    debugBallDrop: dropTestBall,
     playIntro: () => {
       if (!config.features?.matchIntro) return;
       director?.reset();

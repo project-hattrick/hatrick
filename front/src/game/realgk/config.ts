@@ -38,6 +38,8 @@ export interface RealGkFeatures {
   /** v6 keeper: the approved candidate_01 dive pack — crouch anticipation, smeared ghost-trail launch,
    *  prone slide and kneel recovery — instead of the legacy 8-frame dive. */
   keeperDiveV2: boolean;
+  /** Ground-contact particles for the ball: dust bloom and small turf flecks. */
+  ballEffects?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -188,6 +190,13 @@ export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
   playableRoster: 1,
 };
 
+/** Effects lab — a clean playable field with ball-impact particles and a repeatable high drop. */
+export const EFFECTS_LAB_CONFIG: RealGkConfig = {
+  ...REAL_GK_PLAY_CONFIG,
+  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), ballEffects: true },
+  playableRoster: 1,
+};
+
 /** Auto full match — identical look/assets to the sandbox, but 11-a-side AI with goal replays. */
 export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
   fieldScale: 1.5,
@@ -244,6 +253,7 @@ export const REAL_GK_V6_CONFIG: RealGkConfig = {
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.EffectsLab) return EFFECTS_LAB_CONFIG;
   if (id === CheckpointId.RealGkV6) return REAL_GK_V6_CONFIG;
   if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
   if (id === CheckpointId.RealGkSolo) return REAL_GK_SOLO_CONFIG;

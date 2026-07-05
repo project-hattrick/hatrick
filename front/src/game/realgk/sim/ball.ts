@@ -1,5 +1,6 @@
 import { BALL_FRAME_COUNT, BALL_GRAVITY } from '../constants';
 import { BodyAnim, PlayerAction, RestartKind, RestartStage, Role, Team } from '../enums';
+import { spawnBallGroundImpact } from '../effects';
 import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throwInSpot, GOAL_MAX_Z, GOALS, PLAY_LINES } from '../field';
 import type { Ball, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
@@ -169,7 +170,9 @@ export function integrateBallFlight(world: RealGkWorld, dt: number): void {
   ball.spin = (ball.spin + ball.spinRate * dt * 5 + BALL_FRAME_COUNT) % BALL_FRAME_COUNT;
 
   if (ball.z <= 0) {
+    const impactSpeed = Math.abs(Math.min(0, ball.vz));
     if (ball.vz < -70) ball.impact = 0.09;
+    if (impactSpeed > 38) spawnBallGroundImpact(world, impactSpeed);
     ball.z = 0;
     ball.vz = -ball.vz * 0.42;
     ball.spinRate += clamp((ball.vx + ball.vy) * 0.0035, -1.3, 1.3);

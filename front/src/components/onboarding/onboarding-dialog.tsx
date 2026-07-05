@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { PackOpening } from '@/components/store/pack-opening';
 import { cn } from '@/lib/utils';
+import { OnboardingStep } from '@/enums/onboarding-step.enum';
 import { OnboardingFlow } from './onboarding-flow';
-import { useOnboardingController } from './use-onboarding-controller';
+import { useOnboardingController, STARTER_PACK_SIZE } from './use-onboarding-controller';
 
 /** How the modal grows so the pack plays inside it instead of taking over the screen. */
 const EXPANDED = 'h-[92vh] w-[92vw] max-w-[92vw] overflow-hidden p-0 sm:max-w-[92vw] sm:p-0';
@@ -30,7 +31,11 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={!packing}
-        className={cn('transition-[width,height,max-width,padding] duration-300 ease-soft', packing ? EXPANDED : NORMAL)}
+        className={cn(
+          'transition-[width,height,max-width,padding] duration-300 ease-soft',
+          packing ? EXPANDED : NORMAL,
+          !packing && controller.step === OnboardingStep.Squad && 'sm:max-w-3xl',
+        )}
       >
         {packing ? (
           <>
@@ -40,6 +45,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
               hideTrigger
               open
               packName="Starter Pack"
+              packSize={STARTER_PACK_SIZE}
               onClose={controller.closePack}
               onComplete={controller.completePack}
             />

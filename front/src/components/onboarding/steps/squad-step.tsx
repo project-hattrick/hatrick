@@ -1,14 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 
-import { TrendUp } from '@/components/common/icons';
+import { Check, TrendUp } from '@/components/common/icons';
 import { talero } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
+import type { Formation } from '@/config/formation.config';
 import type { PackCard } from '@/config/pack-pool.config';
-
-/** Split the XI into pitch lines (attack → midfield → defense → keeper), strongest up front. */
-const LINES: number[] = [3, 3, 4, 1];
 
 /** Strongest pulls first, capped at an XI, keeping original collection indices for `squad`. */
 export function pickStartingXI(collection: PackCard[]): { card: PackCard; index: number }[] {
@@ -18,69 +17,183 @@ export function pickStartingXI(collection: PackCard[]): { card: PackCard; index:
     .slice(0, 11);
 }
 
-function MiniCard({ card, highlight }: { card: PackCard; highlight?: boolean }) {
+/** Circular player token on the pitch — portrait avatar + rating, draggable to swap. */
+function PlayerToken({
+  card,
+  label,
+  x,
+  y,
+  selected,
+  dragging,
+  onClick,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+}: {
+  card?: PackCard;
+  label: string;
+  x: number;
+  y: number;
+  selected: boolean;
+  dragging: boolean;
+  onClick: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDrop: () => void;
+}) {
   return (
     <div
+      draggable={Boolean(card)}
+      onClick={onClick}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      style={{ left: `${x}%`, top: `${y}%` }}
       className={cn(
-        'relative aspect-[5/7] w-[52px] shrink-0 overflow-hidden rounded-lg border shadow-md',
-        highlight ? 'border-medal-gold ring-1 ring-medal-gold/60' : 'border-white/10',
+        'absolute z-10 flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-col items-center gap-1 transition active:cursor-grabbing',
+        dragging && 'opacity-40',
+        selected && 'scale-110',
       )}
-      style={{ backgroundColor: '#101013', backgroundImage: "url('/cards/card-texture.png')", backgroundSize: 'cover' }}
     >
-      {card.portraitSrc && (
-        <Image src={card.portraitSrc} alt={card.name} fill sizes="52px" className="object-contain object-bottom opacity-95" />
-      )}
-      <div className="absolute top-1 left-1.5 flex flex-col leading-none">
-        <span className={cn(talero.className, 'text-xs text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]')}>
-          {card.number}
+      <span className="relative">
+        <span
+          className={cn(
+            'grid size-12 place-items-end overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-lg transition',
+            selected ? 'border-neon ring-2 ring-neon' : 'border-white/20',
+          )}
+        >
+          {card?.portraitSrc ? (
+            <Image
+              src={card.portraitSrc}
+              alt={card.name}
+              width={48}
+              height={48}
+              className="translate-y-[8%] scale-125 object-contain object-bottom"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          ) : null}
         </span>
-        <span className="text-[8px]">{card.flag}</span>
-      </div>
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-1 pt-3 pb-1 text-center">
-        <p className="truncate text-[7px] font-bold tracking-wide text-white uppercase">{card.name}</p>
-      </div>
+        {card && (
+          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-neon shadow">
+            {card.number}
+          </span>
+        )}
+      </span>
+      <span className="max-w-[72px] truncate rounded bg-black/55 px-1.5 py-0.5 text-eyebrow text-white/90 backdrop-blur-sm">
+        {card ? card.name : label}
+      </span>
     </div>
   );
 }
 
 /**
- * Formation step — the auto-lined XI on a pitch, with the team rating.
- * Presentational only; the flow footer owns the "Lock formation" action.
+ * Formation editor — the XI as circular tokens on a pitch (drag to swap, or tap two), with the
+ * shape presets in a side rail. State (order + shape) lives in the onboarding controller.
  */
-export function SquadStep({ collection }: { collection: PackCard[] }) {
-  const ranked = pickStartingXI(collection);
-  const best = ranked[0]?.card;
-  const strength = ranked.length
-    ? Math.round(ranked.reduce((sum, { card }) => sum + (card.number ?? 0), 0) / ranked.length)
+export function SquadStep({
+  collection,
+  order,
+  formations,
+  formationIndex,
+  formation,
+  onSwap,
+  onSelectFormation,
+}: {
+  collection: PackCard[];
+  order: number[];
+  formations: Formation[];
+  formationIndex: number;
+  formation: Formation;
+  onSwap: (a: number, b: number) => void;
+  onSelectFormation: (index: number) => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+
+  const tap = (slot: number) => {
+    if (selected === null) setSelected(slot);
+    else if (selected === slot) setSelected(null);
+    else {
+      onSwap(selected, slot);
+      setSelected(null);
+    }
+  };
+
+  const dropOn = (slot: number) => {
+    if (dragFrom !== null && dragFrom !== slot) onSwap(dragFrom, slot);
+    setDragFrom(null);
+    setSelected(null);
+  };
+
+  const cards = order.map((idx) => collection[idx]).filter(Boolean) as PackCard[];
+  const strength = cards.length
+    ? Math.round(cards.reduce((sum, card) => sum + (card.number ?? 0), 0) / cards.length)
     : 0;
 
-  const lines: { card: PackCard; index: number }[][] = [];
-  let cursor = 0;
-  for (const size of LINES) {
-    const row = ranked.slice(cursor, cursor + size);
-    if (row.length) lines.push(row);
-    cursor += size;
-  }
-
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="pitch-stripes-v relative flex min-h-[300px] w-full max-w-sm flex-col justify-between gap-3 rounded-2xl border border-white/10 p-4">
-        <span className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-micro font-bold text-neon backdrop-blur-sm">
+    <div className="grid gap-4 md:grid-cols-[1.5fr_1fr] md:items-stretch">
+      {/* Pitch */}
+      <div className="pitch-stripes-v relative h-[380px] w-full overflow-hidden rounded-2xl border border-white/10 md:h-[460px]">
+        <div className="pointer-events-none absolute inset-3 rounded-lg border border-white/10" />
+        <div className="pointer-events-none absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
+        <div className="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
+
+        <span className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-micro font-bold text-neon backdrop-blur-sm">
           <TrendUp className="size-3.5" weight="bold" />
           {strength} OVR
         </span>
-        {lines.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-2">
-            {row.map(({ card, index }) => (
-              <MiniCard key={card.name} card={card} highlight={index === ranked[0]?.index} />
-            ))}
-          </div>
+
+        {formation.slots.map((slot, i) => (
+          <PlayerToken
+            key={i}
+            card={collection[order[i]]}
+            label={slot.label}
+            x={slot.x}
+            y={slot.y}
+            selected={selected === i}
+            dragging={dragFrom === i}
+            onClick={() => tap(i)}
+            onDragStart={() => setDragFrom(i)}
+            onDragEnd={() => setDragFrom(null)}
+            onDrop={() => dropOn(i)}
+          />
         ))}
       </div>
 
-      <p className="text-caption text-center text-muted-foreground">
-        We picked your strongest eleven{best ? ` — led by ${best.name}` : ''}. Rebuild it any time from your squad.
-      </p>
+      {/* Presets rail (right, outside the pitch) */}
+      <div className="flex flex-col gap-2">
+        <p className="text-eyebrow text-muted-foreground">Formation</p>
+        {formations.map((f, i) => {
+          const active = i === formationIndex;
+          return (
+            <button
+              key={f.shape}
+              type="button"
+              onClick={() => onSelectFormation(i)}
+              className={cn(
+                'flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-left transition',
+                active
+                  ? 'border-neon bg-neon/10 text-foreground'
+                  : 'border-border bg-surface-2/60 text-muted-foreground hover:border-neon/40 hover:text-foreground',
+              )}
+            >
+              <span className={cn(talero.className, 'text-lg tracking-wide')}>{f.shape}</span>
+              {active && (
+                <span className="grid size-5 place-items-center rounded-full bg-neon text-primary-foreground">
+                  <Check className="size-3" weight="bold" />
+                </span>
+              )}
+            </button>
+          );
+        })}
+        <p className="text-micro mt-1 text-muted-foreground">
+          Drag a player onto another to swap them — or tap two. Pick a shape above.
+        </p>
+      </div>
     </div>
   );
 }

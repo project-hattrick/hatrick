@@ -1,0 +1,63 @@
+.burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Expanding shockwave rings — the "kick" impact. */
+.ring {
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  border-radius: 9999px;
+  border: 3px solid var(--color-neon);
+  opacity: 0;
+  animation: kick-ring 0.6s ease-out forwards;
+}
+
+.ring2 {
+  animation-delay: 0.09s;
+}
+
+.ring3 {
+  animation-delay: 0.18s;
+}
+
+/* The ball that gets struck — pops in, settles, then flies up and out. */
+.ball {
+  filter: drop-shadow(0 0 14px color-mix(in oklch, var(--color-neon) 70%, transparent));
+  animation: kick-ball 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes kick-ring {
+  from {
+    transform: scale(0.25);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(4.2);
+    opacity: 0;
+  }
+}
+
+@keyframes kick-ball {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  35% {
+    transform: scale(1.25) rotate(12deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85) translateY(-10px);
+    opacity: 0;
+  }
+}

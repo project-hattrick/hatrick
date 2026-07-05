@@ -33,7 +33,8 @@ export function PackStep() {
               stats={HERO_STATS}
               portraitSrc={HERO.portraitSrc}
               holoColors={HERO.holoColors}
-              width={172}
+              surfaceShine
+              width={200}
             />
           </div>
         </div>

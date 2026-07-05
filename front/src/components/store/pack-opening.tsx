@@ -8,7 +8,7 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { Button } from '@/components/ui/button';
 import { MetalButton } from '@/components/ui/metal-button';
 import { HoloPlayerCard } from '@/components/store/holo-player-card';
-import { playRevealSound, playSwipeSound, playTearSound } from '@/components/store/pack-sounds';
+import { playRevealSound, playSwipeSound } from '@/components/store/pack-sounds';
 import { drawPack, type PackCard } from '@/config/pack-pool.config';
 import styles from './pack-opening.module.css';
 import { cn } from '@/lib/utils';
@@ -167,7 +167,6 @@ function PackOpening({
   };
 
   const tearOpen = () => {
-    playTearSound();
     setStage(PackStage.Opening);
     timer.current = setTimeout(() => setStage(PackStage.FaceDown), TEAR_DURATION_MS);
   };
@@ -288,7 +287,7 @@ function PackOpening({
               aria-label="Close"
               onClick={close}
               className={cn(
-                'absolute right-5 z-10 rounded-full border border-border/60 bg-black/40 p-2 text-muted-foreground transition-colors hover:text-foreground',
+                'absolute right-5 z-10 cursor-pointer rounded-full border border-border/60 bg-black/40 p-2 text-muted-foreground transition-colors hover:text-foreground',
                 embedded ? 'top-6' : 'top-20',
               )}
             >
