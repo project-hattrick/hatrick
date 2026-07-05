@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 import {
@@ -12,21 +12,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { CountdownRing } from '@/components/live/countdown-ring';
+import { Flag } from '@/components/common/flag';
 import { DuelistCard } from './duelist-card';
 import { formatTokens } from './bet-selector';
 import { Sword, Check, Lightning, Coins, ShieldCheck } from '@/components/common/icons';
-import { AppMode } from '@/enums/app-mode.enum';
 import { MatchPhase } from '@/enums/match-phase.enum';
+import { fifaToIso } from '@/lib/country';
+import { duelists } from '@/config/duelists.config';
+import { useDuelStore } from '@/store/duel.store';
 import {
   ACCEPT_SECONDS,
   MMR_STAKE,
   SEARCH_MS,
+  START_SECONDS,
   opponentDuelist,
+  opponentRoster,
   rankTierConfig,
   selfDuelist,
+  selfRoster,
   type Duelist,
+  type RosterEntry,
 } from '@/config/matchmaking.config';
 
 interface MatchmakingDialogProps {
@@ -43,7 +50,7 @@ interface MatchmakingDialogProps {
 const HEADINGS: Record<MatchPhase, { title: string; description: string }> = {
   [MatchPhase.Searching]: { title: 'Finding an opponent', description: 'Ranked Duel · matching you by MMR.' },
   [MatchPhase.Found]: { title: 'Opponent found', description: 'Ready check — accept to enter the pitch.' },
-  [MatchPhase.Accepted]: { title: 'Match ready', description: 'Loading the 1v1 arena…' },
+  [MatchPhase.Accepted]: { title: 'Match ready', description: 'Rosters locked — kickoff in a moment.' },
 };
 
 /**
@@ -52,6 +59,10 @@ const HEADINGS: Record<MatchPhase, { title: string; description: string }> = {
  * Timers are mocked until real matchmaking lands.
  */
 export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm }: MatchmakingDialogProps) {
+  const router = useRouter();
+  const startDuel = useDuelStore((s) => s.start);
+  const confirmSetup = useDuelStore((s) => s.confirmSetup);
+
   const isChallenge = Boolean(opponent);
   const activeOpponent = opponent ?? opponentDuelist;
   const openPhase = isChallenge ? MatchPhase.Found : MatchPhase.Searching;
@@ -59,6 +70,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
   const [phase, setPhase] = useState(openPhase);
   const [seconds, setSeconds] = useState(ACCEPT_SECONDS);
   const [elapsed, setElapsed] = useState(0);
+  const [startIn, setStartIn] = useState(START_SECONDS);
   const [wasOpen, setWasOpen] = useState(false);
 
   // Reset the flow each time the dialog opens — adjust state during render (not in an effect).
@@ -67,9 +79,25 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
     setPhase(openPhase);
     setSeconds(ACCEPT_SECONDS);
     setElapsed(0);
+    setStartIn(START_SECONDS);
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
+
+  const enterMatch = () => {
+    if (isChallenge) {
+      // Direct challenge: the mount owns the duel start (routes into the XI setup step).
+      onConfirm?.();
+      onOpenChange(false);
+      return;
+    }
+    // Ranked: the mocked queue always matches the same profile — skip XI setup, straight to the pitch.
+    const profile = duelists.find((d) => d.name === opponentDuelist.name) ?? duelists[0];
+    startDuel(profile.username, profile);
+    confirmSetup();
+    onOpenChange(false);
+    router.push(`/duel/${profile.username}`);
+  };
 
   // Searching: count up, then flip to "found" after a short scan.
   useEffect(() => {
@@ -88,6 +116,18 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
     const id = window.setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearInterval(id);
   }, [open, phase]);
+
+  // Accepted: kickoff countdown — auto-enters the match when it hits 0.
+  useEffect(() => {
+    if (!open || phase !== MatchPhase.Accepted) return;
+    if (startIn === 0) {
+      enterMatch();
+      return;
+    }
+    const id = window.setTimeout(() => setStartIn((s) => s - 1), 1000);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- enterMatch is stable per render inputs
+  }, [open, phase, startIn]);
 
   const heading =
     isChallenge && phase === MatchPhase.Found
@@ -119,7 +159,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
           ) : phase === MatchPhase.Found ? (
             <FoundView seconds={seconds} opponent={activeOpponent} bet={isChallenge ? bet : undefined} />
           ) : (
-            <AcceptedView />
+            <AcceptedView opponent={activeOpponent} startIn={startIn} />
           )}
         </div>
 
@@ -147,28 +187,10 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
           </DialogFooter>
         ) : (
           <DialogFooter>
-            {isChallenge ? (
-              <Button
-                shape="pill"
-                className="w-full gap-2 sm:w-auto"
-                onClick={() => {
-                  onConfirm?.();
-                  onOpenChange(false);
-                }}
-              >
-                <Lightning className="size-4" weight="fill" />
-                Enter the arena
-              </Button>
-            ) : (
-              <Link
-                href={`/${AppMode.Fantasy}`}
-                onClick={() => onOpenChange(false)}
-                className={buttonVariants({ shape: 'pill', className: 'w-full gap-2 sm:w-auto' })}
-              >
-                <Lightning className="size-4" weight="fill" />
-                Enter the pitch
-              </Link>
-            )}
+            <Button shape="pill" className="w-full gap-2 sm:w-auto" onClick={enterMatch}>
+              <Lightning className="size-4" weight="fill" />
+              Enter now · {startIn}s
+            </Button>
           </DialogFooter>
         )}
       </DialogContent>
@@ -250,17 +272,57 @@ function FoundView({
   );
 }
 
-/** Brief confirmation before routing into the duel. */
-function AcceptedView() {
+/** One team on the pre-kickoff reveal — portrait, name and headline roster. */
+function RosterSide({ duelist, roster, highlight }: { duelist: Duelist; roster: RosterEntry[]; highlight?: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-3 py-6 text-center">
-      <span className="grid size-14 place-items-center rounded-full bg-neon/15 text-neon">
-        <Check className="size-7" weight="bold" />
+    <div
+      className={
+        highlight
+          ? 'flex flex-col items-center gap-2 rounded-2xl border border-neon/40 bg-neon/[0.05] p-3'
+          : 'flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface-2/60 p-3'
+      }
+    >
+      <span className="relative grid size-14 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
+        <Image
+          src={duelist.portraitSrc}
+          alt={duelist.name}
+          width={56}
+          height={56}
+          className="translate-y-[6%] scale-110 object-contain object-bottom"
+          style={{ imageRendering: 'pixelated' }}
+        />
       </span>
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold">Both players ready</span>
-        <span className="text-micro text-muted-foreground">Spinning up the 1v1 arena…</span>
+      <span className="flex items-center gap-1.5">
+        <Flag code={fifaToIso(duelist.country)} className="text-xs" />
+        <span className="max-w-[7.5rem] truncate text-sm font-bold">{duelist.name}</span>
+      </span>
+      <ul className="flex w-full flex-col gap-1">
+        {roster.map((entry) => (
+          <li key={entry.name} className="text-micro flex items-center justify-between gap-2">
+            <span className="truncate text-muted-foreground">{entry.name}</span>
+            <span className="font-mono font-bold tabular-nums text-neon">{entry.rating}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Pre-kickoff reveal — both rosters face to face while the start timer runs down. */
+function AcceptedView({ opponent, startIn }: { opponent: Duelist; startIn: number }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2">
+        <RosterSide duelist={selfDuelist} roster={selfRoster} highlight />
+        <div className="flex flex-col items-center justify-center gap-2 px-0.5">
+          <span className="neon-text font-heading text-2xl font-black tracking-tight text-neon">VS</span>
+          <CountdownRing seconds={startIn} max={START_SECONDS} label="Kickoff countdown" />
+        </div>
+        <RosterSide duelist={opponent} roster={opponentRoster} />
       </div>
+      <p className="text-micro text-center text-muted-foreground">
+        Kickoff in <span className="font-mono font-bold text-neon">{startIn}s</span> — entering the pitch automatically.
+      </p>
     </div>
   );
 }

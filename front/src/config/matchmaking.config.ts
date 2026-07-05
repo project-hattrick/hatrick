@@ -11,6 +11,31 @@ export const SEARCH_MS = 2600;
 export const BET_AMOUNTS = [100, 500, 1000, 5000] as const;
 /** Pre-selected stake when the challenge dialog opens. */
 export const DEFAULT_BET_AMOUNT = 500;
+/** Seconds from "match ready" (rosters revealed) to kickoff — the modal auto-launches the arena at 0. */
+export const START_SECONDS = 5;
+
+/** Headline player on the pre-kickoff roster reveal. */
+export interface RosterEntry {
+  name: string;
+  rating: number;
+}
+
+/** Mock squads shown side-by-side before kickoff (until real squads come from the API). */
+export const selfRoster: RosterEntry[] = [
+  { name: 'Mbappé', rating: 97 },
+  { name: 'Haaland', rating: 96 },
+  { name: 'Messi', rating: 95 },
+  { name: 'Bellingham', rating: 89 },
+  { name: 'Alisson', rating: 88 },
+];
+
+export const opponentRoster: RosterEntry[] = [
+  { name: 'Vinícius Jr', rating: 94 },
+  { name: 'Kane', rating: 92 },
+  { name: 'Griezmann', rating: 90 },
+  { name: 'Valverde', rating: 88 },
+  { name: 'Courtois', rating: 89 },
+];
 
 /** Tier badge styling — a metal-plate gradient + label colour per tier. */
 export interface RankTierMeta {

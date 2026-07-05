@@ -20,6 +20,12 @@ const enum PackStage {
   Summary = 'summary',
 }
 
+const enum PullRarity {
+  Standard = 'standard',
+  Epic = 'epic',
+  Legendary = 'legendary',
+}
+
 const TEAR_DURATION_MS = 950;
 const CARD_EXIT_MS = 450;
 /** Rise animation (0.7s) + a short beat before the next card flips on its own. */
@@ -28,10 +34,38 @@ const AUTO_REVEAL_MS = 850;
 const FLASH_MS = 700;
 const SWIPE_THRESHOLD_PX = 90;
 const CARD_WIDTH = 400;
-const SUMMARY_CARD_WIDTH = 210;
+const GROUP_CARD_WIDTH = 300;
+const SUMMARY_CARD_WIDTH = 148;
+const XI_PACK_SIZE = 11;
+const XI_GROUP_SIZE = 3;
+
+const raritySurfaceColors: Partial<Record<PullRarity, [string, string]>> = {
+  [PullRarity.Epic]: ['#2b1742', '#69419a'],
+  [PullRarity.Legendary]: ['#3d2c0f', '#a77a22'],
+};
 
 /** Default cards per pack — each opening draws them at random from the FULL character pool (pack-pool.config). */
 const DEFAULT_PACK_SIZE = 5;
+
+function orderPackCards(cards: PackCard[]): PackCard[] {
+  if (cards.length !== XI_PACK_SIZE) return cards;
+  const ranked = [...cards].sort((left, right) => (right.number ?? 0) - (left.number ?? 0));
+  const featured = ranked.slice(0, 2).reverse();
+  const featuredSet = new Set(featured);
+  return [...cards.filter((card) => !featuredSet.has(card)), ...featured];
+}
+
+function pullRarity(index: number, total: number): PullRarity {
+  if (total !== XI_PACK_SIZE) return PullRarity.Standard;
+  if (index === total - 1) return PullRarity.Legendary;
+  if (index === total - 2) return PullRarity.Epic;
+  return PullRarity.Standard;
+}
+
+function revealGroupSize(index: number, total: number): number {
+  if (total !== XI_PACK_SIZE || index >= 9) return 1;
+  return XI_GROUP_SIZE;
+}
 
 interface PackOpeningProps {
   packName: string;
@@ -78,15 +112,16 @@ function PackOpening({
   const dragStart = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const isLastCard = cardIndex === packCards.length - 1;
-  const currentCard = packCards[cardIndex] ?? null;
+  const groupSize = revealGroupSize(cardIndex, packCards.length);
+  const currentCards = packCards.slice(cardIndex, cardIndex + groupSize);
+  const isLastGroup = cardIndex + currentCards.length >= packCards.length;
   const bestCard = packCards.length
     ? packCards.reduce((best, card) => ((card.number ?? 0) > (best.number ?? 0) ? card : best))
     : null;
 
   /** Buy: draw a fresh random hand from the full character pool, then present the sealed pack. */
   const buyPack = () => {
-    setPackCards(drawPack(packSize));
+    setPackCards(orderPackCards(drawPack(packSize)));
     setStage(PackStage.Sealed);
   };
 
@@ -121,12 +156,12 @@ function PackOpening({
     setExitDir(direction);
     setDragX(0);
     timer.current = setTimeout(() => {
-      if (isLastCard) {
+      if (isLastGroup) {
         playRevealSound();
         setStage(PackStage.Summary);
         setCardIndex(0);
       } else {
-        setCardIndex((index) => index + 1);
+        setCardIndex((index) => index + revealGroupSize(index, packCards.length));
         setStage(PackStage.FaceDown);
         // Flip on its own after rising — only the first card asks for a manual reveal.
         timer.current = setTimeout(reveal, AUTO_REVEAL_MS);
@@ -191,6 +226,10 @@ function PackOpening({
     '--exit-dir': exitDir || 1,
     transform: isDragging || dragX !== 0 ? `translateX(${dragX}px) rotate(${dragX * 0.05}deg)` : undefined,
   } as CSSProperties;
+  const groupStyle: CSSProperties = {
+    '--exit-dir': exitDir || 1,
+    transform: isDragging || dragX !== 0 ? `translateX(${dragX}px) rotate(${dragX * 0.025}deg)` : undefined,
+  } as CSSProperties;
 
   return (
     <>
@@ -222,7 +261,8 @@ function PackOpening({
             <div className="absolute inset-x-0 top-20 z-10 px-14 text-center">
               <span className="font-mono text-xs font-bold tracking-[0.35em] text-white/80 uppercase">
                 {packName}
-                {onCard && ` · card ${cardIndex + 1}/${packCards.length}`}
+                {onCard &&
+                  ` · ${currentCards.length > 1 ? `cards ${cardIndex + 1}–${cardIndex + currentCards.length}` : `card ${cardIndex + 1}`}/${packCards.length}`}
                 {stage === PackStage.Summary && ' · summary'}
               </span>
             </div>
@@ -266,33 +306,55 @@ function PackOpening({
             )}
 
             {onCard && (
-              <div className={styles.stage}>
+              <div className={cn(styles.stage, styles.cardStage)}>
                 {flashing && <div className={styles.flash} />}
                 <div
                   key={cardIndex}
                   className={cn(
-                    styles.flipScene,
-                    styles.cardGlow,
+                    styles.revealGroup,
                     styles.riseFromPodium,
                     isDragging && styles.dragging,
                     exitDir !== 0 && styles.cardExit,
                   )}
-                  style={cardStyle}
+                  style={currentCards.length === 1 ? cardStyle : groupStyle}
                   onClick={stage === PackStage.FaceDown ? reveal : undefined}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerEnd}
                   onPointerCancel={onPointerEnd}
                 >
-                  <div className={cn(styles.flipInner, stage === PackStage.Revealed && styles.flipped)}>
-                    <div className={styles.flipBack}>
-                      <CardBack />
-                    </div>
-                    <div className={styles.flipFace}>
-                      {/* Mounted only at reveal — nested preserve-3d ignores backface-visibility */}
-                      {stage === PackStage.Revealed && currentCard && <HoloPlayerCard {...currentCard} width={CARD_WIDTH} />}
-                    </div>
-                  </div>
+                  {currentCards.map((card, groupIndex) => {
+                    const index = cardIndex + groupIndex;
+                    const rarity = pullRarity(index, packCards.length);
+                    const width = currentCards.length === 1 ? CARD_WIDTH : GROUP_CARD_WIDTH;
+                    return (
+                      <div
+                        key={card.name}
+                        className={cn(
+                          styles.flipScene,
+                          styles.cardGlow,
+                          currentCards.length === 1 ? styles.soloCard : styles.batchCard,
+                          styles[rarity],
+                        )}
+                        style={{ '--group-delay': `${groupIndex * 90}ms` } as CSSProperties}
+                      >
+                        <div className={cn(styles.flipInner, stage === PackStage.Revealed && styles.flipped)}>
+                          <div className={styles.flipBack}>
+                            <CardBack />
+                          </div>
+                          <div className={styles.flipFace}>
+                            {stage === PackStage.Revealed && (
+                              <HoloPlayerCard
+                                {...card}
+                                surfaceColors={raritySurfaceColors[rarity]}
+                                width={width}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -300,10 +362,13 @@ function PackOpening({
             {/* Bottom controls */}
             {(stage !== PackStage.Summary && (
               <div className="absolute inset-x-0 bottom-[max(7svh,calc(env(safe-area-inset-bottom)+16px))] z-10 flex flex-col items-center gap-2 px-4 text-center">
-                {stage === PackStage.Revealed && currentCard && (
-                  <span className="text-lg font-bold text-white drop-shadow">
-                    {currentCard.name} <span className="text-white/70">{currentCard.flag}</span>
+                {stage === PackStage.Revealed && currentCards.length === 1 && (
+                  <span className={cn('text-lg font-bold text-white drop-shadow', styles[pullRarity(cardIndex, packCards.length)])}>
+                    {currentCards[0].name} <span className="text-white/70">{currentCards[0].flag}</span>
                   </span>
+                )}
+                {stage === PackStage.Revealed && currentCards.length > 1 && (
+                  <span className="text-sm font-semibold tracking-wide text-white/80 uppercase">Three new players</span>
                 )}
                 {stage === PackStage.FaceDown && (
                   <Button size="lg" className="px-10 text-base" onClick={reveal}>
@@ -312,7 +377,7 @@ function PackOpening({
                 )}
                 {stage === PackStage.Revealed && (
                   <Button size="lg" className="px-10 text-base" onClick={() => nextCard(1)} disabled={exitDir !== 0 || flashing}>
-                    {isLastCard ? 'See summary' : 'Next card'}
+                    {isLastGroup ? 'See summary' : currentCards.length > 1 ? 'Next reveal' : 'Next card'}
                   </Button>
                 )}
                 <span className="text-[11px] text-white/60">
@@ -326,24 +391,36 @@ function PackOpening({
             {/* Summary */}
             {stage === PackStage.Summary && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/55">
-                <div className="flex max-h-full w-full flex-col items-center gap-8 overflow-y-auto p-6 pt-24">
+                <div className={styles.summaryLayout}>
                   <div className="flex flex-col items-center gap-1.5">
-                    <h2 className="text-4xl font-bold text-white md:text-5xl">You pulled {packCards.length} cards</h2>
+                    <h2 className="text-3xl font-bold text-white md:text-4xl">You pulled {packCards.length} cards</h2>
                     {bestCard && (
                       <span className="text-base text-muted-foreground">
                         Best pull: {bestCard.name} {bestCard.flag} · {bestCard.number}
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center justify-center gap-6">
-                    {packCards.map((card, index) => (
-                      <div key={card.name} className={styles.cardReveal} style={{ animationDelay: `${index * 0.12}s` }}>
-                        <div className="flex flex-col items-center gap-2">
-                          <HoloPlayerCard {...card} width={SUMMARY_CARD_WIDTH} />
-                          <span className="text-sm font-semibold text-white/90">{card.name}</span>
+                  <div className={styles.summaryGrid}>
+                    {packCards.map((card, index) => {
+                      const rarity = pullRarity(index, packCards.length);
+                      return (
+                        <div
+                          key={card.name}
+                          className={cn(styles.cardReveal, styles.summaryCard, styles[rarity])}
+                          style={{ animationDelay: `${index * 0.06}s` }}
+                        >
+                          <div className={styles.summaryCardFrame}>
+                            <HoloPlayerCard
+                              {...card}
+                              surfaceColors={raritySurfaceColors[rarity]}
+                              width={SUMMARY_CARD_WIDTH}
+                            />
+                          </div>
+                          <span className="max-w-full truncate text-xs font-semibold text-white/90">{card.name}</span>
+                          {rarity !== PullRarity.Standard && <span className={styles.rarityLabel}>{rarity}</span>}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <Button size="lg" onClick={close}>
                     Add all to collection

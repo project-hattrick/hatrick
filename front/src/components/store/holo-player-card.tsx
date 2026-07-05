@@ -22,6 +22,8 @@ interface HoloPlayerCardProps {
   portraitSrc?: string;
   /** Hover refraction colors, usually the country flag colors. */
   holoColors?: [string, string, string];
+  /** Optional restrained color treatment for special card surfaces. */
+  surfaceColors?: [string, string];
   /** Card width in px — every inner measure scales with it (cqi units). */
   width?: number;
 }
@@ -45,6 +47,7 @@ function HoloPlayerCard({
   stats = DEFAULT_STATS,
   portraitSrc = '/cards/player-93.png',
   holoColors = ['#ef2b3d', '#f5f5f5', '#00a2e1'],
+  surfaceColors,
   width = 320,
 }: HoloPlayerCardProps) {
   const columns = [stats.slice(0, 3), stats.slice(3, 6)];
@@ -67,8 +70,28 @@ function HoloPlayerCard({
       <HologramSticker.Scene>
         <HologramSticker.Card width={width}>
           {/* Layer 1: solid base + card texture */}
-          <div style={{ position: 'absolute', inset: 0, background: '#101013', borderRadius: '8cqi' }} />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: surfaceColors ? `linear-gradient(145deg, ${surfaceColors[0]}, ${surfaceColors[1]})` : '#101013',
+              borderRadius: '8cqi',
+            }}
+          />
           <HologramSticker.ImageLayer src="/cards/card-texture.png" alt="" objectFit="cover" />
+          {surfaceColors && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+                borderRadius: '8cqi',
+                background: `linear-gradient(145deg, ${surfaceColors[0]}, ${surfaceColors[1]})`,
+                mixBlendMode: 'color',
+                opacity: 0.9,
+              }}
+            />
+          )}
 
           {/* Layer 2: holographic pattern */}
           <HologramSticker.Pattern textureUrl={HOLO_PATTERN_TEXTURE} opacity={0.4} mixBlendMode="multiply">

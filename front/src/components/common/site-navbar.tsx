@@ -17,26 +17,23 @@ const COIN_BALANCE = 28_105_820;
 const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.WalletAvatar), { ssr: false });
 
 /**
- * Top bar. Solid by default; with `heroBackdrop` it starts transparent at the very top (over the
- * hero) and gains its background as soon as the page is scrolled.
+ * Top bar. Transparent at the very top of the page and gains its background as soon as the page is
+ * scrolled — the same behaviour everywhere, over a hero or a plain page. The `heroBackdrop` prop is
+ * kept for call-site clarity but no longer changes behaviour.
  */
-export function SiteNavbar({ heroBackdrop = false }: { heroBackdrop?: boolean }) {
+export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
   const { isAuthenticated, user } = useAuth();
   const openSearch = useUiStore((s) => s.setSearchOpen);
   // Show the real devnet play-money balance from the DB once signed in.
   const coins = isAuthenticated && user ? Number(user.balance) : COIN_BALANCE;
 
-  // Over a hero, go solid only after roughly one viewport of scroll (hysteresis avoids flicker).
-  const [solid, setSolid] = useState(!heroBackdrop);
+  // Transparent at the very top; the background comes in as soon as you scroll (hysteresis avoids
+  // flicker). Start transparent to match the first paint before the scroll position is read.
+  const [solid, setSolid] = useState(false);
   useEffect(() => {
-    if (!heroBackdrop) {
-      setSolid(true);
-      return;
-    }
     let raf = 0;
     const read = () => {
       raf = 0;
-      // Transparent only at the very top; the background comes in as soon as you scroll.
       setSolid(window.scrollY > 8);
     };
     const onScroll = () => {
@@ -48,7 +45,7 @@ export function SiteNavbar({ heroBackdrop = false }: { heroBackdrop?: boolean })
       window.removeEventListener('scroll', onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [heroBackdrop]);
+  }, []);
 
   return (
     <nav

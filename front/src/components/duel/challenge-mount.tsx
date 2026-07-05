@@ -17,7 +17,7 @@ export function ChallengeMount() {
   const confirm = () => {
     if (!opponent) return;
     const id = opponent.username;
-    startDuel(id, opponent);
+    startDuel(id, opponent, bet);
     closeChallenge();
     router.push(`/duel/${id}`);
   };
