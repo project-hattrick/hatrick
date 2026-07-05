@@ -23,3 +23,39 @@
     transparent 60%
   );
 }
+
+.surfaceShine {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -65%;
+  width: 48%;
+  transform: skewX(-14deg);
+  background: linear-gradient(100deg, transparent, rgb(255 239 170 / 0.42), transparent);
+  filter: blur(3px);
+  animation: surface-shine 2.8s ease-in-out infinite;
+}
+
+@keyframes surface-shine {
+  0%,
+  42% {
+    left: -65%;
+    opacity: 0;
+  }
+
+  52% {
+    opacity: 1;
+  }
+
+  78%,
+  100% {
+    left: 125%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surfaceShine {
+    animation: none;
+  }
+}

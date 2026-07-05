@@ -17,7 +17,7 @@ export function SquadSection() {
         <SectionLink href={`/${AppMode.Fantasy}`} label="Edit formation" className="mt-2" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <FormationPitch />
         <div className="flex flex-col gap-4">
           <TeamStrengthCard />

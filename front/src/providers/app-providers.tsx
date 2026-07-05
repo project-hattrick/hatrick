@@ -9,6 +9,7 @@ import { IconContext, type IconProps } from '@/components/common/icons';
 import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import { SearchCommand } from '@/components/common/search-command';
 import { ChallengeMount } from '@/components/duel/challenge-mount';
+import { OnboardingMount } from '@/components/onboarding/onboarding-mount';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 import { createQueryClient } from '@/lib/query-client';
@@ -33,6 +34,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
               {children}
               <SearchCommand />
               <ChallengeMount />
+              <OnboardingMount />
             </IconContext.Provider>
           </WalletModalProvider>
         </WalletProvider>

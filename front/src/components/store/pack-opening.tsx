@@ -41,7 +41,7 @@ const XI_GROUP_SIZE = 3;
 
 const raritySurfaceColors: Partial<Record<PullRarity, [string, string]>> = {
   [PullRarity.Epic]: ['#2b1742', '#69419a'],
-  [PullRarity.Legendary]: ['#3d2c0f', '#a77a22'],
+  [PullRarity.Legendary]: ['#6b4608', '#e0b83f'],
 };
 
 /** Default cards per pack — each opening draws them at random from the FULL character pool (pack-pool.config). */
@@ -76,6 +76,14 @@ interface PackOpeningProps {
   ctaClassName?: string;
   ctaSize?: ComponentProps<typeof Button>['size'];
   ctaVariant?: ComponentProps<typeof Button>['variant'];
+  /** Controlled open — when set, the overlay launches/closes from the parent instead of the CTA. */
+  open?: boolean;
+  /** Fired when the overlay closes (X / ESC / summary) so a controlling parent can sync its state. */
+  onClose?: () => void;
+  /** Hide the built-in "Buy pack" trigger (for controlled/embedded use). */
+  hideTrigger?: boolean;
+  /** Fired with the pulled hand when the player confirms the summary — the seam to persist cards. */
+  onComplete?: (cards: PackCard[]) => void;
 }
 
 /** Foil card back shown before each reveal. */
@@ -101,7 +109,12 @@ function PackOpening({
   ctaClassName,
   ctaSize,
   ctaVariant,
+  open: controlledOpen,
+  onClose,
+  hideTrigger = false,
+  onComplete,
 }: PackOpeningProps) {
+  const controlled = controlledOpen !== undefined;
   const [stage, setStage] = useState<PackStage | null>(null);
   const [packCards, setPackCards] = useState<PackCard[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
@@ -125,15 +138,27 @@ function PackOpening({
     setStage(PackStage.Sealed);
   };
 
-  const close = () => {
-    if (timer.current) clearTimeout(timer.current);
+  /** Reset only React state — no ref access, so it's safe to call during render (controlled sync). */
+  const resetState = () => {
     setStage(null);
     setCardIndex(0);
     setExitDir(0);
     setFlashing(false);
     setDragX(0);
     setDragging(false);
+  };
+
+  const close = () => {
+    if (timer.current) clearTimeout(timer.current);
     dragStart.current = null;
+    resetState();
+    onClose?.();
+  };
+
+  /** Summary confirm — hand the pulled cards to the parent (collection persistence) before closing. */
+  const finish = () => {
+    onComplete?.(packCards);
+    close();
   };
 
   const tearOpen = () => {
@@ -170,16 +195,36 @@ function PackOpening({
     }, CARD_EXIT_MS);
   };
 
-  // Lock page scroll while the overlay is open.
-  const open = stage !== null;
+  // Controlled mode: launch on the parent opening, tear down when it closes.
+  // Adjusted during render (like matchmaking-dialog) — state only, never the timer ref.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (controlled && controlledOpen && !wasOpen) {
+    setWasOpen(true);
+    if (stage === null) buyPack();
+  } else if (controlled && !controlledOpen && wasOpen) {
+    setWasOpen(false);
+    if (stage !== null) resetState();
+  }
+
+  // Clear any pending animation timer once the overlay is closed (ref access lives in an effect).
+  const overlayOpen = stage !== null;
   useEffect(() => {
-    if (!open) return;
+    if (overlayOpen) return;
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  }, [overlayOpen]);
+
+  // Lock page scroll while the overlay is open.
+  useEffect(() => {
+    if (!overlayOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [open]);
+  }, [overlayOpen]);
 
   // SPACE reveals / advances; ESC closes.
   useEffect(() => {
@@ -233,14 +278,16 @@ function PackOpening({
 
   return (
     <>
-      <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
-        {cta ?? (
-          <>
-            Buy pack
-            <CaretRight className="size-4" />
-          </>
-        )}
-      </Button>
+      {!hideTrigger && (
+        <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
+          {cta ?? (
+            <>
+              Buy pack
+              <CaretRight className="size-4" />
+            </>
+          )}
+        </Button>
+      )}
 
       {stage !== null &&
         createPortal(
@@ -347,6 +394,7 @@ function PackOpening({
                               <HoloPlayerCard
                                 {...card}
                                 surfaceColors={raritySurfaceColors[rarity]}
+                                surfaceShine={rarity === PullRarity.Legendary}
                                 width={width}
                               />
                             )}
@@ -413,6 +461,7 @@ function PackOpening({
                             <HoloPlayerCard
                               {...card}
                               surfaceColors={raritySurfaceColors[rarity]}
+                              surfaceShine={rarity === PullRarity.Legendary}
                               width={SUMMARY_CARD_WIDTH}
                             />
                           </div>
@@ -422,7 +471,7 @@ function PackOpening({
                       );
                     })}
                   </div>
-                  <Button size="lg" onClick={close}>
+                  <Button size="lg" onClick={finish}>
                     Add all to collection
                   </Button>
                 </div>
