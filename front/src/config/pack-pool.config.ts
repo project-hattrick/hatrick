@@ -29,29 +29,6 @@ const NATION: Record<string, { flag: string; colors: [string, string, string] }>
 
 const FALLBACK_NATION = { flag: '🏳️', colors: ['#94A3B8', '#E2E8F0', '#64748B'] as [string, string, string] };
 
-/** Display name per FIFA code — used by the onboarding "pick your team" grid. */
-const NATION_NAME: Record<string, string> = {
-  FRA: 'France', ARG: 'Argentina', ESP: 'Spain', ENG: 'England', GER: 'Germany',
-  JPN: 'Japan', NED: 'Netherlands', ITA: 'Italy', URU: 'Uruguay', MEX: 'Mexico',
-  BEL: 'Belgium', CRO: 'Croatia', BRA: 'Brazil', COL: 'Colombia', USA: 'USA', POR: 'Portugal',
-};
-
-/** A selectable nation for the onboarding favorite-team step. */
-export interface NationOption {
-  code: string;
-  name: string;
-  flag: string;
-  colors: [string, string, string];
-}
-
-/** Every playable nation as a pickable option (FIFA code + flag + tricolor palette). */
-export const NATIONS: NationOption[] = Object.entries(NATION).map(([code, { flag, colors }]) => ({
-  code,
-  name: NATION_NAME[code] ?? code,
-  flag,
-  colors,
-}));
-
 /** Stable per-name hash so a character's stats never change between pulls. */
 const hash = (s: string): number => {
   let h = 0;

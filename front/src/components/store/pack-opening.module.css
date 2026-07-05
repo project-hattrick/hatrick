@@ -332,9 +332,9 @@
   }
 }
 
-/* --exit-dir (1 | -1) mirrors the fly-out to the swipe direction */
+/* Soft dissolve out (no whip/fling) — the reveal pop does the drama. */
 .cardExit {
-  animation: card-out 0.45s cubic-bezier(0.5, 0, 0.75, 0.4) forwards;
+  animation: card-out 0.32s ease-in forwards;
 }
 
 @media (max-width: 760px) {
@@ -353,7 +353,22 @@
 
 @keyframes card-out {
   to {
-    transform: translateX(calc(140% * var(--exit-dir, 1))) rotate(calc(16deg * var(--exit-dir, 1)));
+    transform: scale(0.92);
     opacity: 0;
   }
+}
+
+/* Embedded (inside an expanded modal): measure against the container, not the viewport,
+   so the stage and summary stay centered within the modal instead of the full screen. */
+.embedded .summaryLayout {
+  height: 100%;
+  padding: 60px 24px 24px;
+}
+
+.embedded .stage {
+  bottom: 20%;
+}
+
+.embedded .stagePack {
+  bottom: 28%;
 }

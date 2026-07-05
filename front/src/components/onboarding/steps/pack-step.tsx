@@ -1,33 +1,47 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Gift, Sparkle } from '@/components/common/icons';
+import Image from 'next/image';
+
+import { HoloPlayerCard } from '@/components/store/holo-player-card';
+import { userCards, statOrder } from '@/config/fantasy-cards.config';
+import { cn } from '@/lib/utils';
 import styles from './pack-step.module.css';
 
+// A real card as the teaser hero (Mbappé) — the same holo card the pack pulls.
+const HERO = userCards[1];
+const HERO_STATS = statOrder.map(([label, key]) => ({ label, value: HERO.stats[key] }));
+
 /**
- * Reward step — a sealed pack teaser. The button hands off to the cinematic PackOpening
- * overlay (owned by the dialog); the pull result lands the player straight into squad-building.
+ * Reward step — the real holo card the pack can drop, over a lit pitch with peeking backs.
+ * Presentational only; the flow footer owns the "Open pack" action.
  */
-export function PackStep({ onOpenPack }: { onOpenPack: () => void }) {
+export function PackStep() {
   return (
-    <div className="flex flex-col items-center gap-5 py-2 text-center">
-      <div className={styles.pack}>
-        <div className={styles.shine} />
-        <Sparkle className="size-9 text-black/70" weight="fill" />
-        <span className="text-xs font-black tracking-[0.3em] text-black/70 uppercase">Starter Pack</span>
+    <div className="flex flex-col items-center gap-4">
+      <div className={styles.stage}>
+        <div className={styles.fan}>
+          <div className={cn(styles.back, styles.backLeft)}>
+            <Image src="/cards/fade-logo.png" alt="" width={48} height={48} className="opacity-45" />
+          </div>
+          <div className={cn(styles.back, styles.backRight)}>
+            <Image src="/cards/fade-logo.png" alt="" width={48} height={48} className="opacity-45" />
+          </div>
+          <div className={styles.hero}>
+            <HoloPlayerCard
+              number={HERO.rating}
+              flag={HERO.flag}
+              stats={HERO_STATS}
+              portraitSrc={HERO.portraitSrc}
+              holoColors={HERO.holoColors}
+              width={172}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <p className="text-lead font-semibold">Your welcome pack is ready</p>
-        <p className="text-micro text-muted-foreground">
-          5 player cards on the house. Tear it open and see who you pulled.
-        </p>
-      </div>
-
-      <Button size="lg" shape="pill" className="w-full gap-2" onClick={onOpenPack}>
-        <Gift className="size-4" weight="fill" />
-        Open pack
-      </Button>
+      <p className="text-caption text-center text-muted-foreground">
+        Five real cards inside — the best land straight in your XI.
+      </p>
     </div>
   );
 }

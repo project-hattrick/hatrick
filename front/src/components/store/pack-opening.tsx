@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type ComponentProps, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { CaretRight, X } from '@/components/common/icons';
+import { CaretRight, X, ArrowRight } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Button } from '@/components/ui/button';
+import { MetalButton } from '@/components/ui/metal-button';
 import { HoloPlayerCard } from '@/components/store/holo-player-card';
 import { playRevealSound, playSwipeSound, playTearSound } from '@/components/store/pack-sounds';
 import { drawPack, type PackCard } from '@/config/pack-pool.config';
@@ -84,6 +85,9 @@ interface PackOpeningProps {
   hideTrigger?: boolean;
   /** Fired with the pulled hand when the player confirms the summary — the seam to persist cards. */
   onComplete?: (cards: PackCard[]) => void;
+  /** Render into the parent (a sized, relative host like an expanded modal) instead of a
+   *  full-screen portal — same stage, sounds and controls, but contained. */
+  embedded?: boolean;
 }
 
 /** Foil card back shown before each reveal. */
@@ -113,6 +117,7 @@ function PackOpening({
   onClose,
   hideTrigger = false,
   onComplete,
+  embedded = false,
 }: PackOpeningProps) {
   const controlled = controlledOpen !== undefined;
   const [stage, setStage] = useState<PackStage | null>(null);
@@ -276,36 +281,22 @@ function PackOpening({
     transform: isDragging || dragX !== 0 ? `translateX(${dragX}px) rotate(${dragX * 0.025}deg)` : undefined,
   } as CSSProperties;
 
-  return (
+  const overlayInner = (
     <>
-      {!hideTrigger && (
-        <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
-          {cta ?? (
-            <>
-              Buy pack
-              <CaretRight className="size-4" />
-            </>
-          )}
-        </Button>
-      )}
-
-      {stage !== null &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-20 bg-[#050506] bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]"
-            style={{ backgroundImage: "url('/cards/stadium-podium.png')" }}
-          >
             <button
               type="button"
               aria-label="Close"
               onClick={close}
-              className="absolute top-20 right-5 z-10 rounded-full border border-border/60 bg-black/40 p-2 text-muted-foreground transition-colors hover:text-foreground"
+              className={cn(
+                'absolute right-5 z-10 rounded-full border border-border/60 bg-black/40 p-2 text-muted-foreground transition-colors hover:text-foreground',
+                embedded ? 'top-6' : 'top-20',
+              )}
             >
               <X className="size-5" />
             </button>
 
             {/* Header */}
-            <div className="absolute inset-x-0 top-20 z-10 px-14 text-center">
+            <div className={cn('absolute inset-x-0 z-10 px-14 text-center', embedded ? 'top-6' : 'top-20')}>
               <span className="font-mono text-xs font-bold tracking-[0.35em] text-white/80 uppercase">
                 {packName}
                 {onCard &&
@@ -471,15 +462,61 @@ function PackOpening({
                       );
                     })}
                   </div>
-                  <Button size="lg" onClick={finish}>
-                    Add all to collection
-                  </Button>
+                  <MetalButton
+                    size="lg"
+                    shape="pill"
+                    strength={1}
+                    ringCssPx={3}
+                    className="h-12 px-12 text-base font-bold"
+                    onClick={finish}
+                  >
+                    Continue
+                    <ArrowRight className="size-5" weight="bold" />
+                  </MetalButton>
                 </div>
               </div>
             )}
-          </div>,
-          document.body,
-        )}
+    </>
+  );
+
+  const overlayBg = "url('/cards/stadium-podium.png')";
+
+  return (
+    <>
+      {!hideTrigger && (
+        <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
+          {cta ?? (
+            <>
+              Buy pack
+              <CaretRight className="size-4" />
+            </>
+          )}
+        </Button>
+      )}
+
+      {stage !== null &&
+        (embedded ? (
+          // Contained in the parent (an expanded modal) — same stage, no full-screen takeover.
+          <div
+            className={cn(
+              styles.embedded,
+              'absolute inset-0 z-10 overflow-hidden rounded-[inherit] bg-[#050506] bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]',
+            )}
+            style={{ backgroundImage: overlayBg }}
+          >
+            {overlayInner}
+          </div>
+        ) : (
+          createPortal(
+            <div
+              className="fixed inset-0 z-20 bg-[#050506] bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]"
+              style={{ backgroundImage: overlayBg }}
+            >
+              {overlayInner}
+            </div>,
+            document.body,
+          )
+        ))}
     </>
   );
 }
