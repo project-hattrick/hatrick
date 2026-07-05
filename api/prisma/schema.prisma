@@ -1,8 +1,3 @@
-// Prisma schema — hat-trick / api
-// Persistence is for USER state (profile, wallet, bets, fantasy).
-// The live TxLINE feed stays in-memory (event-driven) — do NOT persist the stream here.
-// Rule: only *.repository.ts files touch the generated client (see docs/conventions.md).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,10 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- Enums (persisted) -------------------------------------------------------
-// Persisted enums are declared here and imported from `@prisma/client`.
-// Where a concept is also a domain/event enum (e.g. MarketType in
-// src/events/enums/market-type.enum.ts), the members MUST mirror it exactly.
+enum UserRole {
+  Player
+  Moderator
+  Admin
+}
+
+enum UserStatus {
+  Active
+  Suspended
+  Deleted
+}
 
 enum BetStatus {
   Pending
@@ -25,7 +27,6 @@ enum BetStatus {
   CashedOut
 }
 
-/// Mirrors src/events/enums/market-type.enum.ts — keep members in sync.
 enum MarketType {
   MatchResult
   NextGoal
@@ -35,31 +36,33 @@ enum MarketType {
   Cards
 }
 
-// --- Models ------------------------------------------------------------------
-
-/// A fan, identified by their Solana wallet (sign-in). `balance` is off-chain
-/// devnet play money for the hackathon — no real funds move (see compliance).
 model User {
-  id            String   @id @default(cuid())
-  walletAddress String   @unique
+  id            String     @id @default(cuid())
+  walletAddress String     @unique
+  email         String?    @unique
   displayName   String?
-  balance       Decimal  @default(1000) @db.Decimal(18, 2)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  avatarUrl     String?
+  role          UserRole   @default(Player)
+  status        UserStatus @default(Active)
+  balance       Decimal    @default(1000) @db.Decimal(18, 2)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
 
   bets Bet[]
 
+  @@index([status])
+  @@index([createdAt])
   @@map("users")
 }
 
-/// A bet placed in Live Mode. Settled off the authoritative `*.after` events.
 model Bet {
   id        String     @id @default(cuid())
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   fixtureId Int
   market    MarketType
-  /// Market-specific pick: "Home" | "Over2.5" | a playerId, etc.
   selection String
   stake     Decimal    @db.Decimal(18, 2)
   oddsTaken Decimal    @db.Decimal(10, 3)
@@ -69,5 +72,6 @@ model Bet {
 
   @@index([userId])
   @@index([fixtureId])
+  @@index([status])
   @@map("bets")
 }

@@ -13,7 +13,6 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
  * for testing without touching the persisted flag.
  */
 export function OnboardingMount() {
-  const hydrated = useOnboardingStore((s) => s.hydrated);
   const forcedOpen = useOnboardingStore((s) => s.forcedOpen);
   const openOnboarding = useOnboardingStore((s) => s.openOnboarding);
   const closeForced = useOnboardingStore((s) => s.closeForced);
@@ -34,7 +33,7 @@ export function OnboardingMount() {
         Onboarding
       </Button>
 
-      {hydrated && forcedOpen && (
+      {forcedOpen && (
         <OnboardingDialog
           open
           onOpenChange={(next) => {

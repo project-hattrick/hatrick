@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationKind, CelebrationPhase, KickIntent, PlayerAction, Role, Team } from '../enums';
 import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -398,7 +398,7 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
     if (world.cfg.features?.extraAnims) {
       startPowerShot(owner);
     } else {
-      kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false);
+      kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
       const note = Status.shot(owner.name);
       setStatus(world, note.title, note.text);
     }

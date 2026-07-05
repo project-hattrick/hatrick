@@ -5,6 +5,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
+import { useOnboardingStore } from '@/store/onboarding.store';
 
 /** Base64-encode raw signature bytes for transport (api decodes with Buffer). */
 const toBase64 = (bytes: Uint8Array): string =>
@@ -31,6 +32,8 @@ export function useSignInMutation() {
       const signature = await signMessage(new TextEncoder().encode(message));
       const session = await authService.verify(walletAddress, toBase64(signature));
       setSession(session.token, session.user);
+      // Fresh registration → queue the first-login onboarding for this wallet.
+      if (session.isNew) useOnboardingStore.getState().begin(session.user.walletAddress);
     },
     onMutate: () => {
       setAuthenticating(true);

@@ -16,6 +16,8 @@ interface NonceResponse {
 export interface AuthSession {
   token: string;
   user: AuthUser;
+  /** True when this sign-in created the account (first registration) — drives onboarding. */
+  isNew: boolean;
 }
 
 /** Step 1: ask the api for a one-time message to sign. */

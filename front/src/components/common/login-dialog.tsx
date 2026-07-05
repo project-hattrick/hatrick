@@ -61,24 +61,16 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const { connected, disconnect } = useWallet();
   const { isAuthenticated, user } = useAuth();
   const hasOnboarded = useOnboardingStore((s) => s.hasOnboarded);
-  const hydrated = useOnboardingStore((s) => s.hydrated);
   const dismiss = useOnboardingStore((s) => s.dismiss);
   const controller = useOnboardingController();
 
   // First sign-in: continue into onboarding right here instead of the account view.
-  const onboarding = hydrated && isAuthenticated && Boolean(user) && !hasOnboarded;
+  const onboarding = isAuthenticated && Boolean(user) && !hasOnboarded;
 
   const exitOnboarding = (path?: string) => {
     dismiss();
     onOpenChange(false);
     if (path) router.push(path);
-  };
-
-  // Closing the dialog (X / ESC / outside) mid-onboarding counts as "done" — otherwise the
-  // post-login auto-open would immediately reopen it in a loop.
-  const handleOpenChange = (next: boolean) => {
-    if (!next && onboarding) dismiss();
-    onOpenChange(next);
   };
 
   const step =
@@ -91,7 +83,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const packing = onboarding && controller.packOpen;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={!packing}
         className={cn(

@@ -15,12 +15,12 @@ import { cn } from '@/lib/utils';
 function SideIdentity({ player, align }: { player: PlayerProfile; align: 'left' | 'right' }) {
   return (
     <div className={`flex items-center gap-2.5 ${align === 'right' ? 'flex-row-reverse text-right' : ''}`}>
-      <span className="relative grid size-10 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
+      <span className="relative grid size-14 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10 md:size-16">
         <Image
           src={player.portraitSrc}
           alt={player.name}
-          width={40}
-          height={40}
+          width={64}
+          height={64}
           className="translate-y-[6%] scale-110 object-contain object-bottom"
           style={{ imageRendering: 'pixelated' }}
         />
@@ -58,11 +58,20 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
   };
 
   return (
-    <div className={cn('mx-auto flex w-full max-w-2xl flex-col gap-4', embedded ? 'py-1' : 'px-4 py-6')}>
+    <div className={cn('mx-auto flex w-full max-w-3xl flex-col gap-5', embedded ? 'py-1' : 'px-4 py-6')}>
       <header className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
           <SideIdentity player={selfProfile} align="left" />
-          <span className="neon-text font-heading text-xl font-black tracking-tight text-neon">VS</span>
+          <div className="flex min-w-28 flex-col items-center justify-center rounded-2xl border border-neon/25 bg-neon/[0.06] px-4 py-3 text-center shadow-[0_0_24px_rgba(185,255,0,0.08)]">
+            {bet !== null ? (
+              <>
+                <span className="font-mono text-2xl font-black tabular-nums text-neon">{formatTokens(bet * 2)}</span>
+                <span className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Total pot</span>
+              </>
+            ) : (
+              <span className="neon-text font-heading text-xl font-black tracking-tight text-neon">VS</span>
+            )}
+          </div>
           <SideIdentity player={opponent} align="right" />
         </div>
         {bet !== null && (

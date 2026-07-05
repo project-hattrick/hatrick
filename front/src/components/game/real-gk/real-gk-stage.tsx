@@ -59,6 +59,8 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         handle.debugGoal();
       } else if (k === 'l') {
         handle.debugBallDrop();
+      } else if (k === 'e') {
+        handle.cycleShotEffect();
       } else if (k === 'h') {
         useRealGkStore.getState().toggleUi();
       } else if (k === '1') {
@@ -119,7 +121,7 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
       {!replayActive && !introActive && <RealGkHud />}
       {checkpoint === CheckpointId.EffectsLab && (
         <div className="pointer-events-none fixed left-1/2 top-5 z-10 -translate-x-1/2 rounded-md border border-white/15 bg-black/65 px-4 py-2 text-center text-xs font-bold uppercase tracking-[0.16em] text-white/85 backdrop-blur-sm">
-          Effects Lab · L drops the ball · X shoots
+          Effects Lab · E changes effect · L drops the ball · X shoots
         </div>
       )}
       <RealGkControls handle={handleRef} effectsLab={checkpoint === CheckpointId.EffectsLab} />

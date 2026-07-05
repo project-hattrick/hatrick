@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   Length,
   MaxLength,
 } from 'class-validator';
@@ -20,6 +22,14 @@ export class CreateUserDto {
   walletAddress!: string;
 
   @ApiPropertyOptional({
+    description: 'Contact email (unique)',
+    example: 'striker@example.com',
+  })
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @ApiPropertyOptional({
     description: 'Public display name shown on leaderboards',
     example: 'CryptoStriker9',
     maxLength: 32,
@@ -28,4 +38,13 @@ export class CreateUserDto {
   @IsOptional()
   @MaxLength(32)
   displayName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Avatar image URL',
+    example: 'https://cdn.example.com/a/striker.png',
+  })
+  @IsUrl()
+  @IsOptional()
+  @MaxLength(512)
+  avatarUrl?: string;
 }

@@ -1,4 +1,4 @@
-import { RefPhase, RestartKind, RestartStage, Role, Team } from '../enums';
+import { KickIntent, RefPhase, RestartKind, RestartStage, Role, Team } from '../enums';
 import { GOALS, fieldRatios, goalCenterForTeam, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld, RestartState, Vec2 } from '../types';
 import { clamp } from '../util';
@@ -192,7 +192,8 @@ function takeRestart(world: RealGkWorld, r: RestartState): void {
   const taker = world.players.find((p) => p.id === r.takerId) ?? null;
   if (taker) {
     const { target, power, lob } = restartStrike(world, r, taker);
-    kickBall(world, taker, target.x, target.y, power, lob);
+    const intent = r.kind === RestartKind.Penalty || (r.kind === RestartKind.FreeKick && !lob) ? KickIntent.Shot : KickIntent.Pass;
+    kickBall(world, taker, target.x, target.y, power, lob, { intent });
   }
   if (r.foul?.card) {
     const offender = world.players.find((p) => p.id === r.foul?.offenderId);

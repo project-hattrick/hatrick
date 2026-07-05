@@ -18,13 +18,14 @@ export function WalletAvatar() {
   const [autoOpened, setAutoOpened] = useState(false);
   const { isConnected, isConnecting, isAuthenticated, isAuthenticating } = useAuth();
   const hasOnboarded = useOnboardingStore((s) => s.hasOnboarded);
-  const hydrated = useOnboardingStore((s) => s.hydrated);
+  const forcedOpen = useOnboardingStore((s) => s.forcedOpen);
   const busy = isConnecting || isAuthenticating;
 
   // Post-login: first-timers get the onboarding automatically (the login dialog hosts it).
   // Fires whether they signed in via this dialog or via auto-connect on reload. Adjusted during
-  // render (a latch, not an effect) so it triggers exactly once per first-login.
-  const shouldAutoOpen = hydrated && isAuthenticated && !hasOnboarded;
+  // render (a latch, not an effect) so it triggers exactly once per first-login. Suppressed while
+  // the dev trigger is forcing its own copy open, so they never stack.
+  const shouldAutoOpen = isAuthenticated && !hasOnboarded && !forcedOpen;
   if (shouldAutoOpen && !autoOpened) {
     setAutoOpened(true);
     setOpen(true);

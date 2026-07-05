@@ -1,5 +1,5 @@
 import type { RealGkConfig } from './config';
-import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
 
 export interface Vec2 {
   x: number;
@@ -104,6 +104,23 @@ export interface BallEffectParticle {
 
 export interface BallEffectsState {
   particles: BallEffectParticle[];
+  shots: ShotEffectPulse[];
+  shotStyle: ShotEffectStyle;
+  slowMoTimer: number;
+}
+
+export interface ShotEffectPulse {
+  style: ShotEffectStyle;
+  x: number;
+  y: number;
+  angle: number;
+  strength: number;
+  age: number;
+  life: number;
+}
+
+export interface BallKickOptions {
+  intent?: KickIntent;
 }
 
 export interface Referee {
@@ -263,6 +280,7 @@ export interface RealGkHud {
   teamRedFlag: string;
   cameraLabel: string;
   targetLabel: string;
+  shotEffectLabel: string;
 }
 
 export type RealGkHudPatch = Partial<RealGkHud>;
@@ -280,6 +298,8 @@ export interface RealGkHandle {
   debugGoal: () => void;
   /** Effects lab helper: releases a high ball at midfield to exercise repeated ground impacts. */
   debugBallDrop: () => void;
+  /** Effects lab helper: selects the next shot-contact visual. */
+  cycleShotEffect: () => void;
   /** Debug helper: forces an action anim on the nearest outfielder to review sprite sizes on demand. */
   debugAction: (kind: 'header' | 'receive' | 'intercept' | 'powershot') => void;
   /** v5: replays the pre-match entrance (teams walk on, referee whistle, kickoff). */

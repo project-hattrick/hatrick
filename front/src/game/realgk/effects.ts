@@ -1,11 +1,20 @@
-import { BallEffectKind } from './enums';
+import { BallEffectKind, ShotEffectStyle } from './enums';
 import { fieldBounds } from './field';
-import type { BallEffectParticle, RealGkWorld } from './types';
+import type { BallEffectParticle, RealGkWorld, ShotEffectPulse } from './types';
 import { clamp } from './util';
 
 const DUST_COLORS = ['#c8ad78', '#a88c5e', '#dfc99a'];
 const TURF_COLORS = ['#486f37', '#31562c', '#71924a'];
 const MAX_PARTICLES = 96;
+const MAX_SHOT_PULSES = 8;
+const SHOT_SLOW_MO_SCALE = 0.32;
+const SHOT_SLOW_MO_DURATION = 1.1;
+
+export const SHOT_EFFECT_LABEL = 'Power Arc';
+
+export function shotEffectLabelFor(style: ShotEffectStyle): string {
+  return style === ShotEffectStyle.PowerArc ? SHOT_EFFECT_LABEL : SHOT_EFFECT_LABEL;
+}
 
 const randomBetween = (min: number, max: number): number => min + Math.random() * (max - min);
 
@@ -57,7 +66,38 @@ export function spawnBallGroundImpact(world: RealGkWorld, impactSpeed: number): 
   }
 }
 
+/** Emits the selected lab visual at the exact ball-release position of a goal-directed strike. */
+export function spawnShotEffect(world: RealGkWorld, directionX: number, directionY: number, power: number): void {
+  if (!world.cfg.features?.ballEffects) return;
+  const len = Math.hypot(directionX, directionY) || 1;
+  const nx = directionX / len;
+  const ny = directionY / len;
+  const contactOffset = clamp(7 + power / 160, 7, 10);
+  world.ballEffects.shots.push({
+    style: world.ballEffects.shotStyle,
+    x: world.ball.x - nx * contactOffset,
+    y: world.ball.y - ny * contactOffset,
+    angle: Math.atan2(ny, nx),
+    strength: clamp(power / 470, 0.72, 1.15),
+    age: 0,
+    life: 0.42,
+  });
+  if (world.ballEffects.shots.length > MAX_SHOT_PULSES) world.ballEffects.shots.shift();
+}
+
+/** Starts a short local slow-mo window so shot effects can be inspected frame-by-frame. */
+export function triggerShotSlowMo(world: RealGkWorld): void {
+  if (!world.cfg.features?.ballEffects) return;
+  world.ballEffects.slowMoTimer = SHOT_SLOW_MO_DURATION;
+}
+
+export function cycleShotEffect(world: RealGkWorld): string {
+  world.ballEffects.shotStyle = ShotEffectStyle.PowerArc;
+  return SHOT_EFFECT_LABEL;
+}
+
 export function updateBallEffects(world: RealGkWorld, dt: number): void {
+  world.ballEffects.slowMoTimer = Math.max(0, world.ballEffects.slowMoTimer - dt);
   const particles = world.ballEffects.particles;
   for (const particle of particles) {
     particle.age += dt;
@@ -69,11 +109,48 @@ export function updateBallEffects(world: RealGkWorld, dt: number): void {
     particle.vy *= Math.pow(0.9, dt * 60);
   }
   world.ballEffects.particles = particles.filter((particle) => particle.age < particle.life);
+  for (const shot of world.ballEffects.shots) shot.age += dt;
+  world.ballEffects.shots = world.ballEffects.shots.filter((shot) => shot.age < shot.life);
 }
 
 export function clearBallEffects(world: RealGkWorld): void {
   world.ballEffects.particles = [];
+  world.ballEffects.shots = [];
+  world.ballEffects.slowMoTimer = 0;
 }
+
+export function shotSlowMoScale(world: RealGkWorld): number {
+  return world.cfg.features?.ballEffects && world.ballEffects.slowMoTimer > 0 ? SHOT_SLOW_MO_SCALE : 1;
+}
+
+function drawPixelCircle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  color: string,
+  pixel: number,
+  start = 0,
+  span = Math.PI * 2,
+): void {
+  const steps = Math.max(8, Math.round(22 * (span / (Math.PI * 2))));
+  ctx.fillStyle = color;
+  for (let i = 0; i <= steps; i++) {
+    const angle = start + (span * i) / steps;
+    const px = Math.round((x + Math.cos(angle) * radius) / pixel) * pixel;
+    const py = Math.round((y + Math.sin(angle) * radius * 0.48) / pixel) * pixel;
+    ctx.fillRect(px - pixel * 0.5, py - pixel * 0.5, pixel, pixel);
+  }
+}
+
+type ShotPainter = (ctx: CanvasRenderingContext2D, shot: ShotEffectPulse, progress: number, scale: number) => void;
+
+const paintPowerArc: ShotPainter = (ctx, shot, progress, scale) => {
+  const radius = (10 + progress * 35) * scale * shot.strength;
+  const pixel = Math.max(1.5, 2.3 * scale);
+  drawPixelCircle(ctx, shot.x, shot.y, radius, '#f4ffcc', pixel, shot.angle - 1.05, 2.1);
+  drawPixelCircle(ctx, shot.x, shot.y, radius * 0.7, '#aef019', pixel, shot.angle - 0.78, 1.56);
+};
 
 /** Draws the particle cloud in field space so the existing camera transform handles scale and pan. */
 export function drawBallEffects(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
@@ -91,6 +168,14 @@ export function drawBallEffects(ctx: CanvasRenderingContext2D, world: RealGkWorl
       ctx.rotate(progress * 5.4);
       ctx.fillRect(-size, -size * 0.45, size * 2, Math.max(1, size * 0.9));
     }
+    ctx.restore();
+  }
+  for (const shot of world.ballEffects.shots) {
+    const progress = shot.age / shot.life;
+    const scale = 0.72 + fieldBounds(world.size, shot.y).depth * 0.48;
+    ctx.save();
+    ctx.globalAlpha = Math.pow(1 - progress, 1.35) * 0.92;
+    paintPowerArc(ctx, shot, progress, scale);
     ctx.restore();
   }
 }

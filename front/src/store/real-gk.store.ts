@@ -28,6 +28,7 @@ interface RealGkStore {
   teamRedFlag: string;
   cameraLabel: string;
   targetLabel: string;
+  shotEffectLabel: string;
   uiHidden: boolean;
   apply: (patch: RealGkHudPatch) => void;
   toggleUi: () => void;
@@ -61,6 +62,7 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   teamRedFlag: '',
   cameraLabel: 'Cam: Broadcast',
   targetLabel: 'Follow: ball',
+  shotEffectLabel: 'Pixel Ring',
   uiHidden: false,
   apply: (patch) => set(patch),
   toggleUi: () => set((s) => ({ uiHidden: !s.uiHidden })),

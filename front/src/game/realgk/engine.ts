@@ -5,6 +5,7 @@ import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
 import { MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 import { pointOnField } from './field';
+import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
 import { createRecorder, type ReplayRecorder } from './replay/recorder';
@@ -228,11 +229,12 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       lastT = now;
       const phase = world.match.phase;
       const simRunning = phase === MatchPhase.Intro || phase === MatchPhase.Live || phase === MatchPhase.Celebration;
+      const timeScale = shotSlowMoScale(world);
       // Red card / any state that halts the sim also halts the sprite animation clock.
       const cardFrozen = world.referee.active && world.referee.phase === RefPhase.Card;
       if (!paused && simRunning && !cardFrozen) animClock += rawDt * 1000;
       if (!paused) {
-        if (simRunning) step(world, rawDt * speed);
+        if (simRunning) step(world, rawDt * speed * timeScale);
         if (director && recorder) {
           director.tick(rawDt, now);
           if (phase === MatchPhase.Live && world.match.celebration === 0) recorder.capture(world, now);
@@ -271,6 +273,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   opts.onHud({
     cameraLabel: cameraLabel(cam),
     targetLabel: 'Follow: ball',
+    shotEffectLabel: shotEffectLabelFor(world.ballEffects.shotStyle),
     teamBlueName: config.teams?.blue.name ?? 'Blue',
     teamRedName: config.teams?.red.name ?? 'Red',
     teamBlueFlag: config.teams?.blue.flagId ?? '',
@@ -336,6 +339,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.cooldown = 1.0;
     },
     debugBallDrop: dropTestBall,
+    cycleShotEffect: () => opts.onHud({ shotEffectLabel: cycleShotEffect(world) }),
     playIntro: () => {
       if (!config.features?.matchIntro) return;
       director?.reset();

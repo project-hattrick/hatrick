@@ -1,6 +1,6 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
-import { IntroStage, MatchPhase, RefMode, RefPhase, Role, Team } from '../enums';
+import { IntroStage, MatchPhase, RefMode, RefPhase, Role, ShotEffectStyle, Team } from '../enums';
 import { clearBallEffects, updateBallEffects } from '../effects';
 import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
@@ -153,7 +153,7 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     players: [],
     nextPlayerId: 1,
     ball: freshBall(),
-    ballEffects: { particles: [] },
+    ballEffects: { particles: [], shots: [], shotStyle: ShotEffectStyle.PowerArc, slowMoTimer: 0 },
     referee: freshReferee(),
     coach: freshCoach(),
     match: freshMatch(),

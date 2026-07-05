@@ -55,7 +55,7 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     try {
-      await this.users.delete(id);
+      await this.users.softDelete(id);
     } catch (error) {
       throw this.mapPrismaError(error, id);
     }

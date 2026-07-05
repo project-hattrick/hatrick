@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationKind, RefPhase } from '../enums';
+import { BodyAnim, CelebrationKind, RefPhase, ShotEffectStyle } from '../enums';
 import type { Ball, Coach, RealGkPlayer, RealGkWorld, Referee } from '../types';
 import { clamp, lerp } from '../util';
 import type { ReplayPlayerSnap, ReplaySnapshot } from './types';
@@ -141,7 +141,7 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     players: sample.players.map(playerFromSnap),
     nextPlayerId: live.nextPlayerId,
     ball,
-    ballEffects: { particles: [] },
+    ballEffects: { particles: [], shots: [], shotStyle: ShotEffectStyle.PowerArc, slowMoTimer: 0 },
     referee,
     coach,
     match: live.match,

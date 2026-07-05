@@ -15,6 +15,7 @@ export function RealGkControls({ handle, effectsLab = false }: { handle: RefObje
   const speed = useRealGkStore((s) => s.speed);
   const cameraLabel = useRealGkStore((s) => s.cameraLabel);
   const targetLabel = useRealGkStore((s) => s.targetLabel);
+  const shotEffectLabel = useRealGkStore((s) => s.shotEffectLabel);
   const uiHidden = useRealGkStore((s) => s.uiHidden);
   const toggleUi = useRealGkStore((s) => s.toggleUi);
 
@@ -43,9 +44,14 @@ export function RealGkControls({ handle, effectsLab = false }: { handle: RefObje
         Spawn referee
       </button>
       {effectsLab && (
-        <button type="button" className={controlClass} onClick={() => handle.current?.debugBallDrop()}>
-          Drop ball (L)
-        </button>
+        <>
+          <button type="button" className={controlClass} onClick={() => handle.current?.cycleShotEffect()}>
+            Effect: {shotEffectLabel} (E)
+          </button>
+          <button type="button" className={controlClass} onClick={() => handle.current?.debugBallDrop()}>
+            Drop ball (L)
+          </button>
+        </>
       )}
       <button type="button" className={controlClass} onClick={toggleUi}>
         {uiHidden ? 'Show UI' : 'Hide UI'}

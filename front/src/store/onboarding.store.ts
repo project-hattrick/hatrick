@@ -2,18 +2,21 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface OnboardingStore {
-  /** True once the player has finished (or explicitly skipped) the first-login flow. */
-  hasOnboarded: boolean;
-  /** True after the persist layer rehydrates — the mount waits for this so it never flashes on load. */
-  hydrated: boolean;
-  /** Dev/test override — force the flow open regardless of the persisted flag (not persisted). */
+  /**
+   * Wallets queued to see the first-login flow (registered/new, not yet finished).
+   * Persisted so a mid-flow reload resumes onboarding, and so it is tracked PER account
+   * instead of a single browser-global flag (which stuck `true` after the first sign-in).
+   */
+  pending: string[];
+  /** Dev/test override — force the flow open regardless of `pending` (not persisted). */
   forcedOpen: boolean;
-  /** Mark done and clear any forced-open override (the real first-login completion). */
-  dismiss: () => void;
-  setHydrated: () => void;
+  /** New account signed in — queue onboarding for this wallet (called on `isNew` verify). */
+  begin: (wallet: string) => void;
+  /** Finished (or explicitly skipped) — clear this wallet's onboarding and any dev override. */
+  complete: (wallet: string | null) => void;
   /** Force the flow open (dev trigger button). */
   openOnboarding: () => void;
-  /** Close a dev-forced open without marking onboarded, so the real login flow still fires. */
+  /** Close a dev-forced open without touching `pending`, so the real login flow still fires. */
   closeForced: () => void;
 }
 
@@ -25,26 +28,28 @@ const noopStorage = {
 };
 
 /**
- * First-login onboarding flag, persisted so the welcome flow fires exactly once per browser.
- * The dialog opens when the user has a session (auth.store token) but hasn't onboarded yet,
- * or whenever `forcedOpen` is set by the dev trigger.
+ * First-login onboarding queue, keyed by wallet and persisted. A wallet is added on a
+ * fresh registration (backend `isNew`) and removed once the flow completes — so onboarding
+ * fires for every NEW account (register) but never for a returning login, regardless of how
+ * many accounts have already onboarded in this browser. localStorage rehydration is
+ * synchronous, so `pending` is already correct on the first render — no hydration gate needed.
  */
 export const useOnboardingStore = create<OnboardingStore>()(
   persist(
     (set) => ({
-      hasOnboarded: false,
-      hydrated: false,
+      pending: [],
       forcedOpen: false,
-      dismiss: () => set({ hasOnboarded: true, forcedOpen: false }),
-      setHydrated: () => set({ hydrated: true }),
+      begin: (wallet) =>
+        set((s) => (s.pending.includes(wallet) ? s : { pending: [...s.pending, wallet] })),
+      complete: (wallet) =>
+        set((s) => ({ pending: s.pending.filter((w) => w !== wallet), forcedOpen: false })),
       openOnboarding: () => set({ forcedOpen: true }),
       closeForced: () => set({ forcedOpen: false }),
     }),
     {
       name: 'hat-trick-onboarding',
       storage: createJSONStorage(() => (typeof window === 'undefined' ? noopStorage : localStorage)),
-      partialize: (state) => ({ hasOnboarded: state.hasOnboarded }),
-      onRehydrateStorage: () => (state) => state?.setHydrated(),
+      partialize: (state) => ({ pending: state.pending }),
     },
   ),
 );

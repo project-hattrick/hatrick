@@ -51,10 +51,10 @@ export class AuthService {
       throw new UnauthorizedException('Signature does not match wallet');
     }
 
-    const user = await this.users.upsertByWallet(walletAddress);
+    const { user, isNew } = await this.users.upsertByWallet(walletAddress);
     const payload: JwtPayload = { sub: user.id, wallet: user.walletAddress };
     const token = await this.jwt.signAsync(payload);
 
-    return { token, user: UserResponseDto.fromEntity(user) };
+    return { token, user: UserResponseDto.fromEntity(user), isNew };
   }
 }

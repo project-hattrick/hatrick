@@ -91,6 +91,20 @@ export enum BallEffectKind {
   Turf = 'turf',
 }
 
+export enum ShotEffectStyle {
+  PixelRing = 'pixel_ring',
+  DoublePulse = 'double_pulse',
+  RadialBurst = 'radial_burst',
+  PowerArc = 'power_arc',
+  GlitchHalo = 'glitch_halo',
+}
+
+export enum KickIntent {
+  Pass = 'pass',
+  Shot = 'shot',
+  Header = 'header',
+}
+
 /** Top-level match flow. v2/v3 never leave Live; v4's goal flow walks the replay ring; v5 opens on Intro. */
 export enum MatchPhase {
   /** Pre-match entrance: team+flag showcase, players walking on, referee whistle (v5 matchIntro only). */

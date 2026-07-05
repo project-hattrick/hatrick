@@ -43,7 +43,7 @@ function EntryOption({ icon: Icon, eyebrow, title, description, action, featured
   return (
     <article
       className={cn(
-        'flex flex-col gap-4 rounded-2xl border bg-surface-2/55 p-4',
+        'flex h-full flex-col gap-4 rounded-2xl border bg-surface-2/55 p-4',
         featured ? 'border-neon/35 shadow-[inset_0_0_30px_rgba(174,240,25,0.04)]' : 'border-border/70',
       )}
     >
@@ -57,7 +57,7 @@ function EntryOption({ icon: Icon, eyebrow, title, description, action, featured
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
         </div>
       </div>
-      {action}
+      <div className="mt-auto">{action}</div>
     </article>
   );
 }
@@ -94,7 +94,11 @@ export function HomeModeDialogs() {
       <Dialog open={activeMode !== null} onOpenChange={(open) => !open && closeEntry()}>
         <DialogContent
           className={cn(
-            showDuelSetup ? 'max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl' : 'sm:max-w-xl',
+            showDuelSetup
+              ? 'max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl'
+              : isFantasy
+                ? 'sm:max-w-xl'
+                : 'sm:max-w-2xl',
           )}
         >
           {showDuelSetup ? (

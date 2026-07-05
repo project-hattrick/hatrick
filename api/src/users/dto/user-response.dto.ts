@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { User } from '@prisma/client';
+import { UserRole, UserStatus, type User } from '@prisma/client';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -15,6 +15,14 @@ export class UserResponseDto {
   walletAddress!: string;
 
   @ApiProperty({
+    description: 'Contact email',
+    example: 'striker@example.com',
+    nullable: true,
+    type: String,
+  })
+  email!: string | null;
+
+  @ApiProperty({
     description: 'Public display name',
     example: 'CryptoStriker9',
     nullable: true,
@@ -23,10 +31,32 @@ export class UserResponseDto {
   displayName!: string | null;
 
   @ApiProperty({
+    description: 'Avatar image URL',
+    example: 'https://cdn.example.com/a/striker.png',
+    nullable: true,
+    type: String,
+  })
+  avatarUrl!: string | null;
+
+  @ApiProperty({ description: 'Access level', enum: UserRole })
+  role!: UserRole;
+
+  @ApiProperty({ description: 'Account lifecycle state', enum: UserStatus })
+  status!: UserStatus;
+
+  @ApiProperty({
     description: 'Play-money balance as a decimal string',
     example: '1000.00',
   })
   balance!: string;
+
+  @ApiProperty({
+    description: 'Last sign-in timestamp',
+    example: '2026-07-02T12:00:00.000Z',
+    nullable: true,
+    type: Date,
+  })
+  lastLoginAt!: Date | null;
 
   @ApiProperty({
     description: 'Creation timestamp',
@@ -44,8 +74,13 @@ export class UserResponseDto {
     const dto = new UserResponseDto();
     dto.id = user.id;
     dto.walletAddress = user.walletAddress;
+    dto.email = user.email;
     dto.displayName = user.displayName;
+    dto.avatarUrl = user.avatarUrl;
+    dto.role = user.role;
+    dto.status = user.status;
     dto.balance = user.balance.toFixed(2);
+    dto.lastLoginAt = user.lastLoginAt;
     dto.createdAt = user.createdAt;
     dto.updatedAt = user.updatedAt;
     return dto;

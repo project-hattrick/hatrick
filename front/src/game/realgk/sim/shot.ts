@@ -1,4 +1,4 @@
-import { BodyAnim, PlayerAction, Team } from '../enums';
+import { BodyAnim, KickIntent, PlayerAction, Team } from '../enums';
 import { pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -51,7 +51,7 @@ export function updatePowerShot(world: RealGkWorld, player: RealGkPlayer, dt: nu
   if (!player.powerShotHit && t >= timing.contact) {
     player.powerShotHit = true;
     const goalPoint = pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
-    kickBall(world, player, goalPoint.x, goalPoint.y, SHOT_POWER, false);
+    kickBall(world, player, goalPoint.x, goalPoint.y, SHOT_POWER, false, { intent: KickIntent.Shot });
     const note = Status.powerShot(player.name);
     setStatus(world, note.title, note.text);
   }

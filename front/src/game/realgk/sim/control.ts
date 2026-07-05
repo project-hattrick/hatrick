@@ -1,4 +1,4 @@
-import { BodyAnim, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, KickIntent, PlayerAction, Role, Team } from '../enums';
 import { fieldBounds, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -65,7 +65,7 @@ export function controlShoot(world: RealGkWorld): void {
     return;
   }
   const g = pointOnField(world.size, owner.team === Team.Blue ? 0.99 : 0.01, 0.5);
-  kickBall(world, owner, g.x, g.y, 460, false);
+  kickBall(world, owner, g.x, g.y, 460, false, { intent: KickIntent.Shot });
 }
 
 /** Whether this player is the one under keyboard control right now (control follows possession). */

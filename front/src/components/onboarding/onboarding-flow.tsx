@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MetalButton } from '@/components/ui/metal-button';
@@ -12,7 +10,6 @@ import { OnboardingStep, ONBOARDING_ORDER } from '@/enums/onboarding-step.enum';
 import { PackStep } from './steps/pack-step';
 import { SquadStep } from './steps/squad-step';
 import { DoneStep } from './steps/done-step';
-import { KickBurst } from './kick-burst';
 import type { OnboardingController } from './use-onboarding-controller';
 
 const HEADINGS: Record<OnboardingStep, { title: string; description: string }> = {
@@ -56,9 +53,6 @@ export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
   const heading = HEADINGS[step];
   const stepIndex = ONBOARDING_ORDER.indexOf(step);
 
-  // "Kick" shockwave when locking the squad — plays, then advances to the final step.
-  const [kicking, setKicking] = useState(false);
-
   return (
     <>
       <DialogHeader className="items-center pr-0 text-center">
@@ -67,7 +61,7 @@ export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
         <StepDots index={stepIndex} />
       </DialogHeader>
 
-      <div key={step} className="relative flex min-h-[300px] flex-col justify-center animate-in fade-in-0 zoom-in-95 duration-300">
+      <div key={step} className="flex min-h-[300px] flex-col justify-center animate-in fade-in-0 zoom-in-95 duration-300">
         {step === OnboardingStep.Pack && <PackStep />}
         {step === OnboardingStep.Squad && (
           <SquadStep
@@ -81,14 +75,6 @@ export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
           />
         )}
         {step === OnboardingStep.Done && <DoneStep collection={collection} squadCount={order.length} />}
-        {kicking && (
-          <KickBurst
-            onDone={() => {
-              setKicking(false);
-              lockFormation();
-            }}
-          />
-        )}
       </div>
 
       {step === OnboardingStep.Done ? (
@@ -125,8 +111,8 @@ export function OnboardingFlow({ controller, onExit }: OnboardingFlowProps) {
               ringCssPx={3}
               metalFxClassName="w-full"
               className="h-12 w-full gap-2 text-base font-bold"
-              onClick={() => setKicking(true)}
-              disabled={!order.length || kicking}
+              onClick={lockFormation}
+              disabled={!order.length}
             >
               <Lightning className="size-4" weight="fill" />
               Lock formation

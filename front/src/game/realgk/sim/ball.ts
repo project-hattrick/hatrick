@@ -1,8 +1,8 @@
 import { BALL_FRAME_COUNT, BALL_GRAVITY } from '../constants';
-import { BodyAnim, PlayerAction, RestartKind, RestartStage, Role, Team } from '../enums';
-import { spawnBallGroundImpact } from '../effects';
+import { BodyAnim, KickIntent, PlayerAction, RestartKind, RestartStage, Role, Team } from '../enums';
+import { spawnBallGroundImpact, spawnShotEffect, triggerShotSlowMo } from '../effects';
 import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throwInSpot, GOAL_MAX_Z, GOALS, PLAY_LINES } from '../field';
-import type { Ball, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
+import type { Ball, BallKickOptions, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
 import { BallText, Status } from './messages';
 import { goal, setStatus } from './rules';
@@ -21,11 +21,23 @@ export function teamPlayers(world: RealGkWorld, team: Team): RealGkPlayer[] {
 }
 
 /** Strikes the ball toward a target with curl + height (pass / shot / lob). */
-export function kickBall(world: RealGkWorld, player: RealGkPlayer, targetX: number, targetY: number, power: number, lob: boolean): void {
+export function kickBall(
+  world: RealGkWorld,
+  player: RealGkPlayer,
+  targetX: number,
+  targetY: number,
+  power: number,
+  lob: boolean,
+  options: BallKickOptions = {},
+): void {
   const { ball } = world;
   const dx = targetX - ball.x;
   const dy = targetY - ball.y;
   const len = Math.hypot(dx, dy) || 1;
+  if (options.intent === KickIntent.Shot) {
+    spawnShotEffect(world, dx, dy, power);
+    triggerShotSlowMo(world);
+  }
   const nx = dx / len;
   const ny = dy / len;
   const curlSeed = clamp((player.vx * ny - player.vy * nx) * 0.012, -1, 1);

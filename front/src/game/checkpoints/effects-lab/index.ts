@@ -4,8 +4,8 @@ import { CheckpointId, RuntimeKind, type CheckpointMeta } from '../types';
 export const EFFECTS_LAB_META: CheckpointMeta = {
   id: CheckpointId.EffectsLab,
   title: 'Sandbox — Effects Lab',
-  subtitle: 'Ball impact particles: dust bloom, turf flecks and a repeatable drop (L)',
-  version: 'fx.1',
+  subtitle: 'Power Arc shots plus dust, turf flecks, a repeatable ball drop and slow-mo shots',
+  version: 'fx.4',
   createdAt: '2026-07-05',
   accent: 'effects',
   runtime: RuntimeKind.RealGk,

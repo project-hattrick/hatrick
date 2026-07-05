@@ -11,4 +11,10 @@ export class AuthResponseDto {
 
   @ApiProperty({ description: 'The signed-in user', type: UserResponseDto })
   user!: UserResponseDto;
+
+  @ApiProperty({
+    description: 'True when this sign-in created the account (first registration) — drives onboarding',
+    example: true,
+  })
+  isNew!: boolean;
 }
