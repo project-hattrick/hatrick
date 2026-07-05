@@ -10,6 +10,7 @@ import { useDuelStore } from '@/store/duel.store';
 export function ChallengeMount() {
   const router = useRouter();
   const opponent = useUiStore((s) => s.challengeOpponent);
+  const bet = useUiStore((s) => s.challengeBet);
   const closeChallenge = useUiStore((s) => s.closeChallenge);
   const startDuel = useDuelStore((s) => s.start);
 
@@ -25,6 +26,7 @@ export function ChallengeMount() {
     <MatchmakingDialog
       open={Boolean(opponent)}
       opponent={opponent ?? undefined}
+      bet={bet}
       onOpenChange={(next) => {
         if (!next) closeChallenge();
       }}

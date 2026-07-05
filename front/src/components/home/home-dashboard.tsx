@@ -7,7 +7,6 @@ import { MatchDashboard } from './dashboard/match-dashboard';
 export function HomeDashboard() {
   return (
     <div className="relative z-10">
-      <div aria-hidden className="curtain-seam h-24 bg-gradient-to-b from-transparent to-background md:h-32" />
       <div className="bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pt-4 pb-6 md:pt-6">
           <MatchDashboard />

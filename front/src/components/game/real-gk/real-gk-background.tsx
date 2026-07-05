@@ -6,13 +6,18 @@ import { REAL_GK_MATCH_CONFIG } from '@/game/realgk/config';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { Dimension } from '@/enums/dimension.enum';
 import { useUiStore } from '@/store/ui.store';
+import { useRealGkStore } from '@/store/real-gk.store';
 import { cn } from '@/lib/utils';
 import { CrtOverlay } from './crt-overlay';
 
 const NO_HUD = () => {};
 
-/** The Real Match Sim GK runtime as a non-interactive ambient backdrop (no HUD/controls). */
-export function RealGkBackground({ className }: { className?: string }) {
+/**
+ * The Real Match Sim GK runtime as a non-interactive ambient backdrop (no HUD/controls).
+ * `bridgeHud` mirrors the engine's HUD patches into the real-gk store so the hero can react to
+ * cinematic beats (goal/replay/red card); left off, HUD updates are swallowed as before.
+ */
+export function RealGkBackground({ className, bridgeHud = false }: { className?: string; bridgeHud?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<RealGkHandle | null>(null);
@@ -24,7 +29,8 @@ export function RealGkBackground({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = createRealGkEngine(canvas, { onHud: NO_HUD, config: REAL_GK_MATCH_CONFIG });
+    const onHud = bridgeHud ? useRealGkStore.getState().apply : NO_HUD;
+    const handle = createRealGkEngine(canvas, { onHud, config: REAL_GK_MATCH_CONFIG });
     handleRef.current = handle;
     enginePlayingRef.current = true;
     if (!useUiStore.getState().playing) {
@@ -38,7 +44,7 @@ export function RealGkBackground({ className }: { className?: string }) {
       handle.destroy();
       handleRef.current = null;
     };
-  }, []);
+  }, [bridgeHud]);
 
   // Play/Pause button (ui.store) drives the sim loop.
   useEffect(() => {

@@ -65,3 +65,11 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
   apply: (patch) => set(patch),
   toggleUi: () => set((s) => ({ uiHidden: !s.uiHidden })),
 }));
+
+/**
+ * True while a cinematic beat is playing (goal, replay or red card). The hero chrome dissolves during
+ * these so the match takes the whole screen, then returns once the beat clears. Restart/intro banners
+ * are intentionally excluded — they fire on every corner/throw-in and would make the chrome flicker.
+ */
+export const useHeroImpactActive = () =>
+  useRealGkStore((s) => s.goalActive || s.replayActive || s.redCardActive);

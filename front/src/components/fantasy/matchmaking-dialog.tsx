@@ -15,14 +15,12 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { CountdownRing } from '@/components/live/countdown-ring';
 import { DuelistCard } from './duelist-card';
+import { formatTokens } from './bet-selector';
 import { Sword, Check, Lightning, Coins, ShieldCheck } from '@/components/common/icons';
 import { AppMode } from '@/enums/app-mode.enum';
 import { MatchPhase } from '@/enums/match-phase.enum';
-import { cn } from '@/lib/utils';
 import {
   ACCEPT_SECONDS,
-  BET_AMOUNTS,
-  DEFAULT_BET_AMOUNT,
   MMR_STAKE,
   SEARCH_MS,
   opponentDuelist,
@@ -36,6 +34,8 @@ interface MatchmakingDialogProps {
   onOpenChange: (open: boolean) => void;
   /** When set, skip the search and go straight to a ready-check against this player. */
   opponent?: Duelist;
+  /** Token stake picked in the entry modal — displayed on direct challenges only. */
+  bet?: number;
   /** Fired when the player accepts a direct challenge (used to launch the duel arena). */
   onConfirm?: () => void;
 }
@@ -51,7 +51,7 @@ const HEADINGS: Record<MatchPhase, { title: string; description: string }> = {
  * accepted) on the shared Dialog shell, mirroring the login-dialog step pattern.
  * Timers are mocked until real matchmaking lands.
  */
-export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: MatchmakingDialogProps) {
+export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm }: MatchmakingDialogProps) {
   const isChallenge = Boolean(opponent);
   const activeOpponent = opponent ?? opponentDuelist;
   const openPhase = isChallenge ? MatchPhase.Found : MatchPhase.Searching;
@@ -59,7 +59,6 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
   const [phase, setPhase] = useState(openPhase);
   const [seconds, setSeconds] = useState(ACCEPT_SECONDS);
   const [elapsed, setElapsed] = useState(0);
-  const [bet, setBet] = useState<number>(DEFAULT_BET_AMOUNT);
   const [wasOpen, setWasOpen] = useState(false);
 
   // Reset the flow each time the dialog opens — adjust state during render (not in an effect).
@@ -68,7 +67,6 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
     setPhase(openPhase);
     setSeconds(ACCEPT_SECONDS);
     setElapsed(0);
-    setBet(DEFAULT_BET_AMOUNT);
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
@@ -119,12 +117,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
           {phase === MatchPhase.Searching ? (
             <SearchingView elapsed={elapsed} tier={`${selfTier.label} ${selfDuelist.division}`} rating={selfDuelist.rating} />
           ) : phase === MatchPhase.Found ? (
-            <FoundView
-              seconds={seconds}
-              opponent={activeOpponent}
-              bet={isChallenge ? bet : undefined}
-              onBetChange={isChallenge ? setBet : undefined}
-            />
+            <FoundView seconds={seconds} opponent={activeOpponent} bet={isChallenge ? bet : undefined} />
           ) : (
             <AcceptedView />
           )}
@@ -213,7 +206,16 @@ function SearchingView({ elapsed, tier, rating }: { elapsed: number; tier: strin
 }
 
 /** The VS reveal — you vs the matched opponent, with a ready-check ring. */
-function FoundView({ seconds, opponent }: { seconds: number; opponent: Duelist }) {
+function FoundView({
+  seconds,
+  opponent,
+  bet,
+}: {
+  seconds: number;
+  opponent: Duelist;
+  /** Token stake picked in the entry modal — set only on direct challenges; ranked queue stays MMR-only. */
+  bet?: number;
+}) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-stretch gap-2">
@@ -224,13 +226,26 @@ function FoundView({ seconds, opponent }: { seconds: number; opponent: Duelist }
         </div>
         <DuelistCard duelist={opponent} />
       </div>
-      <div className="text-micro flex items-center justify-center gap-2 text-muted-foreground">
-        <span className="font-semibold text-neon">±{MMR_STAKE} MMR</span>
-        <span>·</span>
-        <span>Best of 1</span>
-        <span>·</span>
-        <span>Ranked</span>
-      </div>
+      {bet !== undefined ? (
+        <div className="flex flex-col items-center gap-1">
+          <span className="flex items-center gap-1.5 font-mono text-sm font-bold tabular-nums text-neon">
+            <Coins className="size-4" weight="fill" />
+            {formatTokens(bet)} tokens each
+          </span>
+          <span className="text-micro flex items-center gap-1 text-muted-foreground">
+            <ShieldCheck className="size-3.5 text-neon" />
+            Winner takes {formatTokens(bet * 2)} · Secured on Solana
+          </span>
+        </div>
+      ) : (
+        <div className="text-micro flex items-center justify-center gap-2 text-muted-foreground">
+          <span className="font-semibold text-neon">±{MMR_STAKE} MMR</span>
+          <span>·</span>
+          <span>Best of 1</span>
+          <span>·</span>
+          <span>Ranked</span>
+        </div>
+      )}
     </div>
   );
 }

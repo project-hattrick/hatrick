@@ -10,6 +10,8 @@ import {
   Sword,
   Users,
 } from '@/components/common/icons';
+import { BetSelector } from '@/components/fantasy/bet-selector';
+import { ChallengePicker } from '@/components/home/challenge-picker';
 import { MatchmakingDialog } from '@/components/fantasy/matchmaking-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -63,14 +65,10 @@ export function HomeModeDialogs() {
   const startMatchmaking = useHomeEntryStore((state) => state.startMatchmaking);
   const matchmakingOpen = useHomeEntryStore((state) => state.matchmakingOpen);
   const setMatchmakingOpen = useHomeEntryStore((state) => state.setMatchmakingOpen);
-  const setSearchOpen = useUiStore((state) => state.setSearchOpen);
+  const challengeBet = useUiStore((state) => state.challengeBet);
+  const setChallengeBet = useUiStore((state) => state.setChallengeBet);
   const isFantasy = activeMode === AppMode.Fantasy;
   const Icon = isFantasy ? GameController : Broadcast;
-
-  const searchPlayer = () => {
-    closeMode();
-    setSearchOpen(true);
-  };
 
   return (
     <>
@@ -108,12 +106,12 @@ export function HomeModeDialogs() {
                   icon={MagnifyingGlass}
                   eyebrow="Direct challenge"
                   title="Find a specific player"
-                  description="Search by username and send a direct 1v1 challenge."
+                  description="Pick your stake, pick a player, build your XI."
                   action={
-                    <Button variant="outline" size="lg" className="h-10 w-full gap-2 rounded-xl" onClick={searchPlayer}>
-                      <Users className="size-4" />
-                      Search players
-                    </Button>
+                    <div className="flex flex-col gap-3">
+                      <BetSelector amount={challengeBet} onSelect={setChallengeBet} />
+                      <ChallengePicker onPick={closeMode} />
+                    </div>
                   }
                 />
               </>

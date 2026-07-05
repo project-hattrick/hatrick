@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -9,21 +10,54 @@ import { IconButton } from './icon-button';
 import { formatThousands } from '@/lib/format';
 import { useAuth } from '@/services/queries/use-auth';
 import { useUiStore } from '@/store/ui.store';
+import { cn } from '@/lib/utils';
 
 const COIN_BALANCE = 28_105_820;
 
 const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.WalletAvatar), { ssr: false });
 
-/** Transparent top bar, centered on the same max width as the floating widgets. */
-export function SiteNavbar() {
+/**
+ * Top bar. Solid by default; with `heroBackdrop` it starts transparent at the very top (over the
+ * hero) and gains its background as soon as the page is scrolled.
+ */
+export function SiteNavbar({ heroBackdrop = false }: { heroBackdrop?: boolean }) {
   const { isAuthenticated, user } = useAuth();
   const openSearch = useUiStore((s) => s.setSearchOpen);
   // Show the real devnet play-money balance from the DB once signed in.
   const coins = isAuthenticated && user ? Number(user.balance) : COIN_BALANCE;
 
+  // Over a hero, go solid only after roughly one viewport of scroll (hysteresis avoids flicker).
+  const [solid, setSolid] = useState(!heroBackdrop);
+  useEffect(() => {
+    if (!heroBackdrop) {
+      setSolid(true);
+      return;
+    }
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      // Transparent only at the very top; the background comes in as soon as you scroll.
+      setSolid(window.scrollY > 8);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    read();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [heroBackdrop]);
+
   return (
-    <nav className="pointer-events-auto fixed inset-x-0 top-0 z-30 h-16 pt-[env(safe-area-inset-top)]">
-      <div className="navbar-shrink mx-auto flex h-full w-full items-center justify-between border border-transparent px-3 sm:px-4 md:px-6">
+    <nav
+      className={cn(
+        'pointer-events-auto fixed inset-x-0 top-0 z-30 h-16 border-b pt-[env(safe-area-inset-top)] transition-colors duration-300',
+        solid ? 'border-border bg-surface-1' : 'border-transparent',
+      )}
+    >
+      <div className="mx-auto flex h-full w-full items-center justify-between px-3 sm:px-4 md:px-6">
         <div className="hidden flex-1 items-center gap-6 text-sm font-semibold md:flex">
           {navLinks.map((link) => (
             <Link

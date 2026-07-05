@@ -2,6 +2,7 @@
 
 import { DuelArena } from '@/components/duel/duel-arena';
 import { DuelResultDialog } from '@/components/duel/duel-result-dialog';
+import { DuelSetup } from '@/components/duel/duel-setup';
 import { Button } from '@/components/ui/button';
 import { DuelResult } from '@/enums/duel-result.enum';
 import { useDuelStore } from '@/store/duel.store';
@@ -19,6 +20,8 @@ import { useSandboxStore } from '@/store/sandbox.store';
  * Metadata lives in the sibling layout.tsx (server component, noindex).
  */
 export default function DuelPage() {
+  const inSetup = useDuelStore((s) => s.inSetup);
+  const opponent = useDuelStore((s) => s.opponent);
   const finished = useDuelStore((s) => s.finished);
   const finish = useDuelStore((s) => s.finish);
   const setScore = useDuelStore((s) => s.setScore);
@@ -40,6 +43,9 @@ export default function DuelPage() {
 
     finish(result);
   }
+
+  // Pre-match step: lock your XI/formation before the engine spins up.
+  if (inSetup && opponent) return <DuelSetup />;
 
   return (
     <>
