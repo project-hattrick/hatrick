@@ -12,7 +12,7 @@ import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 /** Wire 3b — framed live match on the left (prediction docked over the pitch), game switcher + cards + crowd on the right. */
 export function SplitDashboard() {
   return (
-    <div className="flex min-h-screen w-full flex-col gap-4 bg-background px-4 pt-20 pb-4 md:h-screen md:flex-row md:overflow-hidden md:pt-[72px]">
+    <div className="flex min-h-[90svh] w-full flex-col gap-4 bg-background px-4 pt-20 pb-4 md:h-[90svh] md:flex-row md:overflow-hidden md:pt-[72px]">
       <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-white/10 md:min-h-0">
         <MatchBackground scrim={false} />
         <HeroChrome>

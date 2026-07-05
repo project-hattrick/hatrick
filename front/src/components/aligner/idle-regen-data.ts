@@ -1,11 +1,12 @@
 /**
- * Data for the regen-v1 idle field sandbox (`/sandbox/personas-idle`).
+ * Data for the regen-v1 body sandbox (`/sandbox/personas-idle`).
  *
- * Uses the newly regenerated **body-only idle** pack (4 front frames) with each
- * persona's front head composited on top, dropped onto our real match court
- * (fullscreen) and sized like the outfield players we normally use.
+ * Uses the newly regenerated **body-only** packs (idle / walk / run / shot front + run side, 4 frames each)
+ * with each persona's head composited on top, dropped onto our real match court (fullscreen) and sized like
+ * the outfield players we normally use. Flip between anims with the mode selector to read proportion + head
+ * fit for every locomotion the persona bodies ship with.
  *
- * To add a character: drop `pNN_head_front.png` in `public/game/personas/heads/`
+ * To add a character: drop `pNN_head_front.png` (+ `_head_side_right.png`) in `public/game/personas/heads/`
  * and append an entry to `PERSONAS`.
  */
 
@@ -15,19 +16,39 @@ const BODY_ROOT = '/game/personas/body-regen-v1';
 /** Same v1 court the Real Match GK runtime paints (calibrated for field.ts metrics). */
 export const COURT_BG = '/game/stadiums/rain-court/court.png';
 
-/** The 4-frame front idle loop from the regen body pack. */
-export const IDLE_FRAMES: string[] = [1, 2, 3, 4].map(
-  (n) => `${BODY_ROOT}/idle_front_frame_0${n}.png`,
-);
+const frames = (prefix: string): string[] => [1, 2, 3, 4].map((n) => `${BODY_ROOT}/${prefix}_frame_0${n}.png`);
 
-/** Loop cadence for the idle animation. */
-export const IDLE_FRAME_MS = 380;
+/** Which head bust an anim composites (front for front-facing bodies, side_right for the profile run). */
+export type HeadView = 'front' | 'side';
 
-/**
- * Head compositing config for the front idle (matches how the regen body was tuned).
- * Same shape the real-gk render uses (`headScale`/`offsetXRatio`/`offsetYRatio`).
- */
-export const IDLE_HEAD_CFG = { headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.095 } as const;
+export interface AnimDef {
+  id: string;
+  label: string;
+  /** The 4 body-only frames for this anim. */
+  frames: string[];
+  /** Loop cadence (ms per frame). */
+  frameMs: number;
+  headView: HeadView;
+  /** Head compositing config (same shape the real-gk render uses). */
+  headCfg: { headScale: number; offsetXRatio: number; offsetYRatio: number };
+}
+
+/** Front head placement shared by the front-facing regen bodies (tuned with the idle pack). */
+const FRONT_HEAD = { headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.095 } as const;
+/** Side head placement for the profile run (seats the side bust over the shoulder). */
+const SIDE_HEAD = { headScale: 0.62, offsetXRatio: 0.11, offsetYRatio: 0.09 } as const;
+
+/** Every regen body-only anim, in selector order. Front anims share FRONT_HEAD; run_side uses the side bust. */
+export const ANIMS: AnimDef[] = [
+  { id: 'idle', label: 'Idle', frames: frames('idle_front'), frameMs: 380, headView: 'front', headCfg: FRONT_HEAD },
+  { id: 'walk', label: 'Walk', frames: frames('walk_front'), frameMs: 210, headView: 'front', headCfg: FRONT_HEAD },
+  { id: 'run', label: 'Run', frames: frames('run_front'), frameMs: 150, headView: 'front', headCfg: FRONT_HEAD },
+  { id: 'shot', label: 'Shot', frames: frames('shot_front'), frameMs: 170, headView: 'front', headCfg: FRONT_HEAD },
+  { id: 'side', label: 'Run · side', frames: frames('run_side'), frameMs: 150, headView: 'side', headCfg: SIDE_HEAD },
+];
+
+/** Flat list of every frame src (for preloading). */
+export const ALL_FRAMES: string[] = ANIMS.flatMap((a) => a.frames);
 
 /**
  * Our usual outfield actor height band (screen px), from REAL_GK_V4/PLAY
@@ -40,7 +61,9 @@ export interface Persona {
   id: string;
   label: string;
   accent: string;
-  head: string;
+  /** Front + side head busts (front for front anims, side_right for the profile run). */
+  headFront: string;
+  headSide: string;
   /** Home position in field ratios: lat (0 = left touchline, 1 = right), depth (0 = far, 1 = near). */
   lat: number;
   depth: number;
@@ -50,7 +73,8 @@ const persona = (id: string, label: string, accent: string, lat: number, depth: 
   id,
   label,
   accent,
-  head: `${HEADS_ROOT}/${id}_head_front.png`,
+  headFront: `${HEADS_ROOT}/${id}_head_front.png`,
+  headSide: `${HEADS_ROOT}/${id}_head_side_right.png`,
   lat,
   depth,
 });

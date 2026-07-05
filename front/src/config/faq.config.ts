@@ -84,6 +84,18 @@ export const faqItems: FaqItem[] = [
   },
 ];
 
+import type { Icon } from '@/components/common/icons';
+import { Info, Broadcast, GameController, Wallet, Question } from '@/components/common/icons';
+
+/** Phosphor icon per category, used by the landing FAQ tabs. */
+export const FAQ_CATEGORY_ICON: Record<FaqCategory, Icon> = {
+  [FaqCategory.General]: Info,
+  [FaqCategory.Live]: Broadcast,
+  [FaqCategory.Fantasy]: GameController,
+  [FaqCategory.Account]: Wallet,
+  [FaqCategory.Technical]: Question,
+};
+
 /** Ordered list of categories for rendering grouped FAQ sections. */
 export const FAQ_CATEGORY_ORDER: FaqCategory[] = [
   FaqCategory.General,

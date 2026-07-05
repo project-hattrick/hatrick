@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { fieldBounds, pointOnField } from '@/game/realgk/field';
 import {
+  ALL_FRAMES,
+  ANIMS,
   COURT_BG,
-  IDLE_FRAMES,
-  IDLE_FRAME_MS,
-  IDLE_HEAD_CFG,
   PERSONAS,
   SPRITE_MAX_H,
   SPRITE_MIN_H,
+  type AnimDef,
   type Persona,
 } from './idle-regen-data';
 
@@ -30,13 +30,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  * Body height at `depth`, matching the engine's `normalizedSizes` rule: the base actor height is
  * divided so body + composited head together read as the target size we use for outfield players.
  */
-function bodyHeightFor(depth: number, scale: number): number {
+function bodyHeightFor(depth: number, scale: number, anim: AnimDef): number {
   const base = lerp(SPRITE_MIN_H, SPRITE_MAX_H, depth);
-  const divisor = Math.max(0.75, 1 + IDLE_HEAD_CFG.headScale - IDLE_HEAD_CFG.offsetYRatio);
+  const divisor = Math.max(0.75, 1 + anim.headCfg.headScale - anim.headCfg.offsetYRatio);
   return (base / divisor) * scale;
 }
 
-/** Composite one persona (regen body frame + front head), foot-anchored at (footX, footY). */
+/** Composite one persona (regen body frame + head for the anim's view), foot-anchored at (footX, footY). */
 function drawActor(
   ctx: CanvasRenderingContext2D,
   frame: HTMLImageElement,
@@ -44,17 +44,19 @@ function drawActor(
   footX: number,
   footY: number,
   bodyHeight: number,
+  anim: AnimDef,
 ): void {
   if (!frame.complete || !frame.naturalWidth || !head.complete || !head.naturalWidth) return;
+  const cfg = anim.headCfg;
   const bodyW = frame.naturalWidth * (bodyHeight / frame.naturalHeight);
   const bodyX = Math.round(footX - bodyW * 0.5);
   const bodyY = Math.round(footY - bodyHeight);
   ctx.drawImage(frame, bodyX, bodyY, bodyW, bodyHeight);
 
-  const headH = bodyHeight * IDLE_HEAD_CFG.headScale;
+  const headH = bodyHeight * cfg.headScale;
   const headW = head.naturalWidth * (headH / head.naturalHeight);
-  const headX = Math.round(footX - headW * 0.5 + bodyW * IDLE_HEAD_CFG.offsetXRatio);
-  const headY = Math.round(bodyY - headH + bodyHeight * IDLE_HEAD_CFG.offsetYRatio);
+  const headX = Math.round(footX - headW * 0.5 + bodyW * cfg.offsetXRatio);
+  const headY = Math.round(bodyY - headH + bodyHeight * cfg.offsetYRatio);
   ctx.drawImage(head, headX, headY, headW, headH);
 }
 
@@ -73,20 +75,23 @@ function drawShadow(ctx: CanvasRenderingContext2D, footX: number, footY: number,
 
 export function IdleRegenPreview() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<{ court: HTMLImageElement | null; frames: ImageMap; heads: ImageMap }>({
+  const imagesRef = useRef<{ court: HTMLImageElement | null; frames: ImageMap; front: ImageMap; side: ImageMap }>({
     court: null,
     frames: {},
-    heads: {},
+    front: {},
+    side: {},
   });
-  const stateRef = useRef({ scale: 1, labels: true });
+  const stateRef = useRef({ scale: 1, labels: true, animIndex: 0 });
   const [ready, setReady] = useState(false);
   const [scale, setScale] = useState(1);
   const [labels, setLabels] = useState(true);
+  const [animIndex, setAnimIndex] = useState(0);
 
   useEffect(() => {
     stateRef.current.scale = scale;
     stateRef.current.labels = labels;
-  }, [scale, labels]);
+    stateRef.current.animIndex = animIndex;
+  }, [scale, labels, animIndex]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -99,6 +104,7 @@ export function IdleRegenPreview() {
     let last = performance.now();
     let elapsed = 0;
     let frameIndex = 0;
+    let lastAnim = 0;
     let size = { width: 1, height: 1 };
     let dpr = 1;
 
@@ -113,15 +119,19 @@ export function IdleRegenPreview() {
     }
 
     (async () => {
-      const [court] = await Promise.all([loadImage(COURT_BG)]);
+      const court = await loadImage(COURT_BG);
       const frames: ImageMap = {};
-      const heads: ImageMap = {};
+      const front: ImageMap = {};
+      const side: ImageMap = {};
       const jobs: Promise<void>[] = [];
-      for (const src of IDLE_FRAMES) jobs.push(loadImage(src).then((img) => void (frames[src] = img)));
-      for (const p of PERSONAS) jobs.push(loadImage(p.head).then((img) => void (heads[p.id] = img)));
+      for (const src of ALL_FRAMES) jobs.push(loadImage(src).then((img) => void (frames[src] = img)));
+      for (const p of PERSONAS) {
+        jobs.push(loadImage(p.headFront).then((img) => void (front[p.id] = img)));
+        jobs.push(loadImage(p.headSide).then((img) => void (side[p.id] = img)));
+      }
       await Promise.all(jobs);
       if (cancelled) return;
-      imagesRef.current = { court, frames, heads };
+      imagesRef.current = { court, frames, front, side };
       resize();
       setReady(true);
       last = performance.now();
@@ -131,13 +141,20 @@ export function IdleRegenPreview() {
     function loop(now: number): void {
       const dt = Math.min(50, now - last);
       last = now;
-      elapsed += dt;
-      if (elapsed >= IDLE_FRAME_MS) {
+      const anim = ANIMS[stateRef.current.animIndex];
+      // Reset the frame clock when the selected anim changes so a slow idle doesn't stall a fast run.
+      if (stateRef.current.animIndex !== lastAnim) {
+        lastAnim = stateRef.current.animIndex;
+        frameIndex = 0;
         elapsed = 0;
-        frameIndex = (frameIndex + 1) % IDLE_FRAMES.length;
+      }
+      elapsed += dt;
+      if (elapsed >= anim.frameMs) {
+        elapsed = 0;
+        frameIndex = (frameIndex + 1) % anim.frames.length;
       }
 
-      const { court, frames, heads } = imagesRef.current;
+      const { court, frames, front, side } = imagesRef.current;
       if (!ctx || !canvas) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
@@ -147,7 +164,8 @@ export function IdleRegenPreview() {
       }
 
       ctx.imageSmoothingEnabled = false;
-      const frame = frames[IDLE_FRAMES[frameIndex]];
+      const frame = frames[anim.frames[frameIndex]];
+      const heads = anim.headView === 'side' ? side : front;
       const t = now / 1000;
 
       // Depth-sort so nearer actors overlap farther ones, like the engine's render.
@@ -163,14 +181,14 @@ export function IdleRegenPreview() {
         const head = heads[persona.id];
         if (!frame || !head) continue;
         drawShadow(ctx, foot.x, foot.y, depth);
-        drawActor(ctx, frame, head, foot.x, foot.y, bodyHeightFor(depth, stateRef.current.scale));
-        if (stateRef.current.labels) drawLabel(ctx, persona, foot.x, foot.y, depth);
+        drawActor(ctx, frame, head, foot.x, foot.y, bodyHeightFor(depth, stateRef.current.scale, anim), anim);
+        if (stateRef.current.labels) drawLabel(ctx, persona, foot.x, foot.y, depth, anim);
       }
       raf = requestAnimationFrame(loop);
     }
 
-    function drawLabel(ctx: CanvasRenderingContext2D, persona: Persona, footX: number, footY: number, depth: number): void {
-      const top = footY - bodyHeightFor(depth, stateRef.current.scale) * (1 + IDLE_HEAD_CFG.headScale) - 8;
+    function drawLabel(ctx: CanvasRenderingContext2D, persona: Persona, footX: number, footY: number, depth: number, anim: AnimDef): void {
+      const top = footY - bodyHeightFor(depth, stateRef.current.scale, anim) * (1 + anim.headCfg.headScale) - 8;
       ctx.save();
       ctx.font = '700 11px Consolas, "Courier New", monospace';
       ctx.textAlign = 'center';
@@ -206,44 +224,63 @@ export function IdleRegenPreview() {
 
       <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-[46ch] rounded-md border border-white/15 bg-black/55 px-4 py-3 backdrop-blur-sm">
         <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-emerald-300">
-          Regen idle · on-pitch
+          Regen bodies · on-pitch
         </p>
-        <h1 className="mt-1 text-lg font-bold uppercase leading-none text-white">New body idle, three heads</h1>
+        <h1 className="mt-1 text-lg font-bold uppercase leading-none text-white">New regen pack, three heads</h1>
         <p className="mt-1.5 text-[12px] leading-snug text-white/70">
-          The regen body-only idle composited with each persona head, dropped onto our match court at our
-          usual outfield player size.
+          The regen body-only anims (idle · walk · run · shot · side) composited with each persona head, on our
+          match court at our usual outfield player size. Flip the mode to read every locomotion.
         </p>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-md border border-white/15 bg-black/60 px-4 py-2.5 backdrop-blur-sm">
-        <span className="font-mono text-[11px] font-bold uppercase text-white/60">Size</span>
-        <input
-          type="range"
-          min={0.6}
-          max={2}
-          step={0.05}
-          value={scale}
-          onChange={(e) => setScale(Number(e.target.value))}
-          className="w-40 accent-emerald-400"
-        />
-        <span className="w-12 text-right font-mono text-[11px] font-bold text-white/70">{scale.toFixed(2)}×</span>
-        <button
-          onClick={() => setLabels((v) => !v)}
-          className={`min-h-8 border px-3 py-1.5 text-[11px] font-bold uppercase ${
-            labels ? 'border-emerald-400/60 bg-white/10 text-emerald-300' : 'border-white/20 bg-transparent text-white/70'
-          }`}
-        >
-          Labels
-        </button>
-        <button
-          onClick={() => {
-            setScale(1);
-            setLabels(true);
-          }}
-          className="min-h-8 border border-white/20 px-3 py-1.5 text-[11px] font-bold uppercase text-white/70"
-        >
-          Reset
-        </button>
+      <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2.5">
+        <div className="flex items-center gap-1.5 rounded-md border border-white/15 bg-black/60 px-2 py-2 backdrop-blur-sm">
+          {ANIMS.map((anim, i) => (
+            <button
+              key={anim.id}
+              onClick={() => setAnimIndex(i)}
+              className={`min-h-8 border px-3 py-1.5 text-[11px] font-bold uppercase ${
+                animIndex === i
+                  ? 'border-emerald-400/60 bg-white/10 text-emerald-300'
+                  : 'border-white/15 bg-transparent text-white/70'
+              }`}
+            >
+              {anim.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 rounded-md border border-white/15 bg-black/60 px-4 py-2.5 backdrop-blur-sm">
+          <span className="font-mono text-[11px] font-bold uppercase text-white/60">Size</span>
+          <input
+            type="range"
+            min={0.6}
+            max={2}
+            step={0.05}
+            value={scale}
+            onChange={(e) => setScale(Number(e.target.value))}
+            className="w-40 accent-emerald-400"
+          />
+          <span className="w-12 text-right font-mono text-[11px] font-bold text-white/70">{scale.toFixed(2)}×</span>
+          <button
+            onClick={() => setLabels((v) => !v)}
+            className={`min-h-8 border px-3 py-1.5 text-[11px] font-bold uppercase ${
+              labels ? 'border-emerald-400/60 bg-white/10 text-emerald-300' : 'border-white/20 bg-transparent text-white/70'
+            }`}
+          >
+            Labels
+          </button>
+          <button
+            onClick={() => {
+              setScale(1);
+              setLabels(true);
+              setAnimIndex(0);
+            }}
+            className="min-h-8 border border-white/20 px-3 py-1.5 text-[11px] font-bold uppercase text-white/70"
+          >
+            Reset
+          </button>
+        </div>
       </div>
     </div>
   );

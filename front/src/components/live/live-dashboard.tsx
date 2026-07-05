@@ -19,7 +19,7 @@ export function LiveDashboard() {
   const heroLayout = useUiStore((state) => state.heroLayout);
 
   return (
-    <section className="relative min-h-screen w-full">
+    <section className="relative min-h-[90svh] w-full">
       <div className="h-full md:hidden">
         <ImmersiveDashboard />
       </div>

@@ -10,6 +10,7 @@ import { REAL_GK_PLAY_META } from './real-gk-play';
 import { REAL_GK_SOLO_META } from './real-gk-solo';
 import { REAL_GK_MATCH_META } from './real-gk-match';
 import { REAL_GK_PERSONAS_META } from './real-gk-personas';
+import { REAL_GK_PERSONA_PLAY_META } from './real-gk-persona-play';
 import { CheckpointId, RuntimeKind, type CheckpointDef, type CheckpointMeta } from './types';
 
 export { CheckpointId, RuntimeKind };
@@ -22,7 +23,7 @@ const SHARED_DEFS: Partial<Record<CheckpointId, CheckpointDef>> = {
 };
 
 /** All checkpoint metadata — every version stays selectable (history). */
-export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META, REAL_GK_V4_META, REAL_GK_V5_META, REAL_GK_V6_META, REAL_GK_PLAY_META, REAL_GK_SOLO_META, EFFECTS_LAB_META, REAL_GK_MATCH_META, REAL_GK_PERSONAS_META];
+export const CHECKPOINTS: CheckpointMeta[] = [CHUVA_V1.meta, ARENA_V1.meta, REAL_GK_V2_META, REAL_GK_V3_META, REAL_GK_V4_META, REAL_GK_V5_META, REAL_GK_V6_META, REAL_GK_PLAY_META, REAL_GK_SOLO_META, EFFECTS_LAB_META, REAL_GK_MATCH_META, REAL_GK_PERSONAS_META, REAL_GK_PERSONA_PLAY_META];
 
 const META = Object.fromEntries(CHECKPOINTS.map((m) => [m.id, m])) as Record<CheckpointId, CheckpointMeta>;
 

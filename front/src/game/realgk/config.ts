@@ -263,8 +263,20 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true },
 };
 
+/**
+ * Playable persona sandbox — the Playable config (control your teammates, pass/shoot with the ball) with
+ * persona casting on, so the players you drive wear distinct persona heads. `extraAnims` is turned on so
+ * the shot plays its animated power-shot wind-up (composited over the persona head) instead of an instant
+ * strike, and header/trap (C / V / B) become available.
+ */
+export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
+  ...REAL_GK_PLAY_CONFIG,
+  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true },
+};
+
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkPersonaPlay) return REAL_GK_PERSONA_PLAY_CONFIG;
   if (id === CheckpointId.RealGkPersonas) return REAL_GK_PERSONAS_CONFIG;
   if (id === CheckpointId.EffectsLab) return EFFECTS_LAB_CONFIG;
   if (id === CheckpointId.RealGkV6) return REAL_GK_V6_CONFIG;

@@ -16,6 +16,7 @@ export enum CheckpointId {
   RealGkSolo = 'real-gk-solo',
   RealGkMatch = 'real-gk-match',
   RealGkPersonas = 'real-gk-personas',
+  RealGkPersonaPlay = 'real-gk-persona-play',
   EffectsLab = 'effects-lab',
 }
 

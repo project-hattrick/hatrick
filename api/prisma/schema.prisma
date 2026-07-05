@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums — persisted sets. When a concept is also a domain enum in
+// `src/events/enums/` (or mirrored from the front `src/enums/*`), members are
+// kept in sync by name (docs/conventions.md).
+// ─────────────────────────────────────────────────────────────────────────────
+
 enum UserRole {
   Player
   Moderator
@@ -19,6 +25,27 @@ enum UserStatus {
   Deleted
 }
 
+/**
+ * Live availability in the duelist directory — mirrors front `Presence`.
+ */
+enum Presence {
+  Online
+  InMatch
+  Offline
+}
+
+/**
+ * Competitive rank tiers (low → high) — mirrors front `RankTier`.
+ */
+enum RankTier {
+  Bronze
+  Silver
+  Gold
+  Platinum
+  Diamond
+  Master
+}
+
 enum BetStatus {
   Pending
   Won
@@ -27,6 +54,9 @@ enum BetStatus {
   CashedOut
 }
 
+/**
+ * Betting market families — mirrors `events/enums/market-type.enum.ts`.
+ */
 enum MarketType {
   MatchResult
   NextGoal
@@ -35,6 +65,137 @@ enum MarketType {
   Corners
   Cards
 }
+
+/**
+ * On-pitch role of a fantasy card.
+ */
+enum PlayerPosition {
+  GK
+  RB
+  RWB
+  CB
+  LB
+  LWB
+  CDM
+  CM
+  CAM
+  RM
+  LM
+  RW
+  LW
+  CF
+  ST
+}
+
+/**
+ * Card scarcity tier (was implicit in rating on the front).
+ */
+enum CardRarity {
+  Common
+  Rare
+  Epic
+  Legendary
+  Icon
+}
+
+/**
+ * How a copy of a card entered a user's arsenal.
+ */
+enum AcquisitionSource {
+  WelcomePack
+  Pack
+  Market
+  Reward
+  Admin
+}
+
+enum PackType {
+  Welcome
+  Standard
+  Premium
+  Special
+}
+
+/**
+ * XI shape. Prefixed `F_` because enum members cannot start with a digit.
+ */
+enum Formation {
+  F_4_3_3
+  F_4_4_2
+  F_4_2_3_1
+  F_3_5_2
+  F_3_4_3
+  F_5_3_2
+  F_4_5_1
+}
+
+enum DuelMode {
+  Ranked
+  Friendly
+}
+
+enum DuelStatus {
+  Pending
+  Setup
+  Live
+  Finished
+  Cancelled
+}
+
+/**
+ * Duel outcome from the host's POV — mirrors front `DuelResult`.
+ */
+enum DuelResult {
+  Win
+  Loss
+  Draw
+}
+
+enum FriendshipStatus {
+  Pending
+  Accepted
+  Declined
+  Blocked
+}
+
+enum ListingStatus {
+  Active
+  Sold
+  Cancelled
+}
+
+/**
+ * Every money movement is one ledger row of a typed kind.
+ */
+enum WalletTxType {
+  WelcomeGrant
+  Faucet
+  PackPurchase
+  MarketSale
+  MarketPurchase
+  BetStake
+  BetPayout
+  BetRefund
+  DuelStake
+  DuelReward
+  Adjustment
+}
+
+/**
+ * Notification category — mirrors front `NotificationType` (+ Duel).
+ */
+enum NotificationType {
+  Bet
+  Friend
+  Match
+  Pack
+  System
+  Duel
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity & profile
+// ─────────────────────────────────────────────────────────────────────────────
 
 model User {
   id            String     @id @default(cuid())
@@ -50,12 +211,45 @@ model User {
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?
 
-  bets Bet[]
+  // Extended profile (was front-only `ProfileDraft`)
+  username    String?  @unique
+  country     String?
+  bio         String?
+  portraitSrc String?
+  presence    Presence @default(Offline)
+
+  // Cached ranking (source of truth = Duel history; denormalized for reads)
+  mmr      Int      @default(1200)
+  tier     RankTier @default(Bronze)
+  division String?
+  wins     Int      @default(0)
+  losses   Int      @default(0)
+  streak   String?
+
+  bets              Bet[]
+  ownedCards        OwnedCard[]
+  packOpenings      PackOpening[]
+  squads            Squad[]
+  duelsHosted       Duel[]              @relation("DuelHost")
+  duelsJoined       Duel[]              @relation("DuelGuest")
+  duelsWon          Duel[]              @relation("DuelWinner")
+  duelLineups       DuelLineup[]
+  friendReqSent     Friendship[]        @relation("FriendRequester")
+  friendReqReceived Friendship[]        @relation("FriendAddressee")
+  listingsSelling   MarketListing[]     @relation("ListingSeller")
+  listingsBought    MarketListing[]     @relation("ListingBuyer")
+  walletTx          WalletTransaction[]
+  notifications     Notification[]
 
   @@index([status])
   @@index([createdAt])
+  @@index([mmr])
   @@map("users")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Live betting (existing)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Bet {
   id        String     @id @default(cuid())
@@ -74,4 +268,258 @@ model Bet {
   @@index([fixtureId])
   @@index([status])
   @@map("bets")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fantasy — catalog, arsenal, attribute evolution
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Shared card definition. Attributes live in `stats` (Json) so the six FIFA-style
+ * keys (pac/sho/pas/dri/def/phy) can change without a migration. `realPlayerId`
+ * links to a TxLINE player for feed-driven evolution; null for generated personas.
+ */
+model CardCatalog {
+  id           String         @id @default(cuid())
+  name         String
+  position     PlayerPosition
+  rating       Int
+  rarity       CardRarity     @default(Common)
+  stats        Json
+  country      String?
+  code         String?
+  flag         String?
+  holoColors   Json?
+  portraitSrc  String?
+  realPlayerId Int?
+  isPersona    Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  ownedCopies OwnedCard[]
+  snapshots   CardAttributeSnapshot[]
+
+  @@index([realPlayerId])
+  @@index([rating])
+  @@map("card_catalog")
+}
+
+/**
+ * Per-round attribute history, written by AttributeEngineService on `*.after`.
+ * `roundKey` uses the epoch-day util. Immutable log — never updated in place.
+ */
+model CardAttributeSnapshot {
+  id        String      @id @default(cuid())
+  cardId    String
+  card      CardCatalog @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  roundKey  String
+  rating    Int
+  stats     Json
+  createdAt DateTime    @default(now())
+
+  @@unique([cardId, roundKey])
+  @@index([cardId])
+  @@map("card_attribute_snapshots")
+}
+
+/**
+ * One row per owned copy — the user's arsenal. Duplicates are distinct rows.
+ */
+model OwnedCard {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId        String
+  card          CardCatalog       @relation(fields: [cardId], references: [id])
+  acquiredVia   AcquisitionSource @default(Pack)
+  packOpeningId String?
+  packOpening   PackOpening?      @relation(fields: [packOpeningId], references: [id])
+  acquiredAt    DateTime          @default(now())
+
+  squadSlots SquadSlot[]
+  listings   MarketListing[]
+
+  @@index([userId])
+  @@index([cardId])
+  @@map("owned_cards")
+}
+
+model PackOpening {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type     PackType @default(Standard)
+  size     Int
+  costPaid Decimal? @db.Decimal(18, 2)
+  openedAt DateTime @default(now())
+
+  cards OwnedCard[]
+
+  @@index([userId])
+  @@map("pack_openings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Squad / XI
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Squad {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String    @default("My XI")
+  formation Formation @default(F_4_3_3)
+  isActive  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  slots SquadSlot[]
+
+  @@index([userId])
+  @@map("squads")
+}
+
+/**
+ * A filled position in a Squad. `slotIndex` 0–10 = the XI grid order.
+ */
+model SquadSlot {
+  id          String         @id @default(cuid())
+  squadId     String
+  squad       Squad          @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  ownedCardId String
+  ownedCard   OwnedCard      @relation(fields: [ownedCardId], references: [id], onDelete: Cascade)
+  slotIndex   Int
+  position    PlayerPosition
+
+  @@unique([squadId, slotIndex])
+  @@index([squadId])
+  @@map("squad_slots")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Duels (1v1) — with immutable lineup history
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Duel {
+  id         String      @id @default(cuid())
+  hostId     String
+  host       User        @relation("DuelHost", fields: [hostId], references: [id])
+  guestId    String?
+  guest      User?       @relation("DuelGuest", fields: [guestId], references: [id])
+  mode       DuelMode    @default(Friendly)
+  status     DuelStatus  @default(Pending)
+  stake      Decimal     @default(0) @db.Decimal(18, 2)
+  hostScore  Int         @default(0)
+  guestScore Int         @default(0)
+  winnerId   String?
+  winner     User?       @relation("DuelWinner", fields: [winnerId], references: [id])
+  hostResult DuelResult?
+  mmrDelta   Int?
+  createdAt  DateTime    @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  lineups DuelLineup[]
+
+  @@index([hostId])
+  @@index([guestId])
+  @@index([status])
+  @@map("duels")
+}
+
+/**
+ * Each participant's XI frozen at kickoff — survives later squad edits.
+ */
+model DuelLineup {
+  id             String   @id @default(cuid())
+  duelId         String
+  duel           Duel     @relation(fields: [duelId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  lineupSnapshot Json
+  createdAt      DateTime @default(now())
+
+  @@unique([duelId, userId])
+  @@index([duelId])
+  @@map("duel_lineups")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Friends — directed request rows (derive none/outgoing/incoming/friends)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  requester   User             @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId String
+  addressee   User             @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      FriendshipStatus @default(Pending)
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+  @@map("friendships")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Market — player-card marketplace
+// ─────────────────────────────────────────────────────────────────────────────
+
+model MarketListing {
+  id          String        @id @default(cuid())
+  sellerId    String
+  seller      User          @relation("ListingSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  ownedCardId String
+  ownedCard   OwnedCard     @relation(fields: [ownedCardId], references: [id], onDelete: Cascade)
+  price       Decimal       @db.Decimal(18, 2)
+  status      ListingStatus @default(Active)
+  buyerId     String?
+  buyer       User?         @relation("ListingBuyer", fields: [buyerId], references: [id])
+  listedAt    DateTime      @default(now())
+  soldAt      DateTime?
+
+  @@index([status])
+  @@index([sellerId])
+  @@map("market_listings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wallet — auditable ledger (User.balance is a cached running total)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WalletTransaction {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         WalletTxType
+  amount       Decimal      @db.Decimal(18, 2)
+  balanceAfter Decimal      @db.Decimal(18, 2)
+  refType      String?
+  refId        String?
+  createdAt    DateTime     @default(now())
+
+  @@index([userId])
+  @@index([refType, refId])
+  @@map("wallet_transactions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  href      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
 }

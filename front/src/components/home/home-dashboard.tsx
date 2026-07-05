@@ -1,4 +1,4 @@
-import { MobileCta } from './widgets/mobile-cta';
+import { FaqSection } from './faq-section';
 import { SquadSection } from './squad-section';
 import { ModeShowcaseSection } from './mode-showcase-section';
 import { MatchDashboard } from './dashboard/match-dashboard';
@@ -16,9 +16,7 @@ export function HomeDashboard() {
 
         <ModeShowcaseSection />
 
-        <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pb-10 md:pb-14">
-          <MobileCta />
-        </div>
+        <FaqSection />
       </div>
     </div>
   );
