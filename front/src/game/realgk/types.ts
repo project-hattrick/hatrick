@@ -65,6 +65,8 @@ export interface RealGkPlayer {
   /** Off-pitch entrance spawn (v5 matchIntro) — where the player walks on FROM. */
   spawnX: number;
   spawnY: number;
+  /** Which persona head set this player wears (`features.personaHeads`); ignored otherwise. */
+  personaId: number;
 }
 
 export interface Ball {

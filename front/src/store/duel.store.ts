@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { PlayerProfile } from '@/config/duelists.config';
 import { DuelResult } from '@/enums/duel-result.enum';
+import { DuelLayout } from '@/enums/duel-layout.enum';
 
 interface DuelStore {
   /** Stable id for the current /duel/[id] route. */
@@ -10,6 +11,8 @@ interface DuelStore {
   bet: number | null;
   /** True while the player is picking their XI/formation, before the arena starts. */
   inSetup: boolean;
+  /** Immersive (full-bleed) vs split-view arrangement of the arena chrome. */
+  layout: DuelLayout;
   selfScore: number;
   opponentScore: number;
   finished: boolean;
@@ -18,6 +21,8 @@ interface DuelStore {
   start: (duelId: string, opponent: PlayerProfile, bet?: number) => void;
   /** Lock the lineup and enter the arena. */
   confirmSetup: () => void;
+  /** Flip between the immersive and split-view arena layouts. */
+  toggleLayout: () => void;
   /** Push the live scoreline from the engine HUD. */
   setScore: (selfScore: number, opponentScore: number) => void;
   /** Freeze the final result. */
@@ -31,6 +36,7 @@ export const useDuelStore = create<DuelStore>((set) => ({
   opponent: null,
   bet: null,
   inSetup: false,
+  layout: DuelLayout.Immersive,
   selfScore: 0,
   opponentScore: 0,
   finished: false,
@@ -38,6 +44,10 @@ export const useDuelStore = create<DuelStore>((set) => ({
   start: (duelId, opponent, bet) =>
     set({ duelId, opponent, bet: bet ?? null, inSetup: true, selfScore: 0, opponentScore: 0, finished: false, result: null }),
   confirmSetup: () => set({ inSetup: false }),
+  toggleLayout: () =>
+    set((state) => ({
+      layout: state.layout === DuelLayout.Immersive ? DuelLayout.Split : DuelLayout.Immersive,
+    })),
   setScore: (selfScore, opponentScore) => set({ selfScore, opponentScore }),
   finish: (result) => set({ finished: true, result }),
   reset: () =>

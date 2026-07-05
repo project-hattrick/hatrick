@@ -32,8 +32,9 @@ export function useSignInMutation() {
       const signature = await signMessage(new TextEncoder().encode(message));
       const session = await authService.verify(walletAddress, toBase64(signature));
       setSession(session.token, session.user);
-      // Fresh registration → queue the first-login onboarding for this wallet.
-      if (session.isNew) useOnboardingStore.getState().begin(session.user.walletAddress);
+      // TEMP (testing): re-fire onboarding on EVERY sign-in, even for a returning account.
+      // Revert to `if (session.isNew)` to gate it to first registrations only.
+      useOnboardingStore.getState().begin(session.user.walletAddress);
     },
     onMutate: () => {
       setAuthenticating(true);

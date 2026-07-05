@@ -60,7 +60,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   ctx.imageSmoothingEnabled = false;
 
   const config = opts.config ?? REAL_GK_V2_CONFIG;
-  const assets = loadRealGkAssets(config.features !== undefined);
+  const assets = loadRealGkAssets(config.features !== undefined, config.features?.personaHeads === true);
   const world = createWorld({ width: canvas.clientWidth || 800, height: canvas.clientHeight || 600 }, config);
   const dropTestBall = (): void => {
     if (!config.features?.ballEffects) return;

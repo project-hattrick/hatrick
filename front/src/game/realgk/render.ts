@@ -6,9 +6,9 @@ import { drawBillboards } from './billboards';
 import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
-import { outfieldConfigFor, type FrameCfg } from './assets/configs';
+import { locomotionConfigFor, outfieldConfigFor, type FrameCfg } from './assets/configs';
 import { ITEM_MAP } from './assets/items';
-import type { HeadKey, RealGkAssets, RefereeSprites } from './assets/loader';
+import type { HeadKey, HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
 import { DIVE2_HEIGHT_RATIO, dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
@@ -150,14 +150,19 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const depth = flat ? FLAT_DEPTH : bounds.depth;
   const frameIdx = frameIndexFor(player, now);
   const modeItem = ITEM_MAP[player.mode];
-  const frame = assets.body[player.mode][frameIdx];
   const sideMode = SIDE_MODES.has(player.mode);
   const isGk = player.role === Role.GK;
+  // Persona casting: outfield players use a headless sliced body + composited persona head (no baked
+  // face). Gated + guarded so any missing asset falls back to the legacy single-sprite path.
+  const personaOn = world.cfg.features?.personaHeads === true && assets.personaHeads.length > 0;
+  const personaLoco = personaOn && !isGk && !!assets.personaBodies[player.mode]?.length && locomotionConfigFor(player.mode) !== null;
+  const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
+  const frame = personaLoco ? assets.personaBodies[player.mode]![frameIdx] : assets.body[player.mode][frameIdx];
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
-  const outfieldCfg = isGk ? null : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
+  const outfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const diving = isGk && player.action === PlayerAction.Dive;
   // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
-  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
   // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
   // the stretched sprite reads like a normal player instead of inflating off its short height.
   // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.
@@ -183,11 +188,14 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
   const composedCfg = keeperCfg ?? outfieldCfg;
+  const fullFrameBbox = (): number[] | null => (frame.complete && frame.naturalWidth ? [0, 0, frame.naturalWidth, frame.naturalHeight] : null);
   const paintSprite = (): void => {
     if (composedCfg) {
-      const bbox = modeItem?.bboxes[frameIdx] ?? (frame.complete && frame.naturalWidth ? [0, 0, frame.naturalWidth, frame.naturalHeight] : null);
+      // Persona locomotion frames are freshly sliced/trimmed — draw the whole frame (their own bboxes in
+      // items.ts describe the baked sprites, not these). Everything else keeps its per-frame trim box.
+      const bbox = personaLoco ? fullFrameBbox() : modeItem?.bboxes[frameIdx] ?? fullFrameBbox();
       const bodyRect = drawTrimmedSprite(ctx, frame, bbox, player.x, footY, spriteHeight, mirror);
-      if (bodyRect) drawComposedHead(ctx, assets.heads[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg);
+      if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg);
     } else {
       drawSprite(ctx, frame, player.x, footY, spriteHeight, mirror);
     }
@@ -275,7 +283,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
         ctx.save();
         ctx.globalAlpha = alpha;
         const rect = drawTrimmedSprite(ctx, ghostFrame, ghostBox, gx, gy, baseH * DIVE2_HEIGHT_RATIO[idx], mirror);
-        if (rect) drawComposedHead(ctx, assets.heads[gkHead(cfg.headView)], gx, rect, mirror, cfg);
+        if (rect) drawComposedHead(ctx, headSet[gkHead(cfg.headView)], gx, rect, mirror, cfg);
         ctx.restore();
       };
       paintGhost(smear.from, 0, 0.28 * (1 - smear.t * 0.5));

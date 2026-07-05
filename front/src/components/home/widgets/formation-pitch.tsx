@@ -55,14 +55,23 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
   );
 }
 
-/** The user's XI on a stylised pitch, with a button to cycle the formation shape. */
-export function FormationPitch() {
+/**
+ * The user's XI on a stylised pitch, with a button to cycle the formation shape.
+ * Height defaults to a fixed frame; pass `className` (e.g. `lg:h-full`) to let it
+ * stretch and match a sibling column instead.
+ */
+export function FormationPitch({ className }: { className?: string }) {
   const [index, setIndex] = useState(0);
   const formation = formations[index];
   const cycle = () => setIndex((i) => (i + 1) % formations.length);
 
   return (
-    <div className="pitch-stripes-v relative h-[500px] w-full overflow-hidden rounded-3xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_70px_rgba(0,0,0,0.22)] md:h-[540px]">
+    <div
+      className={cn(
+        'pitch-stripes-v relative h-[500px] w-full overflow-hidden rounded-3xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_70px_rgba(0,0,0,0.22)] md:h-[540px]',
+        className,
+      )}
+    >
       {/* Half-pitch markings stay low-contrast so the players read first. */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(174,240,25,0.07),transparent_42%),linear-gradient(to_bottom,transparent_60%,rgba(0,0,0,0.16))]" />
       <div className="pointer-events-none absolute inset-3 rounded-2xl border border-white/14" />

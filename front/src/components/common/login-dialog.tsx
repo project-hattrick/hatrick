@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 
@@ -10,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AccountStep } from '@/components/common/login/account-step';
 import { WalletStep } from '@/components/common/login/wallet-step';
 import { SignStep } from '@/components/common/login/sign-step';
 import { PackOpening } from '@/components/store/pack-opening';
@@ -33,7 +33,6 @@ interface LoginDialogProps {
 enum LoginStep {
   Connect = 'connect',
   Sign = 'sign',
-  Account = 'account',
 }
 
 const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
@@ -45,40 +44,39 @@ const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
     title: 'Confirm it’s you',
     description: 'Approve a one-time signature in your wallet to finish signing in.',
   },
-  [LoginStep.Account]: {
-    title: 'Your account',
-    description: 'Signed in with your Solana wallet.',
-  },
 };
 
 /**
- * "Sign in with Solana" modal — connect → sign, then on a first sign-in it flows straight into
- * onboarding (open pack → set formation → done) in the same shell; returning users land on the
- * account view. The auto-connect/sign driver lives in WalletAuthSync.
+ * "Sign in with Solana" modal — connect → sign, then on a FIRST registration it flows straight
+ * into onboarding (open pack → set formation → done) in the same shell. Returning users never
+ * see this dialog: the navbar avatar opens the account dropdown instead. The auto-connect/sign
+ * driver lives in WalletAuthSync.
  */
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const router = useRouter();
-  const { connected, disconnect } = useWallet();
+  const { connected } = useWallet();
   const { isAuthenticated, user } = useAuth();
-  const hasOnboarded = useOnboardingStore((s) => s.hasOnboarded);
-  const dismiss = useOnboardingStore((s) => s.dismiss);
+  const pending = useOnboardingStore((s) => s.pending);
+  const complete = useOnboardingStore((s) => s.complete);
   const controller = useOnboardingController();
 
-  // First sign-in: continue into onboarding right here instead of the account view.
-  const onboarding = isAuthenticated && Boolean(user) && !hasOnboarded;
+  const wallet = user?.walletAddress ?? null;
+  // First registration: continue into onboarding right here.
+  const onboarding = isAuthenticated && Boolean(wallet) && pending.includes(wallet as string);
+
+  // Safety net: if we end up authenticated with no onboarding to run, this dialog has nothing to
+  // show (the account view is now the avatar dropdown) — close it.
+  useEffect(() => {
+    if (open && isAuthenticated && !onboarding) onOpenChange(false);
+  }, [open, isAuthenticated, onboarding, onOpenChange]);
 
   const exitOnboarding = (path?: string) => {
-    dismiss();
+    complete(wallet);
     onOpenChange(false);
     if (path) router.push(path);
   };
 
-  const step =
-    isAuthenticated && user
-      ? LoginStep.Account
-      : connected
-        ? LoginStep.Sign
-        : LoginStep.Connect;
+  const step = connected ? LoginStep.Sign : LoginStep.Connect;
   const heading = HEADINGS[step];
   const packing = onboarding && controller.packOpen;
 
@@ -116,20 +114,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               <DialogDescription>{heading.description}</DialogDescription>
             </DialogHeader>
 
-            {step === LoginStep.Account && user ? (
-              <AccountStep
-                user={user}
-                onClose={() => onOpenChange(false)}
-                onSignOut={() => {
-                  void disconnect();
-                  onOpenChange(false);
-                }}
-              />
-            ) : step === LoginStep.Sign ? (
-              <SignStep />
-            ) : (
-              <WalletStep />
-            )}
+            {step === LoginStep.Sign ? <SignStep /> : <WalletStep />}
           </>
         )}
       </DialogContent>

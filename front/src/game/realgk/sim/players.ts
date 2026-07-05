@@ -3,6 +3,7 @@ import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { ITEM_MAP } from '../assets/items';
+import { PERSONA_COUNT } from '../assets/manifest';
 import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
 import { FORMATION } from './formation';
@@ -21,8 +22,11 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
   const dir = team === Team.Blue ? 1 : -1;
   const pt = pointOnField(world.size, lat, depth);
   const idle = role === Role.GK ? BodyAnim.GkIdle : dir > 0 ? BodyAnim.IdleFront : BodyAnim.IdleBack;
+  const id = world.nextPlayerId++;
   return {
-    id: world.nextPlayerId++,
+    id,
+    // Spread the available persona faces across the squad (casting; inert unless personaHeads is on).
+    personaId: id % Math.max(1, PERSONA_COUNT),
     name,
     team,
     dir,

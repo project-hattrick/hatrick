@@ -104,6 +104,26 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
   ],
 };
 
+/**
+ * Head placement for the headless locomotion bodies used by persona casting (`features.personaHeads`).
+ * Values seeded from the /sandbox/player-heads aligner defaults for these exact 2x2 sheets. All frames of
+ * an anim share one config (the body framing is consistent), so the composited head never pulses.
+ */
+export const LOCOMOTION_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg>> = {
+  [BodyAnim.IdleFront]: { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 },
+  [BodyAnim.WalkFront]: { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 },
+  [BodyAnim.RunFront]: { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 },
+  [BodyAnim.IdleBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
+  [BodyAnim.WalkBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
+  [BodyAnim.RunBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
+  [BodyAnim.RunSide]: { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1, offsetYRatio: 0.1 },
+};
+
+/** The composited-head config for a persona locomotion body (null = not a persona locomotion anim). */
+export function locomotionConfigFor(mode: BodyAnim): FrameCfg | null {
+  return LOCOMOTION_FRAME_CONFIG[mode] ?? null;
+}
+
 /** Resolves the composited-head config for an outfield mode/frame (null = whole sprite, head baked in). */
 export function outfieldConfigFor(mode: BodyAnim, frameIdx: number, celebrationPhase: CelebrationPhase): FrameCfg | null {
   if (mode === BodyAnim.ArmsUpRun && (celebrationPhase === CelebrationPhase.Pose || celebrationPhase === CelebrationPhase.Loop)) {

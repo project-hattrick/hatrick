@@ -1,5 +1,6 @@
 import { FormationPitch } from './widgets/formation-pitch';
-import { TeamStrengthCard } from './widgets/team-strength-card';
+import { SquadAverageCard } from './widgets/squad-average-card';
+import { ChemistryCard } from './widgets/chemistry-card';
 import { DailyDuelCard } from './widgets/daily-duel-card';
 import { SquadMiniStrip } from './widgets/squad-mini-strip';
 import { SectionLink } from './widgets/section-link';
@@ -17,10 +18,11 @@ export function SquadSection() {
         <SectionLink href={`/${AppMode.Fantasy}`} label="Edit formation" className="mt-2" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <FormationPitch />
+      <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <FormationPitch className="lg:h-full" />
         <div className="flex flex-col gap-4">
-          <TeamStrengthCard />
+          <SquadAverageCard />
+          <ChemistryCard />
           <DailyDuelCard />
         </div>
       </div>

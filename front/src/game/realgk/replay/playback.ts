@@ -1,4 +1,5 @@
 import { BodyAnim, CelebrationKind, RefPhase, ShotEffectStyle } from '../enums';
+import { PERSONA_COUNT } from '../assets/manifest';
 import type { Ball, Coach, RealGkPlayer, RealGkWorld, Referee } from '../types';
 import { clamp, lerp } from '../util';
 import type { ReplayPlayerSnap, ReplaySnapshot } from './types';
@@ -110,6 +111,8 @@ function playerFromSnap(snap: ReplayPlayerSnap): RealGkPlayer {
     introDelay: 0,
     spawnX: snap.x,
     spawnY: snap.y,
+    // Reproduce the live persona casting (createPlayer uses id % PERSONA_COUNT) so replays keep faces.
+    personaId: snap.id % Math.max(1, PERSONA_COUNT),
   };
 }
 

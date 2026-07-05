@@ -40,6 +40,9 @@ export interface RealGkFeatures {
   keeperDiveV2: boolean;
   /** Ground-contact particles for the ball: dust bloom and small turf flecks. */
   ballEffects?: boolean;
+  /** Persona casting: outfield players wear headless bodies + per-persona composited heads (no baked
+   *  face), so the squad shows distinct characters. Requires the persona assets (loaded when set). */
+  personaHeads?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -251,8 +254,18 @@ export const REAL_GK_V6_CONFIG: RealGkConfig = {
   features: { ...(REAL_GK_V5_CONFIG.features as RealGkFeatures), keeperDiveV2: true },
 };
 
+/**
+ * Persona casting match — the Full Match look/behaviour, but every outfield player is rendered as a
+ * headless body + composited persona head (distinct characters), instead of one baked face.
+ */
+export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
+  ...REAL_GK_MATCH_CONFIG,
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true },
+};
+
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
 export function realGkConfigFor(id: CheckpointId): RealGkConfig {
+  if (id === CheckpointId.RealGkPersonas) return REAL_GK_PERSONAS_CONFIG;
   if (id === CheckpointId.EffectsLab) return EFFECTS_LAB_CONFIG;
   if (id === CheckpointId.RealGkV6) return REAL_GK_V6_CONFIG;
   if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;

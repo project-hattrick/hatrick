@@ -98,20 +98,29 @@ export const formations: Formation[] = [
   },
 ];
 
-export interface StrengthLine {
+export interface RadarAxis {
   label: string;
   value: number;
 }
 
-export const teamStrength = {
+/** Squad rating overview — headline number plus the five radar axes (clockwise from the top). */
+export const squadAverage = {
   overall: 91,
-  lines: [
+  max: 100,
+  radar: [
     { label: 'Attack', value: 93 },
     { label: 'Midfield', value: 88 },
     { label: 'Defense', value: 90 },
-  ] satisfies StrengthLine[],
-  chemistry: 'High',
-  chemistryNote: '3 from the same country',
+    { label: 'Chemistry', value: 92 },
+    { label: 'Depth', value: 84 },
+  ] satisfies RadarAxis[],
+};
+
+/** Squad chemistry — qualitative rating, the reason, and a 0–100 fill for the meter. */
+export const chemistry = {
+  rating: 'High',
+  note: '3 from the same country',
+  value: 92,
 };
 
 export const dailyDuel = {

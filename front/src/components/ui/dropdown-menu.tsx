@@ -51,9 +51,10 @@ function DropdownMenuItem({ className, ...props }: MenuPrimitive.Item.Props) {
   )
 }
 
-function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
+function DropdownMenuSeparator({ className, ...props }: ComponentProps<"div">) {
   return (
-    <MenuPrimitive.Separator
+    <div
+      role="separator"
       data-slot="dropdown-separator"
       className={cn("-mx-2 my-2 h-px bg-white/10", className)}
       {...props}
