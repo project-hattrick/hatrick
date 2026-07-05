@@ -128,7 +128,7 @@ export interface PlayModeFeature {
 }
 
 export interface PlayMode {
-  key: string;
+  key: AppMode;
   title: string;
   description: string;
   features: PlayModeFeature[];
@@ -142,7 +142,7 @@ export interface PlayMode {
 
 export const playModes: PlayMode[] = [
   {
-    key: 'live',
+    key: AppMode.Live,
     title: 'Live',
     description: 'Follow real matches in real time, predict and bet every single minute.',
     features: [
@@ -158,7 +158,7 @@ export const playModes: PlayMode[] = [
     art: '/prediction-goal.png',
   },
   {
-    key: 'fantasy',
+    key: AppMode.Fantasy,
     title: 'Fantasy',
     description: 'Build your dream XI and face other users in 3D simulated matches.',
     features: [

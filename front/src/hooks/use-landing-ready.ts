@@ -28,7 +28,7 @@ function collectImages(node: unknown, out: HTMLImageElement[] = []): HTMLImageEl
 /**
  * The exact Image objects the hero backdrop engine draws with — both loaders cache by src,
  * so this piggybacks on (or kicks off) the same requests instead of duplicating them.
- * `includeV4=true` mirrors the hero boot (REAL_GK_HERO_CONFIG defines `features`).
+ * `includeV4=true` mirrors the hero boot (REAL_GK_MATCH_CONFIG defines `features`).
  */
 function heroAssetImages(): HTMLImageElement[] {
   const isRealGk = getCheckpointMeta(HERO_CHECKPOINT).runtime === RuntimeKind.RealGk;

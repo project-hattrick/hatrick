@@ -2,11 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { createRealGkEngine } from '@/game/realgk/engine';
-import { REAL_GK_HERO_CONFIG } from '@/game/realgk/config';
+import { REAL_GK_MATCH_CONFIG } from '@/game/realgk/config';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { Dimension } from '@/enums/dimension.enum';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
+import { CrtOverlay } from './crt-overlay';
 
 const NO_HUD = () => {};
 
@@ -23,7 +24,7 @@ export function RealGkBackground({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = createRealGkEngine(canvas, { onHud: NO_HUD, config: REAL_GK_HERO_CONFIG });
+    const handle = createRealGkEngine(canvas, { onHud: NO_HUD, config: REAL_GK_MATCH_CONFIG });
     handleRef.current = handle;
     enginePlayingRef.current = true;
     if (!useUiStore.getState().playing) {
@@ -60,6 +61,7 @@ export function RealGkBackground({ className }: { className?: string }) {
       >
         <canvas ref={canvasRef} aria-hidden className="pointer-events-none h-full w-full" style={{ imageRendering: 'pixelated' }} />
       </div>
+      {REAL_GK_MATCH_CONFIG.crtFilter && <CrtOverlay />}
     </div>
   );
 }

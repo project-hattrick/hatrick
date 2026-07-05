@@ -15,11 +15,14 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { CountdownRing } from '@/components/live/countdown-ring';
 import { DuelistCard } from './duelist-card';
-import { Sword, Check, Lightning } from '@/components/common/icons';
+import { Sword, Check, Lightning, Coins, ShieldCheck } from '@/components/common/icons';
 import { AppMode } from '@/enums/app-mode.enum';
 import { MatchPhase } from '@/enums/match-phase.enum';
+import { cn } from '@/lib/utils';
 import {
   ACCEPT_SECONDS,
+  BET_AMOUNTS,
+  DEFAULT_BET_AMOUNT,
   MMR_STAKE,
   SEARCH_MS,
   opponentDuelist,
@@ -56,6 +59,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
   const [phase, setPhase] = useState(openPhase);
   const [seconds, setSeconds] = useState(ACCEPT_SECONDS);
   const [elapsed, setElapsed] = useState(0);
+  const [bet, setBet] = useState<number>(DEFAULT_BET_AMOUNT);
   const [wasOpen, setWasOpen] = useState(false);
 
   // Reset the flow each time the dialog opens — adjust state during render (not in an effect).
@@ -64,6 +68,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
     setPhase(openPhase);
     setSeconds(ACCEPT_SECONDS);
     setElapsed(0);
+    setBet(DEFAULT_BET_AMOUNT);
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
@@ -114,7 +119,12 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, onConfirm }: M
           {phase === MatchPhase.Searching ? (
             <SearchingView elapsed={elapsed} tier={`${selfTier.label} ${selfDuelist.division}`} rating={selfDuelist.rating} />
           ) : phase === MatchPhase.Found ? (
-            <FoundView seconds={seconds} opponent={activeOpponent} />
+            <FoundView
+              seconds={seconds}
+              opponent={activeOpponent}
+              bet={isChallenge ? bet : undefined}
+              onBetChange={isChallenge ? setBet : undefined}
+            />
           ) : (
             <AcceptedView />
           )}

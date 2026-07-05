@@ -384,11 +384,10 @@
   }
 }
 @keyframes intro-out {
-  0%,
-  55% {
+  from {
     opacity: 1;
   }
-  100% {
+  to {
     opacity: 0;
     visibility: hidden;
   }
@@ -433,13 +432,13 @@
   background: linear-gradient(90deg, transparent, var(--color-neon), transparent);
   animation: holofote-sweep 1.1s ease-in-out infinite;
 }
-/* The intro reuses the holofote loader, then fades the whole overlay out. */
-.landing-intro {
-  animation: intro-out 2.2s forwards;
+/* The intro reuses the holofote loader; JS adds --out only once the landing is ready. */
+.landing-intro--out {
+  animation: intro-out 0.85s ease forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-intro,
+  .landing-intro--out,
   .holofote-logo,
   .holofote-bar::after {
     animation: none;

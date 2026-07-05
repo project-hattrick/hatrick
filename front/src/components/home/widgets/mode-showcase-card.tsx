@@ -1,10 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { buttonVariants } from '@/components/ui/button';
 import type { PlayMode } from '@/config/home.config';
+import { useHomeEntryStore } from '@/store/home-entry.store';
 
 /** Resting pose: leaning back into the stadium; the cursor gently steers it upright. */
 const REST_TILT = { rx: 9, ry: 0 };
@@ -17,6 +17,7 @@ function ModeShowcaseCard({ mode }: { mode: PlayMode }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState(REST_TILT);
   const [shift, setShift] = useState(REST_SHIFT);
+  const openMode = useHomeEntryStore((state) => state.openMode);
   const Icon = mode.icon;
 
   function handleMove(event: React.MouseEvent<HTMLDivElement>) {
@@ -97,15 +98,16 @@ function ModeShowcaseCard({ mode }: { mode: PlayMode }) {
               })}
             </ul>
 
-            <Link
-              href={mode.href}
+            <button
+              type="button"
+              onClick={() => openMode(mode.key)}
               className={buttonVariants({
                 size: 'lg',
                 className: 'h-12 w-full rounded-xl font-bold tracking-widest uppercase',
               })}
             >
               {mode.cta}
-            </Link>
+            </button>
           </div>
         </div>
       </div>

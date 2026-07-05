@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Globe, ShieldCheck, SoccerBall, Trophy, type Icon } from '@/components/common/icons';
 import { ModeShowcaseCard } from './widgets/mode-showcase-card';
 import { playModes } from '@/config/home.config';
+import { HomeModeDialogs } from './home-mode-dialogs';
 
 const footerIcons: { key: string; icon: Icon }[] = [
   { key: 'global', icon: Globe },
@@ -41,6 +42,7 @@ export function ModeShowcaseSection() {
           ))}
         </div>
       </div>
+      <HomeModeDialogs />
     </section>
   );
 }

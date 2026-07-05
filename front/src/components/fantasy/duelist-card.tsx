@@ -4,7 +4,7 @@ import { fifaToIso } from '@/lib/country';
 import { cn } from '@/lib/utils';
 import { rankTierConfig, type Duelist } from '@/config/matchmaking.config';
 
-/** One side of the VS screen — portrait, flag, tier badge, MMR and win/loss record. */
+/** One side of the VS screen — portrait, flag, tier badge and MMR. */
 export function DuelistCard({ duelist, highlight }: { duelist: Duelist; highlight?: boolean }) {
   const tier = rankTierConfig[duelist.tier];
 
@@ -43,13 +43,6 @@ export function DuelistCard({ duelist, highlight }: { duelist: Duelist; highligh
       <div className="flex flex-col items-center">
         <span className="font-mono text-lg font-bold tabular-nums text-foreground">{duelist.rating}</span>
         <span className="text-micro text-muted-foreground">MMR</span>
-      </div>
-
-      <div className="text-micro flex items-center gap-1.5 text-muted-foreground">
-        <span className="font-semibold text-neon">{duelist.wins}W</span>
-        <span className="font-semibold text-live">{duelist.losses}L</span>
-        <span>·</span>
-        <span>{duelist.streak}</span>
       </div>
     </div>
   );

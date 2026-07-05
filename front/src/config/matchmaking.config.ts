@@ -7,6 +7,11 @@ export const MMR_STAKE = 24;
 /** How long the fake search runs before an opponent is "found" (ms). */
 export const SEARCH_MS = 2600;
 
+/** Token stakes selectable when challenging a friend directly (fantasy mode only — ranked queue stays MMR-only). */
+export const BET_AMOUNTS = [100, 500, 1000, 5000] as const;
+/** Pre-selected stake when the challenge dialog opens. */
+export const DEFAULT_BET_AMOUNT = 500;
+
 /** Tier badge styling — a metal-plate gradient + label colour per tier. */
 export interface RankTierMeta {
   label: string;

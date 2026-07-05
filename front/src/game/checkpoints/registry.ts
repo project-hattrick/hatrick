@@ -27,7 +27,7 @@ const META = Object.fromEntries(CHECKPOINTS.map((m) => [m.id, m])) as Record<Che
 export const DEFAULT_CHECKPOINT = CheckpointId.ChuvaV1;
 
 /** The checkpoint that plays live behind the home hero. */
-export const HERO_CHECKPOINT = CheckpointId.RealGkV2;
+export const HERO_CHECKPOINT = CheckpointId.RealGkMatch;
 
 export const isCheckpointId = (v: string): v is CheckpointId => v in META;
 

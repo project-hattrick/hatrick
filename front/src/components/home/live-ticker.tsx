@@ -12,10 +12,10 @@ import { formatMinute } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 // Reveal thresholds as a fraction of the viewport height. The curtain (HomeDashboard)
-// fully covers the hero at ~1 viewport of scroll, so we snap the ticker in near there
-// and keep hysteresis so it doesn't flicker at the boundary.
-const REVEAL_AT = 0.9;
-const HIDE_AT = 0.78;
+// fully covers the hero at 1 viewport of scroll, so the ticker only enters once the hero
+// is completely out of view, with hysteresis so it doesn't flicker at the boundary.
+const REVEAL_AT = 1.05;
+const HIDE_AT = 0.95;
 
 /** Reveals once the hero has been curtained away, so the live match persists as chrome. */
 function useRevealOnScroll(): boolean {
