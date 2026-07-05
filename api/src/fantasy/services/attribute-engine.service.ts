@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import type { MatchEventPayload } from '../events/dto';
+import type { MatchEventPayload } from '../../events/dto';
 
 /**
  * Fantasy attribute engine (base seam). Listens to authoritative `*.after`

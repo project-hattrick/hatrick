@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { MarketProjectorService } from './market-projector.service';
-import { BetRepository } from './bet.repository';
-import { MarketListingRepository } from './market-listing.repository';
+import { MarketProjectorService } from './services';
+import { BetRepository, MarketListingRepository } from './repositories';
 
 @Module({
   providers: [MarketProjectorService, BetRepository, MarketListingRepository],

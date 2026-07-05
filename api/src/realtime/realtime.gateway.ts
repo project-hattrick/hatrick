@@ -9,7 +9,7 @@ import type { Server, Socket } from 'socket.io';
 
 import { EventName } from '../events/enums/event-name.enum';
 import type { MatchEventPayload, OddsEventPayload } from '../events/dto';
-import { TournamentStateService } from '../txline/tournament-state.service';
+import { TournamentStateService } from '../txline/services/tournament-state.service';
 
 /**
  * Re-broadcasts domain events to the frontend over WebSocket. Generic base.

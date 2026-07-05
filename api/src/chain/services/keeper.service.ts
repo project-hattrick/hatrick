@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { EventName } from '../events/enums/event-name.enum';
-import { MarketType } from '../events/enums/market-type.enum';
-import { MatchResultOutcome } from '../events/enums/match-result-outcome.enum';
-import type { MatchEndPayload } from '../events/dto';
-import { ChainConfig } from './chain.config';
+import { EventName } from '../../events/enums/event-name.enum';
+import { MarketType } from '../../events/enums/market-type.enum';
+import { MatchResultOutcome } from '../../events/enums/match-result-outcome.enum';
+import type { MatchEndPayload } from '../../events/dto';
+import { ChainConfig } from '../chain.config';
 import { SolanaService } from './solana.service';
-import { HatTrickClient, MarketStatus, selectionHash } from './hat-trick.client';
+import { HatTrickClient, MarketStatus, selectionHash } from '../hat-trick.client';
 
 /**
  * Settlement keeper — listens for the authoritative `match-end.after` and

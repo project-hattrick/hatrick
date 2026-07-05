@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FriendshipStatus, type Friendship, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `friendships` access — directed request rows. */
 @Injectable()

@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { TxlineSnapshotService } from './txline-snapshot.service';
+import { TxlineSnapshotService } from './services/txline-snapshot.service';
 import { FixtureDto } from './dto/fixture.dto';
 import { OddsSnapshotItemDto } from './dto/odds-snapshot.dto';
 import { ScoreSnapshotItemDto } from './dto/score-snapshot.dto';

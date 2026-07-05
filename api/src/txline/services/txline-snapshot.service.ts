@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { TxlineAuthService } from './txline-auth.service';
 import { TxlineHttpService } from './txline-http.service';
-import { RawFixture, RawOddsEvent, RawScoreEvent, StreamKind } from './txline.types';
+import { RawFixture, RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
 
 export interface FixturesQuery {
   startEpochDay?: number;

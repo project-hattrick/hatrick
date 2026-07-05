@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PublicKey, Transaction } from '@solana/web3.js';
 
-import { MarketType } from '../events/enums/market-type.enum';
-import { ChainConfig } from './chain.config';
+import { MarketType } from '../../events/enums/market-type.enum';
+import { ChainConfig } from '../chain.config';
 import { SolanaService } from './solana.service';
-import { HatTrickClient, selectionHash } from './hat-trick.client';
+import { HatTrickClient, selectionHash } from '../hat-trick.client';
 
 export interface BuildBetInput {
   walletAddress: string;

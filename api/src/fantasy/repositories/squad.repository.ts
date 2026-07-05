@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type Squad, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `squads` + `squad_slots` access (the user's XI). */
 @Injectable()

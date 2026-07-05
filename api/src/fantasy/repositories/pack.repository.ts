@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type PackOpening, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `pack_openings` access. */
 @Injectable()

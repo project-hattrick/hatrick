@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type WalletTransaction, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `wallet_transactions` access — the auditable ledger. */
 @Injectable()

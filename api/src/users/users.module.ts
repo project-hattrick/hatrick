@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 
-import { FriendshipRepository } from './friendship.repository';
-import { NotificationRepository } from './notification.repository';
-import { UserRepository } from './user.repository';
+import {
+  FriendshipRepository,
+  NotificationRepository,
+  UserRepository,
+  WalletRepository,
+} from './repositories';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { WalletRepository } from './wallet.repository';
 
 @Module({
   controllers: [UsersController],

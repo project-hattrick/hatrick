@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { UserRepository } from '../users/user.repository';
+import { UserRepository } from '../users/repositories';
 import { JwtPayload } from './auth.types';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { NonceResponseDto } from './dto/nonce-response.dto';

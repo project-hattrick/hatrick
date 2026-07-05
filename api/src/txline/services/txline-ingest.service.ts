@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { TxlineAuthService } from './txline-auth.service';
 import { TxlineNormalizerService } from './txline-normalizer.service';
-import { RawOddsEvent, RawScoreEvent, StreamKind } from './txline.types';
+import { RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
 
 const BASE_DELAY_MS = 1_000;
 const MAX_DELAY_MS = 30_000;

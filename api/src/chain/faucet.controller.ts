@@ -12,7 +12,7 @@ import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { assertWalletOwner } from '../auth/wallet-owner.util';
-import { FaucetGrant, FaucetService } from './faucet.service';
+import { FaucetGrant, FaucetService } from './services/faucet.service';
 
 interface FaucetRequestBody {
   walletAddress?: string;

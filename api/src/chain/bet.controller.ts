@@ -13,7 +13,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { assertWalletOwner } from '../auth/wallet-owner.util';
 import { MarketType } from '../events/enums/market-type.enum';
-import { BetService } from './bet.service';
+import { BetService } from './services/bet.service';
 
 interface BuildBetBody {
   walletAddress?: string;

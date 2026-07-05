@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DuelStatus, type Duel, type DuelLineup, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `duels` + `duel_lineups` access (1v1 history). */
 @Injectable()

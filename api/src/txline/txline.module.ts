@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { TxlineAuthService } from './txline-auth.service';
-import { TxlineHttpService } from './txline-http.service';
-import { TxlineIngestService } from './txline-ingest.service';
-import { TxlineNormalizerService } from './txline-normalizer.service';
-import { TxlineSnapshotService } from './txline-snapshot.service';
-import { TournamentStateService } from './tournament-state.service';
+import { TxlineAuthService } from './services/txline-auth.service';
+import { TxlineHttpService } from './services/txline-http.service';
+import { TxlineIngestService } from './services/txline-ingest.service';
+import { TxlineNormalizerService } from './services/txline-normalizer.service';
+import { TxlineSnapshotService } from './services/txline-snapshot.service';
+import { TournamentStateService } from './services/tournament-state.service';
 import { TxlineController } from './txline.controller';
 
 @Module({

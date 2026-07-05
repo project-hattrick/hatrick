@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RawOddsEvent, RawScoreEvent } from './txline.types';
-import { TournamentSnapshot } from '../events/dto';
+import { RawOddsEvent, RawScoreEvent } from '../txline.types';
+import { TournamentSnapshot } from '../../events/dto';
 
 /** In-memory tournament state. Generic base — swap for Redis/DB later. */
 @Injectable()

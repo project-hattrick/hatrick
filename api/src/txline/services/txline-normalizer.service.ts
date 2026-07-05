@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { EmissionState } from '../events/enums/emission-state.enum';
-import { EventName } from '../events/enums/event-name.enum';
-import { MatchAction } from '../events/enums/match-action.enum';
-import { MatchResultOutcome } from '../events/enums/match-result-outcome.enum';
-import { MatchEndPayload, MatchEventPayload, OddsEventPayload } from '../events/dto';
-import { RawOddsEvent, RawScoreEvent } from './txline.types';
+import { EmissionState } from '../../events/enums/emission-state.enum';
+import { EventName } from '../../events/enums/event-name.enum';
+import { MatchAction } from '../../events/enums/match-action.enum';
+import { MatchResultOutcome } from '../../events/enums/match-result-outcome.enum';
+import { MatchEndPayload, MatchEventPayload, OddsEventPayload } from '../../events/dto';
+import { RawOddsEvent, RawScoreEvent } from '../txline.types';
 import { TournamentStateService } from './tournament-state.service';
 
 /**

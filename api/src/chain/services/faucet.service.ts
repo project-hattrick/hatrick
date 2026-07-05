@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Keypair, PublicKey } from '@solana/web3.js';
 
-import { ChainConfig } from './chain.config';
+import { ChainConfig } from '../chain.config';
 import { SolanaService } from './solana.service';
-import { airdropTokens, createPlayMint } from './token.util';
+import { airdropTokens, createPlayMint } from '../token.util';
 
 export interface FaucetGrant {
   mint: string;

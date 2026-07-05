@@ -7,8 +7,8 @@ import {
   sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
-import { ChainConfig } from './chain.config';
-import { HatTrickClient, MarketAccount } from './hat-trick.client';
+import { ChainConfig } from '../chain.config';
+import { HatTrickClient, MarketAccount } from '../hat-trick.client';
 
 /**
  * Owns the RPC connection and gates chain features behind SOLANA_ENABLED so the

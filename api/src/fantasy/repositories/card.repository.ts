@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type CardCatalog, type CardAttributeSnapshot, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `card_catalog` + `card_attribute_snapshots` access. */
 @Injectable()

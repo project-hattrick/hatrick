@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { UserRepository } from '../users/user.repository';
+import { UserRepository } from '../users/repositories';
 import { AuthService } from './auth.service';
 import type { AuthenticatedUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ListingStatus, type MarketListing, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `market_listings` access — the card marketplace. */
 @Injectable()

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type OwnedCard, type Prisma } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Sole owner of `owned_cards` access — a user's card arsenal. */
 @Injectable()

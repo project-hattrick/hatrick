@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 
-import { AttributeEngineService } from './attribute-engine.service';
-import { CardRepository } from './card.repository';
-import { DuelRepository } from './duel.repository';
-import { OwnedCardRepository } from './owned-card.repository';
-import { PackRepository } from './pack.repository';
-import { SquadRepository } from './squad.repository';
+import { AttributeEngineService } from './services';
+import {
+  CardRepository,
+  DuelRepository,
+  OwnedCardRepository,
+  PackRepository,
+  SquadRepository,
+} from './repositories';
 
 @Module({
   providers: [

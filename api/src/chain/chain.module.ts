@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../auth/auth.module';
 import { ChainConfig } from './chain.config';
-import { SolanaService } from './solana.service';
-import { FaucetService } from './faucet.service';
+import { SolanaService } from './services/solana.service';
+import { FaucetService } from './services/faucet.service';
 import { FaucetController } from './faucet.controller';
-import { MarketService } from './market.service';
-import { KeeperService } from './keeper.service';
-import { BetService } from './bet.service';
+import { MarketService } from './services/market.service';
+import { KeeperService } from './services/keeper.service';
+import { BetService } from './services/bet.service';
 import { BetController } from './bet.controller';
 
 /**
