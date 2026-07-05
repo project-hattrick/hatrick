@@ -30,6 +30,8 @@ export enum BodyAnim {
   PowerShotFront = 'power_shot',
   PowerShotBack = 'power_shot_back',
   PowerShotSide = 'side_shot',
+  /** Regen body-only front shot (headless) — persona casting composites the head; drives the persona strike. */
+  ShotFront = 'shot_front',
   CelebrateJump = 'celebrate_jump',
   KneeSlide = 'celebrate_knee_slide',
   KneeRise = 'celebrate_knee_rise',

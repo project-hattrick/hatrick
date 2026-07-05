@@ -17,14 +17,16 @@ function shotTiming(mode: BodyAnim): { dur: number; contact: number } {
  * the striker's orientation: profile (side) toward the goal by default, back if running away, front if
  * facing the camera.
  */
-export function startPowerShot(player: RealGkPlayer): boolean {
+export function startPowerShot(player: RealGkPlayer, personas = false): boolean {
   let mode = BodyAnim.PowerShotSide;
   let idle = player.idleMode;
   if (player.lookY < -0.45 || player.idleMode === BodyAnim.IdleBack) {
     mode = BodyAnim.PowerShotBack;
     idle = BodyAnim.IdleBack;
   } else if (player.lookY > 0.45) {
-    mode = BodyAnim.PowerShotFront;
+    // Persona casting swaps the front strike for the regen headless shot body (composited head); the
+    // side/back views keep the v4 power-shot bodies (also headless, also persona-composited).
+    mode = personas ? BodyAnim.ShotFront : BodyAnim.PowerShotFront;
     idle = BodyAnim.IdleFront;
   }
   player.action = PlayerAction.PowerShot;

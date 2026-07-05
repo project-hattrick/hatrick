@@ -43,6 +43,9 @@ export interface RealGkFeatures {
   /** Persona casting: outfield players wear headless bodies + per-persona composited heads (no baked
    *  face), so the squad shows distinct characters. Requires the persona assets (loaded when set). */
   personaHeads?: boolean;
+  /** Animate the near-goal strike (regen shot body, composited head) instead of the instant strike —
+   *  keeps the rest of the match script identical. Independent of `extraAnims`. */
+  personaShot?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -260,7 +263,9 @@ export const REAL_GK_V6_CONFIG: RealGkConfig = {
  */
 export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   ...REAL_GK_MATCH_CONFIG,
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true },
+  // Hero match script/bounds/lighting, but persona-cast + an animated strike (regen shot body) and the
+  // ball dust/impact effects from the Effects Lab.
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true },
 };
 
 /**
@@ -271,7 +276,7 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
  */
 export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   ...REAL_GK_PLAY_CONFIG,
-  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true },
+  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true },
 };
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */

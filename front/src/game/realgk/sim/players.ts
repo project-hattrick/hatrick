@@ -399,8 +399,9 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
 
   if (distToGoal < 180) {
     // v4: wind up an animated power shot (fires at the contact frame); legacy: instant strike.
-    if (world.cfg.features?.extraAnims) {
-      startPowerShot(owner);
+    // `personaShot` animates the strike with the regen shot body without turning on the rest of extraAnims.
+    if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
+      startPowerShot(owner, world.cfg.features?.personaHeads === true);
     } else {
       kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
       const note = Status.shot(owner.name);

@@ -117,6 +117,9 @@ export const LOCOMOTION_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg>> = {
   [BodyAnim.WalkBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
   [BodyAnim.RunBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
   [BodyAnim.RunSide]: { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1, offsetYRatio: 0.1 },
+  // Regen front shot (headless) — front head seated like the other front locomotion bodies so it stays a
+  // constant size across the wind-up; drives the persona strike (see sim/shot.ts).
+  [BodyAnim.ShotFront]: { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 },
 };
 
 /** The composited-head config for a persona locomotion body (null = not a persona locomotion anim). */
