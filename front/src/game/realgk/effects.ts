@@ -66,6 +66,37 @@ export function spawnBallGroundImpact(world: RealGkWorld, impactSpeed: number): 
   }
 }
 
+/**
+ * Skid dust off a player's feet on a hard direction reversal (running one way, cutting back the other).
+ * `dir` is the NEW facing (+1 right / -1 left) — the dust kicks out opposite it, reading as a braked slide.
+ */
+export function spawnFootDust(world: RealGkWorld, x: number, y: number, speed: number, dir: number): void {
+  if (!world.cfg.features?.ballEffects) return;
+  const strength = clamp((speed - 55) / 170, 0.28, 1);
+  const dustCount = Math.round(4 + strength * 6);
+  const particles: BallEffectParticle[] = [];
+  for (let i = 0; i < dustCount; i++) {
+    const spread = randomBetween(22, 62) * (0.6 + strength * 0.7);
+    particles.push({
+      kind: BallEffectKind.Dust,
+      x: x + randomBetween(-3, 3),
+      y: y + randomBetween(-1, 2),
+      lift: randomBetween(0, 2),
+      vx: -dir * spread * randomBetween(0.5, 1.15),
+      vy: randomBetween(-6, 9),
+      vlift: randomBetween(12, 36) * (0.6 + strength * 0.6),
+      age: 0,
+      life: randomBetween(0.26, 0.48),
+      size: randomBetween(2, 4.4) * (0.7 + strength * 0.4),
+      color: DUST_COLORS[i % DUST_COLORS.length],
+    });
+  }
+  world.ballEffects.particles.push(...particles);
+  if (world.ballEffects.particles.length > MAX_PARTICLES) {
+    world.ballEffects.particles.splice(0, world.ballEffects.particles.length - MAX_PARTICLES);
+  }
+}
+
 /** Emits the selected lab visual at the exact ball-release position of a goal-directed strike. */
 export function spawnShotEffect(world: RealGkWorld, directionX: number, directionY: number, power: number): void {
   if (!world.cfg.features?.ballEffects) return;

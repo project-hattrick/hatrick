@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, UserStatus, type User } from '@prisma/client';
+import { DuelResult, Prisma, UserStatus, type User } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { WELCOME_GRANT_COINS } from '../user.constants';
 
 /**
  * The ONLY place user rows are read/written. Services depend on this, never on
@@ -42,7 +43,7 @@ export class UserRepository {
     const user = await this.prisma.user.upsert({
       where: { walletAddress },
       update: { lastLoginAt: new Date(), status: UserStatus.Active, deletedAt: null },
-      create: { walletAddress, displayName },
+      create: { walletAddress, displayName, balance: WELCOME_GRANT_COINS },
     });
     return { user, isNew: !existing };
   }
@@ -51,6 +52,18 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id },
       data: { balance: { increment: delta } },
+    });
+  }
+
+  /** Apply a 1v1 outcome to the cached ranking (wins/losses + MMR swing). */
+  recordDuelOutcome(id: string, result: DuelResult, mmrDelta: number): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        mmr: { increment: mmrDelta },
+        wins: result === DuelResult.Win ? { increment: 1 } : undefined,
+        losses: result === DuelResult.Loss ? { increment: 1 } : undefined,
+      },
     });
   }
 
@@ -86,10 +99,13 @@ export class UserRepository {
   update(
     id: string,
     data: {
-      walletAddress?: string;
       displayName?: string;
       email?: string;
       avatarUrl?: string;
+      username?: string;
+      country?: string;
+      bio?: string;
+      portraitSrc?: string;
     },
   ): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });

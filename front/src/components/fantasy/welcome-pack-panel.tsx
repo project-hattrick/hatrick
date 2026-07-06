@@ -5,21 +5,33 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { PackOpening } from '@/components/store/pack-opening';
 import { pickStartingXI } from '@/components/onboarding/steps/squad-step';
 import { useFantasyStore } from '@/store/fantasy.store';
-import type { PackCard } from '@/config/pack-pool.config';
+import { useAuthStore } from '@/store/auth.store';
+import { fantasyService, PackType, type CollectionCard } from '@/services/fantasy.service';
+import { usePackDeck } from '@/services/queries/use-pack-deck';
 
-/** Players in the free welcome pack (per product vision). */
-const WELCOME_PACK_SIZE = 7;
+/** Players in the free welcome pack — a full XI to seed the squad (matches the api PackSpec). */
+const WELCOME_PACK_SIZE = 11;
 
 /** First-touch hero: open the welcome pack, seed the collection and a starting XI. */
 export function WelcomePackPanel() {
   const addToCollection = useFantasyStore((s) => s.addToCollection);
   const setSquad = useFantasyStore((s) => s.setSquad);
   const squad = useFantasyStore((s) => s.squad);
+  const formation = useFantasyStore((s) => s.formation);
+  const resolveDeck = usePackDeck(PackType.Welcome);
 
-  const onComplete = (cards: PackCard[]) => {
+  const onComplete = (cards: CollectionCard[]) => {
     addToCollection(cards);
     // Collection was empty here, so the pulled cards keep their indices — seed the XI order.
-    if (!squad.length) setSquad(pickStartingXI(cards).map(({ index }) => index));
+    if (!squad.length) {
+      const xi = pickStartingXI(cards);
+      setSquad(xi.map(({ index }) => index));
+      // Persist the seeded XI when signed in (cards carry their owned copy id).
+      if (useAuthStore.getState().status === 'authed') {
+        const ownedIds = xi.map(({ index }) => cards[index]?.ownedCardId).filter(Boolean) as string[];
+        if (ownedIds.length) void fantasyService.saveSquad(formation, ownedIds).catch(() => {});
+      }
+    }
   };
 
   return (
@@ -40,6 +52,7 @@ export function WelcomePackPanel() {
           ctaSize="lg"
           cta="Open pack"
           onComplete={onComplete}
+          resolveDeck={resolveDeck}
         />
       </div>
     </GlassPanel>

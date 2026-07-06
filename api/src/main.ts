@@ -1,11 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-  app.enableCors({ origin: true, credentials: true });
+  app.use(cookieParser());
+  // Credentialed requests (the session cookie) require an explicit allow-list —
+  // wildcard origins are rejected by browsers when credentials are sent.
+  const origins = (process.env.FRONT_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim());
+  app.enableCors({ origin: origins, credentials: true });
   app.enableShutdownHooks(); // lets PrismaService.$disconnect run on SIGTERM/SIGINT
   app.useGlobalPipes(
     new ValidationPipe({

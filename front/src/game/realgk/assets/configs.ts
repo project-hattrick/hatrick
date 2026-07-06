@@ -102,6 +102,10 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.09, offsetYRatio: 0.075 },
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.16, offsetYRatio: 0.06 },
   ],
+  // Slide tackle (carrinho, regen v1) — side head, mirrors with facing. The sprite is a tightly-cropped
+  // horizontal pose, so it inflates under `normalizedSizes` (which normalizes height) — `sizeScale` shrinks
+  // it back to read like a grounded player. Values from the pack's approved config.
+  [BodyAnim.SlideTackle]: repeat({ headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: 0.1, offsetYRatio: 0.1, sizeScale: 0.62 }, 6),
   // Knee-celebration pack (now body-only regen) — front head throughout; per-frame offsets from the
   // preview's KNEE_CONFIG so the head seats through the slide → rise → jump. Replaces the old baked faces.
   [BodyAnim.KneeSlide]: [
@@ -141,6 +145,8 @@ export const LOCOMOTION_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg>> = {
   // Regen front shot (headless) — front head seated like the other front locomotion bodies so it stays a
   // constant size across the wind-up; drives the persona strike (see sim/shot.ts).
   [BodyAnim.ShotFront]: { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 },
+  // Regen rear shot (headless) — back head, seated like the away-facing locomotion (BACK_CONFIG).
+  [BodyAnim.ShotBack]: { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 },
 };
 
 /** The composited-head config for a persona locomotion body (null = not a persona locomotion anim). */

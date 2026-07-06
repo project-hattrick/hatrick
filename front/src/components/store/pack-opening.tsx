@@ -85,6 +85,8 @@ interface PackOpeningProps {
   hideTrigger?: boolean;
   /** Fired with the pulled hand when the player confirms the summary — the seam to persist cards. */
   onComplete?: (cards: PackCard[]) => void;
+  /** Overrides the client draw — e.g. a server-authoritative pack open. Falls back to drawPack. */
+  resolveDeck?: (size: number) => Promise<PackCard[]>;
   /** Render into the parent (a sized, relative host like an expanded modal) instead of a
    *  full-screen portal — same stage, sounds and controls, but contained. */
   embedded?: boolean;
@@ -117,10 +119,12 @@ function PackOpening({
   onClose,
   hideTrigger = false,
   onComplete,
+  resolveDeck,
   embedded = false,
 }: PackOpeningProps) {
   const controlled = controlledOpen !== undefined;
   const [stage, setStage] = useState<PackStage | null>(null);
+  const [loading, setLoading] = useState(false);
   const [packCards, setPackCards] = useState<PackCard[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [exitDir, setExitDir] = useState(0);
@@ -137,9 +141,23 @@ function PackOpening({
     ? packCards.reduce((best, card) => ((card.number ?? 0) > (best.number ?? 0) ? card : best))
     : null;
 
-  /** Buy: draw a fresh random hand from the full character pool, then present the sealed pack. */
-  const buyPack = () => {
-    setPackCards(orderPackCards(drawPack(packSize)));
+  /** Buy: draw a hand (server-authoritative when resolveDeck is set), then present the sealed pack. */
+  const buyPack = async () => {
+    if (loading) return;
+    let cards: PackCard[];
+    if (resolveDeck) {
+      setLoading(true);
+      try {
+        cards = await resolveDeck(packSize);
+      } catch {
+        setLoading(false);
+        return; // resolver surfaces its own error (toast); stay closed
+      }
+      setLoading(false);
+    } else {
+      cards = drawPack(packSize);
+    }
+    setPackCards(orderPackCards(cards));
     setStage(PackStage.Sealed);
   };
 
@@ -204,7 +222,7 @@ function PackOpening({
   const [wasOpen, setWasOpen] = useState(false);
   if (controlled && controlledOpen && !wasOpen) {
     setWasOpen(true);
-    if (stage === null) buyPack();
+    if (stage === null) void buyPack();
   } else if (controlled && !controlledOpen && wasOpen) {
     setWasOpen(false);
     if (stage !== null) resetState();
@@ -483,7 +501,7 @@ function PackOpening({
   return (
     <>
       {!hideTrigger && (
-        <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={buyPack}>
+        <Button variant={ctaVariant} size={ctaSize} className={ctaClassName} onClick={() => void buyPack()} disabled={loading}>
           {cta ?? (
             <>
               Buy pack

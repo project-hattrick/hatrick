@@ -10,18 +10,18 @@ import { useAuthStore } from '@/store/auth.store';
  */
 export function useAuth() {
   const { connected, connecting } = useWallet();
-  const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const status = useAuthStore((s) => s.status);
   const authenticating = useAuthStore((s) => s.authenticating);
   const error = useAuthStore((s) => s.error);
 
   return {
     user,
-    token,
+    status,
     error,
     isConnected: connected,
     isConnecting: connecting,
-    isAuthenticated: Boolean(token),
+    isAuthenticated: status === 'authed',
     isAuthenticating: authenticating,
   };
 }

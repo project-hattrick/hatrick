@@ -12,6 +12,10 @@ export class SquadRepository {
     return this.prisma.squad.create({ data });
   }
 
+  update(id: string, data: Prisma.SquadUpdateInput): Promise<Squad> {
+    return this.prisma.squad.update({ where: { id }, data });
+  }
+
   findByUser(userId: string): Promise<Squad[]> {
     return this.prisma.squad.findMany({
       where: { userId },

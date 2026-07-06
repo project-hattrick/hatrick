@@ -23,4 +23,6 @@ export interface Bet extends BetSelection {
   placedAt: number;
   /** ms epoch when the mock driver resolves it (settlement seam). */
   settleAt: number;
+  /** Backend bet id once persisted (authed users) — drives server-side settlement. */
+  serverId?: string;
 }

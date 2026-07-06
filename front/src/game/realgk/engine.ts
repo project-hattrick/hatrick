@@ -16,6 +16,7 @@ import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
+import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
 import { createWorld, enterIntro, resetBall, restartMatch, step } from './sim/world';
 import type { RealGkHandle, RealGkHudPatch } from './types';
@@ -109,6 +110,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
           if (k === 'c') startHeader(p);
           else startReceive(world, p, k === 'b'); // v = trap, b = intercept/steal
         }
+      } else if (k === 'f') {
+        const p = controlled();
+        if (p && p.actionTimer <= 0 && p.slideCooldown <= 0) startSlideTackle(p); // f = slide tackle (carrinho)
       } else {
         setKey(e, true);
         return;
@@ -314,7 +318,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       if (kind === 'header') startHeader(p);
       else if (kind === 'receive') startReceive(world, p, false);
       else if (kind === 'intercept') startReceive(world, p, true);
-      else startPowerShot(p);
+      else startPowerShot(world, p, config.features?.personaHeads === true);
     },
     debugGoal: () => {
       // v4-only test hook — never active for v2/v3 (no features), so their 'g' stays a no-op.

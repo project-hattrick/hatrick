@@ -22,7 +22,7 @@ interface SpriteRect {
   sourceH: number;
 }
 
-const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive, BodyAnim.GkDiveV2, BodyAnim.PowerShotSide]);
+const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive, BodyAnim.GkDiveV2, BodyAnim.PowerShotSide, BodyAnim.SlideTackle]);
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };

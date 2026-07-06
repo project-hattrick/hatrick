@@ -4,6 +4,7 @@ import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { ITEM_MAP } from '../assets/items';
 import { PERSONA_COUNT } from '../assets/manifest';
+import { spawnFootDust } from '../effects';
 import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
 import { FORMATION } from './formation';
@@ -11,6 +12,7 @@ import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { startPowerShot, updatePowerShot } from './shot';
+import { updateSlideTackle } from './slide';
 import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { setStatus } from './rules';
@@ -69,6 +71,8 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
     receiveCooldown: 0,
     receiveHit: false,
     powerShotHit: false,
+    slideCooldown: 0,
+    slideHit: false,
     introDelay: 0,
     spawnX: pt.x,
     spawnY: pt.y,
@@ -332,6 +336,11 @@ export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number,
   const facingBefore = player.facing;
   updateFacingGuard(player, dt);
 
+  // Skid dust: a hard left/right reversal while running kicks up a puff off the feet (gated by ballEffects).
+  if (player.role !== Role.GK && player.facing !== facingBefore && Math.abs(player.vx) > 60) {
+    spawnFootDust(world, player.x, player.y, Math.abs(player.vx), player.facing);
+  }
+
   if (extraAnims && player.role !== Role.GK && startTurnOrBrake(player, facingBefore, len, stopRadius)) return;
   // Decaying recent-peak speed (~150 px/s² bleed) so the brake can see the sprint that just ended.
   player.prevSpeed = Math.max(Math.hypot(player.vx, player.vy), player.prevSpeed - 150 * dt);
@@ -401,7 +410,7 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
     // v4: wind up an animated power shot (fires at the contact frame); legacy: instant strike.
     // `personaShot` animates the strike with the regen shot body without turning on the rest of extraAnims.
     if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
-      startPowerShot(owner, world.cfg.features?.personaHeads === true);
+      startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
     } else {
       kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
       const note = Status.shot(owner.name);
@@ -441,7 +450,8 @@ export function faceBall(world: RealGkWorld): void {
       p.action === PlayerAction.StopBrake ||
       p.action === PlayerAction.Header ||
       p.action === PlayerAction.Receive ||
-      p.action === PlayerAction.PowerShot
+      p.action === PlayerAction.PowerShot ||
+      p.action === PlayerAction.SlideTackle
     ) {
       continue;
     }
@@ -494,6 +504,11 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     }
     if (player.action === PlayerAction.PowerShot) {
       updatePowerShot(world, player, dt);
+      continue;
+    }
+    player.slideCooldown = Math.max(0, player.slideCooldown - dt);
+    if (player.action === PlayerAction.SlideTackle) {
+      updateSlideTackle(world, player, dt);
       continue;
     }
 

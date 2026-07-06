@@ -30,8 +30,12 @@ export enum BodyAnim {
   PowerShotFront = 'power_shot',
   PowerShotBack = 'power_shot_back',
   PowerShotSide = 'side_shot',
+  /** Slide tackle (carrinho) — side-view headless 6-frame lunge; head composited (persona/generic). */
+  SlideTackle = 'slide_tackle',
   /** Regen body-only front shot (headless) — persona casting composites the head; drives the persona strike. */
   ShotFront = 'shot_front',
+  /** Regen body-only rear shot (headless) — the away-facing persona strike (back head composited). */
+  ShotBack = 'shot_back',
   CelebrateJump = 'celebrate_jump',
   KneeSlide = 'celebrate_knee_slide',
   KneeRise = 'celebrate_knee_rise',
@@ -80,6 +84,7 @@ export enum PlayerAction {
   Header = 'header',
   Receive = 'receive',
   PowerShot = 'power_shot',
+  SlideTackle = 'slide_tackle',
   Celebrate = 'celebrate',
 }
 

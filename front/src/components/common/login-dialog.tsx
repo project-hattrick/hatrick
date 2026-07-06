@@ -14,6 +14,8 @@ import {
 import { WalletStep } from '@/components/common/login/wallet-step';
 import { SignStep } from '@/components/common/login/sign-step';
 import { PackOpening } from '@/components/store/pack-opening';
+import { usePackDeck } from '@/services/queries/use-pack-deck';
+import { PackType } from '@/services/fantasy.service';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 import { useOnboardingController, STARTER_PACK_SIZE } from '@/components/onboarding/use-onboarding-controller';
 import { OnboardingStep } from '@/enums/onboarding-step.enum';
@@ -59,6 +61,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const pending = useOnboardingStore((s) => s.pending);
   const complete = useOnboardingStore((s) => s.complete);
   const controller = useOnboardingController();
+  const resolveDeck = usePackDeck(PackType.Welcome);
 
   const wallet = user?.walletAddress ?? null;
   // First registration: continue into onboarding right here.
@@ -103,6 +106,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               packSize={STARTER_PACK_SIZE}
               onClose={controller.closePack}
               onComplete={controller.completePack}
+              resolveDeck={resolveDeck}
             />
           </>
         ) : onboarding ? (

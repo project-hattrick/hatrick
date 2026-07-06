@@ -7,7 +7,7 @@ import { Prisma } from '@prisma/client';
 
 import { PaginatedResponseDto, PaginationQueryDto } from '../common/dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserRepository } from './repositories';
 
@@ -45,7 +45,7 @@ export class UsersService {
     return UserResponseDto.fromEntity(user);
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(id: string, dto: UpdateProfileDto): Promise<UserResponseDto> {
     try {
       return UserResponseDto.fromEntity(await this.users.update(id, dto));
     } catch (error) {
@@ -64,7 +64,10 @@ export class UsersService {
   private mapPrismaError(error: unknown, id?: string): Error {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorCode.UniqueViolation.valueOf()) {
-        return new ConflictException('walletAddress already registered');
+        // meta.target names the offending unique field(s) (e.g. username, email).
+        const target = error.meta?.target;
+        const field = Array.isArray(target) ? target.join(', ') : 'walletAddress';
+        return new ConflictException(`That ${field} is already taken`);
       }
       if (error.code === PrismaErrorCode.RecordNotFound.valueOf()) {
         return new NotFoundException(`User ${id ?? ''} not found`.trim());

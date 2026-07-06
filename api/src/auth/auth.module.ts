@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -10,7 +10,7 @@ import { NonceStore } from './nonce.store';
 
 @Module({
   imports: [
-    UsersModule, // provides UserRepository
+    forwardRef(() => UsersModule), // provides UserRepository (cycle: UsersModule uses JwtAuthGuard)
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

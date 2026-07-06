@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { PackOpening } from '@/components/store/pack-opening';
+import { usePackDeck } from '@/services/queries/use-pack-deck';
+import { PackType } from '@/services/fantasy.service';
 import { cn } from '@/lib/utils';
 import { OnboardingStep } from '@/enums/onboarding-step.enum';
 import { OnboardingFlow } from './onboarding-flow';
@@ -21,6 +23,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
   const router = useRouter();
   const controller = useOnboardingController();
   const packing = controller.packOpen;
+  const resolveDeck = usePackDeck(PackType.Welcome);
 
   const exit = (path?: string) => {
     onOpenChange(false);
@@ -48,6 +51,7 @@ export function OnboardingDialog({ open, onOpenChange }: { open: boolean; onOpen
               packSize={STARTER_PACK_SIZE}
               onClose={controller.closePack}
               onComplete={controller.completePack}
+              resolveDeck={resolveDeck}
             />
           </>
         ) : (

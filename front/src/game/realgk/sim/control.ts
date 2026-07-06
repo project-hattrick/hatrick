@@ -61,7 +61,7 @@ export function controlShoot(world: RealGkWorld): void {
   const owner = ballOwner(world);
   if (!owner) return;
   if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
-    startPowerShot(owner, world.cfg.features?.personaHeads === true);
+    startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
     return;
   }
   const g = pointOnField(world.size, owner.team === Team.Blue ? 0.99 : 0.01, 0.5);

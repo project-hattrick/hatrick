@@ -7,12 +7,23 @@ export interface ProfileDraft {
   username: string;
   country: string;
   bio: string;
-  /** `/personas/*` path; empty = default portrait. */
+  /** `/personas/*` preset path, an uploaded `data:` URL, or empty = default portrait. */
   portraitSrc: string;
+}
+
+/** Subset of the authed user carrying the server-persisted profile fields. */
+export interface ServerProfile {
+  displayName: string | null;
+  username: string | null;
+  country: string | null;
+  bio: string | null;
+  portraitSrc: string | null;
 }
 
 interface ProfileStore extends ProfileDraft {
   save: (draft: ProfileDraft) => void;
+  /** Reconcile with the authoritative server profile (from /auth/me or a save). */
+  hydrateFromServer: (user: ServerProfile) => void;
 }
 
 /** No-op storage on the server so persist doesn't touch localStorage during SSR. */
@@ -36,6 +47,17 @@ export const useProfileStore = create<ProfileStore>()(
       bio: '',
       portraitSrc: '',
       save: (draft) => set(draft),
+      hydrateFromServer: (user) =>
+        set((prev) => ({
+          // Server is the source of truth; fall back to whatever's local when a
+          // field is unset server-side (e.g. an uploaded data-URL portrait we keep
+          // local, or a guest's edits before their first save).
+          displayName: user.displayName ?? prev.displayName,
+          username: user.username ?? prev.username,
+          country: user.country ?? prev.country,
+          bio: user.bio ?? prev.bio,
+          portraitSrc: user.portraitSrc ?? prev.portraitSrc,
+        })),
     }),
     {
       name: 'hat-trick-profile',

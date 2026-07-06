@@ -2,10 +2,23 @@ import { create } from 'zustand';
 import type { PlayerProfile } from '@/config/duelists.config';
 import { DuelResult } from '@/enums/duel-result.enum';
 import { DuelLayout } from '@/enums/duel-layout.enum';
+import { duelService, type DuelResultValue } from '@/services/fantasy.service';
+import { useAuthStore } from '@/store/auth.store';
+import { useWalletStore } from '@/store/wallet.store';
+import { useFantasyStore } from '@/store/fantasy.store';
+
+const isAuthed = () => useAuthStore.getState().status === 'authed';
+
+/** Front DuelResult enum ("win") → api DuelResult ("Win"). */
+const toServerResult = (r: DuelResult): DuelResultValue =>
+  r === DuelResult.Win ? 'Win' : r === DuelResult.Loss ? 'Loss' : 'Draw';
 
 interface DuelStore {
   /** Stable id for the current /duel/[id] route. */
   duelId: string | null;
+  /** Backend duel id once persisted (authed) — drives server-side settlement. */
+  serverId: string | null;
+  setServerId: (serverId: string | null) => void;
   opponent: PlayerProfile | null;
   /** Token stake agreed for this duel (null = friendly, nothing on the line). */
   bet: number | null;
@@ -31,8 +44,10 @@ interface DuelStore {
 }
 
 /** Current 1v1 duel — ephemeral (never persisted; the live stream stays in memory). */
-export const useDuelStore = create<DuelStore>((set) => ({
+export const useDuelStore = create<DuelStore>((set, get) => ({
   duelId: null,
+  serverId: null,
+  setServerId: (serverId) => set({ serverId }),
   opponent: null,
   bet: null,
   inSetup: false,
@@ -42,14 +57,45 @@ export const useDuelStore = create<DuelStore>((set) => ({
   finished: false,
   result: null,
   start: (duelId, opponent, bet) =>
-    set({ duelId, opponent, bet: bet ?? null, inSetup: true, selfScore: 0, opponentScore: 0, finished: false, result: null }),
-  confirmSetup: () => set({ inSetup: false }),
+    set({ duelId, serverId: null, opponent, bet: bet ?? null, inSetup: true, selfScore: 0, opponentScore: 0, finished: false, result: null }),
+  confirmSetup: () => {
+    set({ inSetup: false });
+    // Persist the duel (stake + lineup) when signed in; reconcile the wallet + keep the server id.
+    if (!isAuthed()) return;
+    const { opponent, bet } = get();
+    const fantasy = useFantasyStore.getState();
+    const ownedCardIds = fantasy.squad
+      .map((i) => fantasy.collection[i]?.ownedCardId)
+      .filter(Boolean) as string[];
+    if (!ownedCardIds.length) return;
+    void duelService
+      .create({
+        stake: bet ?? 0,
+        opponentName: opponent?.name,
+        mode: bet ? 'Ranked' : 'Friendly',
+        formation: fantasy.formation,
+        ownedCardIds,
+      })
+      .then((res) => {
+        set({ serverId: res.duel.id });
+        useWalletStore.getState().hydrate(Number(res.balance));
+      })
+      .catch(() => {});
+  },
   toggleLayout: () =>
     set((state) => ({
       layout: state.layout === DuelLayout.Immersive ? DuelLayout.Split : DuelLayout.Immersive,
     })),
   setScore: (selfScore, opponentScore) => set({ selfScore, opponentScore }),
-  finish: (result) => set({ finished: true, result }),
+  finish: (result) => {
+    set({ finished: true, result });
+    const { serverId, selfScore, opponentScore } = get();
+    if (!serverId || !isAuthed()) return;
+    void duelService
+      .settle(serverId, { hostScore: selfScore, guestScore: opponentScore, result: toServerResult(result) })
+      .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))
+      .catch(() => {});
+  },
   reset: () =>
-    set({ duelId: null, opponent: null, bet: null, inSetup: false, selfScore: 0, opponentScore: 0, finished: false, result: null }),
+    set({ duelId: null, serverId: null, opponent: null, bet: null, inSetup: false, selfScore: 0, opponentScore: 0, finished: false, result: null }),
 }));

@@ -3,8 +3,13 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { PackCard } from '@/config/pack-pool.config';
 import { SEED_LISTINGS, type Listing } from '@/config/market-listings.config';
+import { marketService } from '@/services/market.service';
+import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
+
+/** Authed users persist trades to the backend ledger; guests stay purely local. */
+const isAuthed = () => useAuthStore.getState().status === 'authed';
 
 interface MarketStore {
   listings: Listing[];
@@ -34,6 +39,15 @@ export const useMarketStore = create<MarketStore>()(
         useWalletStore.getState().debit(listing.price);
         useFantasyStore.getState().addToCollection([listing.card]);
         set((state) => ({ listings: state.listings.filter((entry) => entry.id !== id) }));
+        // Persist the coin movement to the server ledger (authed only) + reconcile balance.
+        if (isAuthed()) {
+          marketService
+            .buy(listing.card.name, listing.price)
+            .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))
+            .catch(() => {
+              /* keep the optimistic local trade; the local debit already applied */
+            });
+        }
         return true;
       },
       sell: (card, price) => {
@@ -41,6 +55,14 @@ export const useMarketStore = create<MarketStore>()(
         useFantasyStore.getState().removeFromCollection(card.name);
         saleCounter += 1;
         set((state) => ({ listings: [{ id: `sale-${saleCounter}-${card.name}`, card, price }, ...state.listings] }));
+        if (isAuthed()) {
+          marketService
+            .sell(card.name, price)
+            .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))
+            .catch(() => {
+              /* keep the optimistic local trade; the local credit already applied */
+            });
+        }
       },
     }),
     {

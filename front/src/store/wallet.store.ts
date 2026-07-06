@@ -8,6 +8,10 @@ interface WalletStore {
   debit: (amount: number) => void;
   /** Add coins (market sale, bet payout). */
   credit: (amount: number) => void;
+  /** Adopt the authoritative server balance (from /auth/me) on sign-in. */
+  hydrate: (balance: number) => void;
+  /** Back to the guest seed on sign-out. */
+  reset: () => void;
 }
 
 /** No-op storage on the server so persist doesn't touch localStorage during SSR. */
@@ -27,6 +31,8 @@ export const useWalletStore = create<WalletStore>()(
       balance: SEED_BALANCE,
       debit: (amount) => set((state) => ({ balance: Math.max(0, state.balance - Math.max(0, amount)) })),
       credit: (amount) => set((state) => ({ balance: state.balance + Math.max(0, amount) })),
+      hydrate: (balance) => set({ balance: Math.max(0, Math.round(balance)) }),
+      reset: () => set({ balance: SEED_BALANCE }),
     }),
     {
       name: 'hat-trick-wallet',

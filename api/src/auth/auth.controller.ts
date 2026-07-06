@@ -5,16 +5,19 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { UserRepository } from '../users/repositories';
@@ -26,6 +29,7 @@ import { NonceResponseDto } from './dto/nonce-response.dto';
 import { RequestNonceDto } from './dto/request-nonce.dto';
 import { VerifySignatureDto } from './dto/verify-signature.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { SESSION_COOKIE, sessionCookieOptions } from './session-cookie.util';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -55,8 +59,26 @@ export class AuthController {
   })
   @ApiOkResponse({ description: 'Session token + user', type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Nonce expired or signature invalid' })
-  verify(@Body() dto: VerifySignatureDto): Promise<AuthResponseDto> {
-    return this.auth.verify(dto.walletAddress, dto.signature);
+  async verify(
+    @Body() dto: VerifySignatureDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const session = await this.auth.verify(dto.walletAddress, dto.signature);
+    // The JWT rides in an httpOnly cookie (source of truth for the browser); it's
+    // still echoed in the body for Swagger/non-browser clients.
+    res.cookie(SESSION_COOKIE, session.token, sessionCookieOptions());
+    return session;
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'End the session',
+    description: 'Clears the httpOnly session cookie.',
+  })
+  @ApiNoContentResponse({ description: 'Session cookie cleared' })
+  logout(@Res({ passthrough: true }) res: Response): void {
+    res.clearCookie(SESSION_COOKIE, { path: '/' });
   }
 
   @Get('me')

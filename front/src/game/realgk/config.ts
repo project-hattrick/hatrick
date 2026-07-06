@@ -268,6 +268,8 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   // persona heads read cleaner on the pitch.
   spriteMinH: 20,
   spriteMaxH: 34,
+  // Players shrank (composited head reads at the base height), so bump the referee/coach whole-sprites to match.
+  actorScale: { referee: 1.3, coach: 1.3 },
   features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true },
 };
 
@@ -281,6 +283,7 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   ...REAL_GK_PLAY_CONFIG,
   spriteMinH: 20,
   spriteMaxH: 34,
+  actorScale: { referee: 1.3, coach: 1.3 },
   features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true },
 };
 

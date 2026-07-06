@@ -1,6 +1,8 @@
 # hat-trick / front — Next.js (App Router)
 
-shadcn/ui + Zustand + React Query + a `services/` layer + Solana wallet login (devnet).
+Next 16 · React 19 · Tailwind v4 · shadcn/ui + Zustand + React Query + a `services/` layer + Solana wallet login (devnet).
+
+The consumer web app for both modes — **Fantasy** (pack → XI → simulated 1v1) and **Live** (real-time match view + betting) — over a shared profile/wallet/design. MVP user flows are built and **front-mocked** (backend adiado): the betting loop + settlement, the fantasy loop, market, fixtures, and profile all run off `config/` mocks + `services/mock/`, wired through the real stores.
 
 ## Run
 ```bash
@@ -8,35 +10,67 @@ npm install
 cp .env.example .env.local   # point at the backend + pick the Solana cluster
 npm run dev                  # http://localhost:3000
 ```
+Scripts: `dev` · `build` · `start` · `lint` (no test script — verify by running the app).
+
+## Routes (`src/app`)
+| Route | Role |
+|---|---|
+| `/` | home / landing (live hero backdrop, LiveScorebar seam) |
+| `/live` | 2D real-time match view + betting |
+| `/duelists` · `/duelists/[username]` | duelist directory + public profiles (⌘K search) |
+| `/duel/[id]` | 1v1 duel (reuses the game stage) |
+| `/fantasy` · `/fantasy/market` | fantasy loop · player market |
+| `/bets` · `/fixtures` · `/store` | bet slip/history · fixtures · store |
+| `/profile` · `/profile/edit` | profile + XI · editor |
+| `/about` · `/contact` · `/faq` · `/blog` · `/blog/[slug]` | marketing + MDX blog |
+| `/legal/{privacy,terms,cookies,responsible-gaming}` | compliance pages |
+| `/style-guide` | living design-system reference |
+| `/sandbox` (+ `?cp=`) | game-engine checkpoint runner + editor tools (see below) |
+
+Metadata routes: `manifest.ts`, `robots.ts`, `sitemap.ts`, `opengraph-image.tsx`.
 
 ## Layout (`src/`)
 | Folder | Role |
 |---|---|
-| `app/` | routes: `/` (mode-picker), `/live`, `/fantasy` |
-| `components/ui/` | shadcn primitives · `components/common/` shared (header, wallet button, mode card) |
-| `services/` | API callers (`*.service.ts`) · `services/queries/` React Query hooks · `services/realtime/` socket → stores |
-| `store/` | Zustand slices (`match`, `fantasy`, `crowd`) |
-| `providers/` | React Query + Solana wallet providers |
-| `enums/`, `lib/` | enums · env, query client, solana endpoint |
+| `app/` | routes above + `globals.css`, `mdx-components.tsx` |
+| `components/ui/` | shadcn primitives |
+| `components/common/` | shared widgets (header, wallet button, icons barrel, GlassPanel) |
+| `components/{home,live,duel,duelists,fantasy,market,profile,store,crowd,onboarding,legal,contact,game,aligner,design-system}/` | per-feature UI |
+| `config/` | mock data + typed lookup configs (home, faq, duelists, formation, betting-markets, pack-pool, …) |
+| `services/` | API callers (`*.service.ts`) · `services/mock/` · `services/queries/` React Query hooks (+ `keys.ts`) · `services/realtime/` (`socket.ts`, `use-live-feed.ts`) |
+| `store/` | Zustand slices (see below) |
+| `providers/` | `app-providers.tsx` — React Query + Solana wallet tree |
+| `hooks/` | `use-zod-form.ts`, `use-landing-ready.ts` |
+| `enums/`, `lib/`, `types/` | enums (barrel) · utils (env, query-client, solana, seo, blog, format, lookup, …) · shared types |
+| `game/` | the framework-free 2D/2.5D match engine (see below) |
 
-## Conventions
-shadcn + small components · Zustand (client state) + React Query (server state) · **no `fetch`/`axios` in components — always via `services/`** · enums not strings · ≤600 lines/file · no tests this sprint · English.
+## Stores (`src/store/*.store.ts`)
+`auth` · `wallet` (single ledger — bets/fantasy settle through it) · `bets` · `market` · `fantasy` · `duel` · `friends` · `match` · `crowd` · `prediction` · `notifications` · `onboarding` · `profile` · `home-entry` · `real-gk` · `sandbox` · `ui`. Stores map 1:1 with services; subscribe by selector, never the whole store.
 
-> Base seams with `TODO`s — generic and easy to swap. Three.js / 3D deferred until Fantasy work starts.
+## Game engine (`src/game`)
+Custom **canvas/TS engine, framework-free** (no Three.js). `engine.ts` + `core/` `math/` `sim/` `render/`, plus `realgk/` for the real-match variant.
+
+- **Checkpoints** — `checkpoints/registry.ts` registers self-contained scenes (`chuva-v1`, `arena-v1`, `effects-lab`, `real-gk-v2…v6`, `real-gk-play/solo/match/personas/persona-play`). `DEFAULT_CHECKPOINT = ChuvaV1`; `HERO_CHECKPOINT = RealGkMatch` plays live behind the home hero.
+- **Sandbox** — `/sandbox?cp=<id>` renders any checkpoint via `GameStage`; sub-tools: `personas`, `personas-idle`, `player-heads`, `svg-players`, `hero-figures`, `markers`, `field-calibrator`, `sprite-editor`, `shadow-editor`, `billboard-editor`.
+- **Assets** — `public/game/` (`actors/`, `ball/`, `personas/`, `player-align/`, `real-gk/`, `stadiums/`). Persona line-players = headless body + composed persona head (gated behind `features.personaHeads`).
 
 ## Engineering rules (non-negotiable)
-
 | Rule | How it lives in the code |
 |---|---|
-| No `switch`/`case` | Typed lookup maps `Record<Enum, Config>` in `src/config/*.config.ts`, read via `lookup()` from `src/lib/lookup.ts`. Branching is data, not control flow. |
-| No multi-line comments | Single-line `//` or one-line `/** */` only. Convention-enforced. |
-| Reusable fns → utils | Every reusable pure function lives in `src/lib/*` (`format.ts`, `lookup.ts`, `cn`) and is imported, never re-inlined. |
-| ≤ 600 lines/file | Decompose: widgets ~≤120 lines, orchestrators only compose. |
-| React Query + smart invalidation | Central key factory `src/services/queries/keys.ts`; mutations invalidate precise keys only. All network access stays in `src/services/`. |
-| Zustand for state | Client/UI/realtime state in `src/store/*.store.ts`; subscribe by selector, never the whole store. |
+| No `switch`/`case` | Typed lookup maps `Record<Enum, Config>` in `src/config/*`, read via `lookup()` from `src/lib/lookup.ts`. Branching is data. |
+| No `fetch`/`axios` in components | All network access lives in `src/services/` (+ `queries/`, `realtime/`, `mock/`). |
+| React Query + smart invalidation | Central key factory `services/queries/keys.ts`; mutations invalidate precise keys only. |
+| Zustand for state | Client/UI/realtime state in `src/store/*.store.ts`; subscribe by selector. |
 | React Hook Form for forms | `react-hook-form` + `zod` via `src/hooks/use-zod-form.ts`. |
-| Avoid `useState`/`useEffect` | Form state → RHF; shared/UI state → Zustand; derived values computed in render. The only sanctioned effects are the data-subscription hook (`use-live-feed`) and the 2D/2.5D game loop in `match-stage`. |
+| Avoid `useState`/`useEffect` | Form state → RHF; shared/UI state → Zustand; derived values in render. Sanctioned effects: the data-subscription hook and the game loop. |
+| No multi-line comments | Single-line `//` or one-line `/** */` only. |
+| Reusable fns → `src/lib/*` | Imported, never re-inlined. |
+| ≤ 600 lines/file | Widgets ~≤120 lines; orchestrators only compose. |
+| Icons | Phosphor duotone, imported **only** from the `components/common/icons` barrel. |
+| English only · no tests this sprint | — |
 
-## Design tokens
+## Design system — Neon Turf (dark-only)
+Tokens live in `src/app/globals.css` (Tailwind v4, CSS-first — no `tailwind.config`): neutral graphite surfaces + lime-neon accent, semantic type scale (`.text-display/title/eyebrow/micro`), pitch-turf utilities, the glass-black surface (use the `GlassPanel` component, never copy-pasted classes), hero accent glow + seam utilities. The theme switcher/color palettes were removed — the Neon Turf baseline is the only theme. Living reference at `/style-guide`; formal docs in `docs/design-system.md`.
 
-Dark-only. Brand palette + tokens live in `src/app/globals.css` (Tailwind v4, CSS-first — no `tailwind.config`): black-green stage `--background #0a0d0a`, lime-neon accent `--primary #aef019`, surfaces `--color-surface-1/2/3`, `--color-live` (coral), `--color-hot` (badge), `--color-pitch`, `--color-team-home/away`. The glass widget surface is the `GlassPanel` component, never copy-pasted classes.
+## Key deps
+`next` 16 · `react` 19 · Tailwind v4 · `shadcn` · `@base-ui/react` · `@phosphor-icons/react` · `zustand` · `@tanstack/react-query` · `react-hook-form` + `zod` · `socket.io-client` · `@solana/wallet-adapter-*` (sign-in only) · `@next/mdx` + `remark-*` (blog) · `lenis` (smooth scroll) · `sonner`, `flag-icons`, `next-themes`.

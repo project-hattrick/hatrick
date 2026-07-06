@@ -13,7 +13,7 @@ import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
  *  full height so the live scoreboard peeks below the fold as a scroll affordance. */
 export function ImmersiveDashboard() {
   return (
-    <div className="relative mx-auto h-[90svh] min-h-[520px] w-full overflow-hidden">
+    <div className="relative mx-auto h-[82svh] min-h-[480px] w-full overflow-hidden">
       <HeroChrome>
       {/* Scoreboard — top-centre, cleared below the navbar + notch on mobile. */}
       <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 -translate-x-1/2 md:top-16">

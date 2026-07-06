@@ -1,8 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { WalletTxType } from '@prisma/client';
 
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { UserRepository } from '../users/repositories';
+import { UserRepository, WalletRepository } from '../users/repositories';
 import { JwtPayload } from './auth.types';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { NonceResponseDto } from './dto/nonce-response.dto';
@@ -25,6 +26,7 @@ export class AuthService {
   constructor(
     private readonly nonces: NonceStore,
     private readonly users: UserRepository,
+    private readonly wallet: WalletRepository,
     private readonly jwt: JwtService,
   ) {}
 
@@ -52,6 +54,15 @@ export class AuthService {
     }
 
     const { user, isNew } = await this.users.upsertByWallet(walletAddress);
+    // Provenance for the starting balance — the first entry in the user's ledger.
+    if (isNew) {
+      await this.wallet.record({
+        user: { connect: { id: user.id } },
+        type: WalletTxType.WelcomeGrant,
+        amount: user.balance,
+        balanceAfter: user.balance,
+      });
+    }
     const payload: JwtPayload = { sub: user.id, wallet: user.walletAddress };
     const token = await this.jwt.signAsync(payload);
 

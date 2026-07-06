@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Flag } from '@/components/common/flag';
-import { CalendarDots, Check, Coins, Crown, Wallet } from '@/components/common/icons';
+import { CalendarDots, Camera, Check, CircleNotch, Coins, Crown, Wallet } from '@/components/common/icons';
 import { TierBadge } from '@/components/duelists/tier-badge';
 import { PresenceDot } from '@/components/duelists/presence-dot';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,24 @@ import { cn } from '@/lib/utils';
 import { selfProfile } from '@/config/duelists.config';
 import { avatarOptions, formatJoined, rankFromRating } from '@/config/profile-mock';
 import { useAuth } from '@/services/queries/use-auth';
+import { useUpdateProfile } from '@/services/queries/use-update-profile';
 import { useProfileStore, type ProfileDraft } from '@/store/profile.store';
+
+/** Uploaded photos are stored as data URLs; presets are `/personas/*` paths (pixel-art). */
+const isUploadedPhoto = (src: string): boolean => src.startsWith('data:');
+
+/** Max upload size (kept small — the data URL lives in localStorage). */
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+/** Avatar image props differ for real photos (cover-crop, smooth) vs pixel-art personas. */
+function avatarImageProps(src: string) {
+  return isUploadedPhoto(src)
+    ? { className: 'size-full object-cover', style: undefined }
+    : {
+        className: 'translate-y-[6%] scale-110 object-contain object-bottom',
+        style: { imageRendering: 'pixelated' as const },
+      };
+}
 
 function MiniStat({ value, label, accent }: { value: string; label: string; accent?: boolean }) {
   return (
@@ -40,16 +57,58 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
     };
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const { isAuthenticated } = useAuth();
+  const updateProfile = useUpdateProfile();
+
   const setField = (id: keyof ProfileDraft, value: string) => setDraft((d) => ({ ...d, [id]: value }));
+
   const save = () => {
-    useProfileStore.getState().save(draft);
-    onDone();
+    setSaveError('');
+    // Usernames are handle-style server-side (no leading @).
+    const clean: ProfileDraft = { ...draft, username: draft.username.replace(/^@+/, '').trim() };
+    useProfileStore.getState().save(clean); // instant local paint
+    if (!isAuthenticated) {
+      onDone(); // guest — local only, nothing to persist
+      return;
+    }
+    updateProfile.mutate(clean, {
+      onSuccess: () => onDone(),
+      onError: (e) => setSaveError((e as Error)?.message ?? 'Could not save your profile'),
+    });
   };
 
-  const fields: Array<{ id: keyof Omit<ProfileDraft, 'bio'>; label: string; placeholder: string }> = [
-    { id: 'displayName', label: 'Display name', placeholder: 'Kaua Miguel' },
-    { id: 'username', label: 'Username', placeholder: 'kauamigueldev' },
-    { id: 'country', label: 'Country', placeholder: 'Brazil' },
+  const handleFile = (file: File | undefined) => {
+    setUploadError('');
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please choose an image file.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setUploadError('Image is too large (max 2 MB).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setField('portraitSrc', String(reader.result));
+    reader.onerror = () => setUploadError('Could not read that file.');
+    reader.readAsDataURL(file);
+  };
+
+  const uploaded = isUploadedPhoto(draft.portraitSrc);
+
+  // maxLength mirrors the api UpdateProfileDto so the form can't produce a 400.
+  const fields: Array<{
+    id: keyof Omit<ProfileDraft, 'bio'>;
+    label: string;
+    placeholder: string;
+    maxLength: number;
+  }> = [
+    { id: 'displayName', label: 'Display name', placeholder: 'Kaua Miguel', maxLength: 32 },
+    { id: 'username', label: 'Username', placeholder: 'kauamigueldev', maxLength: 24 },
+    { id: 'country', label: 'Country', placeholder: 'Brazil', maxLength: 56 },
   ];
 
   return (
@@ -57,6 +116,32 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
       <div className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-muted-foreground">Avatar</span>
         <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              handleFile(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              'grid size-12 place-items-center overflow-hidden rounded-lg bg-gradient-to-b from-surface-3 to-surface-deep ring-2 transition',
+              uploaded ? 'ring-neon' : 'ring-dashed ring-border text-muted-foreground hover:ring-neon/40',
+            )}
+            aria-label="Upload a photo"
+            aria-pressed={uploaded}
+          >
+            {uploaded ? (
+              <Image src={draft.portraitSrc} alt="" width={48} height={48} className="size-full object-cover" unoptimized />
+            ) : (
+              <Camera className="size-5" />
+            )}
+          </button>
           {avatarOptions.map((src) => {
             const selected = src === (draft.portraitSrc || selfProfile.portraitSrc);
             return (
@@ -82,11 +167,17 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
             );
           })}
         </div>
+        {uploadError ? <span className="text-micro text-hot">{uploadError}</span> : null}
       </div>
       {fields.map((field) => (
         <label key={field.id} className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">{field.label}</span>
-          <Input value={draft[field.id]} onChange={(e) => setField(field.id, e.target.value)} placeholder={field.placeholder} />
+          <Input
+            value={draft[field.id]}
+            onChange={(e) => setField(field.id, e.target.value)}
+            placeholder={field.placeholder}
+            maxLength={field.maxLength}
+          />
         </label>
       ))}
       <label className="flex flex-col gap-1.5">
@@ -96,14 +187,21 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
           value={draft.bio}
           onChange={(e) => setField('bio', e.target.value)}
           placeholder="Tell other managers about your squad…"
+          maxLength={280}
           className="w-full rounded-lg border border-input bg-input/30 px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring"
         />
       </label>
+      {saveError ? <span className="text-micro text-hot">{saveError}</span> : null}
       <div className="flex gap-2">
-        <Button className="flex-1" onClick={save}>
-          <Check className="size-4" /> Save
+        <Button className="flex-1" onClick={save} disabled={updateProfile.isPending}>
+          {updateProfile.isPending ? (
+            <CircleNotch className="size-4 animate-spin" />
+          ) : (
+            <Check className="size-4" />
+          )}{' '}
+          {updateProfile.isPending ? 'Saving…' : 'Save'}
         </Button>
-        <Button variant="ghost" onClick={onDone}>
+        <Button variant="ghost" onClick={onDone} disabled={updateProfile.isPending}>
           Cancel
         </Button>
       </div>
@@ -134,14 +232,21 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
   return (
     <div className="flex flex-col">
       <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl ring-2 ring-neon/30">
-        <Image
-          src={draft.portraitSrc || selfProfile.portraitSrc}
-          alt={displayName}
-          width={96}
-          height={96}
-          className="translate-y-[6%] scale-110 object-contain object-bottom"
-          style={{ imageRendering: 'pixelated' }}
-        />
+        {(() => {
+          const src = draft.portraitSrc || selfProfile.portraitSrc;
+          const { className, style } = avatarImageProps(src);
+          return (
+            <Image
+              src={src}
+              alt={displayName}
+              width={96}
+              height={96}
+              className={className}
+              style={style}
+              unoptimized={isUploadedPhoto(src)}
+            />
+          );
+        })()}
       </span>
 
       <div className="mt-3 flex items-center gap-2">

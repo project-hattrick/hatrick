@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { AttributeEngineService } from './services';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { FantasyController } from './fantasy.controller';
+import { DuelController } from './duel.controller';
+import { AttributeEngineService, DuelService, PackService, SquadService } from './services';
 import {
   CardRepository,
   DuelRepository,
@@ -10,8 +14,16 @@ import {
 } from './repositories';
 
 @Module({
+  imports: [
+    AuthModule, // JwtAuthGuard
+    UsersModule, // UserRepository + WalletRepository for the ledger
+  ],
+  controllers: [FantasyController, DuelController],
   providers: [
     AttributeEngineService,
+    PackService,
+    SquadService,
+    DuelService,
     CardRepository,
     OwnedCardRepository,
     PackRepository,

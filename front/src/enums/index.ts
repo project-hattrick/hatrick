@@ -2,6 +2,7 @@ export { AppMode } from './app-mode.enum';
 export { EmissionState } from './emission-state.enum';
 export { MarketType } from './market-type.enum';
 export { BetStatus } from './bet-status.enum';
+export { WalletTxType } from './wallet-tx-type.enum';
 export { NotificationType } from './notification-type.enum';
 export { MatchAction } from './match-action.enum';
 export { MatchPhase } from './match-phase.enum';

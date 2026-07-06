@@ -7,28 +7,32 @@ import {
   HttpStatus,
   Param,
   Patch,
-  Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import type { AuthenticatedUser } from '../auth/auth.types';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { assertSelf } from '../auth/wallet-owner.util';
 import {
   ApiPaginatedResponse,
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '../common/dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
@@ -37,18 +41,8 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @ApiOperation({
-    summary: 'Register a user',
-    description:
-      'Creates a user keyed by wallet address with the default play-money balance.',
-  })
-  @ApiCreatedResponse({ description: 'User created', type: UserResponseDto })
-  @ApiConflictResponse({ description: 'walletAddress already registered' })
-  @ApiBadRequestResponse({ description: 'Validation failed' })
-  create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return this.usersService.create(dto);
-  }
+  // Registration is handled by POST /auth/verify (get-or-create on sign-in), so
+  // there is no public POST /users — it would let anyone mint accounts unsigned.
 
   @Get()
   @ApiOperation({
@@ -76,28 +70,42 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Update a user',
-    description: 'Partial update — send only the fields to change.',
+    summary: 'Update your account',
+    description: 'Partial update — send only the fields to change. Self only.',
   })
   @ApiParam({ name: 'id', description: 'User id (cuid)' })
   @ApiOkResponse({ description: 'Updated user', type: UserResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid token' })
+  @ApiForbiddenResponse({ description: 'Not your account' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiConflictResponse({ description: 'walletAddress already registered' })
   update(
     @Param('id') id: string,
-    @Body() dto: UpdateUserDto,
+    @Body() dto: UpdateProfileDto,
+    @CurrentUser() principal: AuthenticatedUser,
   ): Promise<UserResponseDto> {
+    assertSelf(principal, id);
     return this.usersService.update(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a user' })
+  @ApiOperation({ summary: 'Delete your account', description: 'Self only.' })
   @ApiParam({ name: 'id', description: 'User id (cuid)' })
   @ApiNoContentResponse({ description: 'User deleted' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid token' })
+  @ApiForbiddenResponse({ description: 'Not your account' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  remove(@Param('id') id: string): Promise<void> {
+  remove(
+    @Param('id') id: string,
+    @CurrentUser() principal: AuthenticatedUser,
+  ): Promise<void> {
+    assertSelf(principal, id);
     return this.usersService.remove(id);
   }
 }

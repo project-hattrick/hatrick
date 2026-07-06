@@ -1,4 +1,5 @@
-import { env } from '@/lib/env';
+import { endpoints } from './endpoints';
+import { api } from './http';
 
 /** Mirror of the api UserResponseDto (front is its own app — no cross-app import). */
 export interface AuthUser {
@@ -6,6 +7,10 @@ export interface AuthUser {
   walletAddress: string;
   displayName: string | null;
   balance: string;
+  username: string | null;
+  country: string | null;
+  bio: string | null;
+  portraitSrc: string | null;
 }
 
 interface NonceResponse {
@@ -14,6 +19,7 @@ interface NonceResponse {
 }
 
 export interface AuthSession {
+  /** The JWT also comes back in the body for non-browser clients; the browser uses the cookie. */
   token: string;
   user: AuthUser;
   /** True when this sign-in created the account (first registration) — drives onboarding. */
@@ -21,28 +27,18 @@ export interface AuthSession {
 }
 
 /** Step 1: ask the api for a one-time message to sign. */
-async function requestNonce(walletAddress: string): Promise<NonceResponse> {
-  const res = await fetch(`${env.apiUrl}/auth/nonce`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ walletAddress }),
-  });
-  if (!res.ok) throw new Error(`Failed to request nonce (${res.status})`);
-  return res.json() as Promise<NonceResponse>;
-}
+const requestNonce = (walletAddress: string): Promise<NonceResponse> =>
+  api.post<NonceResponse>(endpoints.auth.nonce, { walletAddress });
 
-/** Step 2: submit the signed message; get back a session JWT + user. */
-async function verify(
-  walletAddress: string,
-  signature: string,
-): Promise<AuthSession> {
-  const res = await fetch(`${env.apiUrl}/auth/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ walletAddress, signature }),
-  });
-  if (!res.ok) throw new Error(`Signature verification failed (${res.status})`);
-  return res.json() as Promise<AuthSession>;
-}
+/** Step 2: submit the signed message; the api sets the httpOnly session cookie. */
+const verify = (walletAddress: string, signature: string): Promise<AuthSession> =>
+  api.post<AuthSession>(endpoints.auth.verify, { walletAddress, signature });
 
-export const authService = { requestNonce, verify };
+/** Validate the session cookie and hydrate the current user (used on boot). */
+const me = (signal?: AbortSignal): Promise<AuthUser> =>
+  api.get<AuthUser>(endpoints.auth.me, signal);
+
+/** End the session — clears the httpOnly cookie server-side. */
+const logout = (): Promise<void> => api.post<void>(endpoints.auth.logout);
+
+export const authService = { requestNonce, verify, me, logout };

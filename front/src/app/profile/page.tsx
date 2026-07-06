@@ -7,6 +7,7 @@ import { CollectionCarousel } from '@/components/profile/collection-carousel';
 import { ProfileBets } from '@/components/profile/profile-bets';
 import { ProfileHero } from '@/components/profile/profile-hero';
 import { StartingXiPreview } from '@/components/profile/starting-xi-preview';
+import { WalletActivity } from '@/components/profile/wallet-activity';
 import { userCards } from '@/config/fantasy-cards.config';
 import { selfProfile } from '@/config/duelists.config';
 
@@ -37,6 +38,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           <DuelHistoryList profile={selfProfile} />
           <ProfileBets />
+          <WalletActivity />
           <GlassPanel radius="xl" tone="surface" className="overflow-hidden lg:col-span-2 xl:col-span-1">
             <SectionHeader
               title="Starting XI"

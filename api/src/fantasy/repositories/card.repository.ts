@@ -16,6 +16,11 @@ export class CardRepository {
     return this.prisma.cardCatalog.findUnique({ where: { id } });
   }
 
+  /** Resolve a catalog card by its unique display name (the front↔api join key). */
+  findByName(name: string): Promise<CardCatalog | null> {
+    return this.prisma.cardCatalog.findFirst({ where: { name } });
+  }
+
   findByRealPlayerId(realPlayerId: number): Promise<CardCatalog[]> {
     return this.prisma.cardCatalog.findMany({ where: { realPlayerId } });
   }

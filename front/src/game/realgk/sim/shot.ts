@@ -12,25 +12,35 @@ function shotTiming(mode: BodyAnim): { dur: number; contact: number } {
   return mode === BodyAnim.PowerShotSide ? { dur: 0.72, contact: 0.66 } : { dur: 0.52, contact: 0.54 };
 }
 
+/** The goal the player is attacking — the exact point the strike is aimed at (shared by start + update). */
+function goalPointFor(world: RealGkWorld, player: RealGkPlayer): { x: number; y: number } {
+  return pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
+}
+
 /**
- * The ball owner winds up a power shot; the actual strike fires at the contact frame. The view follows
- * the striker's orientation: profile (side) toward the goal by default, back if running away, front if
- * facing the camera.
+ * The ball owner winds up a power shot; the actual strike fires at the contact frame. The pose follows the
+ * DIRECTION TO THE GOAL (the same vector the ball travels), so the striker always faces where the ball goes:
+ * rear pose when the goal is up/away, front when it's down/toward the camera, profile when it's mostly sideways.
  */
-export function startPowerShot(player: RealGkPlayer, personas = false): boolean {
-  const facingBack = player.lookY < -0.45 || player.idleMode === BodyAnim.IdleBack;
+export function startPowerShot(world: RealGkWorld, player: RealGkPlayer, personas = false): boolean {
+  const goal = goalPointFor(world, player);
+  const gdx = goal.x - player.x;
+  const gdy = goal.y - player.y;
+  const upward = gdy < -Math.abs(gdx) * 0.35; // goal is clearly above → ball travels up
+  const downward = gdy > Math.abs(gdx) * 0.35; // goal is clearly below → ball travels down
+  if (Math.abs(gdx) > 1) player.facing = gdx < 0 ? -1 : 1; // face the goal horizontally (mirrors side/front)
+
   let mode = BodyAnim.PowerShotSide;
   let idle = player.idleMode;
   if (personas) {
-    // Persona casting always strikes with the regen `shot_front` body (front / side / back all collapse to
-    // it), composited with the persona head. There is no rear-view regen shot pose yet — the back case
-    // reuses the same front body; regenerate a `shot_back` body-only pack for a true rear kick.
-    mode = BodyAnim.ShotFront;
-    idle = facingBack ? BodyAnim.IdleBack : BodyAnim.IdleFront;
-  } else if (facingBack) {
+    // Persona casting has only front/rear shot bodies — rear when the ball goes up, front otherwise
+    // (down + sideways). Both are headless; the persona head composites on top.
+    mode = upward ? BodyAnim.ShotBack : BodyAnim.ShotFront;
+    idle = upward ? BodyAnim.IdleBack : BodyAnim.IdleFront;
+  } else if (upward) {
     mode = BodyAnim.PowerShotBack;
     idle = BodyAnim.IdleBack;
-  } else if (player.lookY > 0.45) {
+  } else if (downward) {
     mode = BodyAnim.PowerShotFront;
     idle = BodyAnim.IdleFront;
   }
@@ -57,7 +67,7 @@ export function updatePowerShot(world: RealGkWorld, player: RealGkPlayer, dt: nu
   player.vy = 0;
   if (!player.powerShotHit && t >= timing.contact) {
     player.powerShotHit = true;
-    const goalPoint = pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
+    const goalPoint = goalPointFor(world, player);
     kickBall(world, player, goalPoint.x, goalPoint.y, SHOT_POWER, false, { intent: KickIntent.Shot });
     const note = Status.powerShot(player.name);
     setStatus(world, note.title, note.text);

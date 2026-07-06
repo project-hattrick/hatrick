@@ -60,6 +60,9 @@ export interface RealGkPlayer {
   receiveHit: boolean;
   /** Power-shot wind-up flag — true once the strike has fired (v4 extraAnims; inert otherwise). */
   powerShotHit: boolean;
+  /** Slide tackle (carrinho) state — `slideHit` fires once at the poke frame. */
+  slideCooldown: number;
+  slideHit: boolean;
   /** Seconds after the intro starts before this player begins walking on (v5 matchIntro; 0 otherwise). */
   introDelay: number;
   /** Off-pitch entrance spawn (v5 matchIntro) — where the player walks on FROM. */

@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { OnboardingStep } from '@/enums/onboarding-step.enum';
 import { formations } from '@/config/formation.config';
 import { useFantasyStore } from '@/store/fantasy.store';
-import type { PackCard } from '@/config/pack-pool.config';
+import { useAuthStore } from '@/store/auth.store';
+import { fantasyService, type CollectionCard } from '@/services/fantasy.service';
 import { pickStartingXI } from './steps/squad-step';
 
 /** Cards a Starter Pack drops — a full XI so the formation editor has an eleven to arrange. */
@@ -42,10 +43,16 @@ export function useOnboardingController() {
 
   const lockFormation = () => {
     setSquad(order);
+    // Persist the XI server-side when signed in (cards carry their owned copy id).
+    if (useAuthStore.getState().status === 'authed') {
+      const shape = formations[formationIndex].shape;
+      const ownedIds = order.map((i) => collection[i]?.ownedCardId).filter(Boolean) as string[];
+      if (ownedIds.length) void fantasyService.saveSquad(shape, ownedIds).catch(() => {});
+    }
     setStep(OnboardingStep.Done);
   };
 
-  const completePack = (cards: PackCard[]) => {
+  const completePack = (cards: CollectionCard[]) => {
     addToCollection(cards);
     // The collection was empty, so the pulled cards keep their indices — seed the XI order.
     setOrder(pickStartingXI(cards).map(({ index }) => index));

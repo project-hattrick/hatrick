@@ -1,10 +1,18 @@
 import { Module } from '@nestjs/common';
 
-import { MarketProjectorService } from './services';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { BetsController } from './bets.controller';
+import { BettingService, MarketProjectorService } from './services';
 import { BetRepository, MarketListingRepository } from './repositories';
 
 @Module({
-  providers: [MarketProjectorService, BetRepository, MarketListingRepository],
+  imports: [
+    UsersModule, // WalletRepository + UserRepository for the ledger
+    AuthModule, // JwtAuthGuard
+  ],
+  controllers: [BetsController],
+  providers: [MarketProjectorService, BettingService, BetRepository, MarketListingRepository],
   exports: [BetRepository, MarketListingRepository],
 })
 export class LiveModule {}

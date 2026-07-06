@@ -38,6 +38,22 @@ export class UserResponseDto {
   })
   avatarUrl!: string | null;
 
+  @ApiProperty({ description: 'Unique handle', nullable: true, type: String })
+  username!: string | null;
+
+  @ApiProperty({ description: 'Country represented', nullable: true, type: String })
+  country!: string | null;
+
+  @ApiProperty({ description: 'Short bio', nullable: true, type: String })
+  bio!: string | null;
+
+  @ApiProperty({
+    description: 'Avatar source — preset path or URL',
+    nullable: true,
+    type: String,
+  })
+  portraitSrc!: string | null;
+
   @ApiProperty({ description: 'Access level', enum: UserRole })
   role!: UserRole;
 
@@ -77,6 +93,10 @@ export class UserResponseDto {
     dto.email = user.email;
     dto.displayName = user.displayName;
     dto.avatarUrl = user.avatarUrl;
+    dto.username = user.username;
+    dto.country = user.country;
+    dto.bio = user.bio;
+    dto.portraitSrc = user.portraitSrc;
     dto.role = user.role;
     dto.status = user.status;
     dto.balance = user.balance.toFixed(2);

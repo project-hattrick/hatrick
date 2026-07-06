@@ -48,9 +48,9 @@ Bodies live in `public/game/real-gk/` (v4) unless noted. Actions marked *(play o
 
 | Anim (`BodyAnim`) | Style | Persona head | Regen available? |
 |---|---|---|---|
-| **All persona strikes** (front / side / back) | **regen-v1** `shot_front` ✅ | ✅ | every persona shot now collapses to the regen body (`sim/shot.ts`, `personas=true`) |
+| Persona **front / side** strike | **regen-v1** `shot_front` ✅ | ✅ | side collapses to the front regen body (`sim/shot.ts`) |
+| Persona **rear** strike | **regen-v1** `shot_back` ✅ | ✅ back | away-facing shots use the regen rear pose (`ShotBack`) with the back head |
 | `power_shot` / `_back` / `side_shot` (v4 strikes) | v4 | ✅ | **only used by non-persona checkpoints now** — personas no longer reach them |
-| ⚠️ Rear-view shot **pose** | reuses front `shot_front` | ✅ (front head) | **NO `shot_back` regen pack** — the back case plays the front body; generate a `shot_back` body-only pack for a true rear kick |
 | `header` *(play only)* | v4 | ✅ | no `bodyonly_regen` pack (only `header_pack*`) |
 | `receive_foot` (trap) *(play only)* | v4 | ✅ | no regen pack |
 | `intercept` *(play only)* | v4 | ✅ | no regen pack |
@@ -88,11 +88,9 @@ design (one keeper character). Codex has `goalkeeper_bodyonly_*` packs if we eve
 
 ## Missing-assets summary (priority order)
 
-1. **Rear-view shot pose (`shot_back` body-only).** Persona shots now always use the front `shot_front`; a player
-   shooting away from camera plays the front body. Needs a `shot_back` regen pack for a true rear kick.
-2. **`header` / `receive` / `intercept` / `turn` / `stop_brake` regen.** Still v4 art (playable sandbox only);
-   regenerate body-only to match the new style.
+1. **`header` / `receive` / `intercept` / `turn` / `stop_brake` regen.** Still v4 art (playable sandbox only);
+   regenerate body-only to match the new style. These are the only v4 bodies left in the persona cast.
 
 Everything now **composites the persona head correctly** (no baked faces left in the persona cast). "How it looks now":
-new regen bodies for the **full locomotion family (front + side + back)**, the front shot, and the **knee celebrations**;
-old-but-persona-headed v4 bodies for the remaining actions (side/back shot, header, trap, intercept, turn, brake).
+new regen bodies for the **full locomotion family (front + side + back)**, **both shots (front + rear)**, and the **knee
+celebrations**; old-but-persona-headed v4 bodies only for header / trap / intercept / turn / brake (playable sandbox).

@@ -17,3 +17,13 @@ export function assertWalletOwner(
     );
   }
 }
+
+/**
+ * Authorization rule for id-scoped actions: the target user id must be the
+ * signed-in user's own id. Used to guard profile update/delete. Throws 403.
+ */
+export function assertSelf(user: AuthenticatedUser, userId: string): void {
+  if (userId !== user.userId) {
+    throw new ForbiddenException('You can only modify your own account');
+  }
+}

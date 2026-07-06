@@ -13,11 +13,11 @@ import { useAuthStore } from '@/store/auth.store';
  */
 export function useRequireAuth(): () => boolean {
   const { setVisible } = useWalletModal();
-  const token = useAuthStore((s) => s.token);
+  const status = useAuthStore((s) => s.status);
 
   return useCallback(() => {
-    if (token) return true;
+    if (status === 'authed') return true;
     setVisible(true);
     return false;
-  }, [token, setVisible]);
+  }, [status, setVisible]);
 }

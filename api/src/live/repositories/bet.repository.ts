@@ -12,6 +12,10 @@ export class BetRepository {
     return this.prisma.bet.create({ data });
   }
 
+  findById(id: string): Promise<Bet | null> {
+    return this.prisma.bet.findUnique({ where: { id } });
+  }
+
   findByUser(userId: string): Promise<Bet[]> {
     return this.prisma.bet.findMany({ where: { userId }, orderBy: { placedAt: 'desc' } });
   }

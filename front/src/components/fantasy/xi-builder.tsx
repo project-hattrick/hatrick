@@ -6,14 +6,21 @@ import { Button } from '@/components/ui/button';
 import { SquadStep, pickStartingXI } from '@/components/onboarding/steps/squad-step';
 import { formations } from '@/config/formation.config';
 import { useFantasyStore } from '@/store/fantasy.store';
+import { useAuthStore } from '@/store/auth.store';
+import { fantasyService } from '@/services/fantasy.service';
 
 /** Formation editor for /fantasy — owns the pitch order + shape, persists to fantasy.store.squad. */
 export function XiBuilder() {
   const collection = useFantasyStore((s) => s.collection);
   const squad = useFantasyStore((s) => s.squad);
+  const storedFormation = useFantasyStore((s) => s.formation);
   const setSquad = useFantasyStore((s) => s.setSquad);
+  const setStoreFormation = useFantasyStore((s) => s.setFormation);
 
-  const [formationIndex, setFormationIndex] = useState(0);
+  const [formationIndex, setFormationIndex] = useState(() => {
+    const i = formations.findIndex((f) => f.shape === storedFormation);
+    return i >= 0 ? i : 0;
+  });
   const [order, setOrder] = useState<number[]>(() =>
     squad.length ? squad : pickStartingXI(collection).map(({ index }) => index),
   );
@@ -26,7 +33,15 @@ export function XiBuilder() {
     });
 
   const save = () => {
+    const shape = formations[formationIndex].shape;
     setSquad(order);
+    setStoreFormation(shape);
+    if (useAuthStore.getState().status === 'authed') {
+      const ownedIds = order.map((i) => collection[i]?.ownedCardId).filter(Boolean) as string[];
+      if (ownedIds.length) {
+        void fantasyService.saveSquad(shape, ownedIds).catch(() => toast.error('Could not sync your XI.'));
+      }
+    }
     toast.success('Starting XI saved.');
   };
 

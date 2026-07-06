@@ -10,6 +10,9 @@ import { SiteFooter } from './site-footer';
 export function HomeExperience() {
   return (
     <div className="relative w-full">
+      {/* Sole page heading — the hero is all visual chrome, so the landing's h1 lives here for SEO/a11y. */}
+      <h1 className="sr-only">Hat-trick — Live &amp; Fantasy football for the World Cup</h1>
+
       <LandingIntro />
       <SiteNavbar heroBackdrop />
 
