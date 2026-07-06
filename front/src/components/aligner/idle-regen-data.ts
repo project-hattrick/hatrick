@@ -18,8 +18,8 @@ export const COURT_BG = '/game/stadiums/rain-court/court.png';
 
 const frames = (prefix: string): string[] => [1, 2, 3, 4].map((n) => `${BODY_ROOT}/${prefix}_frame_0${n}.png`);
 
-/** Which head bust an anim composites (front for front-facing bodies, side_right for the profile run). */
-export type HeadView = 'front' | 'side';
+/** Which head bust an anim composites (front, side_right for the profile run, or back for away-facing). */
+export type HeadView = 'front' | 'side' | 'back';
 
 export interface AnimDef {
   id: string;
@@ -37,14 +37,19 @@ export interface AnimDef {
 const FRONT_HEAD = { headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.095 } as const;
 /** Side head placement for the profile run (seats the side bust over the shoulder). */
 const SIDE_HEAD = { headScale: 0.62, offsetXRatio: 0.11, offsetYRatio: 0.09 } as const;
+/** Back head placement for the away-facing bodies (from the updated preview's BACK_CONFIG). */
+const BACK_HEAD = { headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 } as const;
 
-/** Every regen body-only anim, in selector order. Front anims share FRONT_HEAD; run_side uses the side bust. */
+/** Every regen body-only anim, in selector order. Front anims share FRONT_HEAD; side/back use their bust. */
 export const ANIMS: AnimDef[] = [
   { id: 'idle', label: 'Idle', frames: frames('idle_front'), frameMs: 380, headView: 'front', headCfg: FRONT_HEAD },
   { id: 'walk', label: 'Walk', frames: frames('walk_front'), frameMs: 210, headView: 'front', headCfg: FRONT_HEAD },
   { id: 'run', label: 'Run', frames: frames('run_front'), frameMs: 150, headView: 'front', headCfg: FRONT_HEAD },
   { id: 'shot', label: 'Shot', frames: frames('shot_front'), frameMs: 170, headView: 'front', headCfg: FRONT_HEAD },
   { id: 'side', label: 'Run · side', frames: frames('run_side'), frameMs: 150, headView: 'side', headCfg: SIDE_HEAD },
+  { id: 'idle_back', label: 'Idle · back', frames: frames('idle_back'), frameMs: 380, headView: 'back', headCfg: BACK_HEAD },
+  { id: 'walk_back', label: 'Walk · back', frames: frames('walk_back'), frameMs: 210, headView: 'back', headCfg: BACK_HEAD },
+  { id: 'run_back', label: 'Run · back', frames: frames('run_back'), frameMs: 150, headView: 'back', headCfg: BACK_HEAD },
 ];
 
 /** Flat list of every frame src (for preloading). */
@@ -61,9 +66,10 @@ export interface Persona {
   id: string;
   label: string;
   accent: string;
-  /** Front + side head busts (front for front anims, side_right for the profile run). */
+  /** Front + side + back head busts (picked per anim's headView). */
   headFront: string;
   headSide: string;
+  headBack: string;
   /** Home position in field ratios: lat (0 = left touchline, 1 = right), depth (0 = far, 1 = near). */
   lat: number;
   depth: number;
@@ -75,6 +81,7 @@ const persona = (id: string, label: string, accent: string, lat: number, depth: 
   accent,
   headFront: `${HEADS_ROOT}/${id}_head_front.png`,
   headSide: `${HEADS_ROOT}/${id}_head_side_right.png`,
+  headBack: `${HEADS_ROOT}/${id}_head_back.png`,
   lat,
   depth,
 });

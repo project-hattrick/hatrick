@@ -75,11 +75,12 @@ function drawShadow(ctx: CanvasRenderingContext2D, footX: number, footY: number,
 
 export function IdleRegenPreview() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<{ court: HTMLImageElement | null; frames: ImageMap; front: ImageMap; side: ImageMap }>({
+  const imagesRef = useRef<{ court: HTMLImageElement | null; frames: ImageMap; front: ImageMap; side: ImageMap; back: ImageMap }>({
     court: null,
     frames: {},
     front: {},
     side: {},
+    back: {},
   });
   const stateRef = useRef({ scale: 1, labels: true, animIndex: 0 });
   const [ready, setReady] = useState(false);
@@ -123,15 +124,17 @@ export function IdleRegenPreview() {
       const frames: ImageMap = {};
       const front: ImageMap = {};
       const side: ImageMap = {};
+      const back: ImageMap = {};
       const jobs: Promise<void>[] = [];
       for (const src of ALL_FRAMES) jobs.push(loadImage(src).then((img) => void (frames[src] = img)));
       for (const p of PERSONAS) {
         jobs.push(loadImage(p.headFront).then((img) => void (front[p.id] = img)));
         jobs.push(loadImage(p.headSide).then((img) => void (side[p.id] = img)));
+        jobs.push(loadImage(p.headBack).then((img) => void (back[p.id] = img)));
       }
       await Promise.all(jobs);
       if (cancelled) return;
-      imagesRef.current = { court, frames, front, side };
+      imagesRef.current = { court, frames, front, side, back };
       resize();
       setReady(true);
       last = performance.now();
@@ -154,7 +157,7 @@ export function IdleRegenPreview() {
         frameIndex = (frameIndex + 1) % anim.frames.length;
       }
 
-      const { court, frames, front, side } = imagesRef.current;
+      const { court, frames, front, side, back } = imagesRef.current;
       if (!ctx || !canvas) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
@@ -165,7 +168,7 @@ export function IdleRegenPreview() {
 
       ctx.imageSmoothingEnabled = false;
       const frame = frames[anim.frames[frameIndex]];
-      const heads = anim.headView === 'side' ? side : front;
+      const heads = anim.headView === 'side' ? side : anim.headView === 'back' ? back : front;
       const t = now / 1000;
 
       // Depth-sort so nearer actors overlap farther ones, like the engine's render.
@@ -228,8 +231,8 @@ export function IdleRegenPreview() {
         </p>
         <h1 className="mt-1 text-lg font-bold uppercase leading-none text-white">New regen pack, three heads</h1>
         <p className="mt-1.5 text-[12px] leading-snug text-white/70">
-          The regen body-only anims (idle · walk · run · shot · side) composited with each persona head, on our
-          match court at our usual outfield player size. Flip the mode to read every locomotion.
+          The regen body-only anims (idle · walk · run · shot · side + the back family) composited with each
+          persona head, on our match court at our usual outfield player size. Flip the mode to read every locomotion.
         </p>
       </div>
 

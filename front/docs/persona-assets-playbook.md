@@ -33,11 +33,11 @@ Source folder: `public/game/personas/players/`.
 | `run_side` | 2x2 | **regen-v1** ✅ | ✅ | done |
 | `walk_back` | 2x2 | **regen-v1** ✅ | ✅ | done |
 | `shot_front` | — (new) | **regen-v1** ✅ | ✅ | done |
-| `run_back` | 2x2 | **2x2** ⚠️ | ✅ | **YES — `run_back_bodyonly_regen_v1` not pulled** (frames look very small, verify quality first) |
-| `idle_back` | 2x2 | **2x2** ⚠️ | ✅ | **NO regen pack exists** — only `idle_front` was regenerated |
+| `run_back` | 2x2 | **regen-v1** ✅ | ✅ | done (`run_back_bodyonly_regen_v1`) |
+| `idle_back` | 2x2 | **regen-v1** ✅ | ✅ | done (`idle_back_bodyonly_regen_v1`) |
 
-**Gap:** `run_back` (available to pull) and `idle_back` (needs generation) still ride the old 2x2 art, so a player
-running/standing *away from camera* looks a style-generation behind the rest.
+**Locomotion is fully regen now** (front + side + back family). Preview them at `/sandbox/personas-idle` (mode selector
+includes Idle/Walk/Run · back).
 
 ---
 
@@ -48,8 +48,9 @@ Bodies live in `public/game/real-gk/` (v4) unless noted. Actions marked *(play o
 
 | Anim (`BodyAnim`) | Style | Persona head | Regen available? |
 |---|---|---|---|
-| `shot_front` (front strike) | **regen-v1** ✅ | ✅ | done — used by `personaShot` |
-| `power_shot` / `_back` / `side_shot` (side & back strikes) | v4 | ✅ | no regen pack — style differs from `shot_front` |
+| **All persona strikes** (front / side / back) | **regen-v1** `shot_front` ✅ | ✅ | every persona shot now collapses to the regen body (`sim/shot.ts`, `personas=true`) |
+| `power_shot` / `_back` / `side_shot` (v4 strikes) | v4 | ✅ | **only used by non-persona checkpoints now** — personas no longer reach them |
+| ⚠️ Rear-view shot **pose** | reuses front `shot_front` | ✅ (front head) | **NO `shot_back` regen pack** — the back case plays the front body; generate a `shot_back` body-only pack for a true rear kick |
 | `header` *(play only)* | v4 | ✅ | no `bodyonly_regen` pack (only `header_pack*`) |
 | `receive_foot` (trap) *(play only)* | v4 | ✅ | no regen pack |
 | `intercept` *(play only)* | v4 | ✅ | no regen pack |
@@ -89,12 +90,11 @@ design (one keeper character). Codex has `goalkeeper_bodyonly_*` packs if we eve
 
 1. **Knee celebrations → persona (`KneeSlide` / `KneeRise` / `KneeJump`).** Most visible break — wrong face on every
    goal. Needs a new body-only regen pack (none exists yet).
-2. **`run_back` regen.** Pack **exists** (`generated_player_run_back_bodyonly_regen_v1`) — quick pull, but the frames are
-   ~4 KB (verify they aren't broken/empty before swapping).
-3. **`idle_back` regen.** No pack — needs generation to finish the locomotion swap.
-4. **Side/back strike + header/receive/intercept/turn/brake regen.** All still v4 art; regenerate body-only to match the
-   new style (only `run_back` currently has a regen pack among these; the rest need generation).
+2. **Rear-view shot pose (`shot_back` body-only).** Persona shots now always use the front `shot_front`; a player
+   shooting away from camera plays the front body. Needs a `shot_back` regen pack for a true rear kick.
+3. **`header` / `receive` / `intercept` / `turn` / `stop_brake` regen.** Still v4 art (playable sandbox only);
+   regenerate body-only to match the new style.
 
 Everything above **composites the persona head correctly except the three knee celebrations** (baked). So "how it looks
-now" is: new regen bodies for front locomotion + front shot, old-but-persona-headed bodies everywhere else, and a
-generic face only during the knee-slide celebration.
+now" is: new regen bodies for the **full locomotion family (front + side + back)** and the front shot, old-but-persona-headed
+bodies for the remaining actions, and a generic face only during the knee-slide celebration.

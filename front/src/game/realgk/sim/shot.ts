@@ -18,15 +18,20 @@ function shotTiming(mode: BodyAnim): { dur: number; contact: number } {
  * facing the camera.
  */
 export function startPowerShot(player: RealGkPlayer, personas = false): boolean {
+  const facingBack = player.lookY < -0.45 || player.idleMode === BodyAnim.IdleBack;
   let mode = BodyAnim.PowerShotSide;
   let idle = player.idleMode;
-  if (player.lookY < -0.45 || player.idleMode === BodyAnim.IdleBack) {
+  if (personas) {
+    // Persona casting always strikes with the regen `shot_front` body (front / side / back all collapse to
+    // it), composited with the persona head. There is no rear-view regen shot pose yet — the back case
+    // reuses the same front body; regenerate a `shot_back` body-only pack for a true rear kick.
+    mode = BodyAnim.ShotFront;
+    idle = facingBack ? BodyAnim.IdleBack : BodyAnim.IdleFront;
+  } else if (facingBack) {
     mode = BodyAnim.PowerShotBack;
     idle = BodyAnim.IdleBack;
   } else if (player.lookY > 0.45) {
-    // Persona casting swaps the front strike for the regen headless shot body (composited head); the
-    // side/back views keep the v4 power-shot bodies (also headless, also persona-composited).
-    mode = personas ? BodyAnim.ShotFront : BodyAnim.PowerShotFront;
+    mode = BodyAnim.PowerShotFront;
     idle = BodyAnim.IdleFront;
   }
   player.action = PlayerAction.PowerShot;
