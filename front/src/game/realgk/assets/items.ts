@@ -21,7 +21,8 @@ const RAW: RawItem[] = [
   { id: BodyAnim.WalkFront, fps: 4.5, frameCount: 4, bboxes: [[73, 69, 413, 614], [3, 69, 343, 614], [73, 3, 413, 548], [3, 3, 343, 548]] },
   { id: BodyAnim.RunFront, fps: 7.2, frameCount: 4, bboxes: [[99, 49, 458, 664], [18, 38, 370, 671], [83, 3, 443, 631], [3, 12, 355, 625]] },
   { id: BodyAnim.RunSide, fps: 7.2, frameCount: 4, bboxes: [[98, 62, 370, 613], [3, 70, 335, 591], [129, 3, 387, 519], [15, 10, 320, 528]] },
-  { id: BodyAnim.GkIdle, fps: 2.2, frameCount: 4, bboxes: [[253, 136, 503, 476], [157, 142, 411, 476], [229, 69, 504, 411], [145, 76, 403, 412]] },
+  // Idle now uses the light-save stance (pre-trimmed, drawn whole) instead of the old green sheet — no bboxes.
+  { id: BodyAnim.GkIdle, fps: 2.2, frameCount: 4 },
   { id: BodyAnim.GkReady, fps: 4.4, frameCount: 4, bboxes: [[209, 135, 467, 455], [154, 136, 409, 455], [195, 89, 451, 411], [133, 96, 407, 406]] },
   { id: BodyAnim.GkShuffle, fps: 6.0, frameCount: 4, bboxes: [[225, 145, 471, 461], [142, 145, 390, 461], [204, 69, 462, 387], [152, 74, 415, 387]] },
   {
@@ -46,6 +47,8 @@ const RAW: RawItem[] = [
     loop: false,
     bboxes: [[0, 0, 65, 82], [0, 0, 82, 84], [0, 0, 296, 90], [0, 0, 318, 61], [0, 0, 260, 139], [0, 0, 231, 105], [0, 0, 214, 121], [0, 0, 187, 120]],
   },
+  // Light save (headless 3/4-front reflex block) — pre-trimmed, drawn whole (no bbox), head composited.
+  { id: BodyAnim.GkLightSave, fps: 7.0, frameCount: 4, loop: false },
   // v4 pack — timings ported from the assets playground.
   { id: BodyAnim.TurnSide, fps: 8.0, frameCount: 4, loop: false },
   { id: BodyAnim.StopBrake, fps: 8.0, frameCount: 4, loop: false },

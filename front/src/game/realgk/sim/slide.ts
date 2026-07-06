@@ -2,6 +2,7 @@ import { BodyAnim, PlayerAction, Role } from '../enums';
 import { fieldBounds } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
+import { ballOwner } from './ball';
 import { BallText, Status } from './messages';
 import { setStatus } from './rules';
 
@@ -28,6 +29,22 @@ export function startSlideTackle(player: RealGkPlayer): boolean {
   player.vx = player.facing * SLIDE_LUNGE;
   player.vy = 0;
   return true;
+}
+
+/** AI carrinho: a defender within lunge range of the opponent ball-carrier slides in to win the ball. */
+export function maybeTriggerSlideTackle(world: RealGkWorld, player: RealGkPlayer): boolean {
+  if (!world.cfg.features?.slideTackles || player.role === Role.GK) return false;
+  if (player.action !== PlayerAction.None || player.actionTimer > 0 || player.slideCooldown > 0) return false;
+  const owner = ballOwner(world);
+  if (!owner || owner.team === player.team) return false;
+  const dx = owner.x - player.x;
+  const dy = owner.y - player.y;
+  // Reachable by a mostly-horizontal lunge: some room to slide (dx) with the carrier roughly level (dy).
+  if (Math.abs(dx) < 12 || Math.abs(dx) > 42 || Math.abs(dy) > 26) return false;
+  // Occasional, so defenders don't all pile in at once (cooldown + chance gate it).
+  if (Math.random() > 0.03) return false;
+  player.facing = dx < 0 ? -1 : 1;
+  return startSlideTackle(player);
 }
 
 /** Ticks an in-progress slide: glide forward, poke/strip the ball at contact if in reach, then recover. */

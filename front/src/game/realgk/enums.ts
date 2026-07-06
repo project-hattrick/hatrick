@@ -46,6 +46,8 @@ export enum BodyAnim {
   GkRunSide = 'gk_run_side',
   GkDive = 'gk_dive_save',
   GkDiveV2 = 'gk_dive_v2',
+  /** Light save (carrinho do goleiro) — 3/4-front reflex block, headless 4-frame; head composited. */
+  GkLightSave = 'gk_light_save',
 }
 
 export enum HeadView {

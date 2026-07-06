@@ -159,10 +159,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
   const frame = personaLoco ? assets.personaBodies[player.mode]![frameIdx] : assets.body[player.mode][frameIdx];
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
-  const outfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
+  const outfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode, frameIdx) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const diving = isGk && player.action === PlayerAction.Dive;
   // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
-  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
   // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
   // the stretched sprite reads like a normal player instead of inflating off its short height.
   // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.

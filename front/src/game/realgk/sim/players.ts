@@ -12,7 +12,7 @@ import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { startPowerShot, updatePowerShot } from './shot';
-import { updateSlideTackle } from './slide';
+import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
 import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { setStatus } from './rules';
@@ -524,6 +524,10 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     }
     if (maybeTriggerReceive(world, player)) {
       updateReceive(world, player, dt);
+      continue;
+    }
+    if (maybeTriggerSlideTackle(world, player)) {
+      updateSlideTackle(world, player, dt);
       continue;
     }
 

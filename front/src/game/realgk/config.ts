@@ -46,6 +46,8 @@ export interface RealGkFeatures {
   /** Animate the near-goal strike (regen shot body, composited head) instead of the instant strike —
    *  keeps the rest of the match script identical. Independent of `extraAnims`. */
   personaShot?: boolean;
+  /** AI slide tackles (carrinho): a defender near the opponent ball-carrier slides in to win the ball. */
+  slideTackles?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -270,7 +272,7 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   spriteMaxH: 34,
   // Players shrank (composited head reads at the base height), so bump the referee/coach whole-sprites to match.
   actorScale: { referee: 1.3, coach: 1.3 },
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true },
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
 };
 
 /**
@@ -284,7 +286,7 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   spriteMinH: 20,
   spriteMaxH: 34,
   actorScale: { referee: 1.3, coach: 1.3 },
-  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true },
+  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
 };
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
