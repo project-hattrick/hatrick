@@ -51,9 +51,16 @@ function FaqRow({ question, answer }: FaqRowProps) {
         </span>
       </button>
 
-      {open && (
-        <p className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">{answer}</p>
-      )}
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-300 ease-out',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">{answer}</p>
+        </div>
+      </div>
     </GlassPanel>
   );
 }
@@ -103,9 +110,11 @@ export function FaqSection() {
         })}
       </div>
 
-      <div className="grid gap-2.5 md:grid-cols-2">
+      <div className="columns-1 gap-2.5 md:columns-2">
         {items.map((item) => (
-          <FaqRow key={item.q} question={item.q} answer={item.a} />
+          <div key={item.q} className="mb-2.5 break-inside-avoid">
+            <FaqRow question={item.q} answer={item.a} />
+          </div>
         ))}
       </div>
     </section>

@@ -34,7 +34,7 @@ function TeamTag({ name, shape, code, align }: { name: string; shape: string; co
 export function TeamFormationCard() {
   const { home, away } = teamFormation;
   return (
-    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
+    <GlassPanel tone="surface" radius="xl" className="flex flex-1 flex-col gap-3 p-4">
       <span className="text-sm font-bold">Team Formation</span>
 
       <div className="flex items-center justify-between">
@@ -43,7 +43,7 @@ export function TeamFormationCard() {
         <TeamTag name={away.name} shape={away.shape} code={away.code} align="right" />
       </div>
 
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">
+      <div className="relative min-h-[220px] w-full flex-1 overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">
         <div className="pointer-events-none absolute inset-2 rounded-md border border-white/10" />
         <div className="pointer-events-none absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
         <div className="pointer-events-none absolute top-1/2 left-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
