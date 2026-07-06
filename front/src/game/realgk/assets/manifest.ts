@@ -48,7 +48,7 @@ export const COACH_PATHS = {
 const PERSONAS_ROOT = '/game/personas';
 
 /** How many persona head sets ship (p01..pNN in `public/game/personas/heads/`). */
-export const PERSONA_COUNT = 3;
+export const PERSONA_COUNT = 11;
 
 /** Headless outfield anims that carry a per-frame sliced body (BodyAnim value = file prefix). */
 export const PERSONA_BODY_ANIMS = ['idle_front', 'walk_front', 'run_front', 'idle_back', 'walk_back', 'run_back', 'run_side', 'shot_front', 'shot_back'] as const;

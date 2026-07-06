@@ -2,6 +2,7 @@
 
 import { useWalletAuth } from '@/services/queries/use-wallet-auth';
 import { useFantasySession } from '@/services/queries/use-fantasy-session';
+import { useBetsSession } from '@/services/queries/use-bets-session';
 
 /**
  * Headless component that drives wallet sign-in app-wide. Mounted once inside the
@@ -11,5 +12,6 @@ import { useFantasySession } from '@/services/queries/use-fantasy-session';
 export function WalletAuthSync(): null {
   useWalletAuth();
   useFantasySession();
+  useBetsSession();
   return null;
 }

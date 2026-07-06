@@ -3,6 +3,7 @@ export const queryKeys = {
   authMe: () => ['auth', 'me'] as const,
   walletTransactions: () => ['wallet', 'transactions'] as const,
   fantasySession: () => ['fantasy', 'session'] as const,
+  betsSession: () => ['bets', 'session'] as const,
   fixtures: () => ['fixtures'] as const,
   odds: (fixtureId: number) => ['odds', fixtureId] as const,
   crowd: (fixtureId: number) => ['crowd', fixtureId] as const,

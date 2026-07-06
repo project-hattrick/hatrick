@@ -105,37 +105,15 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.09, offsetYRatio: 0.075 },
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.16, offsetYRatio: 0.06 },
   ],
-  // Slide tackle (carrinho, regen v1) — side head, mirrors with facing (headFlip); sizeScale keeps the
-  // tightly-cropped horizontal pose from inflating under normalizedSizes. Per-frame, tuned in the editor.
-  [BodyAnim.SlideTackle]: [
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.004, offsetYRatio: 0.1, sizeScale: 0.62, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.0622, offsetYRatio: 0.0925, sizeScale: 0.62, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.1423, offsetYRatio: 0.0944, sizeScale: 0.62, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.1542, offsetYRatio: 0.1436, sizeScale: 0.6, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.149, offsetYRatio: 0.1291, sizeScale: 0.62, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: -0.174, offsetYRatio: 0.1218, sizeScale: 0.62, headFlip: true },
-  ],
+  // Slide tackle (carrinho, regen v1) — side head, mirrors with facing. sizeScale keeps the tightly-cropped
+  // horizontal pose from inflating under normalizedSizes.
+  [BodyAnim.SlideTackle]: repeat({ headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: 0.1, offsetYRatio: 0.1, sizeScale: 0.62 }, 6),
   // Knee-celebration pack (now body-only regen) — front head throughout; per-frame offsets from the
   // preview's KNEE_CONFIG so the head seats through the slide → rise → jump. Replaces the old baked faces.
-  [BodyAnim.KneeSlide]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.0219, offsetYRatio: 0.2121 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0123, offsetYRatio: 0.2829 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.032, offsetYRatio: 0.3481 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0389, offsetYRatio: 0.3521 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0579, offsetYRatio: 0.2796 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.0411, offsetYRatio: 0.2011 },
-  ],
-  [BodyAnim.KneeRise]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.2911 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.0328, offsetYRatio: 0.131 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.0081, offsetYRatio: 0.0834 },
-  ],
-  [BodyAnim.KneeJump]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0162, offsetYRatio: 0.165 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: -0.0316, offsetYRatio: 0.0825 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0179, offsetYRatio: 0.0694 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0.0162, offsetYRatio: 0.095 },
-  ],
+  // Knee celebration removed from the goal routine (arms-up only); configs kept for the sprite editor.
+  [BodyAnim.KneeSlide]: repeat({ headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.14 }, 6),
+  [BodyAnim.KneeRise]: repeat({ headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.14 }, 3),
+  [BodyAnim.KneeJump]: repeat({ headView: HeadView.Front, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.135 }, 4),
 };
 
 /**
@@ -144,60 +122,15 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
  * /sandbox/sprite-editor. `RunSide` mirrors with facing (headFlip). Idle anims only ever read frame 0.
  */
 export const LOCOMOTION_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
-  [BodyAnim.IdleFront]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0221, offsetYRatio: 0.0842 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0112, offsetYRatio: 0.0693 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.0813 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0066, offsetYRatio: 0.0914 },
-  ],
-  [BodyAnim.WalkFront]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0203, offsetYRatio: 0.0672 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.0778 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0105, offsetYRatio: 0.0672 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.0778 },
-  ],
-  [BodyAnim.RunFront]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: -0.0396, offsetYRatio: 0.0725 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: -0.016, offsetYRatio: 0.0962 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0242, offsetYRatio: 0.0932 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0169, offsetYRatio: 0.1021 },
-  ],
-  [BodyAnim.IdleBack]: [
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.0525 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0082, offsetYRatio: 0.0842 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-  ],
-  [BodyAnim.WalkBack]: [
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-  ],
-  [BodyAnim.RunBack]: [
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 },
-  ],
-  [BodyAnim.RunSide]: [
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1752, offsetYRatio: 0.0899, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1, offsetYRatio: 0.1, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.26, offsetYRatio: 0.0969, headFlip: true },
-    { headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1019, offsetYRatio: 0.1168, headFlip: true },
-  ],
-  [BodyAnim.ShotFront]: [
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0173, offsetYRatio: 0.0931 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: -0.0033, offsetYRatio: 0.0956 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0294, offsetYRatio: 0.0848 },
-    { headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.0282, offsetYRatio: 0.0902 },
-  ],
-  [BodyAnim.ShotBack]: [
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 },
-    { headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 },
-  ],
+  [BodyAnim.IdleFront]: [{ headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 }],
+  [BodyAnim.WalkFront]: [{ headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 }],
+  [BodyAnim.RunFront]: [{ headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 }],
+  [BodyAnim.IdleBack]: [{ headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 }],
+  [BodyAnim.WalkBack]: [{ headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 }],
+  [BodyAnim.RunBack]: [{ headView: HeadView.Back, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.1 }],
+  [BodyAnim.RunSide]: [{ headView: HeadView.Side, bodyScale: 1, headScale: 0.5, offsetXRatio: 0.1, offsetYRatio: 0.1 }],
+  [BodyAnim.ShotFront]: [{ headView: HeadView.Front, bodyScale: 1, headScale: 0.5, offsetXRatio: 0, offsetYRatio: 0.12 }],
+  [BodyAnim.ShotBack]: [{ headView: HeadView.Back, bodyScale: 1, headScale: 0.48, offsetXRatio: 0, offsetYRatio: 0.08 }],
 };
 
 /** The composited-head config for a persona locomotion body/frame (null = not a persona locomotion anim). */

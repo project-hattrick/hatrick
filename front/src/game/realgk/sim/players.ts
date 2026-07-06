@@ -20,15 +20,16 @@ import { setStatus } from './rules';
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
 
 /** Builds one player object at (lat, depth) for the given team. */
-function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, depth: number, name: string): RealGkPlayer {
+function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, depth: number, name: string, slotIndex?: number): RealGkPlayer {
   const dir = team === Team.Blue ? 1 : -1;
   const pt = pointOnField(world.size, lat, depth);
   const idle = role === Role.GK ? BodyAnim.GkIdle : dir > 0 ? BodyAnim.IdleFront : BodyAnim.IdleBack;
   const id = world.nextPlayerId++;
   return {
     id,
-    // Spread the available persona faces across the squad (casting; inert unless personaHeads is on).
-    personaId: id % Math.max(1, PERSONA_COUNT),
+    // One distinct persona head per squad slot (0..10) so no face repeats within a team; falls back to
+    // id-based spread for the playable sandbox. Inert unless `personaHeads` is on.
+    personaId: (slotIndex ?? id) % Math.max(1, PERSONA_COUNT),
     name,
     team,
     dir,
@@ -98,7 +99,7 @@ export function resetPlayers(world: RealGkWorld): void {
   for (const team of [Team.Blue, Team.Red]) {
     FORMATION.forEach((slot, index) => {
       const lat = team === Team.Blue ? slot.lat : 1 - slot.lat;
-      world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, `${TEAM_TAG[team]}-${index + 1}`));
+      world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, `${TEAM_TAG[team]}-${index + 1}`, index));
     });
   }
   // A red card holds across kickoff resets — the sent-off player stays in the dressing room (v5 fouls).

@@ -79,8 +79,8 @@ export function startCelebrations(world: RealGkWorld, scoringTeam: Team): void {
       Math.hypot(p.x - ball.x, p.y - ball.y) < Math.hypot(best.x - ball.x, best.y - ball.y) ? p : best,
     );
 
-  const kind = Math.random() < 0.5 ? CelebrationKind.ArmsUp : CelebrationKind.Knee;
-  beginFor(scorer, kind);
+  // Knee-slide celebration removed — the scorer always does the arms-up run.
+  beginFor(scorer, CelebrationKind.ArmsUp);
   match.celebrantId = scorer.id;
 
   squad

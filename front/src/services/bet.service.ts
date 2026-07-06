@@ -28,7 +28,8 @@ export interface ServerBet {
   selection: string;
   stake: string;
   oddsTaken: string;
-  status: BetStatus;
+  /** api BetStatus — a superset of the front BetStatus (adds Pending/CashedOut). */
+  status: 'Pending' | 'Won' | 'Lost' | 'Void' | 'CashedOut';
   placedAt: string;
   settledAt: string | null;
 }

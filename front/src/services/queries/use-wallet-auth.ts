@@ -8,6 +8,7 @@ import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
+import { useBetsStore } from '@/store/bets.store';
 import { useSignInMutation } from './use-sign-in';
 import { useSession } from './use-session';
 import { queryKeys } from './keys';
@@ -48,9 +49,11 @@ export function useWalletAuth() {
           clear();
           useWalletStore.getState().reset();
           useFantasyStore.getState().reset();
+          useBetsStore.getState().reset();
           queryClient.setQueryData(queryKeys.authMe(), null);
           queryClient.removeQueries({ queryKey: queryKeys.walletTransactions() });
           queryClient.removeQueries({ queryKey: queryKeys.fantasySession() });
+          queryClient.removeQueries({ queryKey: queryKeys.betsSession() });
         });
       }
       inFlight.current = false;

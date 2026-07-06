@@ -31,6 +31,10 @@ interface BetsStore {
   place: () => Bet | null;
   /** Resolve an open bet (mock settlement driver): credit the payout on a win. */
   settle: (id: string, status: BetStatus) => void;
+  /** Replace the ledger with the authoritative server bets (on login). */
+  hydrate: (open: Bet[], settled: Bet[]) => void;
+  /** Clear the ledger on sign-out. */
+  reset: () => void;
 }
 
 const noopStorage = {
@@ -112,6 +116,8 @@ export const useBetsStore = create<BetsStore>()(
           href: '/bets',
         });
       },
+      hydrate: (open, settled) => set({ open, settled }),
+      reset: () => set({ open: [], settled: [], slip: null, stake: DEFAULT_STAKE }),
     }),
     {
       name: 'hat-trick-bets',
