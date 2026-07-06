@@ -264,7 +264,10 @@ export const REAL_GK_V6_CONFIG: RealGkConfig = {
 export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   ...REAL_GK_MATCH_CONFIG,
   // Hero match script/bounds/lighting, but persona-cast + an animated strike (regen shot body) and the
-  // ball dust/impact effects from the Effects Lab.
+  // ball dust/impact effects from the Effects Lab. Smaller actors than the hero (~22%) so the composited
+  // persona heads read cleaner on the pitch.
+  spriteMinH: 20,
+  spriteMaxH: 34,
   features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true },
 };
 
@@ -276,6 +279,8 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
  */
 export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   ...REAL_GK_PLAY_CONFIG,
+  spriteMinH: 20,
+  spriteMaxH: 34,
   features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true },
 };
 

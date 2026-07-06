@@ -69,13 +69,13 @@ Used by `sim/celebration.ts` when `celebrations: true` (both persona checkpoints
 |---|---|---|---|
 | Run / Pose / Loop | `player_armsup_run_front` (`ArmsUpRun`) | v4 | ✅ composited |
 | Jump | `celebrate_jump` (`CelebrateJump`) | v4 | ✅ composited |
-| Knee slide | `celebrate_knee_slide` (`KneeSlide`) | **baked** | ❌ **generic face** |
-| Knee rise | `celebrate_knee_rise` (`KneeRise`) | **baked** | ❌ **generic face** |
-| Knee jump | `celebrate_knee_jump` (`KneeJump`) | **baked** | ❌ **generic face** |
+| Knee slide | `celebrate_knee_slide` (`KneeSlide`) | **regen-v1** ✅ | ✅ composited |
+| Knee rise | `celebrate_knee_rise` (`KneeRise`) | **regen-v1** ✅ | ✅ composited |
+| Knee jump | `celebrate_knee_jump` (`KneeJump`) | **regen-v1** ✅ | ✅ composited |
 
-**Gap (visible on every goal):** the arms-up celebration keeps the persona head, but the **knee-slide sequence shows a
-generic baked face**, breaking the illusion right at the celebration. No headless regen pack exists for the knee frames —
-they'd need to be regenerated body-only (like the locomotion pack) to composite the persona head.
+**Resolved:** the knee pack is now body-only regen (`knee_celebration_bodyonly_regen_v1`), overwriting the baked frames
+in `public/game/real-gk/`, with per-frame head configs in `OUTFIELD_FRAME_CONFIG`. Personas now keep their head through
+the whole slide → rise → jump, and non-persona checkpoints composite the generic head (no more baked face).
 
 ---
 
@@ -88,13 +88,11 @@ design (one keeper character). Codex has `goalkeeper_bodyonly_*` packs if we eve
 
 ## Missing-assets summary (priority order)
 
-1. **Knee celebrations → persona (`KneeSlide` / `KneeRise` / `KneeJump`).** Most visible break — wrong face on every
-   goal. Needs a new body-only regen pack (none exists yet).
-2. **Rear-view shot pose (`shot_back` body-only).** Persona shots now always use the front `shot_front`; a player
+1. **Rear-view shot pose (`shot_back` body-only).** Persona shots now always use the front `shot_front`; a player
    shooting away from camera plays the front body. Needs a `shot_back` regen pack for a true rear kick.
-3. **`header` / `receive` / `intercept` / `turn` / `stop_brake` regen.** Still v4 art (playable sandbox only);
+2. **`header` / `receive` / `intercept` / `turn` / `stop_brake` regen.** Still v4 art (playable sandbox only);
    regenerate body-only to match the new style.
 
-Everything above **composites the persona head correctly except the three knee celebrations** (baked). So "how it looks
-now" is: new regen bodies for the **full locomotion family (front + side + back)** and the front shot, old-but-persona-headed
-bodies for the remaining actions, and a generic face only during the knee-slide celebration.
+Everything now **composites the persona head correctly** (no baked faces left in the persona cast). "How it looks now":
+new regen bodies for the **full locomotion family (front + side + back)**, the front shot, and the **knee celebrations**;
+old-but-persona-headed v4 bodies for the remaining actions (side/back shot, header, trap, intercept, turn, brake).
