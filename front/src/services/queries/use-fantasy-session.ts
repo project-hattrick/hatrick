@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { fantasyService } from '@/services/fantasy.service';
+import { backendEnabled } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
 import { useFantasyStore } from '@/store/fantasy.store';
 import { queryKeys } from './keys';
@@ -28,7 +29,7 @@ export function useFantasySession() {
       ]);
       return { collection, squad };
     },
-    enabled: isAuthed,
+    enabled: backendEnabled && isAuthed,
     staleTime: 60_000,
   });
 

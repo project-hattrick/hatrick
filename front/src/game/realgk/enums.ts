@@ -48,6 +48,8 @@ export enum BodyAnim {
   GkDiveV2 = 'gk_dive_v2',
   /** Light save (carrinho do goleiro) — 3/4-front reflex block, headless 4-frame; head composited. */
   GkLightSave = 'gk_light_save',
+  /** Compact lateral dive — headless 6-frame, crouch → extend → prone; head composited (aspect-normalized). */
+  GkDiveCompact = 'gk_dive_compact',
 }
 
 export enum HeadView {

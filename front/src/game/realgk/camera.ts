@@ -298,6 +298,9 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
     }
   }
 
+  // Lift the framing toward the far touchline (billboards / telões) so the action reads nearer them.
+  if (preset.follow) ty -= (world.cfg.cameraLift ?? 0) * (m.bottomY - m.topY);
+
   const posEase = cam.cinematic ? 0.072 : 0.09;
   const zoomEase = cam.cinematic ? 0.045 : 0.06;
   cam.x += (tx - cam.x) * posEase;

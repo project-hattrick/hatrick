@@ -23,6 +23,16 @@ export const KEEPER_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
   [BodyAnim.GkRunSide]: repeat({ headView: HeadView.Side, bodyScale: 0.68, headScale: 0.42, offsetXRatio: 0.18677396993231044, offsetYRatio: 0.05288377325392865 }, 8),
   // Light save — 3/4-front reflex block; front head seated like GkReady. Tune in /sandbox/sprite-editor.
   [BodyAnim.GkLightSave]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0, offsetYRatio: 0.14 }, 4),
+  // Compact lateral dive (authored diving right; mirrors for left). Side head; per-frame headScale rises as
+  // the body flattens so the head stays a constant pixel size, and offsetX/Y follow the head toward the prone tip.
+  [BodyAnim.GkDiveCompact]: [
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.18, offsetXRatio: 0.0, offsetYRatio: 0.1 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.22, offsetXRatio: 0.06, offsetYRatio: 0.14 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.29, offsetXRatio: 0.22, offsetYRatio: 0.2 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.56, offsetXRatio: 0.3, offsetYRatio: 0.34 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.44, offsetXRatio: 0.33, offsetYRatio: 0.42 },
+    { headView: HeadView.Side, bodyScale: 0.68, headScale: 0.56, offsetXRatio: 0.35, offsetYRatio: 0.48 },
+  ],
   [BodyAnim.GkDive]: [
     { headView: HeadView.Side, bodyScale: 0.56, headScale: 0.61, offsetXRatio: 0.11, offsetYRatio: 0.1 },
     { headView: HeadView.Side, bodyScale: 0.56, headScale: 0.61, offsetXRatio: -0.06978095399641616, offsetYRatio: 0.2075580556828049 },

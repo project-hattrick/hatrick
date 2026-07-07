@@ -27,9 +27,9 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
   const id = world.nextPlayerId++;
   return {
     id,
-    // One distinct persona head per squad slot (0..10) so no face repeats within a team; falls back to
-    // id-based spread for the playable sandbox. Inert unless `personaHeads` is on.
-    personaId: (slotIndex ?? id) % Math.max(1, PERSONA_COUNT),
+    // One distinct persona head per squad slot (0..10) so no face repeats within a team, and the Red team
+    // uses a rotated head set so opponents don't mirror the same faces. Inert unless `personaHeads` is on.
+    personaId: ((slotIndex ?? id) + (team === Team.Red ? Math.floor(PERSONA_COUNT / 2) : 0)) % Math.max(1, PERSONA_COUNT),
     name,
     team,
     dir,
@@ -363,27 +363,47 @@ export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number,
   }
 }
 
+/** Stable per-player pseudo-random in [0,1) from id + salt — deterministic identity variety (no per-frame RNG). */
+function idNoise(id: number, salt: number): number {
+  const x = Math.sin(id * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
 function supportTarget(world: RealGkWorld, player: RealGkPlayer, possessionTeam: Team | null) {
   const { ball, size } = world;
   const ballRatio = fieldRatios(size, ball.x, ball.y);
   const attacking = possessionTeam === player.team;
   const press = possessionTeam && possessionTeam !== player.team;
+  const lively = world.cfg.features?.livelyMatch === true;
+  // Stable per-player variety so the shape breathes instead of moving in lockstep.
+  const jLat = lively ? (idNoise(player.id, 1) - 0.5) * 0.09 : 0;
+  const jDepth = lively ? (idNoise(player.id, 2) - 0.5) * 0.11 : 0;
+  const drift = lively ? 0.72 + idNoise(player.id, 3) * 0.66 : 1; // per-player lead/lag on the ball
 
   let lat = player.homeLat;
   let depth = player.homeDepth;
 
   if (player.role === Role.GK) {
-    lat = player.team === Team.Blue ? 0.05 : 0.95;
-    depth = clamp(ballRatio.depth, 0.34, 0.66);
+    if (lively) {
+      // Sweeper-keeper: advance off the line when the ball is upfield, drop onto it as it nears; track depth.
+      const blue = player.team === Team.Blue;
+      const goalLat = blue ? 0.035 : 0.965;
+      const upfield = blue ? clamp(ballRatio.lat, 0, 1) : clamp(1 - ballRatio.lat, 0, 1);
+      lat = blue ? goalLat + upfield * 0.1 : goalLat - upfield * 0.1;
+      depth = clamp(0.5 + (ballRatio.depth - 0.5) * 0.72, 0.28, 0.72);
+    } else {
+      lat = player.team === Team.Blue ? 0.05 : 0.95;
+      depth = clamp(ballRatio.depth, 0.34, 0.66);
+    }
   } else if (attacking) {
-    lat = clamp(player.homeLat + player.dir * 0.06 + (ballRatio.lat - 0.5) * 0.18, 0.06, 0.94);
-    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.42, 0.14, 0.86);
+    lat = clamp(player.homeLat + player.dir * 0.06 + (ballRatio.lat - 0.5) * 0.18 * drift + jLat, 0.06, 0.94);
+    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.42 * drift + jDepth, 0.14, 0.86);
   } else if (press) {
-    lat = clamp(player.homeLat + (ballRatio.lat - player.homeLat) * 0.16, 0.05, 0.95);
-    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.25, 0.12, 0.88);
+    lat = clamp(player.homeLat + (ballRatio.lat - player.homeLat) * 0.16 * drift + jLat, 0.05, 0.95);
+    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.25 * drift + jDepth, 0.12, 0.88);
   } else {
-    lat = clamp(player.homeLat, 0.05, 0.95);
-    depth = clamp(player.homeDepth, 0.12, 0.88);
+    lat = clamp(player.homeLat + jLat, 0.05, 0.95);
+    depth = clamp(player.homeDepth + jDepth, 0.12, 0.88);
   }
   return pointOnField(size, lat, depth);
 }
@@ -438,9 +458,11 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
   }
 }
 
-/** Orients every player (except the ball carrier / diving keeper) to watch the ball. */
+/** Orients players to watch the ball; with `livelyMatch`, only nearby players lock onto it while the rest
+ *  hold a stable per-player resting orientation so the field shows varied facings (not one staring crowd). */
 export function faceBall(world: RealGkWorld): void {
-  const { players, ball } = world;
+  const { players, ball, size } = world;
+  const lively = world.cfg.features?.livelyMatch === true;
   for (const p of players) {
     if (ball.ownerId === p.id) continue;
     if (p.role === Role.GK) continue;
@@ -459,13 +481,27 @@ export function faceBall(world: RealGkWorld): void {
     const dx = ball.x - p.x;
     const dy = ball.y - p.y;
     const len = Math.hypot(dx, dy) || 1;
-    p.lookX = dx / len;
-    p.lookY = dy / len;
-    p.desiredLookX = p.lookX;
-    p.desiredLookY = p.lookY;
-    p.facing = dx < 0 ? -1 : 1;
-    if (Math.abs(dy) >= Math.abs(dx)) {
-      p.idleMode = dy < 0 ? BodyAnim.IdleBack : BodyAnim.IdleFront;
+    let lx = dx / len;
+    let ly = dy / len;
+    if (lively) {
+      // Near the ball → watch it; far → blend toward a stable per-player rest orientation (checking a mark /
+      // space), so idle players face a mix of directions instead of all snapping toward the ball.
+      const near = clamp(1 - len / (size.height * 0.42), 0, 1);
+      const restX = clamp(p.dir * 0.5 + (idNoise(p.id, 4) - 0.5) * 0.9, -1, 1);
+      const restY = (idNoise(p.id, 5) - 0.5) * 1.7;
+      lx = lx * near + restX * (1 - near);
+      ly = ly * near + restY * (1 - near);
+      const l = Math.hypot(lx, ly) || 1;
+      lx /= l;
+      ly /= l;
+    }
+    p.lookX = lx;
+    p.lookY = ly;
+    p.desiredLookX = lx;
+    p.desiredLookY = ly;
+    p.facing = lx < 0 ? -1 : 1;
+    if (Math.abs(ly) >= Math.abs(lx)) {
+      p.idleMode = ly < 0 ? BodyAnim.IdleBack : BodyAnim.IdleFront;
     }
   }
 }

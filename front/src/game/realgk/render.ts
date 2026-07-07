@@ -7,115 +7,19 @@ import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
 import { locomotionConfigFor, outfieldConfigFor, type FrameCfg } from './assets/configs';
+import { SIDE_MODES, gkHead, spriteHeightForBase, drawSprite, drawTrimmedSprite, drawComposedHead } from './composite';
 import { ITEM_MAP } from './assets/items';
 import type { HeadKey, HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
 import { DIVE2_HEIGHT_RATIO, dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
 
-interface SpriteRect {
-  drawX: number;
-  drawY: number;
-  drawW: number;
-  drawH: number;
-  sourceW: number;
-  sourceH: number;
-}
-
-const SIDE_MODES = new Set<BodyAnim>([BodyAnim.RunSide, BodyAnim.TurnSide, BodyAnim.GkRunSide, BodyAnim.GkDive, BodyAnim.GkDiveV2, BodyAnim.PowerShotSide, BodyAnim.SlideTackle]);
-
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
 
-const gkHead = (v: HeadView): HeadKey =>
-  v === HeadView.Back ? 'back' : v === HeadView.Side ? 'side' : v === HeadView.FrontClosed ? 'frontClosed' : 'front';
-
-/**
- * Actor height at `depth`. With `normalizedSizes` a composited body is shrunk so body+head together
- * read as the base height (playground rule); legacy path keeps the keeper's hand-tuned bodyScale.
- */
+/** Actor height at `depth` — thin wrapper over the shared `spriteHeightForBase` (see composite.ts). */
 function spriteHeightFor(world: RealGkWorld, depth: number, frameCfg: FrameCfg | null): number {
-  const base = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth);
-  if (!frameCfg) return base;
-  const sizeScale = frameCfg.sizeScale ?? 1;
-  if (world.cfg.features?.normalizedSizes) {
-    return (base / Math.max(0.75, 1 + frameCfg.headScale - frameCfg.offsetYRatio)) * sizeScale;
-  }
-  return base * frameCfg.bodyScale * sizeScale;
-}
-
-function drawSprite(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, footY: number, height: number, mirror: boolean): void {
-  if (!image || !image.complete || !image.naturalWidth) return;
-  const width = image.naturalWidth * (height / image.naturalHeight);
-  const drawX = Math.round(x - width * 0.5);
-  const drawY = Math.round(footY - height);
-  if (mirror) {
-    ctx.save();
-    ctx.translate(drawX + width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(image, 0, drawY, width, height);
-    ctx.restore();
-  } else {
-    ctx.drawImage(image, drawX, drawY, width, height);
-  }
-}
-
-function drawTrimmedSprite(
-  ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  bbox: number[] | null,
-  x: number,
-  footY: number,
-  visibleHeight: number,
-  mirror: boolean,
-): SpriteRect | null {
-  if (!image || !image.complete || !image.naturalWidth || !bbox) return null;
-  const [left, top, right, bottom] = bbox;
-  const sourceW = Math.max(1, right - left);
-  const sourceH = Math.max(1, bottom - top);
-  const scale = visibleHeight / sourceH;
-  const drawW = sourceW * scale;
-  const drawH = visibleHeight;
-  const drawX = Math.round(x - drawW * 0.5);
-  const drawY = Math.round(footY - drawH);
-  if (mirror) {
-    ctx.save();
-    ctx.translate(drawX + drawW, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(image, left, top, sourceW, sourceH, 0, drawY, drawW, drawH);
-    ctx.restore();
-  } else {
-    ctx.drawImage(image, left, top, sourceW, sourceH, drawX, drawY, drawW, drawH);
-  }
-  return { drawX, drawY, drawW, drawH, sourceW, sourceH };
-}
-
-function drawComposedHead(
-  ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  centerX: number,
-  bodyRect: SpriteRect,
-  mirror: boolean,
-  frameCfg: FrameCfg,
-): void {
-  if (!image.complete || !image.naturalWidth) return;
-  const headHeight = bodyRect.drawH * frameCfg.headScale;
-  const headWidth = image.naturalWidth * (headHeight / image.naturalHeight);
-  const xShift = bodyRect.drawW * frameCfg.offsetXRatio * (mirror ? -1 : 1);
-  const yOverlap = bodyRect.drawH * frameCfg.offsetYRatio;
-  const drawX = Math.round(centerX - headWidth * 0.5 + xShift);
-  const drawY = Math.round(bodyRect.drawY - headHeight + yOverlap);
-  // Side heads mirror with body facing; headFlip flips the look direction on top of that (XOR).
-  const shouldMirror = (mirror && frameCfg.headView === HeadView.Side) !== (frameCfg.headFlip ?? false);
-  if (shouldMirror) {
-    ctx.save();
-    ctx.translate(drawX + headWidth, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(image, 0, drawY, headWidth, headHeight);
-    ctx.restore();
-  } else {
-    ctx.drawImage(image, drawX, drawY, headWidth, headHeight);
-  }
+  return spriteHeightForBase(lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth), frameCfg, world.cfg.features?.normalizedSizes === true);
 }
 
 /** Whole-sprite referee (v2): idle 3/4, side-walk cycle, or red card — head embedded, no compositing. */

@@ -15,6 +15,7 @@ import { selfProfile } from '@/config/duelists.config';
 import { avatarOptions, formatJoined, rankFromRating } from '@/config/profile-mock';
 import { useAuth } from '@/services/queries/use-auth';
 import { useUpdateProfile } from '@/services/queries/use-update-profile';
+import { backendEnabled } from '@/services/session-mode';
 import { useProfileStore, type ProfileDraft } from '@/store/profile.store';
 
 /** Uploaded photos are stored as data URLs; presets are `/personas/*` paths (pixel-art). */
@@ -70,8 +71,8 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
     // Usernames are handle-style server-side (no leading @).
     const clean: ProfileDraft = { ...draft, username: draft.username.replace(/^@+/, '').trim() };
     useProfileStore.getState().save(clean); // instant local paint
-    if (!isAuthenticated) {
-      onDone(); // guest — local only, nothing to persist
+    if (!isAuthenticated || !backendEnabled) {
+      onDone(); // guest or mock mode — local only, nothing to persist
       return;
     }
     updateProfile.mutate(clean, {

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BetStatus } from '@/enums/bet-status.enum';
 import { BETTING_MARKETS, BETTING_MATCH_LABEL } from '@/config/betting-markets.config';
 import { betService, type ServerBet } from '@/services/bet.service';
+import { backendEnabled } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
 import { useBetsStore } from '@/store/bets.store';
 import type { Bet } from '@/types/bet';
@@ -67,7 +68,7 @@ export function useBetsSession() {
   const query = useQuery({
     queryKey: queryKeys.betsSession(),
     queryFn: ({ signal }) => betService.list(signal),
-    enabled: isAuthed,
+    enabled: backendEnabled && isAuthed,
     staleTime: 60_000,
   });
 

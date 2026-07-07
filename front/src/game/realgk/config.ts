@@ -48,6 +48,9 @@ export interface RealGkFeatures {
   personaShot?: boolean;
   /** AI slide tackles (carrinho): a defender near the opponent ball-carrier slides in to win the ball. */
   slideTackles?: boolean;
+  /** Lifelike positioning: stable per-player position jitter + varied facings (not everyone staring at the
+   *  ball) + a sweeper-keeper that comes off its line. Only affects gated checkpoints. */
+  livelyMatch?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -85,6 +88,9 @@ export interface RealGkConfig {
   actorScale?: { referee?: number; coach?: number };
   /** Max cinematic zoom push near a goal (legacy default 1.32). */
   nearGoalPush?: number;
+  /** Vertical framing bias as a fraction of pitch height: positive lifts the follow view UP toward the far
+   *  touchline (the billboards / telões), so the action reads nearer them. Unset/0 = centered on the ball. */
+  cameraLift?: number;
   /** Team brands for the v5 intro showcase (flags + names). Unset → generic Blue/Red. */
   teams?: { blue: TeamBrand; red: TeamBrand };
   /** Light retro-TV overlay on the stage (faint scanlines + RGB mask + vignette). */
@@ -267,12 +273,15 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   ...REAL_GK_MATCH_CONFIG,
   // Hero match script/bounds/lighting, but persona-cast + an animated strike (regen shot body) and the
   // ball dust/impact effects from the Effects Lab. Smaller actors than the hero (~22%) so the composited
-  // persona heads read cleaner on the pitch.
+  // persona heads read cleaner on the pitch. Wider pitch so the shape spreads like a real match.
+  fieldScale: 1.85,
   spriteMinH: 20,
   spriteMaxH: 34,
   // Players shrank (composited head reads at the base height), so bump the referee/coach whole-sprites to match.
   actorScale: { referee: 1.3, coach: 1.3 },
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
+  // Frame the action higher, nearer the far-touchline billboards (telões).
+  cameraLift: 0.12,
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true },
 };
 
 /**
@@ -286,6 +295,7 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   spriteMinH: 20,
   spriteMaxH: 34,
   actorScale: { referee: 1.3, coach: 1.3 },
+  cameraLift: 0.12,
   features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
 };
 

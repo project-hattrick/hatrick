@@ -59,8 +59,8 @@ export function dive2SmearAt(elapsed: number): { from: number; to: number; t: nu
   return null;
 }
 
-// Light save replaces the legacy lateral dive as the main keeper block; v6's dive-v2 pack still wins where enabled.
-const diveAnimFor = (world: RealGkWorld): BodyAnim => (world.cfg.features?.keeperDiveV2 ? BodyAnim.GkDiveV2 : BodyAnim.GkLightSave);
+// Compact lateral dive is the main keeper save; v6's dive-v2 pack still wins where explicitly enabled.
+const diveAnimFor = (world: RealGkWorld): BodyAnim => (world.cfg.features?.keeperDiveV2 ? BodyAnim.GkDiveV2 : BodyAnim.GkDiveCompact);
 
 const diveDurationFor = (anim: BodyAnim): number => (anim === BodyAnim.GkDiveV2 ? DIVE2_DURATION : DIVE_DURATION);
 

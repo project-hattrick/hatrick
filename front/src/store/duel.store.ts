@@ -3,11 +3,9 @@ import type { PlayerProfile } from '@/config/duelists.config';
 import { DuelResult } from '@/enums/duel-result.enum';
 import { DuelLayout } from '@/enums/duel-layout.enum';
 import { duelService, type DuelResultValue } from '@/services/fantasy.service';
-import { useAuthStore } from '@/store/auth.store';
+import { isBackendSession } from '@/services/session-mode';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
-
-const isAuthed = () => useAuthStore.getState().status === 'authed';
 
 /** Front DuelResult enum ("win") → api DuelResult ("Win"). */
 const toServerResult = (r: DuelResult): DuelResultValue =>
@@ -61,7 +59,7 @@ export const useDuelStore = create<DuelStore>((set, get) => ({
   confirmSetup: () => {
     set({ inSetup: false });
     // Persist the duel (stake + lineup) when signed in; reconcile the wallet + keep the server id.
-    if (!isAuthed()) return;
+    if (!isBackendSession()) return;
     const { opponent, bet } = get();
     const fantasy = useFantasyStore.getState();
     const ownedCardIds = fantasy.squad
@@ -90,7 +88,7 @@ export const useDuelStore = create<DuelStore>((set, get) => ({
   finish: (result) => {
     set({ finished: true, result });
     const { serverId, selfScore, opponentScore } = get();
-    if (!serverId || !isAuthed()) return;
+    if (!serverId || !isBackendSession()) return;
     void duelService
       .settle(serverId, { hostScore: selfScore, guestScore: opponentScore, result: toServerResult(result) })
       .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))

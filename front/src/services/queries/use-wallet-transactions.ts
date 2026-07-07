@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { walletService } from '@/services/wallet.service';
+import { backendEnabled } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
 import { queryKeys } from './keys';
 
@@ -16,7 +17,7 @@ export function useWalletTransactions() {
   return useQuery({
     queryKey: queryKeys.walletTransactions(),
     queryFn: ({ signal }) => walletService.transactions(signal),
-    enabled: isAuthed,
+    enabled: backendEnabled && isAuthed,
     staleTime: 30_000,
   });
 }

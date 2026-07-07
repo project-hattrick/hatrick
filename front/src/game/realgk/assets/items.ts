@@ -49,6 +49,15 @@ const RAW: RawItem[] = [
   },
   // Light save (headless 3/4-front reflex block) — pre-trimmed, drawn whole (no bbox), head composited.
   { id: BodyAnim.GkLightSave, fps: 7.0, frameCount: 4, loop: false },
+  // Compact lateral dive (headless) — bboxes are the per-frame trimmed dims so the aspect-normalized dive
+  // path keeps a constant dive LENGTH as the body flattens (crouch → extend → prone). fps plays all 6 in DIVE_DURATION.
+  {
+    id: BodyAnim.GkDiveCompact,
+    fps: 9.0,
+    frameCount: 6,
+    loop: false,
+    bboxes: [[0, 0, 207, 228], [0, 0, 247, 220], [0, 0, 324, 227], [0, 0, 377, 134], [0, 0, 257, 118], [0, 0, 264, 94]],
+  },
   // v4 pack — timings ported from the assets playground.
   { id: BodyAnim.TurnSide, fps: 8.0, frameCount: 4, loop: false },
   { id: BodyAnim.StopBrake, fps: 8.0, frameCount: 4, loop: false },

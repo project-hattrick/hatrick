@@ -5,8 +5,8 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { PackOpening } from '@/components/store/pack-opening';
 import { pickStartingXI } from '@/components/onboarding/steps/squad-step';
 import { useFantasyStore } from '@/store/fantasy.store';
-import { useAuthStore } from '@/store/auth.store';
 import { fantasyService, PackType, type CollectionCard } from '@/services/fantasy.service';
+import { isBackendSession } from '@/services/session-mode';
 import { usePackDeck } from '@/services/queries/use-pack-deck';
 
 /** Players in the free welcome pack — a full XI to seed the squad (matches the api PackSpec). */
@@ -27,7 +27,7 @@ export function WelcomePackPanel() {
       const xi = pickStartingXI(cards);
       setSquad(xi.map(({ index }) => index));
       // Persist the seeded XI when signed in (cards carry their owned copy id).
-      if (useAuthStore.getState().status === 'authed') {
+      if (isBackendSession()) {
         const ownedIds = xi.map(({ index }) => cards[index]?.ownedCardId).filter(Boolean) as string[];
         if (ownedIds.length) void fantasyService.saveSquad(formation, ownedIds).catch(() => {});
       }

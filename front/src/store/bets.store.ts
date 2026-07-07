@@ -7,12 +7,9 @@ import type { Bet, BetSelection } from '@/types/bet';
 import { BETTING_MATCH_LABEL } from '@/config/betting-markets.config';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { betService, type SettleStatus } from '@/services/bet.service';
-import { useAuthStore } from '@/store/auth.store';
+import { isBackendSession } from '@/services/session-mode';
 import { useWalletStore } from '@/store/wallet.store';
 import { useNotificationsStore } from '@/store/notifications.store';
-
-/** Authed users persist bets to the backend ledger; guests stay purely local. */
-const isAuthed = () => useAuthStore.getState().status === 'authed';
 
 /** Random settlement delay so a placed bet resolves within a demo window. */
 const MIN_SETTLE_MS = 6_000;
@@ -74,7 +71,7 @@ export const useBetsStore = create<BetsStore>()(
         set((state) => ({ open: [bet, ...state.open], slip: null, stake: DEFAULT_STAKE }));
         // Persist to the server ledger (authed only); reconcile the wallet from the
         // authoritative balance and tag the open bet with its server id for settlement.
-        if (isAuthed()) {
+        if (isBackendSession()) {
           betService
             .place({ fixtureId: bet.fixtureId, market: bet.market, selection: bet.selectionId, stake, oddsTaken: bet.odds })
             .then((res) => {
@@ -100,7 +97,7 @@ export const useBetsStore = create<BetsStore>()(
           settled: [{ ...bet, status }, ...state.settled].slice(0, 50),
         }));
         // Mirror the settlement to the server ledger and reconcile the balance.
-        if (bet.serverId && isAuthed()) {
+        if (bet.serverId && isBackendSession()) {
           betService
             .settle(bet.serverId, status as SettleStatus)
             .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))

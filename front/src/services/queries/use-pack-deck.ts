@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { drawPack, type PackCard } from '@/config/pack-pool.config';
 import { fantasyService, PackType } from '@/services/fantasy.service';
+import { backendEnabled } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 
@@ -20,7 +21,7 @@ export function usePackDeck(type: PackType): (size: number) => Promise<PackCard[
 
   return useCallback(
     async (size: number) => {
-      if (!isAuthed) return drawPack(size);
+      if (!backendEnabled || !isAuthed) return drawPack(size);
       try {
         const { cards, balance } = await fantasyService.openPack(type);
         hydrateWallet(Number(balance));

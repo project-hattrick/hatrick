@@ -8,6 +8,7 @@ import { ApiError } from '@/services/http';
 import { useAuthStore } from '@/store/auth.store';
 import { useProfileStore } from '@/store/profile.store';
 import { useWalletStore } from '@/store/wallet.store';
+import { backendEnabled } from '@/services/session-mode';
 import { queryKeys } from './keys';
 
 /** GET /auth/me → user, or null when the cookie is absent/expired (401). */
@@ -35,6 +36,7 @@ export function useSession() {
   const query = useQuery({
     queryKey: queryKeys.authMe(),
     queryFn: ({ signal }) => fetchSession(signal),
+    enabled: backendEnabled, // mock mode drives the session locally (useWalletAuth)
     retry: false,
     staleTime: 60_000,
   });

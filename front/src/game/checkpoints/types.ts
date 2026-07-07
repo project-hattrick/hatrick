@@ -17,6 +17,7 @@ export enum CheckpointId {
   RealGkMatch = 'real-gk-match',
   RealGkPersonas = 'real-gk-personas',
   RealGkPersonaPlay = 'real-gk-persona-play',
+  HeadsOnly = 'heads-only',
   EffectsLab = 'effects-lab',
 }
 
@@ -24,6 +25,7 @@ export enum CheckpointId {
 export enum RuntimeKind {
   Shared = 'shared',
   RealGk = 'real-gk',
+  HeadsOnly = 'heads-only',
 }
 
 /** Display metadata surfaced on the home checkpoints list. */

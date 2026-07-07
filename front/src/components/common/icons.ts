@@ -44,6 +44,7 @@ export {
   Hash,
   Image,
   Info,
+  Keyboard,
   Lightning,
   Package,
   Palette,

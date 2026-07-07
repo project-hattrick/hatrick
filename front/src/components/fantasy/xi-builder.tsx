@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { SquadStep, pickStartingXI } from '@/components/onboarding/steps/squad-step';
 import { formations } from '@/config/formation.config';
 import { useFantasyStore } from '@/store/fantasy.store';
-import { useAuthStore } from '@/store/auth.store';
 import { fantasyService } from '@/services/fantasy.service';
+import { isBackendSession } from '@/services/session-mode';
 
 /** Formation editor for /fantasy — owns the pitch order + shape, persists to fantasy.store.squad. */
 export function XiBuilder() {
@@ -36,7 +36,7 @@ export function XiBuilder() {
     const shape = formations[formationIndex].shape;
     setSquad(order);
     setStoreFormation(shape);
-    if (useAuthStore.getState().status === 'authed') {
+    if (isBackendSession()) {
       const ownedIds = order.map((i) => collection[i]?.ownedCardId).filter(Boolean) as string[];
       if (ownedIds.length) {
         void fantasyService.saveSquad(shape, ownedIds).catch(() => toast.error('Could not sync your XI.'));
