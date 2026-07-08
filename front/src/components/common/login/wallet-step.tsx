@@ -5,7 +5,7 @@ import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
 import { WalletReadyState } from '@solana/wallet-adapter-base';
 
 import { Envelope, GoogleLogo, ShieldCheck, CaretRight, CircleNotch, UserCircle, Wallet as WalletIcon } from '@/components/common/icons';
-import { signInAsGuest } from '@/services/session-mode';
+import { backendEnabled, signInAsGuest } from '@/services/session-mode';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
 
@@ -60,15 +60,18 @@ export function WalletStep() {
       <Divider label="or" />
 
       <div className="space-y-2">
-        <button
-          type="button"
-          onClick={continueAsGuest}
-          className="flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-neon/35 bg-neon/[0.06] px-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-neon/[0.1]"
-        >
-          <UserCircle className="size-5 text-neon" />
-          Continue as guest
-          <span className="ml-auto rounded-full border border-neon/35 px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-neon">Demo</span>
-        </button>
+        {/* Guest sign-in only makes sense in mock mode — in backend mode it'd create a session with no cookie. */}
+        {!backendEnabled ? (
+          <button
+            type="button"
+            onClick={continueAsGuest}
+            className="flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-neon/35 bg-neon/[0.06] px-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-neon/[0.1]"
+          >
+            <UserCircle className="size-5 text-neon" />
+            Continue as guest
+            <span className="ml-auto rounded-full border border-neon/35 px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-neon">Demo</span>
+          </button>
+        ) : null}
         <AltRow icon={<Envelope className="size-5" />} label="Continue with Email" />
         <AltRow icon={<GoogleLogo className="size-5" />} label="Continue with Google" />
       </div>

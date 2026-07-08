@@ -8,7 +8,8 @@ import { Flag } from '@/components/common/flag';
 import { Coins, Lightning, ShieldCheck } from '@/components/common/icons';
 import { Button } from '@/components/ui/button';
 import { fifaToIso } from '@/lib/country';
-import { selfProfile, type PlayerProfile } from '@/config/duelists.config';
+import { type PlayerProfile } from '@/config/duelists.config';
+import { useSelfProfile } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +47,7 @@ interface DuelSetupProps {
 }
 
 export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
+  const self = useSelfProfile();
   const opponent = useDuelStore((s) => s.opponent);
   const bet = useDuelStore((s) => s.bet);
   const confirmSetup = useDuelStore((s) => s.confirmSetup);
@@ -61,7 +63,7 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
     <div className={cn('mx-auto flex w-full max-w-3xl flex-col gap-5', embedded ? 'py-1' : 'px-4 py-6')}>
       <header className="flex flex-col gap-3">
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-          <SideIdentity player={selfProfile} align="left" />
+          <SideIdentity player={self} align="left" />
           <div className="flex min-w-28 flex-col items-center justify-center rounded-2xl border border-neon/25 bg-neon/[0.06] px-4 py-3 text-center shadow-[0_0_24px_rgba(185,255,0,0.08)]">
             {bet !== null ? (
               <>

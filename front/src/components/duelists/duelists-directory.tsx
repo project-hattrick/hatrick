@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDuelists } from '@/services/queries/use-duelists';
+import { useAuth } from '@/services/queries/use-auth';
 import { useFriendsStore } from '@/store/friends.store';
 import { tierFilters } from '@/config/duelists.config';
 import { RankTier } from '@/enums/rank-tier.enum';
@@ -23,9 +24,11 @@ export function DuelistsDirectory() {
   const [friendFilter, setFriendFilter] = useState<FriendFilter>('all');
 
   const { data: profiles, isLoading, isError } = useDuelists();
+  const { user } = useAuth();
   const friendIds = useFriendsStore((s) => s.friendIds);
 
   const filtered = (profiles ?? []).filter((p: PlayerProfile) => {
+    if (user && p.id === user.id) return false; // never list yourself as an opponent
     const tierMatch = tierFilter === 'all' || p.tier === tierFilter;
     const friendMatch = friendFilter === 'all' || friendIds.includes(p.id);
     return tierMatch && friendMatch;

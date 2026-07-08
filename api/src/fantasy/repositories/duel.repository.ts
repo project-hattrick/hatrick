@@ -16,11 +16,12 @@ export class DuelRepository {
     return this.prisma.duel.findUnique({ where: { id }, include: { lineups: true } });
   }
 
-  /** All duels a user took part in (as host or guest), newest first. */
+  /** All duels a user took part in (as host or guest), newest first, with frozen lineups. */
   findByUser(userId: string): Promise<Duel[]> {
     return this.prisma.duel.findMany({
       where: { OR: [{ hostId: userId }, { guestId: userId }] },
       orderBy: { createdAt: 'desc' },
+      include: { lineups: true },
     });
   }
 

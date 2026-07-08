@@ -4,8 +4,9 @@ import { PlayerFocusCard } from '@/components/live/player-focus-card';
 import { PredictionPrompt } from '@/components/live/prediction-prompt';
 import { HeroChrome } from '@/components/live/hero-chrome';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
-import { selfProfile } from '@/config/duelists.config';
 import { userCards } from '@/config/fantasy-cards.config';
+import { useSelfDeck } from '@/hooks/use-self-deck';
+import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
 import { DuelScoreboard } from './duel-scoreboard';
 import { DuelDeckRail } from './duel-deck-rail';
@@ -16,6 +17,8 @@ const OPPONENT_DECK = [...userCards].reverse();
 /** Split duel: framed pitch on the left (scoreboard + on-the-ball + prediction docked), decks + chat on the right. */
 export function DuelSplit() {
   const opponent = useDuelStore((s) => s.opponent);
+  const selfDeck = useSelfDeck();
+  const { displayName } = useSelfIdentity();
 
   return (
     <div className="flex min-h-screen w-full flex-col gap-4 bg-background p-4 md:h-screen md:flex-row md:overflow-hidden">
@@ -39,7 +42,7 @@ export function DuelSplit() {
 
       <div className="flex w-full flex-col gap-3 md:h-full md:w-[392px]">
         <div className="flex gap-3">
-          <DuelDeckRail title={selfProfile.name} cards={userCards} className="max-h-[38vh] flex-1" />
+          <DuelDeckRail title={displayName} cards={selfDeck} className="max-h-[38vh] flex-1" />
           {opponent && (
             <DuelDeckRail title={opponent.name} cards={OPPONENT_DECK} className="max-h-[38vh] flex-1" />
           )}

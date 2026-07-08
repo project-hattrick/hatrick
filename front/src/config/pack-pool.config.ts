@@ -5,6 +5,10 @@ import type { CardStat, HoloPlayerCardProps } from '@/components/store/holo-play
 /** A pullable pack card: the holo card props + the character's name for captions. */
 export interface PackCard extends HoloPlayerCardProps {
   name: string;
+  /** ISO country code for the flag chip (used by the mini deck card). */
+  code?: string;
+  /** Field position label, e.g. "ST". */
+  position?: string;
 }
 
 /** FIFA code → flag emoji + tricolor refraction palette (every duelist nation). */

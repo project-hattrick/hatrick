@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { SITE } from '@/lib/seo';
 import { getAllPosts } from '@/lib/blog';
+import { locales } from '@/i18n/locales';
+import { localizePath } from '@/i18n/path';
 
 /** Public, indexable routes (duel/sandbox are private and excluded). */
 const STATIC_PATHS = [
@@ -23,18 +25,22 @@ const STATIC_PATHS = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const url = (path: string) => new URL(path, SITE.url).toString();
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
-    url: url(path),
-    changeFrequency: path === '/' ? 'daily' : 'weekly',
-    priority: path === '/' ? 1 : 0.7,
-  }));
+  const staticEntries: MetadataRoute.Sitemap = locales.flatMap((locale) =>
+    STATIC_PATHS.map((path) => ({
+      url: url(localizePath(path, locale)),
+      changeFrequency: path === '/' ? 'daily' : 'weekly',
+      priority: path === '/' ? 1 : 0.7,
+    })),
+  );
 
-  const postEntries: MetadataRoute.Sitemap = getAllPosts().map((post) => ({
-    url: url(`/blog/${post.slug}`),
-    lastModified: new Date(post.meta.date),
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
+  const postEntries: MetadataRoute.Sitemap = locales.flatMap((locale) =>
+    getAllPosts().map((post) => ({
+      url: url(localizePath(`/blog/${post.slug}`, locale)),
+      lastModified: new Date(post.meta.date),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    })),
+  );
 
   return [...staticEntries, ...postEntries];
 }

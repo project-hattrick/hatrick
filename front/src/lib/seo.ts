@@ -47,6 +47,7 @@ export function buildMetadata({
   const images = image ? [{ url: image }] : undefined;
 
   return {
+    metadataBase: new URL(SITE.url),
     title,
     description,
     alternates: { canonical: url },

@@ -59,11 +59,13 @@ export class TxlineNormalizerService {
       playerStats: raw.playerStats,
     };
 
-    this.emitter.emit(this.actionEvent(action, emission), payload);
-    this.emitter.emit(
-      emission === EmissionState.After ? EventName.ScoreUpdateAfter : EventName.ScoreUpdateDuring,
-      payload,
-    );
+    // Always emit the generic score-update (the gateway forwards these); also emit
+    // the action-specific event when it differs, so specialized listeners can target
+    // goal.*/corner.* without the generic listeners seeing the same frame twice.
+    const generic = emission === EmissionState.After ? EventName.ScoreUpdateAfter : EventName.ScoreUpdateDuring;
+    const specific = this.actionEvent(action, emission);
+    this.emitter.emit(generic, payload);
+    if (specific !== generic) this.emitter.emit(specific, payload);
 
     this.maybeEmitMatchEnd(raw);
   }

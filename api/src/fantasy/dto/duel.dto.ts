@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DuelMode, DuelResult, DuelStatus, type Duel } from '@prisma/client';
+import { DuelMode, DuelResult, DuelStatus, type Duel, type DuelLineup } from '@prisma/client';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -46,6 +46,9 @@ export class SettleDuelDto {
   @ApiProperty({ enum: DuelResult }) @IsEnum(DuelResult) result!: DuelResult;
 }
 
+/** Duel row optionally carrying its frozen lineups (host lineup holds the opponent name). */
+type DuelWithLineups = Duel & { lineups?: DuelLineup[] };
+
 export class DuelDto {
   @ApiProperty() id!: string;
   @ApiProperty({ enum: DuelMode }) mode!: DuelMode;
@@ -55,10 +58,14 @@ export class DuelDto {
   @ApiProperty() guestScore!: number;
   @ApiProperty({ nullable: true, type: String }) winnerId!: string | null;
   @ApiProperty({ enum: DuelResult, nullable: true }) hostResult!: DuelResult | null;
+  @ApiProperty({ description: 'Opponent persona name', nullable: true, type: String })
+  opponentName!: string | null;
+  @ApiProperty({ description: 'Host MMR change on settle', nullable: true, type: Number })
+  mmrDelta!: number | null;
   @ApiProperty() createdAt!: Date;
   @ApiProperty({ nullable: true, type: Date }) finishedAt!: Date | null;
 
-  static fromEntity(duel: Duel): DuelDto {
+  static fromEntity(duel: DuelWithLineups): DuelDto {
     const dto = new DuelDto();
     dto.id = duel.id;
     dto.mode = duel.mode;
@@ -68,6 +75,9 @@ export class DuelDto {
     dto.guestScore = duel.guestScore;
     dto.winnerId = duel.winnerId;
     dto.hostResult = duel.hostResult;
+    const snapshot = duel.lineups?.[0]?.lineupSnapshot as { opponentName?: string } | null | undefined;
+    dto.opponentName = snapshot?.opponentName ?? null;
+    dto.mmrDelta = duel.mmrDelta;
     dto.createdAt = duel.createdAt;
     dto.finishedAt = duel.finishedAt;
     return dto;

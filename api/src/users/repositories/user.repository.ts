@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DuelResult, Prisma, UserStatus, type User } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { rankFromMmr, nextStreak } from '../../fantasy/ranking.util';
 import { WELCOME_GRANT_COINS } from '../user.constants';
 
 /**
@@ -30,6 +31,12 @@ export class UserRepository {
     });
   }
 
+  findByUsername(username: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { username, ...UserRepository.notDeleted },
+    });
+  }
+
   /**
    * Get-or-create on wallet sign-in (idempotent); stamps last login.
    * `isNew` distinguishes a first-time registration from a returning login so the
@@ -55,12 +62,22 @@ export class UserRepository {
     });
   }
 
-  /** Apply a 1v1 outcome to the cached ranking (wins/losses + MMR swing). */
-  recordDuelOutcome(id: string, result: DuelResult, mmrDelta: number): Promise<User> {
+  /**
+   * Apply a 1v1 outcome to the cached ranking: MMR swing + win/loss tally, then
+   * recompute tier/division from the new MMR and extend the streak — so all the
+   * denormalized ranking fields stay coherent after every settle.
+   */
+  async recordDuelOutcome(id: string, result: DuelResult, mmrDelta: number): Promise<User> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id } });
+    const mmr = user.mmr + mmrDelta;
+    const { tier, division } = rankFromMmr(mmr);
     return this.prisma.user.update({
       where: { id },
       data: {
-        mmr: { increment: mmrDelta },
+        mmr,
+        tier,
+        division,
+        streak: nextStreak(user.streak, result),
         wins: result === DuelResult.Win ? { increment: 1 } : undefined,
         losses: result === DuelResult.Loss ? { increment: 1 } : undefined,
       },

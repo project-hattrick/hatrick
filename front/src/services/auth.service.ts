@@ -1,3 +1,6 @@
+import { RankTier } from '@/enums/rank-tier.enum';
+import { Presence } from '@/enums/presence.enum';
+import { toAuthUser, type ApiUserDto } from '@/lib/user-mapper';
 import { endpoints } from './endpoints';
 import { api } from './http';
 
@@ -11,6 +14,16 @@ export interface AuthUser {
   country: string | null;
   bio: string | null;
   portraitSrc: string | null;
+  /** Account creation ISO date (drives the "Joined" line). */
+  createdAt: string;
+  /** Ranking stats (denormalized server-side, recomputed each duel settle). */
+  mmr: number;
+  tier: RankTier;
+  division: string | null;
+  wins: number;
+  losses: number;
+  streak: string | null;
+  presence: Presence;
 }
 
 interface NonceResponse {
@@ -31,12 +44,17 @@ const requestNonce = (walletAddress: string): Promise<NonceResponse> =>
   api.post<NonceResponse>(endpoints.auth.nonce, { walletAddress });
 
 /** Step 2: submit the signed message; the api sets the httpOnly session cookie. */
-const verify = (walletAddress: string, signature: string): Promise<AuthSession> =>
-  api.post<AuthSession>(endpoints.auth.verify, { walletAddress, signature });
+const verify = async (walletAddress: string, signature: string): Promise<AuthSession> => {
+  const res = await api.post<{ token: string; user: ApiUserDto; isNew: boolean }>(
+    endpoints.auth.verify,
+    { walletAddress, signature },
+  );
+  return { token: res.token, user: toAuthUser(res.user), isNew: res.isNew };
+};
 
 /** Validate the session cookie and hydrate the current user (used on boot). */
-const me = (signal?: AbortSignal): Promise<AuthUser> =>
-  api.get<AuthUser>(endpoints.auth.me, signal);
+const me = async (signal?: AbortSignal): Promise<AuthUser> =>
+  toAuthUser(await api.get<ApiUserDto>(endpoints.auth.me, signal));
 
 /** End the session — clears the httpOnly cookie server-side. */
 const logout = (): Promise<void> => api.post<void>(endpoints.auth.logout);

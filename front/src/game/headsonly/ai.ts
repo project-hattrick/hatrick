@@ -117,19 +117,22 @@ export function ownerDecision(state: GameState, p: Player): Decision {
       ty: rand(0.25, 0.75),
     };
   }
+  // Feed threat for this player's team (0 when it isn't the attacking side).
+  const drive = state.intent.attackingTeam === p.team ? state.intent.threat : 0;
   const distGoal = Math.hypot(gx - p.x, 0.5 - p.y);
-  const inRange = Math.abs(gx - p.x) < 0.32 && p.y > 0.14 && p.y < 0.86;
-  if (inRange && Math.random() < clamp(0.9 - distGoal * 1.9, 0.15, 0.8)) {
+  const inRange = Math.abs(gx - p.x) < 0.32 + drive * 0.14 && p.y > 0.14 && p.y < 0.86;
+  if (inRange && Math.random() < clamp(0.9 - distGoal * 1.9, 0.15, 0.8) + drive * 0.3) {
     return { kind: DecisionKind.Shoot, tx: gx, ty: 0.5 };
   }
   const pressured = nearestOpponentDist(state, p.x, p.y, p.team) < 0.055;
-  if (Math.random() < (pressured ? 0.85 : 0.62)) {
+  // Higher threat → commit forward more (fewer safe passes, longer carries).
+  if (Math.random() < (pressured ? 0.85 : 0.62) - drive * 0.18) {
     const target = passTargetFor(state, p);
     if (target) return { kind: DecisionKind.Pass, target, tx: target.x, ty: target.y };
   }
   return {
     kind: DecisionKind.Dribble,
-    tx: clamp(p.x + sign * rand(0.08, 0.18), 0.03, 0.97),
+    tx: clamp(p.x + sign * rand(0.08, 0.18) * (1 + drive), 0.03, 0.97),
     ty: clamp(p.y + rand(-0.16, 0.16), 0.08, 0.92),
   };
 }
@@ -157,7 +160,19 @@ export function updateOffBall(state: GameState, p: Player, isChaser: boolean, dt
     p.runX = rand(-0.04, 0.04) + forward;
     p.runY = rand(-0.05, 0.05);
   }
-  const tx = clamp(p.homeX + (ball.x - 0.5) * 0.16 + p.runX, 0.03, 0.97);
-  const ty = clamp(p.homeY + (ball.y - p.homeY) * 0.14 + p.runY, 0.07, 0.93);
+  // Mold the team shape to the feed: the attacking side pushes forward by threat,
+  // the defending side drops deeper and squeezes toward the middle (defend the box).
+  const intent = state.intent;
+  let pushX = 0;
+  let squeezeY = 0;
+  if (intent.attackingTeam) {
+    if (p.team === intent.attackingTeam) pushX = attackSign(p.team) * intent.threat * 0.16;
+    else {
+      pushX = -attackSign(p.team) * intent.threat * 0.1;
+      squeezeY = (0.5 - p.homeY) * intent.threat * 0.28;
+    }
+  }
+  const tx = clamp(p.homeX + (ball.x - 0.5) * 0.16 + p.runX + pushX, 0.03, 0.97);
+  const ty = clamp(p.homeY + (ball.y - p.homeY) * 0.14 + p.runY + squeezeY, 0.07, 0.93);
   moveToward(p, tx, ty, TUNING.aiHoldSpeed, dt);
 }

@@ -5,12 +5,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/services/queries/use-auth';
+import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { signOutLocal } from '@/services/session-mode';
 import { useOnboardingStore } from '@/store/onboarding.store';
 import { useUiStore } from '@/store/ui.store';
+import { UserAvatar } from './user-avatar';
 import { AccountMenu } from './account-menu';
-
-const PROFILE_PIC = 'https://i.pravatar.cc/80?img=12';
 
 /**
  * Navbar profile avatar. Signed out → opens the "Sign in with Solana" dialog. Signed in →
@@ -23,6 +23,7 @@ export function WalletAvatar() {
   const { disconnect } = useWallet();
   const openLogin = useUiStore((s) => s.openLogin);
   const setLoginOpen = useUiStore((s) => s.setLoginOpen);
+  const { portraitSrc } = useSelfIdentity();
   const pending = useOnboardingStore((s) => s.pending);
   const forcedOpen = useOnboardingStore((s) => s.forcedOpen);
   const busy = isConnecting || isAuthenticating;
@@ -66,12 +67,12 @@ export function WalletAvatar() {
       // it as its dropdown trigger and owns the click.
       onClick={isAuthenticated && !onboarding ? undefined : openLogin}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={PROFILE_PIC}
+      <UserAvatar
+        src={portraitSrc}
         alt="Profile"
+        size={36}
         className={cn(
-          'size-9 rounded-full border object-cover transition',
+          'rounded-full border transition',
           isAuthenticated ? 'border-neon' : 'border-border/60',
         )}
       />

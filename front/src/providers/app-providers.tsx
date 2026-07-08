@@ -16,12 +16,23 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 
 import { createQueryClient } from '@/lib/query-client';
 import { solanaEndpoint } from '@/lib/solana';
+import { I18nProvider } from '@/i18n/i18n-provider';
+import type { Dictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/locales';
 
 /** Every Phosphor icon defaults to the duotone (two-tone filled) weight app-wide. */
 const ICON_DEFAULTS: IconProps = { weight: 'duotone' };
 
 /** App-wide providers: React Query + Solana wallet (devnet). */
-export function AppProviders({ children }: { children: ReactNode }) {
+export function AppProviders({
+  children,
+  locale,
+  dictionary,
+}: {
+  children: ReactNode;
+  locale: Locale;
+  dictionary: Dictionary;
+}) {
   const [queryClient] = useState(createQueryClient);
   // Wallet Standard auto-detects Phantom/Solflare — no explicit adapters needed.
   const wallets = useMemo<Adapter[]>(() => [], []);
@@ -32,14 +43,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>
             <WalletAuthSync />
-            <IconContext.Provider value={ICON_DEFAULTS}>
-              {children}
-              <SearchCommand />
-              <LoginMount />
-              <ChallengeMount />
-              <OnboardingMount />
-              <BetSettlementMount />
-            </IconContext.Provider>
+            <I18nProvider locale={locale} dictionary={dictionary}>
+              <IconContext.Provider value={ICON_DEFAULTS}>
+                {children}
+                <SearchCommand />
+                <LoginMount />
+                <ChallengeMount />
+                <OnboardingMount />
+                <BetSettlementMount />
+              </IconContext.Provider>
+            </I18nProvider>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>

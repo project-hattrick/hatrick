@@ -88,6 +88,16 @@ export interface EventToast {
   life: number;
 }
 
+/**
+ * Feed-driven direction of play. When `attackingTeam` is set, the AI "molds"
+ * toward it: the attacking side pushes forward and commits proportional to
+ * `threat` (0..1), the other side compacts. Default (null / 0) = autonomous.
+ */
+export interface MatchIntent {
+  attackingTeam: Team | null;
+  threat: number;
+}
+
 export interface GameState {
   players: Player[];
   ball: Ball;
@@ -107,6 +117,11 @@ export interface GameState {
   passTargetId: number | null;
   goalBanner: GoalBanner | null;
   shake: number;
+  /** External event feed steering the sim (see MatchIntent). */
+  intent: MatchIntent;
+  /** True when a live/replay feed drives the match: disables auto-goals, random
+   *  steals and user control so possession + score follow the feed. */
+  driven: boolean;
 }
 
 export type HeadSet = Record<HeadView, HTMLImageElement>;

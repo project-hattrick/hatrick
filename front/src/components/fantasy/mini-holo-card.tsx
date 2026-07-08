@@ -2,14 +2,24 @@ import Image from 'next/image';
 import { talero } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { Flag } from '@/components/common/flag';
-import type { PlayerCardData } from '@/config/fantasy-cards.config';
+
+/** Minimal fields the mini card renders — satisfied by both PlayerCardData and a mapped owned card. */
+export interface DeckCard {
+  id: string;
+  name: string;
+  rating: number;
+  position: string;
+  code: string;
+  holoColors: [string, string, string];
+  portraitSrc: string;
+}
 
 /**
  * Minimalist collectible card following the holographic card identity:
  * dark texture base, Talero rating, country flag, holo tint (flag colors) on hover.
  * Pure CSS — cheap enough for long strips, unlike the full HoloPlayerCard.
  */
-export function MiniHoloCard({ card, className }: { card: PlayerCardData; className?: string }) {
+export function MiniHoloCard({ card, className }: { card: DeckCard; className?: string }) {
   const [holo1, holo2, holo3] = card.holoColors;
 
   return (

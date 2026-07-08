@@ -21,6 +21,7 @@ import { Sword, Check, Lightning, Coins, ShieldCheck } from '@/components/common
 import { MatchPhase } from '@/enums/match-phase.enum';
 import { fifaToIso } from '@/lib/country';
 import { duelists } from '@/config/duelists.config';
+import { useSelfProfile } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
 import {
   ACCEPT_SECONDS,
@@ -30,7 +31,6 @@ import {
   opponentDuelist,
   opponentRoster,
   rankTierConfig,
-  selfDuelist,
   selfRoster,
   type Duelist,
   type RosterEntry,
@@ -60,6 +60,7 @@ const HEADINGS: Record<MatchPhase, { title: string; description: string }> = {
  */
 export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm }: MatchmakingDialogProps) {
   const router = useRouter();
+  const self = useSelfProfile();
   const startDuel = useDuelStore((s) => s.start);
   const confirmSetup = useDuelStore((s) => s.confirmSetup);
 
@@ -134,7 +135,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
       ? { title: `Challenging ${activeOpponent.name}`, description: 'Ready check — accept to enter the arena.' }
       : HEADINGS[phase];
   const expired = seconds === 0;
-  const selfTier = rankTierConfig[selfDuelist.tier];
+  const selfTier = rankTierConfig[self.tier];
 
   const requeue = () => {
     setPhase(openPhase);
@@ -155,11 +156,11 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
 
         <div key={phase} className="animate-in fade-in-0 zoom-in-95 duration-300">
           {phase === MatchPhase.Searching ? (
-            <SearchingView elapsed={elapsed} tier={`${selfTier.label} ${selfDuelist.division}`} rating={selfDuelist.rating} />
+            <SearchingView self={self} elapsed={elapsed} tier={`${selfTier.label} ${self.division}`} rating={self.rating} />
           ) : phase === MatchPhase.Found ? (
-            <FoundView seconds={seconds} opponent={activeOpponent} bet={isChallenge ? bet : undefined} />
+            <FoundView self={self} seconds={seconds} opponent={activeOpponent} bet={isChallenge ? bet : undefined} />
           ) : (
-            <AcceptedView opponent={activeOpponent} startIn={startIn} />
+            <AcceptedView self={self} opponent={activeOpponent} startIn={startIn} />
           )}
         </div>
 
@@ -199,7 +200,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
 }
 
 /** Radar scan over the player's portrait while queueing. */
-function SearchingView({ elapsed, tier, rating }: { elapsed: number; tier: string; rating: number }) {
+function SearchingView({ self, elapsed, tier, rating }: { self: Duelist; elapsed: number; tier: string; rating: number }) {
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <div className="relative grid size-28 place-items-center">
@@ -208,8 +209,8 @@ function SearchingView({ elapsed, tier, rating }: { elapsed: number; tier: strin
         <span className="absolute size-28 rounded-full border border-border" />
         <span className="relative grid size-16 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
           <Image
-            src={selfDuelist.portraitSrc}
-            alt={selfDuelist.name}
+            src={self.portraitSrc}
+            alt={self.name}
             width={64}
             height={64}
             className="translate-y-[6%] scale-110 object-contain object-bottom"
@@ -229,10 +230,12 @@ function SearchingView({ elapsed, tier, rating }: { elapsed: number; tier: strin
 
 /** The VS reveal — you vs the matched opponent, with a ready-check ring. */
 function FoundView({
+  self,
   seconds,
   opponent,
   bet,
 }: {
+  self: Duelist;
   seconds: number;
   opponent: Duelist;
   /** Token stake picked in the entry modal — set only on direct challenges; ranked queue stays MMR-only. */
@@ -241,7 +244,7 @@ function FoundView({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-stretch gap-2">
-        <DuelistCard duelist={selfDuelist} highlight />
+        <DuelistCard duelist={self} highlight />
         <div className="flex shrink-0 flex-col items-center justify-center gap-2 px-0.5">
           <span className="neon-text font-heading text-2xl font-black tracking-tight text-neon">VS</span>
           <CountdownRing seconds={seconds} max={ACCEPT_SECONDS} label="Accept time remaining" />
@@ -309,11 +312,11 @@ function RosterSide({ duelist, roster, highlight }: { duelist: Duelist; roster: 
 }
 
 /** Pre-kickoff reveal — both rosters face to face while the start timer runs down. */
-function AcceptedView({ opponent, startIn }: { opponent: Duelist; startIn: number }) {
+function AcceptedView({ self, opponent, startIn }: { self: Duelist; opponent: Duelist; startIn: number }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2">
-        <RosterSide duelist={selfDuelist} roster={selfRoster} highlight />
+        <RosterSide duelist={self} roster={selfRoster} highlight />
         <div className="flex flex-col items-center justify-center gap-2 px-0.5">
           <span className="neon-text font-heading text-2xl font-black tracking-tight text-neon">VS</span>
           <CountdownRing seconds={startIn} max={START_SECONDS} label="Kickoff countdown" />

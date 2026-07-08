@@ -48,6 +48,13 @@ export class TxlineController {
     return this.snapshots.getScoresSnapshot(fixtureId) as Promise<ScoreSnapshotItemDto[]>;
   }
 
+  @Get('replay/catalog')
+  @ApiOperation({ summary: 'List finished fixtures available to replay (discovered from historical updates).' })
+  @ApiQuery({ name: 'days', required: false, type: Number })
+  getReplayCatalog(@Query('days') days?: string) {
+    return this.replay.catalog(days ? Number(days) : undefined);
+  }
+
   @Post('replay')
   @ApiOperation({ summary: 'Replay a past fixture from historical updates through the live event pipeline.' })
   startReplay(@Body() body: ReplayRequestDto): { started: boolean; fixtureId: number } {

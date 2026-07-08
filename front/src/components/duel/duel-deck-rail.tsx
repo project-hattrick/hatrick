@@ -1,12 +1,11 @@
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
-import { MiniHoloCard } from '@/components/fantasy/mini-holo-card';
+import { MiniHoloCard, type DeckCard } from '@/components/fantasy/mini-holo-card';
 import { cn } from '@/lib/utils';
-import type { PlayerCardData } from '@/config/fantasy-cards.config';
 
 interface DuelDeckRailProps {
   title: string;
-  cards: PlayerCardData[];
+  cards: DeckCard[];
   className?: string;
 }
 

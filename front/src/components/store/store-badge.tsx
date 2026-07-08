@@ -31,7 +31,7 @@ export function StoreBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-micro font-bold tracking-wide uppercase',
+        'inline-flex items-center gap-1 rounded px-1.5 py-px text-micro leading-4 font-semibold tracking-wide uppercase',
         toneClass[tone],
         className,
       )}

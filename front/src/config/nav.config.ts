@@ -1,13 +1,13 @@
 import { GameController, Sword, ShoppingCart, type Icon } from '@/components/common/icons';
 
 interface NavLink {
-  label: string;
+  labelKey: 'nav.games' | 'nav.duelists' | 'nav.store';
   href: string;
   icon: Icon;
 }
 
 export const navLinks: NavLink[] = [
-  { label: 'Games', href: '/', icon: GameController },
-  { label: 'Duelists', href: '/duelists', icon: Sword },
-  { label: 'Store', href: '/store', icon: ShoppingCart },
+  { labelKey: 'nav.games', href: '/', icon: GameController },
+  { labelKey: 'nav.duelists', href: '/duelists', icon: Sword },
+  { labelKey: 'nav.store', href: '/store', icon: ShoppingCart },
 ];

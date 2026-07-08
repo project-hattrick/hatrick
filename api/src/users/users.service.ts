@@ -45,6 +45,12 @@ export class UsersService {
     return UserResponseDto.fromEntity(user);
   }
 
+  async findByUsername(username: string): Promise<UserResponseDto> {
+    const user = await this.users.findByUsername(username);
+    if (!user) throw new NotFoundException(`User @${username} not found`);
+    return UserResponseDto.fromEntity(user);
+  }
+
   async update(id: string, dto: UpdateProfileDto): Promise<UserResponseDto> {
     try {
       return UserResponseDto.fromEntity(await this.users.update(id, dto));

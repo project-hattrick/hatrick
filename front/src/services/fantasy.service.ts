@@ -51,6 +51,8 @@ export function toPackCard(dto: CardDto): CollectionCard {
     portraitSrc: dto.portraitSrc ?? undefined,
     stats: statOrder.map(([label, key]) => ({ label, value: dto.stats[key] ?? 0 })),
     ownedCardId: dto.ownedCardId,
+    code: dto.code ?? undefined,
+    position: dto.position,
   };
 }
 
@@ -90,6 +92,22 @@ export interface CreateDuelPayload {
   ownedCardIds: string[];
 }
 
+/** A settled/live duel row from the api (mirror of the api DuelDto). */
+export interface DuelHistoryDto {
+  id: string;
+  mode: string;
+  status: string;
+  stake: string;
+  hostScore: number;
+  guestScore: number;
+  winnerId: string | null;
+  hostResult: DuelResultValue | null;
+  opponentName: string | null;
+  mmrDelta: number | null;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
 export const duelService = {
   create: (payload: CreateDuelPayload): Promise<DuelResultResponse> =>
     api.post<DuelResultResponse>(endpoints.duels.base, payload),
@@ -99,4 +117,8 @@ export const duelService = {
     payload: { hostScore: number; guestScore: number; result: DuelResultValue },
   ): Promise<DuelResultResponse> =>
     api.post<DuelResultResponse>(endpoints.duels.settle(id), payload),
+
+  /** The signed-in player's duel history (self-scoped, newest first). */
+  list: (signal?: AbortSignal): Promise<DuelHistoryDto[]> =>
+    api.get<DuelHistoryDto[]>(endpoints.duels.base, signal),
 };

@@ -10,29 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fifaToIso } from '@/lib/country';
 import { formatThousands, shortAddress } from '@/lib/format';
+import { avatarImageProps, isUploadedPhoto, DEFAULT_SELF_PORTRAIT } from '@/lib/avatar';
 import { cn } from '@/lib/utils';
-import { selfProfile } from '@/config/duelists.config';
 import { avatarOptions, formatJoined, rankFromRating } from '@/config/profile-mock';
+import { useSelfProfile } from '@/hooks/use-self-identity';
 import { useAuth } from '@/services/queries/use-auth';
 import { useUpdateProfile } from '@/services/queries/use-update-profile';
 import { backendEnabled } from '@/services/session-mode';
 import { useProfileStore, type ProfileDraft } from '@/store/profile.store';
 
-/** Uploaded photos are stored as data URLs; presets are `/personas/*` paths (pixel-art). */
-const isUploadedPhoto = (src: string): boolean => src.startsWith('data:');
-
 /** Max upload size (kept small — the data URL lives in localStorage). */
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-
-/** Avatar image props differ for real photos (cover-crop, smooth) vs pixel-art personas. */
-function avatarImageProps(src: string) {
-  return isUploadedPhoto(src)
-    ? { className: 'size-full object-cover', style: undefined }
-    : {
-        className: 'translate-y-[6%] scale-110 object-contain object-bottom',
-        style: { imageRendering: 'pixelated' as const },
-      };
-}
 
 function MiniStat({ value, label, accent }: { value: string; label: string; accent?: boolean }) {
   return (
@@ -144,7 +132,7 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
             )}
           </button>
           {avatarOptions.map((src) => {
-            const selected = src === (draft.portraitSrc || selfProfile.portraitSrc);
+            const selected = src === (draft.portraitSrc || DEFAULT_SELF_PORTRAIT);
             return (
               <button
                 key={src}
@@ -222,19 +210,20 @@ interface ProfileIdentityProps {
 export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityProps) {
   const { isAuthenticated, user } = useAuth();
   const draft = useProfileStore();
+  const self = useSelfProfile();
 
   const wallet = user?.walletAddress ?? null;
   const displayName = draft.displayName || user?.displayName || (wallet ? shortAddress(wallet) : 'Guest');
   const handle = draft.username ? draft.username.replace(/^@/, '') : wallet ? shortAddress(wallet) : 'guest';
-  const bio = draft.bio || selfProfile.bio;
+  const bio = draft.bio || self.bio;
   const country = draft.country || 'Brazil';
-  const rank = rankFromRating(selfProfile.rating);
+  const rank = rankFromRating(self.rating);
 
   return (
     <div className="flex flex-col">
       <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-e3 ring-2 ring-neon/30">
         {(() => {
-          const src = draft.portraitSrc || selfProfile.portraitSrc;
+          const src = draft.portraitSrc || self.portraitSrc;
           const { className, style } = avatarImageProps(src);
           return (
             <Image
@@ -259,13 +248,13 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
       <span className="text-micro mt-0.5 font-mono text-muted-foreground">@{handle}</span>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <TierBadge tier={selfProfile.tier} division={selfProfile.division} />
-        <PresenceDot presence={selfProfile.presence} showLabel />
+        <TierBadge tier={self.tier} division={self.division} />
+        <PresenceDot presence={self.presence} showLabel />
       </div>
 
       <div className="mt-4 flex gap-6">
-        <MiniStat value={String(selfProfile.wins)} label="Wins" />
-        <MiniStat value={String(selfProfile.losses)} label="Losses" />
+        <MiniStat value={String(self.wins)} label="Wins" />
+        <MiniStat value={String(self.losses)} label="Losses" />
         <MiniStat value={`#${rank}`} label="Rank" accent />
       </div>
 
@@ -296,7 +285,7 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
               </span>
             </span>
             <span className="flex items-center gap-2">
-              <Flag code={fifaToIso(selfProfile.country)} className="text-sm" />
+              <Flag code={fifaToIso(self.country)} className="text-sm" />
               <span>
                 Represents <b className="font-semibold text-foreground">{country}</b>
               </span>
@@ -304,7 +293,7 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
             <span className="flex items-center gap-2">
               <CalendarDots className="size-4" />
               <span>
-                Joined <b className="font-semibold text-foreground">{formatJoined(selfProfile.joinedAt)}</b>
+                Joined <b className="font-semibold text-foreground">{formatJoined(self.joinedAt)}</b>
               </span>
             </span>
           </div>

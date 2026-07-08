@@ -10,6 +10,9 @@ const INTERVALS_PER_HOUR = 12; // 5-min buckets
 const DEFAULT_HOURS = 3; // a match window + extra time
 const DEFAULT_SPEED = 8; // playback multiplier (real gaps ÷ speed)
 const MAX_GAP_MS = 4_000; // cap idle gaps so replay never stalls
+const CATALOG_TTL_MS = 5 * 60 * 1000;
+const CATALOG_HOURS = [13, 16, 19, 20]; // where the sim tournament's kickoffs land
+const COMPETITION_NAMES: Record<number, string> = { 72: 'World Cup', 430: 'Friendlies' };
 
 export interface ReplayOptions {
   fixtureId: number;
@@ -17,6 +20,17 @@ export interface ReplayOptions {
   startHour: number; // UTC hour of kickoff
   hours?: number;
   speed?: number;
+}
+
+/** A finished fixture the user can replay (discovered from historical updates). */
+export interface ReplayCatalogItem {
+  fixtureId: number;
+  home: string;
+  away: string;
+  competition: string;
+  startTime: number;
+  epochDay: number;
+  startHour: number;
 }
 
 type Frame = { ts: number; kind: 'score' | 'odds'; ev: WireScoreEvent | WireOddsEvent };
@@ -33,6 +47,7 @@ export class TxlineReplayService implements OnModuleInit {
   private readonly logger = new Logger(TxlineReplayService.name);
   private runId = 0; // bump invalidates any in-flight playback (single-flight)
   private running = false;
+  private catalogCache?: { at: number; items: ReplayCatalogItem[] };
 
   constructor(
     private readonly config: ConfigService,
@@ -65,6 +80,66 @@ export class TxlineReplayService implements OnModuleInit {
   stop(): void {
     this.runId++; // any active loop sees a stale id and bails
     this.running = false;
+  }
+
+  /** Discover finished fixtures the user can replay (cached ~5 min). */
+  async catalog(daysBack = 5): Promise<ReplayCatalogItem[]> {
+    if (this.catalogCache && Date.now() - this.catalogCache.at < CATALOG_TTL_MS) return this.catalogCache.items;
+
+    const today = Math.floor(Date.now() / 86_400_000);
+    const found = new Map<number, { startTime: number; competitionId: number; p1: number; p2: number }>();
+    for (let d = today - Math.max(1, daysBack); d <= today; d++) {
+      for (const h of CATALOG_HOURS) {
+        const evs = await this.http.get<WireScoreEvent[]>(`/api/scores/updates/${d}/${h}/0`).catch(() => []);
+        for (const e of Array.isArray(evs) ? evs : []) {
+          const fixtureId = Number(e.FixtureId);
+          const startTime = Number(e.StartTime);
+          if (!fixtureId || !startTime || found.has(fixtureId)) continue;
+          found.set(fixtureId, { startTime, competitionId: Number(e.CompetitionId), p1: Number(e.Participant1Id), p2: Number(e.Participant2Id) });
+        }
+      }
+    }
+
+    const names = await this.teamNames();
+    const now = Date.now();
+    const items = [...found.entries()]
+      .filter(([, f]) => f.startTime < now) // finished/started matches only
+      .sort((a, b) => b[1].startTime - a[1].startTime)
+      .slice(0, 40)
+      .map(([fixtureId, f]) => ({
+        fixtureId,
+        home: names.team.get(f.p1) ?? `Team ${f.p1}`,
+        away: names.team.get(f.p2) ?? `Team ${f.p2}`,
+        competition: names.comp.get(f.competitionId) ?? COMPETITION_NAMES[f.competitionId] ?? `Competition ${f.competitionId}`,
+        startTime: f.startTime,
+        epochDay: Math.floor(f.startTime / 86_400_000),
+        startHour: new Date(f.startTime).getUTCHours(),
+      }));
+
+    this.catalogCache = { at: Date.now(), items };
+    this.logger.log(`replay catalog: ${items.length} past fixtures (scanned ${daysBack + 1} days)`);
+    return items;
+  }
+
+  /** Best-effort id→name maps from the widest fixtures snapshot available. */
+  private async teamNames(): Promise<{ team: Map<number, string>; comp: Map<number, string> }> {
+    const team = new Map<number, string>();
+    const comp = new Map<number, string>();
+    try {
+      const today = Math.floor(Date.now() / 86_400_000);
+      const fx = await this.http.get<Record<string, unknown>[]>(`/api/fixtures/snapshot?startEpochDay=${today - 30}`);
+      for (const f of Array.isArray(fx) ? fx : []) {
+        const p1 = Number(f.Participant1Id);
+        const p2 = Number(f.Participant2Id);
+        if (p1 && typeof f.Participant1 === 'string') team.set(p1, f.Participant1);
+        if (p2 && typeof f.Participant2 === 'string') team.set(p2, f.Participant2);
+        const c = Number(f.CompetitionId);
+        if (c && typeof f.Competition === 'string') comp.set(c, f.Competition);
+      }
+    } catch {
+      /* names are best-effort; fall back to ids */
+    }
+    return { team, comp };
   }
 
   /** Load a fixture's history, order by Ts, and play it through the normalizer. */

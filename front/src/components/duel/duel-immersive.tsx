@@ -4,8 +4,9 @@ import { PlayerFocusCard } from '@/components/live/player-focus-card';
 import { PredictionPrompt } from '@/components/live/prediction-prompt';
 import { HeroChrome } from '@/components/live/hero-chrome';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
-import { selfProfile } from '@/config/duelists.config';
 import { userCards } from '@/config/fantasy-cards.config';
+import { useSelfDeck } from '@/hooks/use-self-deck';
+import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
 import { DuelScoreboard } from './duel-scoreboard';
 import { DuelDeckRail } from './duel-deck-rail';
@@ -16,6 +17,8 @@ const OPPONENT_DECK = [...userCards].reverse();
 /** Immersive duel: full-bleed real-match engine with personalized glass widgets pinned to the screen edges. */
 export function DuelImmersive() {
   const opponent = useDuelStore((s) => s.opponent);
+  const selfDeck = useSelfDeck();
+  const { displayName } = useSelfIdentity();
 
   return (
     <div className="relative mx-auto h-[100svh] min-h-[520px] w-full overflow-hidden">
@@ -34,7 +37,7 @@ export function DuelImmersive() {
 
         {/* Self deck — extreme left, vertical. */}
         <div className="hidden md:absolute md:top-24 md:bottom-6 md:left-3 md:flex md:w-[116px]">
-          <DuelDeckRail title={selfProfile.name} cards={userCards} className="w-full" />
+          <DuelDeckRail title={displayName} cards={selfDeck} className="w-full" />
         </div>
 
         {/* Opponent deck — extreme right, vertical. */}

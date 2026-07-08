@@ -6,7 +6,7 @@
  *
  * Run: `npx ts-node prisma/seed.ts` (idempotent — skips if already populated).
  */
-import { CardRarity, PlayerPosition, PrismaClient, type Prisma } from '@prisma/client';
+import { CardRarity, PlayerPosition, Presence, PrismaClient, RankTier, type Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -120,10 +120,11 @@ const personas: SeedCard[] = duelistSeeds.map((d) => {
   };
 });
 
-async function main(): Promise<void> {
+/** Card catalog — gated by count (idempotent; the pool never changes mid-run). */
+async function seedCards(): Promise<void> {
   const existing = await prisma.cardCatalog.count();
   if (existing > 0) {
-    console.log(`card_catalog already has ${existing} rows — skipping seed.`);
+    console.log(`card_catalog already has ${existing} rows — skipping cards.`);
     return;
   }
 
@@ -144,6 +145,80 @@ async function main(): Promise<void> {
 
   const { count } = await prisma.cardCatalog.createMany({ data });
   console.log(`Seeded ${count} cards (${stars.length} stars + ${personas.length} personas).`);
+}
+
+// ── Ranking (mirrors src/fantasy/ranking.util.ts) ─────────────────────────────
+const TIER_BANDS: Array<{ min: number; tier: RankTier }> = [
+  { min: 1800, tier: RankTier.Master },
+  { min: 1650, tier: RankTier.Diamond },
+  { min: 1500, tier: RankTier.Platinum },
+  { min: 1350, tier: RankTier.Gold },
+  { min: 1200, tier: RankTier.Silver },
+  { min: 0, tier: RankTier.Bronze },
+];
+function rankFromMmr(mmr: number): { tier: RankTier; division: string } {
+  const band = TIER_BANDS.find((b) => mmr >= b.min) ?? TIER_BANDS[TIER_BANDS.length - 1];
+  const offset = mmr - band.min;
+  return { tier: band.tier, division: offset >= 100 ? 'I' : offset >= 50 ? 'II' : 'III' };
+}
+
+/**
+ * The 16 duelists as real User rows (vs-CPU personas). Idempotent upsert by a
+ * deterministic `npc:<username>` placeholder wallet — stats derived from the same
+ * hash + MMR the cards use, so the directory + public profiles are backed by real data.
+ */
+async function seedDuelistUsers(): Promise<void> {
+  for (const d of duelistSeeds) {
+    const h = hash(d.username);
+    const wins = 80 + (h % 320);
+    const losses = 40 + ((h >> 5) % 220);
+    const streak = `${h % 2 === 0 ? 'W' : 'L'}${1 + (h % 8)}`;
+    const { tier, division } = rankFromMmr(d.rating);
+    const stats = {
+      mmr: d.rating,
+      tier,
+      division,
+      wins,
+      losses,
+      streak,
+      country: d.country,
+      portraitSrc: d.portraitSrc,
+      presence: Presence.Online,
+    };
+    await prisma.user.upsert({
+      where: { walletAddress: `npc:${d.username}` },
+      update: stats,
+      create: { walletAddress: `npc:${d.username}`, username: d.username, displayName: d.name, ...stats },
+    });
+  }
+  console.log(`Seeded ${duelistSeeds.length} duelist users.`);
+}
+
+/**
+ * Give the signed-in demo account a populated profile: any real (non-persona) user
+ * still at defaults (mmr 1200, 0-0) gets a starter Gold-II record. Idempotent — once
+ * bumped (or once the user has actually played), it's left alone.
+ */
+async function backfillCurrentUserStats(): Promise<void> {
+  const fresh = await prisma.user.findMany({
+    where: { mmr: 1200, wins: 0, losses: 0, walletAddress: { not: { startsWith: 'npc:' } } },
+  });
+  if (!fresh.length) return;
+  const mmr = 1420;
+  const { tier, division } = rankFromMmr(mmr);
+  for (const u of fresh) {
+    await prisma.user.update({
+      where: { id: u.id },
+      data: { mmr, tier, division, wins: 128, losses: 74, streak: 'W5' },
+    });
+  }
+  console.log(`Backfilled starter stats for ${fresh.length} real user(s).`);
+}
+
+async function main(): Promise<void> {
+  await seedCards();
+  await seedDuelistUsers();
+  await backfillCurrentUserStats();
 }
 
 main()

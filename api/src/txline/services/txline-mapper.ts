@@ -102,6 +102,9 @@ export function mapWireScore(w: WireScoreEvent): RawScoreEvent | null {
   // Authoritative cumulative score object (real key is `Score`; tolerate aliases).
   const scoreSoccer = (w.Score ?? w.scoreSoccer ?? w.ScoreSoccer) as Record<string, unknown> | undefined;
   const participant = numOr(0, w.Participant) || undefined;
+  // The Score blob is sparse: a participant with 0 goals omits the `Goals` key.
+  // So when a Score object exists, an absent count means 0 (not "unknown").
+  const hasScore = isObj(scoreSoccer);
 
   return {
     fixtureId,
@@ -111,9 +114,9 @@ export function mapWireScore(w: WireScoreEvent): RawScoreEvent | null {
     seq: numOr(0, w.Seq, w.seq),
     confirmed: boolOf(w.Confirmed, w.confirmed),
     possessionType: possessionType(action),
-    scoreSoccer: isObj(scoreSoccer) ? scoreSoccer : undefined,
-    homeGoals: goalsFromScore(scoreSoccer, 'Participant1'),
-    awayGoals: goalsFromScore(scoreSoccer, 'Participant2'),
+    scoreSoccer: hasScore ? scoreSoccer : undefined,
+    homeGoals: hasScore ? (goalsFromScore(scoreSoccer, 'Participant1') ?? 0) : undefined,
+    awayGoals: hasScore ? (goalsFromScore(scoreSoccer, 'Participant2') ?? 0) : undefined,
     playerStats: isObj(w.PlayerStats) && Object.keys(w.PlayerStats).length ? w.PlayerStats : undefined,
     dataSoccer: {
       Action: action,

@@ -2,16 +2,13 @@
 
 import { useRef } from 'react';
 import { CaretLeft, CaretRight } from '@/components/common/icons';
-import { HoloPlayerCard, type CardStat } from '@/components/store/holo-player-card';
+import { HoloPlayerCard } from '@/components/store/holo-player-card';
 import { cn } from '@/lib/utils';
-import { statOrder, userCards, type PlayerCardData } from '@/config/fantasy-cards.config';
+import { useFantasyStore } from '@/store/fantasy.store';
 
 /** Card width in px — the carousel scroll step derives from it (+ gap). */
 const CARD_W = 176;
 const STEP = CARD_W + 16;
-
-const toCardStats = (card: PlayerCardData): CardStat[] =>
-  statOrder.map(([label, key]) => ({ value: card.stats[key], label }));
 
 function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void }) {
   const Icon = side === 'left' ? CaretLeft : CaretRight;
@@ -30,27 +27,32 @@ function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void 
   );
 }
 
-/** The full collection as big holographic cards in a snapping carousel. */
+/** The owned collection (fantasy.store) as big holographic cards in a snapping carousel. */
 export function CollectionCarousel() {
   const ref = useRef<HTMLDivElement>(null);
+  const collection = useFantasyStore((s) => s.collection);
   const scroll = (direction: number) => ref.current?.scrollBy({ left: direction * STEP, behavior: 'smooth' });
+
+  if (!collection.length) {
+    return (
+      <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+        No players yet — open a pack to start your collection.
+      </p>
+    );
+  }
 
   return (
     <div className="relative">
       <div ref={ref} className="custom-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3">
-        {userCards.map((card) => (
-          <figure key={card.id} className="flex shrink-0 snap-start flex-col items-center gap-2" style={{ width: CARD_W }}>
-            <HoloPlayerCard
-              number={card.rating}
-              flag={card.flag}
-              holoColors={card.holoColors}
-              stats={toCardStats(card)}
-              portraitSrc={card.portraitSrc}
-              width={CARD_W}
-            />
+        {collection.map((card, i) => (
+          <figure
+            key={card.ownedCardId ?? `${card.name}-${i}`}
+            className="flex shrink-0 snap-start flex-col items-center gap-2"
+            style={{ width: CARD_W }}
+          >
+            <HoloPlayerCard {...card} width={CARD_W} />
             <figcaption className="flex w-full items-center justify-center gap-1.5 text-xs">
               <span className="truncate font-semibold">{card.name}</span>
-              <span className="rounded bg-surface-3 px-1 py-0.5 text-micro font-bold text-muted-foreground">{card.position}</span>
             </figcaption>
           </figure>
         ))}

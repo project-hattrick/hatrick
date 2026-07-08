@@ -1,4 +1,4 @@
-import { DecisionKind, isKeeper, moveToward, ownerDecision, updateOffBall } from './ai';
+import { attackSign, DecisionKind, isKeeper, moveToward, ownerDecision, updateOffBall } from './ai';
 import { loadAssets } from './assets';
 import {
   createEffects,
@@ -37,6 +37,20 @@ export interface HeadsOnlyHandle {
   togglePause: () => void;
   resize: () => void;
   destroy: () => void;
+  /** Enter/leave feed-driven mode (disables auto-goals, steals and user control). */
+  setDriven: (on: boolean) => void;
+  /** The team currently on the ball + how threatening (0..1). Steers the whole shape. */
+  setPossession: (team: Team, threat: number) => void;
+  /** Commit a shot on goal from the attacking team. */
+  injectShot: (team: Team) => void;
+  /** Celebrate a goal (score comes from setScore — the feed is authoritative). */
+  injectGoal: (team: Team) => void;
+  /** Stage a corner for the attacking team. */
+  injectCorner: (team: Team) => void;
+  /** Card toast for a team. */
+  injectCard: (team: Team) => void;
+  /** Authoritative scoreboard (Blue = home / participant 1, Red = away / participant 2). */
+  setScore: (blue: number, red: number) => void;
 }
 
 const KEY_MAP: Record<string, keyof InputState | undefined> = {
@@ -134,6 +148,8 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     passTargetId: null,
     goalBanner: null,
     shake: 0,
+    intent: { attackingTeam: null, threat: 0 },
+    driven: false,
   };
   let paused = false;
   let raf = 0;
@@ -241,6 +257,10 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
   };
 
   const pickControlled = (): void => {
+    if (state.driven) {
+      state.controlledId = null; // no human player in feed-driven mode
+      return;
+    }
     const o = owner();
     if (o && o.team === Team.Blue) {
       state.controlledId = o.id;
@@ -370,7 +390,7 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
       ball.vy = 0;
       ball.spin += o.speed * dt * 26;
       ball.trail.length = 0;
-      tackle(dt);
+      if (!state.driven) tackle(dt); // driven: possession changes come from the feed
       return;
     }
     ball.x += ball.vx * dt;
@@ -390,7 +410,8 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     }
     ball.y = clamp(ball.y, 0.03, 0.97);
 
-    const inMouth = ball.y > GOAL_TOP && ball.y < GOAL_BOTTOM;
+    // Driven mode never auto-scores — goals come from the feed (injectGoal).
+    const inMouth = ball.y > GOAL_TOP && ball.y < GOAL_BOTTOM && !state.driven;
     if (ball.x > 1.0) {
       if (inMouth) goal(Team.Blue);
       else goalKick(Team.Red);
@@ -427,6 +448,8 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     state.time += sdt;
     state.clock += sdt * TUNING.clockScale;
     state.shake = Math.max(0, state.shake - dt * 2.2);
+    // Danger fades between feed events (~7s time constant) so the shape relaxes.
+    if (state.intent.threat > 0) state.intent.threat *= Math.exp(-sdt / 7);
     if (state.goalBanner) {
       state.goalBanner.t += dt;
       if (state.goalBanner.t > 1.8) state.goalBanner = null;
@@ -501,6 +524,46 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     state.passTargetId = null;
   };
 
+  // ---- feed director (drives the sim from an external match event stream) ----
+  const outfieldNearestBall = (team: Team): Player | null =>
+    nearest(state.players, state.ball.x, state.ball.y, (p) => p.team === team && !isKeeper(p));
+
+  const giveBall = (team: Team): void => {
+    const taker = outfieldNearestBall(team) ?? state.players.find((p) => p.team === team && !isKeeper(p));
+    if (!taker) return;
+    state.ball.ownerId = taker.id;
+    state.ball.vx = 0;
+    state.ball.vy = 0;
+    state.ball.cooldown = 0.15;
+    state.ball.trail.length = 0;
+    state.passTargetId = null;
+    taker.decideAt = state.time + rand(0.2, 0.5);
+    taker.aimX = taker.x;
+    taker.aimY = taker.y;
+  };
+
+  const mostAdvanced = (team: Team): Player | null => {
+    let pick: Player | null = null;
+    let best = Number.NEGATIVE_INFINITY;
+    for (const p of state.players) {
+      if (p.team !== team || isKeeper(p)) continue;
+      const forwardness = p.x * attackSign(team); // higher = closer to opponent goal
+      if (forwardness > best) {
+        best = forwardness;
+        pick = p;
+      }
+    }
+    return pick;
+  };
+
+  const celebrateGoal = (team: Team): void => {
+    state.goalBanner = { t: 0, team };
+    state.shake = 1;
+    const cx = team === Team.Blue ? 0.99 : 0.01;
+    for (let i = 0; i < 18; i++) spawnFx(FxKind.Spark, cx, 0.5, TEAM_COLOR[team], 0.3);
+    kickoff(team === Team.Blue ? Team.Red : Team.Blue);
+  };
+
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
   canvas.addEventListener('pointerdown', onPointerDown);
@@ -530,6 +593,55 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       canvas.removeEventListener('pointerdown', onPointerDown);
+    },
+    setDriven: (on: boolean) => {
+      state.driven = on;
+      if (on) {
+        state.controlledId = null;
+        state.intent = { attackingTeam: null, threat: 0 };
+        state.scoreBlue = 0;
+        state.scoreRed = 0;
+        kickoff(Team.Blue);
+      }
+    },
+    setPossession: (team: Team, threat: number) => {
+      const t = clamp(threat, 0, 1);
+      const o = owner();
+      const flip = !o || o.team !== team;
+      state.intent.attackingTeam = team;
+      state.intent.threat = Math.max(state.intent.threat, t);
+      if (flip) giveBall(team); // possession changed hands per the feed
+    },
+    injectShot: (team: Team) => {
+      state.intent.attackingTeam = team;
+      state.intent.threat = Math.max(state.intent.threat, 0.8);
+      const o = owner();
+      const shooter = o && o.team === team ? o : mostAdvanced(team) ?? outfieldNearestBall(team);
+      if (!shooter) return;
+      state.ball.ownerId = shooter.id;
+      doShoot(shooter);
+    },
+    injectGoal: (team: Team) => {
+      state.intent.attackingTeam = team;
+      state.intent.threat = 0.4; // danger resets after the ball hits the net
+      celebrateGoal(team);
+    },
+    injectCorner: (team: Team) => {
+      state.intent.attackingTeam = team;
+      state.intent.threat = Math.max(state.intent.threat, 0.7);
+      state.ball.x = team === Team.Blue ? 0.98 : 0.02;
+      state.ball.y = Math.random() < 0.5 ? 0.07 : 0.93;
+      state.ball.vx = 0;
+      state.ball.vy = 0;
+      giveBall(team);
+      event(`CORNER — ${TEAM_NAME[team]}`, TEAM_COLOR[team]);
+    },
+    injectCard: (team: Team) => {
+      event(`CARD — ${TEAM_NAME[team]}`, TEAM_COLOR[team]);
+    },
+    setScore: (blue: number, red: number) => {
+      state.scoreBlue = blue;
+      state.scoreRed = red;
     },
   };
 }

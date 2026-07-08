@@ -7,13 +7,41 @@ import type { TeamSide } from '@/enums/team-side.enum';
 export interface MatchEventPayload {
   fixtureId: number;
   action: MatchAction;
+  /** Raw provider action string (e.g. `shot`, `danger_possession`) — richer than the enum. */
+  rawAction?: string;
+  /** `Safe | Attack | Danger | HighDanger` — drives the 2D danger meter. */
+  possessionType?: string;
   state: EmissionState;
   confirmed: boolean;
   seq: number;
   ts: number;
   minute?: number;
   participant?: number;
+  /** Authoritative cumulative score at this event (from the wire `Score` object). */
+  score?: { home?: number; away?: number };
+  playerStats?: Record<string, unknown>;
   label?: string;
+}
+
+/** Pushed on `odds.update`. */
+export interface OddsEventPayload {
+  fixtureId: number;
+  bookmaker: string;
+  superOddsType: string;
+  inRunning: boolean;
+  priceNames: string[];
+  prices: number[];
+  ts: number;
+}
+
+/** Pushed on `match-end.after`. */
+export interface MatchEndPayload {
+  fixtureId: number;
+  seq: number;
+  ts: number;
+  homeScore?: number;
+  awayScore?: number;
+  outcome?: string;
 }
 
 export interface TeamInfo {

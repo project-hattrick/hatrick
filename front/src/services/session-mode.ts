@@ -1,4 +1,6 @@
 import { env } from '@/lib/env';
+import { RankTier } from '@/enums/rank-tier.enum';
+import { Presence } from '@/enums/presence.enum';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
@@ -33,6 +35,15 @@ export const mockUser = (walletAddress: string): AuthUser => ({
   country: null,
   bio: null,
   portraitSrc: null,
+  // Starter demo stats — mirror the backend's backfill so mock mode presents the same.
+  createdAt: '2026-01-14T00:00:00.000Z',
+  mmr: 1420,
+  tier: RankTier.Gold,
+  division: 'II',
+  wins: 128,
+  losses: 74,
+  streak: 'W5',
+  presence: Presence.Online,
 });
 
 /** Synthetic address for the wallet-free demo session — stable so its id/persistence are consistent. */

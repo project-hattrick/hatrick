@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole, UserStatus, type User } from '@prisma/client';
+import { Presence, RankTier, UserRole, UserStatus, type User } from '@prisma/client';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -60,6 +60,27 @@ export class UserResponseDto {
   @ApiProperty({ description: 'Account lifecycle state', enum: UserStatus })
   status!: UserStatus;
 
+  @ApiProperty({ description: 'Cached rating', example: 1420 })
+  mmr!: number;
+
+  @ApiProperty({ description: 'Competitive tier', enum: RankTier })
+  tier!: RankTier;
+
+  @ApiProperty({ description: 'Division within tier', nullable: true, type: String })
+  division!: string | null;
+
+  @ApiProperty({ description: 'Duels won', example: 128 })
+  wins!: number;
+
+  @ApiProperty({ description: 'Duels lost', example: 74 })
+  losses!: number;
+
+  @ApiProperty({ description: 'Current W/L streak, e.g. "W5"', nullable: true, type: String })
+  streak!: string | null;
+
+  @ApiProperty({ description: 'Online presence', enum: Presence })
+  presence!: Presence;
+
   @ApiProperty({
     description: 'Play-money balance as a decimal string',
     example: '1000.00',
@@ -99,6 +120,13 @@ export class UserResponseDto {
     dto.portraitSrc = user.portraitSrc;
     dto.role = user.role;
     dto.status = user.status;
+    dto.mmr = user.mmr;
+    dto.tier = user.tier;
+    dto.division = user.division;
+    dto.wins = user.wins;
+    dto.losses = user.losses;
+    dto.streak = user.streak;
+    dto.presence = user.presence;
     dto.balance = user.balance.toFixed(2);
     dto.lastLoginAt = user.lastLoginAt;
     dto.createdAt = user.createdAt;

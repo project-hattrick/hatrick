@@ -56,6 +56,16 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
+  // Declared before `:id` so "username" isn't captured as an id.
+  @Get('username/:username')
+  @ApiOperation({ summary: 'Get a public profile by username' })
+  @ApiParam({ name: 'username', description: 'Unique handle', example: 'pixelmessi10' })
+  @ApiOkResponse({ description: 'The user', type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  findByUsername(@Param('username') username: string): Promise<UserResponseDto> {
+    return this.usersService.findByUsername(username);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiParam({

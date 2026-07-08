@@ -11,6 +11,8 @@ export const endpoints = {
   },
   users: {
     byId: (id: string) => `/users/${id}`,
+    list: (limit: number) => `/users?limit=${limit}`,
+    byUsername: (username: string) => `/users/username/${encodeURIComponent(username)}`,
   },
   wallet: {
     transactions: '/wallet/transactions',
