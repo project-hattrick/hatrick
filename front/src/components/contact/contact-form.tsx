@@ -21,14 +21,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const textareaClass = cn(
-  'w-full min-w-0 resize-none rounded-[18px] border border-white/10 bg-white/[0.03]',
+  'w-full min-w-0 resize-none rounded-[18px] border border-border bg-surface-1',
   'px-5 py-3.5 text-sm text-foreground outline-none transition-colors',
   'placeholder:text-muted-foreground focus-visible:border-foreground/40',
   'disabled:pointer-events-none disabled:opacity-50',
 );
 
 const selectClass = cn(
-  'w-full min-w-0 appearance-none rounded-[18px] border border-white/10 bg-surface-2',
+  'w-full min-w-0 appearance-none rounded-[18px] border border-border bg-surface-2',
   'px-5 py-3.5 text-sm text-foreground outline-none transition-colors',
   'focus-visible:border-foreground/40 disabled:pointer-events-none disabled:opacity-50',
 );

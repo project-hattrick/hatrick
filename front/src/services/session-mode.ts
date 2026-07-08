@@ -1,5 +1,8 @@
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/store/auth.store';
+import { useWalletStore } from '@/store/wallet.store';
+import { useFantasyStore } from '@/store/fantasy.store';
+import { useBetsStore } from '@/store/bets.store';
 import type { AuthUser } from '@/services/auth.service';
 
 /**
@@ -31,3 +34,19 @@ export const mockUser = (walletAddress: string): AuthUser => ({
   bio: null,
   portraitSrc: null,
 });
+
+/** Synthetic address for the wallet-free demo session — stable so its id/persistence are consistent. */
+const GUEST_ADDRESS = 'GuestDemo1111111111111111111111111111111111';
+
+/** Wallet-free demo sign-in — establishes a local mock session with no extension, signing or network. */
+export const signInAsGuest = (): void => {
+  useAuthStore.getState().setSession(mockUser(GUEST_ADDRESS));
+};
+
+/** Local sign-out — clears the session and resets the play-money stores (no wallet to disconnect). */
+export const signOutLocal = (): void => {
+  useAuthStore.getState().clear();
+  useWalletStore.getState().reset();
+  useFantasyStore.getState().reset();
+  useBetsStore.getState().reset();
+};

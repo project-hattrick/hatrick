@@ -35,10 +35,10 @@ export function WelcomePackPanel() {
   };
 
   return (
-    <GlassPanel radius="xl" tone="dark" className="overflow-hidden p-6">
+    <GlassPanel radius="xl" tone="dark" className="overflow-hidden p-5">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-neon uppercase">
+          <span className="inline-flex items-center gap-1.5 text-micro font-bold tracking-wider text-neon uppercase">
             <Sparkle className="size-3.5" /> Welcome pack
           </span>
           <h2 className="text-xl font-bold">Open your pack of {WELCOME_PACK_SIZE} players</h2>

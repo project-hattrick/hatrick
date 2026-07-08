@@ -16,7 +16,7 @@ export function BetRow({ bet }: { bet: Bet }) {
   const status = lookup(betStatusConfig, bet.status, betStatusFallback);
   return (
     <div className="flex items-center gap-3 px-4 py-3">
-      <span className={cn('w-11 shrink-0 rounded py-0.5 text-center text-[10px] font-bold uppercase', status.className)}>
+      <span className={cn('w-11 shrink-0 rounded py-0.5 text-center text-micro font-bold uppercase', status.className)}>
         {status.label}
       </span>
       <div className="flex min-w-0 flex-1 flex-col">

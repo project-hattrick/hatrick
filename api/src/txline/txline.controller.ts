@@ -1,16 +1,21 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { TxlineSnapshotService } from './services/txline-snapshot.service';
+import { TxlineReplayService } from './services/txline-replay.service';
 import { FixtureDto } from './dto/fixture.dto';
 import { OddsSnapshotItemDto } from './dto/odds-snapshot.dto';
 import { ScoreSnapshotItemDto } from './dto/score-snapshot.dto';
+import { ReplayRequestDto } from './dto/replay-request.dto';
 
 /** Public snapshot API — proxies TxLINE initial-state reads (docs/txline-provider.md). */
 @ApiTags('TxLINE snapshots')
 @Controller()
 export class TxlineController {
-  constructor(private readonly snapshots: TxlineSnapshotService) {}
+  constructor(
+    private readonly snapshots: TxlineSnapshotService,
+    private readonly replay: TxlineReplayService,
+  ) {}
 
   @Get('fixtures')
   @ApiOperation({ summary: 'Latest fixtures snapshot, optionally filtered by competition / epoch day.' })
@@ -41,5 +46,26 @@ export class TxlineController {
   @ApiOkResponse({ type: ScoreSnapshotItemDto, isArray: true })
   getScores(@Param('fixtureId', ParseIntPipe) fixtureId: number): Promise<ScoreSnapshotItemDto[]> {
     return this.snapshots.getScoresSnapshot(fixtureId) as Promise<ScoreSnapshotItemDto[]>;
+  }
+
+  @Post('replay')
+  @ApiOperation({ summary: 'Replay a past fixture from historical updates through the live event pipeline.' })
+  startReplay(@Body() body: ReplayRequestDto): { started: boolean; fixtureId: number } {
+    // Fire-and-forget: playback runs in the background and emits on the event bus.
+    void this.replay.start(body);
+    return { started: true, fixtureId: body.fixtureId };
+  }
+
+  @Post('replay/stop')
+  @ApiOperation({ summary: 'Stop the currently running replay.' })
+  stopReplay(): { stopped: boolean } {
+    this.replay.stop();
+    return { stopped: true };
+  }
+
+  @Get('replay/status')
+  @ApiOperation({ summary: 'Whether a replay is currently playing.' })
+  replayStatus(): { running: boolean } {
+    return { running: this.replay.isRunning() };
   }
 }

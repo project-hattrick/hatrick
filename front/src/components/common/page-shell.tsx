@@ -12,7 +12,7 @@ export function PageShell({ children, footer = true }: PageShellProps) {
   return (
     <div className="relative min-h-screen bg-background">
       <SiteNavbar />
-      <main className="px-6 pt-24 pb-16">
+      <main className="px-4 pt-24 pb-16 sm:px-6">
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
       {footer ? <SiteFooter /> : null}

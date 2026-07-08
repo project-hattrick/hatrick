@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { env } from '@/lib/env';
 import type { AuthUser } from '@/services/auth.service';
 
 /** Session lifecycle: 'unknown' until /auth/me resolves on boot, then guest/authed. */
@@ -60,7 +61,11 @@ export const useAuthStore = create<AuthStore>()(
       storage: createJSONStorage(() =>
         typeof window === 'undefined' ? noopStorage : localStorage,
       ),
-      partialize: (state) => ({ user: state.user }),
+      // Backend mode re-validates the cookie on boot, so only `user` is persisted (for a
+      // flash-free paint); `status` is not. Mock mode has no server to re-validate against,
+      // so the local session (incl. a wallet-free guest) must persist `status` to survive a reload.
+      partialize: (state) =>
+        env.useMock ? { user: state.user, status: state.status } : { user: state.user },
     },
   ),
 );

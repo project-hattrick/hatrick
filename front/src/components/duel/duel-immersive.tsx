@@ -44,13 +44,14 @@ export function DuelImmersive() {
           </div>
         )}
 
-        {/* On the ball + predictions — bottom-left, inset past the self deck. */}
-        <div className="hidden md:absolute md:bottom-6 md:left-[140px] md:block md:w-[300px]">
+        {/* On the ball + predictions — bottom-left, inset past the self deck (lg+ only; at md the
+            300px card would overlap the 320px crowd on a tablet, so both wait for lg). */}
+        <div className="hidden lg:absolute lg:bottom-6 lg:left-[140px] lg:block lg:w-[300px]">
           <PlayerFocusCard />
         </div>
 
-        {/* Crowd chat — right, inset past the opponent deck. */}
-        <div className="hidden md:absolute md:top-24 md:right-[140px] md:bottom-6 md:flex md:w-[320px]">
+        {/* Crowd chat — right, inset past the opponent deck (lg+ only, see above). */}
+        <div className="hidden lg:absolute lg:top-24 lg:right-[140px] lg:bottom-6 lg:flex lg:w-[320px]">
           <CrowdPanel fixtureId={MOCK_FIXTURE_ID} />
         </div>
 

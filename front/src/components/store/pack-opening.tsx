@@ -98,7 +98,7 @@ function CardBack() {
     <div className={cn(styles.foil, 'flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl')}>
       <Image src="/cards/fade-logo.png" alt="" width={140} height={140} className="opacity-60" />
       <span className="text-2xl font-black tracking-widest text-white/90">TxODDS</span>
-      <span className="text-[10px] tracking-[0.4em] text-white/50 uppercase">Player card</span>
+      <span className="text-micro tracking-[0.4em] text-white/50 uppercase">Player card</span>
     </div>
   );
 }
@@ -305,7 +305,7 @@ function PackOpening({
               aria-label="Close"
               onClick={close}
               className={cn(
-                'absolute right-5 z-10 cursor-pointer rounded-full border border-border/60 bg-black/40 p-2 text-muted-foreground transition-colors hover:text-foreground',
+                'absolute right-5 z-10 cursor-pointer rounded-full border border-border/60 bg-overlay/40 p-2 text-muted-foreground transition-colors hover:text-foreground',
                 embedded ? 'top-6' : 'top-20',
               )}
             >
@@ -336,7 +336,7 @@ function PackOpening({
                   <div className={cn(styles.foil, 'flex w-full flex-col items-center justify-center gap-1.5 rounded-lg py-5')}>
                     <Image src="/cards/fade-logo.png" alt="" width={56} height={56} className="opacity-80" />
                     <span className="text-xs font-black tracking-widest text-white/90">TxODDS</span>
-                    <span className="text-[8px] tracking-[0.3em] text-white/45 uppercase">{packName}</span>
+                    <span className="text-micro tracking-[0.3em] text-white/45 uppercase">{packName}</span>
                   </div>
                 </div>
               </GlassPanel>
@@ -436,7 +436,7 @@ function PackOpening({
                     {isLastGroup ? 'See summary' : currentCards.length > 1 ? 'Next reveal' : 'Next card'}
                   </Button>
                 )}
-                <span className="text-[11px] text-white/60">
+                <span className="text-caption text-white/60">
                   {stage === PackStage.Sealed && 'Click the pack or press SPACE to tear it open'}
                   {stage === PackStage.FaceDown && 'Click or press SPACE to reveal'}
                   {stage === PackStage.Revealed && 'Swipe the card aside or press SPACE'}
@@ -446,7 +446,7 @@ function PackOpening({
 
             {/* Summary */}
             {stage === PackStage.Summary && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+              <div className="absolute inset-0 flex items-center justify-center bg-overlay/55">
                 <div className={styles.summaryLayout}>
                   <div className="flex flex-col items-center gap-1.5">
                     <h2 className="text-3xl font-bold text-white md:text-4xl">You pulled {packCards.length} cards</h2>
@@ -517,7 +517,7 @@ function PackOpening({
           <div
             className={cn(
               styles.embedded,
-              'absolute inset-0 z-10 overflow-hidden rounded-[inherit] bg-[#050506] bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]',
+              'absolute inset-0 z-10 overflow-hidden rounded-[inherit] bg-surface-deep bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]',
             )}
             style={{ backgroundImage: overlayBg }}
           >
@@ -526,7 +526,7 @@ function PackOpening({
         ) : (
           createPortal(
             <div
-              className="fixed inset-0 z-20 bg-[#050506] bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]"
+              className="fixed inset-0 z-20 bg-surface-deep bg-cover bg-center select-none animate-in fade-in duration-300 [&_img]:pointer-events-none [&_img]:[-webkit-user-drag:none]"
               style={{ backgroundImage: overlayBg }}
             >
               {overlayInner}

@@ -21,7 +21,7 @@ function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void 
       aria-label={side === 'left' ? 'Previous cards' : 'Next cards'}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-10 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface-1/90 text-foreground shadow-xl backdrop-blur transition hover:border-neon/40 hover:text-neon',
+        'absolute top-1/2 z-10 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface-1/90 text-foreground shadow-e3 backdrop-blur transition hover:border-neon/40 hover:text-neon',
         side === 'left' ? 'left-2' : 'right-2',
       )}
     >
@@ -50,7 +50,7 @@ export function CollectionCarousel() {
             />
             <figcaption className="flex w-full items-center justify-center gap-1.5 text-xs">
               <span className="truncate font-semibold">{card.name}</span>
-              <span className="rounded bg-white/10 px-1 py-0.5 text-[10px] font-bold text-muted-foreground">{card.position}</span>
+              <span className="rounded bg-surface-3 px-1 py-0.5 text-micro font-bold text-muted-foreground">{card.position}</span>
             </figcaption>
           </figure>
         ))}

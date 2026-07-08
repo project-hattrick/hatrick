@@ -8,7 +8,7 @@ function Dots({ dots, color }: { dots: FormationDot[]; color: string }) {
       {dots.map((dot) => (
         <div
           key={`${color}-${dot.number}-${dot.x}-${dot.y}`}
-          className="absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[10px] font-bold text-white shadow-md ring-2 ring-black/30 sm:size-7 sm:text-xs"
+          className="absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-micro font-bold text-white shadow-e2 ring-2 ring-black/30 sm:size-7 sm:text-xs"
           style={{ left: `${dot.x}%`, top: `${dot.y}%`, backgroundColor: color }}
         >
           {dot.number}

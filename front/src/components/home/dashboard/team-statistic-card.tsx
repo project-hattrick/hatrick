@@ -10,7 +10,7 @@ export function TeamStatisticCard() {
         <span className="text-sm font-bold">Team Statistic</span>
         <span className="flex items-center gap-2 text-micro font-semibold text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-neon" />{teamStatistic.home}</span>
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[#e2b33c]" />{teamStatistic.away}</span>
+          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-warning" />{teamStatistic.away}</span>
         </span>
       </div>
 

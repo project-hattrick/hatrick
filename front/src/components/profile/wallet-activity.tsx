@@ -61,7 +61,7 @@ export function WalletActivity() {
     <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
       <SectionHeader
         title="Wallet activity"
-        action={<span className="text-[10px] text-muted-foreground">coins · devnet</span>}
+        action={<span className="text-micro text-muted-foreground">coins · devnet</span>}
       />
       {!isAuthenticated ? (
         <p className="px-4 py-8 text-center text-sm text-muted-foreground">

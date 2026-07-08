@@ -39,7 +39,7 @@ export default function MarketPage() {
         <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
           <SectionHeader
             title="Listings"
-            action={<span className="text-[10px] text-muted-foreground">{listings.length} for sale</span>}
+            action={<span className="text-micro text-muted-foreground">{listings.length} for sale</span>}
           />
           <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-5">
             {listings.map((listing) => (
@@ -57,7 +57,7 @@ export default function MarketPage() {
         <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
           <SectionHeader
             title="Your players"
-            action={<span className="text-[10px] text-muted-foreground">{collection.length} owned</span>}
+            action={<span className="text-micro text-muted-foreground">{collection.length} owned</span>}
           />
           {collection.length ? (
             <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-5">

@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 
 import { TxlineAuthService } from './txline-auth.service';
 import { TxlineNormalizerService } from './txline-normalizer.service';
-import { RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
+import { mapWireOdds, mapWireScore, WireOddsEvent, WireScoreEvent } from './txline-mapper';
+import { StreamKind } from '../txline.types';
 
 const BASE_DELAY_MS = 1_000;
 const MAX_DELAY_MS = 30_000;
@@ -94,8 +95,15 @@ export class TxlineIngestService implements OnModuleInit {
       const msg = JSON.parse(json) as { id?: string; data?: unknown; event?: string };
       if (msg.id) this.lastEventId[stream] = msg.id;
       if (msg.event === 'heartbeat' || !msg.data) return;
-      if (stream === 'scores') this.normalizer.handleScore(msg.data as RawScoreEvent);
-      else this.normalizer.handleOdds(msg.data as RawOddsEvent);
+      // Live wire schema == historical schema (Capitalized keys); map both paths.
+      // Mappers return null for unroutable frames — skip rather than emit garbage.
+      if (stream === 'scores') {
+        const ev = mapWireScore(msg.data as WireScoreEvent);
+        if (ev) this.normalizer.handleScore(ev);
+      } else {
+        const ev = mapWireOdds(msg.data as WireOddsEvent);
+        if (ev) this.normalizer.handleOdds(ev);
+      }
     } catch {
       // Ignore non-JSON SSE frames.
     }

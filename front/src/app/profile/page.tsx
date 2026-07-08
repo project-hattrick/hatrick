@@ -30,7 +30,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
           <SectionHeader
             title="Collection"
-            action={<span className="text-[10px] text-muted-foreground">{userCards.length} players</span>}
+            action={<span className="text-micro text-muted-foreground">{userCards.length} players</span>}
           />
           <CollectionCarousel />
         </GlassPanel>
@@ -43,7 +43,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             <SectionHeader
               title="Starting XI"
               action={
-                <Link href="/fantasy" className="text-[10px] text-neon">
+                <Link href="/fantasy" className="text-micro text-neon">
                   Manage
                 </Link>
               }

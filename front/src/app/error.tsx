@@ -13,7 +13,7 @@ export default function Error({ error, reset }: ErrorProps) {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
       <Warning className="size-12 text-live" />
-      <h1 className="text-xl font-bold">Something went wrong</h1>
+      <h1 className="text-title">Something went wrong</h1>
       <p className="max-w-md text-sm text-muted-foreground">
         An unexpected error occurred while loading this view. You can try again or head back home.
       </p>
@@ -23,7 +23,7 @@ export default function Error({ error, reset }: ErrorProps) {
           Go home
         </Button>
       </div>
-      {error.digest ? <span className="text-[10px] text-muted-foreground/60">ref: {error.digest}</span> : null}
+      {error.digest ? <span className="text-micro text-muted-foreground/60">ref: {error.digest}</span> : null}
     </div>
   );
 }

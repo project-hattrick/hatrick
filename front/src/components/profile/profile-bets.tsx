@@ -17,7 +17,7 @@ export function ProfileBets() {
       <SectionHeader
         title="Bet & prediction history"
         action={
-          <Link href="/bets" className="text-[10px] text-neon">
+          <Link href="/bets" className="text-micro text-neon">
             View all
           </Link>
         }

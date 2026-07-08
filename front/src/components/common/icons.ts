@@ -85,6 +85,7 @@ export {
   Heartbeat,
   House,
   Link,
+  List,
   MagnifyingGlass,
   MapPin,
   Medal,

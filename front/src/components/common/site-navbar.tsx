@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Plus, MagnifyingGlass } from '@/components/common/icons';
 import { navLinks } from '@/config/nav.config';
 import { IconButton } from './icon-button';
+import { MobileNavMenu } from './mobile-nav-menu';
 import { formatThousands } from '@/lib/format';
 import { useUiStore } from '@/store/ui.store';
 import { useBalance, useWalletStore } from '@/store/wallet.store';
@@ -62,6 +63,7 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
       )}
     >
       <div className="mx-auto flex h-full w-full items-center justify-between px-3 sm:px-4 md:px-6">
+        <MobileNavMenu />
         <div className="hidden flex-1 items-center gap-6 text-sm font-semibold md:flex">
           {navLinks.map((link) => (
             <Link

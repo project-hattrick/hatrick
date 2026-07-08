@@ -18,8 +18,8 @@ const storeIcons: Record<string, Icon> = {
 /** Landing footer: brand, link columns, app badges and the devnet disclaimer. */
 export function SiteFooter() {
   return (
-    <footer className="relative z-10 border-t border-border bg-background px-6 py-14">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+    <footer className="relative z-10 border-t border-border bg-background px-6 py-10 md:py-14">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:gap-10">
         <div className="flex flex-col gap-4">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="Hat-trick" width={472} height={481} className="h-8 w-auto" />

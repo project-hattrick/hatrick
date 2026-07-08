@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
 import { WalletReadyState } from '@solana/wallet-adapter-base';
 
-import { Envelope, GoogleLogo, ShieldCheck, CaretRight, CircleNotch, Wallet as WalletIcon } from '@/components/common/icons';
+import { Envelope, GoogleLogo, ShieldCheck, CaretRight, CircleNotch, UserCircle, Wallet as WalletIcon } from '@/components/common/icons';
+import { signInAsGuest } from '@/services/session-mode';
+import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
 
 /** Installed wallets first, then everything else — keeps the detected one on top. */
@@ -17,6 +19,7 @@ const rank = (w: Wallet): number => (w.readyState === WalletReadyState.Installed
  */
 export function WalletStep() {
   const { wallets, select, wallet, connect, connecting } = useWallet();
+  const setLoginOpen = useUiStore((s) => s.setLoginOpen);
 
   // select() lands async — connect once the selected wallet is actually set.
   useEffect(() => {
@@ -26,13 +29,19 @@ export function WalletStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
+  // Wallet-free demo sign-in: establish a local mock session and close the dialog.
+  const continueAsGuest = () => {
+    signInAsGuest();
+    setLoginOpen(false);
+  };
+
   const ordered = [...wallets].sort((a, b) => rank(a) - rank(b));
 
   return (
     <div className="space-y-4">
       <ul className="space-y-2">
         {ordered.length === 0 ? (
-          <li className="flex items-center gap-3 rounded-[14px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-muted-foreground">
+          <li className="flex items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 py-4 text-sm text-muted-foreground">
             <WalletIcon className="size-5 shrink-0" />
             No Solana wallet detected. Install Phantom or Solflare to continue.
           </li>
@@ -51,6 +60,15 @@ export function WalletStep() {
       <Divider label="or" />
 
       <div className="space-y-2">
+        <button
+          type="button"
+          onClick={continueAsGuest}
+          className="flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-neon/35 bg-neon/[0.06] px-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-neon/[0.1]"
+        >
+          <UserCircle className="size-5 text-neon" />
+          Continue as guest
+          <span className="ml-auto rounded-full border border-neon/35 px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-neon">Demo</span>
+        </button>
         <AltRow icon={<Envelope className="size-5" />} label="Continue with Email" />
         <AltRow icon={<GoogleLogo className="size-5" />} label="Continue with Google" />
       </div>
@@ -70,17 +88,17 @@ function WalletRow({ wallet, busy, onSelect }: { wallet: Wallet; busy: boolean; 
         type="button"
         onClick={onSelect}
         disabled={busy}
-        className="group flex h-[58px] w-full items-center gap-3 rounded-[14px] border border-white/10 bg-white/[0.04] px-4 text-left transition-colors hover:bg-white/[0.07] disabled:opacity-70"
+        className="group flex h-[58px] w-full items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 text-left transition-colors hover:bg-surface-2 disabled:opacity-70"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={wallet.adapter.icon} alt="" className="size-7 shrink-0 rounded-md" />
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-[15px] font-bold">{wallet.adapter.name}</span>
-          <span className="text-[11px] text-muted-foreground">{detected ? 'Browser wallet' : 'Not installed'}</span>
+          <span className="truncate text-body font-bold">{wallet.adapter.name}</span>
+          <span className="text-caption text-muted-foreground">{detected ? 'Browser wallet' : 'Not installed'}</span>
         </span>
         <span className="ml-auto flex items-center gap-2">
           {detected && !busy ? (
-            <span className="rounded-[5px] bg-neon/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-neon">Detected</span>
+            <span className="rounded-sm bg-neon/15 px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-neon">Detected</span>
           ) : null}
           {busy ? (
             <CircleNotch className="size-4 animate-spin text-muted-foreground" />
@@ -100,23 +118,23 @@ function AltRow({ icon, label }: { icon: React.ReactNode; label: string }) {
       type="button"
       disabled
       className={cn(
-        'flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-white/10 bg-white/[0.02] px-4 text-left text-sm font-semibold text-muted-foreground',
+        'flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 text-left text-sm font-semibold text-muted-foreground',
         'cursor-not-allowed opacity-60',
       )}
     >
       <span className="text-muted-foreground">{icon}</span>
       {label}
-      <span className="ml-auto rounded-full border border-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">Soon</span>
+      <span className="ml-auto rounded-full border border-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide">Soon</span>
     </button>
   );
 }
 
 function Divider({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
-      <span className="h-px flex-1 bg-white/10" />
+    <div className="flex items-center gap-3 text-caption font-medium uppercase tracking-widest text-muted-foreground/60">
+      <span className="h-px flex-1 bg-surface-2" />
       {label}
-      <span className="h-px flex-1 bg-white/10" />
+      <span className="h-px flex-1 bg-surface-2" />
     </div>
   );
 }

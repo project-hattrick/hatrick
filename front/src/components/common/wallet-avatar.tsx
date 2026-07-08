@@ -5,9 +5,10 @@ import { useWallet } from '@solana/wallet-adapter-react';
 
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/services/queries/use-auth';
+import { signOutLocal } from '@/services/session-mode';
 import { useOnboardingStore } from '@/store/onboarding.store';
+import { useUiStore } from '@/store/ui.store';
 import { AccountMenu } from './account-menu';
-import { LoginDialog } from './login-dialog';
 
 const PROFILE_PIC = 'https://i.pravatar.cc/80?img=12';
 
@@ -17,13 +18,21 @@ const PROFILE_PIC = 'https://i.pravatar.cc/80?img=12';
  * the first-login onboarding, which auto-opens for a freshly registered account.
  */
 export function WalletAvatar() {
-  const [loginOpen, setLoginOpen] = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
   const { isConnected, isConnecting, isAuthenticated, isAuthenticating, user } = useAuth();
   const { disconnect } = useWallet();
+  const openLogin = useUiStore((s) => s.openLogin);
+  const setLoginOpen = useUiStore((s) => s.setLoginOpen);
   const pending = useOnboardingStore((s) => s.pending);
   const forcedOpen = useOnboardingStore((s) => s.forcedOpen);
   const busy = isConnecting || isAuthenticating;
+
+  // Guest sessions have no wallet to disconnect, so tear the local session down directly;
+  // a real wallet disconnect lets the auth driver run the full (backend) teardown.
+  const signOut = () => {
+    if (isConnected) void disconnect();
+    else signOutLocal();
+  };
 
   const wallet = user?.walletAddress ?? null;
   const onboarding = isAuthenticated && Boolean(wallet) && pending.includes(wallet as string);
@@ -55,7 +64,7 @@ export function WalletAvatar() {
       className="relative shrink-0"
       // When signed out the button opens the login dialog; when signed in the AccountMenu wraps
       // it as its dropdown trigger and owns the click.
-      onClick={isAuthenticated && !onboarding ? undefined : () => setLoginOpen(true)}
+      onClick={isAuthenticated && !onboarding ? undefined : openLogin}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -78,15 +87,10 @@ export function WalletAvatar() {
   return (
     <>
       {isAuthenticated && user && !onboarding ? (
-        <AccountMenu
-          user={user}
-          trigger={avatar}
-          onSignOut={() => void disconnect()}
-        />
+        <AccountMenu user={user} trigger={avatar} onSignOut={signOut} />
       ) : (
         avatar
       )}
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </>
   );
 }

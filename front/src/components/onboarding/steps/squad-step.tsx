@@ -62,7 +62,7 @@ function PlayerToken({
       <span className="relative">
         <span
           className={cn(
-            'grid size-12 place-items-end overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-lg transition',
+            'grid size-12 place-items-end overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-e3 transition',
             selected ? 'border-neon ring-2 ring-neon' : 'border-white/20',
           )}
         >
@@ -78,12 +78,12 @@ function PlayerToken({
           ) : null}
         </span>
         {card && (
-          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-neon shadow">
+          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-overlay/60 bg-surface-deep px-1.5 py-0.5 font-mono text-micro font-bold tabular-nums text-neon shadow">
             {card.number}
           </span>
         )}
       </span>
-      <span className="max-w-[72px] truncate rounded bg-black/55 px-1.5 py-0.5 text-eyebrow text-white/90 backdrop-blur-sm">
+      <span className="max-w-[72px] truncate rounded bg-overlay/55 px-1.5 py-0.5 text-eyebrow text-white/90 backdrop-blur-sm">
         {card ? card.name : label}
       </span>
     </div>
@@ -142,7 +142,7 @@ export function SquadStep({
         <div className="pointer-events-none absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
         <div className="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
 
-        <span className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-micro font-bold text-neon backdrop-blur-sm">
+        <span className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-overlay/45 px-2.5 py-1 text-micro font-bold text-neon backdrop-blur-sm">
           <TrendUp className="size-3.5" weight="bold" />
           {strength} OVR
         </span>

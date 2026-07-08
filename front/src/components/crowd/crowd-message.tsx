@@ -35,7 +35,7 @@ export function CrowdMessage({ message }: { message: CrowdMessageModel }) {
           <div className="flex min-w-0 items-center gap-1.5">
             <Flag code={fifaToIso(message.countryCode)} className="text-sm" />
             <span className={cn('truncate text-xs font-bold', meta.tone)}>{message.author}</span>
-            <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-muted-foreground uppercase">
+            <span className="rounded bg-surface-3 px-1.5 py-0.5 text-micro font-bold tracking-wide text-muted-foreground uppercase">
               {message.countryCode}
             </span>
             <span className={cn('grid size-[15px] shrink-0 place-items-center rounded', source.className)}>

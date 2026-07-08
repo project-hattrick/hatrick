@@ -24,7 +24,7 @@ export function ImmersiveDashboard() {
       </div>
 
       {/* Player focus + my predictions — desktop rail only (keeps the mobile hero uncluttered). */}
-      <div className="hidden md:absolute md:bottom-0 md:left-6 md:block md:w-[300px]">
+      <div className="hidden md:absolute md:bottom-6 md:left-6 md:block md:w-[300px]">
         <PlayerFocusCard />
         <div className="mt-3">
           <MyPredictionsPanel />
@@ -32,12 +32,12 @@ export function ImmersiveDashboard() {
       </div>
 
       {/* Live prediction — the hero CTA; bottom-centre on every size, above the home indicator. */}
-      <div className="absolute inset-x-3 bottom-[env(safe-area-inset-bottom)] z-20 flex justify-center sm:inset-x-4 md:inset-x-auto md:bottom-0 md:left-1/2 md:-translate-x-1/2">
+      <div className="absolute inset-x-3 bottom-[env(safe-area-inset-bottom)] z-20 flex justify-center sm:inset-x-4 md:inset-x-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2">
         <PredictionPrompt />
       </div>
 
       {/* Cards + crowd — desktop rail only. */}
-      <div className="hidden md:absolute md:top-20 md:right-6 md:bottom-0 md:flex md:w-[334px] md:flex-col md:gap-3">
+      <div className="hidden md:absolute md:top-20 md:right-6 md:bottom-6 md:flex md:w-[334px] md:flex-col md:gap-3">
         <UserCardsStrip />
         <div className="min-h-0 flex-1">
           <CrowdPanel fixtureId={MOCK_FIXTURE_ID} />

@@ -16,7 +16,7 @@ function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void 
       aria-label={side === 'left' ? 'Previous players' : 'Next players'}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-10 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface-1/90 text-foreground shadow-xl backdrop-blur transition hover:border-neon/40 hover:text-neon',
+        'absolute top-1/2 z-10 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface-1/90 text-foreground shadow-e4 backdrop-blur transition hover:border-neon/40 hover:text-neon',
         side === 'left' ? 'left-2' : 'right-2',
       )}
     >

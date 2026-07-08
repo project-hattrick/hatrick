@@ -26,7 +26,7 @@ export function DuelistIdentity({ profile }: { profile: PlayerProfile }) {
 
   return (
     <div className="flex flex-col">
-      <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl ring-2 ring-neon/30">
+      <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-e3 ring-2 ring-neon/30">
         <Image
           src={profile.portraitSrc}
           alt={profile.name}
@@ -38,7 +38,7 @@ export function DuelistIdentity({ profile }: { profile: PlayerProfile }) {
       </span>
 
       <div className="mt-3 flex items-center gap-2">
-        <h1 className="text-xl font-bold">{profile.name}</h1>
+        <h1 className="text-title">{profile.name}</h1>
         <span className="grid size-5 place-items-center rounded-full bg-neon text-primary-foreground">
           <Crown className="size-3" weight="fill" />
         </span>

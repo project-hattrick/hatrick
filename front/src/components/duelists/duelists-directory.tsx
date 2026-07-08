@@ -45,7 +45,7 @@ export function DuelistsDirectory() {
               type="button"
               onClick={() => setTierFilter(filter.value)}
               className={cn(
-                'rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors',
+                'rounded-full border px-3 py-1 text-caption font-semibold transition-colors',
                 tierFilter === filter.value
                   ? 'border-neon bg-neon text-black'
                   : 'border-border bg-surface-2/60 text-muted-foreground hover:border-border/80 hover:text-foreground',
@@ -64,7 +64,7 @@ export function DuelistsDirectory() {
               type="button"
               onClick={() => setFriendFilter(tab.value)}
               className={cn(
-                'rounded-full px-3 py-0.5 text-[11px] font-semibold transition-colors',
+                'rounded-full px-3 py-0.5 text-caption font-semibold transition-colors',
                 friendFilter === tab.value
                   ? 'bg-neon text-black'
                   : 'text-muted-foreground hover:text-foreground',

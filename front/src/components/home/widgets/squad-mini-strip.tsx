@@ -19,7 +19,7 @@ export function SquadMiniStrip() {
         player ? (
           <div
             key={player.id}
-            className="flex flex-col overflow-hidden rounded-xl border border-white/8 bg-surface-2"
+            className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface-2"
           >
             <div className="relative aspect-[100/76] bg-gradient-to-b from-surface-3 to-surface-1">
               <span className="absolute top-1 left-2 z-10 font-talero text-lg text-neon">{player.number}</span>
@@ -35,7 +35,7 @@ export function SquadMiniStrip() {
             <div className="flex flex-col gap-0.5 p-2">
               <span className="truncate text-xs leading-tight font-bold text-white">{player.name}</span>
               <span className="flex items-center gap-1 text-micro font-semibold text-muted-foreground">
-                <Flag code={player.code} className="text-[10px]" />
+                <Flag code={player.code} className="text-micro" />
                 <span className="truncate">{player.position}</span>
               </span>
             </div>
@@ -44,7 +44,7 @@ export function SquadMiniStrip() {
           <Link
             key={`empty-${index}`}
             href={`/${AppMode.Fantasy}`}
-            className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/12 bg-surface-1/40 p-2 text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon"
+            className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-1/40 p-2 text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon"
           >
             <UserPlus className="text-2xl opacity-70 transition-opacity group-hover:opacity-100" />
             <span className="text-micro font-semibold">Empty slot</span>

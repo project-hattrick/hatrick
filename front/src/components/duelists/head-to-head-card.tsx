@@ -21,7 +21,7 @@ export function HeadToHeadCard({ profile }: { profile: PlayerProfile }) {
           <div className="text-micro truncate text-muted-foreground">{them}</div>
         </div>
       </div>
-      <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-surface-2">
         <div className="bg-neon" style={{ width: `${pct}%` }} />
       </div>
     </div>

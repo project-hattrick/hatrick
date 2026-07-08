@@ -24,6 +24,11 @@ export interface RawScoreEvent {
     VAR?: boolean;
   };
   scoreSoccer?: Record<string, unknown>;
+  /** Authoritative cumulative goals from the wire `Score` object (when present). */
+  homeGoals?: number;
+  awayGoals?: number;
+  /** Per-player stats blob (`PlayerStats`) — feeds Fantasy attribute recalculation. */
+  playerStats?: Record<string, unknown>;
   [key: string]: unknown;
 }
 

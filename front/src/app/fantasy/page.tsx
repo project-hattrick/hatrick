@@ -43,7 +43,7 @@ export default function FantasyPage() {
               <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
                 <SectionHeader
                   title="Your collection"
-                  action={<span className="text-[10px] text-muted-foreground">{collection.length} players</span>}
+                  action={<span className="text-micro text-muted-foreground">{collection.length} players</span>}
                 />
                 <CollectionGrid />
               </GlassPanel>

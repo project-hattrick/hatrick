@@ -11,6 +11,8 @@ interface UiStore {
   focusedPlayerIndex: number;
   /** ⌘K command-palette (user search) visibility. */
   searchOpen: boolean;
+  /** Sign-in dialog visibility — the single app-wide login modal (opened by gated CTAs). */
+  loginOpen: boolean;
   /** When set, the matchmaking dialog opens as a direct challenge to this player. */
   challengeOpponent: PlayerProfile | null;
   /** Token stake picked for the next direct challenge (fantasy mode only). */
@@ -22,6 +24,8 @@ interface UiStore {
   focusPrev: () => void;
   setSearchOpen: (open: boolean) => void;
   toggleSearch: () => void;
+  setLoginOpen: (open: boolean) => void;
+  openLogin: () => void;
   setChallengeBet: (amount: number) => void;
   openChallenge: (opponent: PlayerProfile) => void;
   closeChallenge: () => void;
@@ -34,6 +38,7 @@ export const useUiStore = create<UiStore>((set) => ({
   heroLayout: HeroLayout.Immersive,
   focusedPlayerIndex: 0,
   searchOpen: false,
+  loginOpen: false,
   challengeOpponent: null,
   challengeBet: DEFAULT_BET_AMOUNT,
   setDimension: (dimension) => set({ dimension }),
@@ -46,6 +51,8 @@ export const useUiStore = create<UiStore>((set) => ({
   focusPrev: () => set((state) => ({ focusedPlayerIndex: state.focusedPlayerIndex - 1 })),
   setSearchOpen: (searchOpen) => set({ searchOpen }),
   toggleSearch: () => set((state) => ({ searchOpen: !state.searchOpen })),
+  setLoginOpen: (loginOpen) => set({ loginOpen }),
+  openLogin: () => set({ loginOpen: true }),
   setChallengeBet: (challengeBet) => set({ challengeBet }),
   openChallenge: (challengeOpponent) => set({ challengeOpponent }),
   closeChallenge: () => set({ challengeOpponent: null }),

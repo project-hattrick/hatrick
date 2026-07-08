@@ -20,7 +20,7 @@ function Form({ form }: { form: MatchResult[] }) {
   return (
     <div className="flex items-center justify-end gap-1">
       {form.map((r, i) => (
-        <span key={i} className={cn('grid size-4 place-items-center rounded-full text-[8px] font-bold', formClass[r])}>
+        <span key={i} className={cn('grid size-4 place-items-center rounded-full text-micro font-bold', formClass[r])}>
           {r}
         </span>
       ))}
@@ -84,13 +84,13 @@ export function GroupStageTable() {
                   <div
                     className={cn(
                       GRID,
-                      'rounded-lg px-3 py-2.5 text-[13px] transition hover:bg-foreground/5',
+                      'rounded-lg px-3 py-2.5 text-caption transition hover:bg-foreground/5',
                       advances && 'bg-neon/[0.06]',
                     )}
                   >
                     <span
                       className={cn(
-                        'mx-auto grid size-6 place-items-center rounded-full text-[11px] font-bold tabular-nums',
+                        'mx-auto grid size-6 place-items-center rounded-full text-caption font-bold tabular-nums',
                         advances ? 'bg-neon text-primary-foreground' : 'bg-foreground/8 text-muted-foreground',
                       )}
                     >

@@ -6,10 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
-import { useWalletStore } from '@/store/wallet.store';
-import { useFantasyStore } from '@/store/fantasy.store';
-import { useBetsStore } from '@/store/bets.store';
-import { backendEnabled, mockUser } from '@/services/session-mode';
+import { backendEnabled, mockUser, signOutLocal } from '@/services/session-mode';
 import { useSignInMutation } from './use-sign-in';
 import { useSession } from './use-session';
 import { queryKeys } from './keys';
@@ -28,7 +25,6 @@ export function useWalletAuth() {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const status = useAuthStore((s) => s.status);
-  const clear = useAuthStore((s) => s.clear);
   const setSession = useAuthStore((s) => s.setSession);
   const signIn = useSignInMutation();
   useSession(); // boot hydration: GET /auth/me → store status (no-op in mock mode)
@@ -48,10 +44,7 @@ export function useWalletAuth() {
       // session must survive — only a REAL disconnect (was connected → not) logs out.
       if (wasConnected.current && (isAuthed || user)) {
         const teardown = () => {
-          clear();
-          useWalletStore.getState().reset();
-          useFantasyStore.getState().reset();
-          useBetsStore.getState().reset();
+          signOutLocal();
           queryClient.setQueryData(queryKeys.authMe(), null);
           queryClient.removeQueries({ queryKey: queryKeys.walletTransactions() });
           queryClient.removeQueries({ queryKey: queryKeys.fantasySession() });
@@ -80,7 +73,7 @@ export function useWalletAuth() {
 
     inFlight.current = true;
     mutate(undefined, { onSettled: () => (inFlight.current = false) });
-  }, [connected, wallet, authedWallet, isAuthed, status, user, signMessage, clear, mutate, setSession, queryClient]);
+  }, [connected, wallet, authedWallet, isAuthed, status, user, signMessage, mutate, setSession, queryClient]);
 
   const retry = useCallback(() => mutate(), [mutate]);
 

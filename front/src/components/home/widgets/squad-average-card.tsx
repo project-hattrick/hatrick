@@ -29,8 +29,8 @@ function RadarLabel({ axis, index, count }: { axis: RadarAxis; index: number; co
   const anchor = Math.abs(p.x - CX) < 4 ? 'middle' : p.x > CX ? 'start' : 'end';
   return (
     <text x={p.x} y={p.y} textAnchor={anchor} dominantBaseline="middle">
-      <tspan className="fill-muted-foreground text-[8.5px] font-medium tracking-wide">{axis.label}</tspan>
-      <tspan x={p.x} dy="10" className="fill-foreground text-[9px] font-bold tabular-nums">
+      <tspan className="fill-muted-foreground text-micro font-medium tracking-wide">{axis.label}</tspan>
+      <tspan x={p.x} dy="10" className="fill-foreground text-micro font-bold tabular-nums">
         {axis.value}
       </tspan>
     </text>

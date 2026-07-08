@@ -8,6 +8,7 @@ import type { Adapter } from '@solana/wallet-adapter-base';
 import { IconContext, type IconProps } from '@/components/common/icons';
 import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import { SearchCommand } from '@/components/common/search-command';
+import { LoginMount } from '@/components/common/login-mount';
 import { ChallengeMount } from '@/components/duel/challenge-mount';
 import { OnboardingMount } from '@/components/onboarding/onboarding-mount';
 import { BetSettlementMount } from '@/components/live/bet-settlement-mount';
@@ -34,6 +35,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <IconContext.Provider value={ICON_DEFAULTS}>
               {children}
               <SearchCommand />
+              <LoginMount />
               <ChallengeMount />
               <OnboardingMount />
               <BetSettlementMount />

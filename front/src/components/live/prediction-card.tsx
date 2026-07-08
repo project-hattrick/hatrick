@@ -24,24 +24,24 @@ export function PredictionCard({ question, secondsLeft, yes, no, onPick, classNa
     <GlassPanel tone="dark" radius="xl" aria-label={question} className={cn('border-neon/30 p-4', className)}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="mb-1 font-mono text-[8px] font-bold tracking-[0.16em] text-neon">● LIVE PREDICTION · FREE</div>
-          <div className="text-[19px] leading-tight font-bold text-white">{question}</div>
+          <div className="mb-1 font-mono text-micro font-bold tracking-[0.16em] text-neon">● LIVE PREDICTION · FREE</div>
+          <div className="text-title leading-tight font-bold text-white">{question}</div>
         </div>
         <span className="shrink-0 font-mono text-base font-bold text-neon tabular-nums">{clock(secondsLeft)}</span>
       </div>
 
-      <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+      <div className="flex gap-1 rounded-xl border border-border bg-surface-3 p-1">
         <button
           type="button"
           onClick={() => onPick?.(yes.label)}
-          className="flex-1 rounded-lg bg-neon py-3 text-[15px] font-bold text-primary-foreground transition hover:bg-neon-hover"
+          className="flex-1 rounded-lg bg-neon py-3 text-body font-bold text-primary-foreground transition hover:bg-neon-hover"
         >
           {yes.label} · +{yes.points}
         </button>
         <button
           type="button"
           onClick={() => onPick?.(no.label)}
-          className="flex-1 rounded-lg py-3 text-[15px] font-bold text-muted-foreground transition hover:text-foreground"
+          className="flex-1 rounded-lg py-3 text-body font-bold text-muted-foreground transition hover:text-foreground"
         >
           {no.label} · +{no.points}
         </button>

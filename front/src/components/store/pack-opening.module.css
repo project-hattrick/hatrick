@@ -152,7 +152,9 @@
   justify-content: center;
   gap: clamp(12px, 2svh, 24px);
   overflow-y: auto;
-  padding: 80px 24px 20px;
+  /* Symmetric top/bottom padding so justify-content:center lands the block on the true
+     viewport centre (80px top clearance is also what the mobile flex-start case needs). */
+  padding: 80px 24px;
 }
 
 .summaryGrid {

@@ -22,7 +22,7 @@ function OddPill({ label, odds, onClick }: { label: string; odds: number; onClic
       onClick={onClick}
       className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 py-1 font-mono text-xs transition will-change-transform hover:-translate-y-px hover:border-neon active:translate-y-0 motion-reduce:hover:translate-y-0"
     >
-      <span className="text-[10px] font-semibold tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-micro font-semibold tracking-wide text-muted-foreground">{label}</span>
       {odds.toFixed(2)}
     </button>
   );
@@ -74,7 +74,7 @@ export function LiveScorebar() {
       <div
         className={cn(
           'sticky top-16 z-20 border-y border-border bg-surface-1 transition-shadow duration-200 motion-reduce:transition-none',
-          stuck ? 'shadow-[0_10px_26px_-18px_#000]' : 'shadow-none',
+          stuck ? 'shadow-e3' : 'shadow-none',
         )}
       >
         <div className="mx-auto flex h-[52px] w-full max-w-6xl items-center gap-3 px-4 md:gap-4 md:px-6">

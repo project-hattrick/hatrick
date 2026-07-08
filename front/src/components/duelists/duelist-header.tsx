@@ -20,10 +20,10 @@ export function DuelistHeader({ profile }: DuelistHeaderProps) {
     <GlassPanel
       tone="surface"
       radius="xl"
-      className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start sm:gap-6"
+      className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:gap-6"
     >
       {/* Portrait */}
-      <span className="relative mx-auto grid size-24 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-2 ring-white/10 sm:mx-0">
+      <span className="relative mx-auto grid size-24 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-2 ring-border sm:mx-0">
         <Image
           src={profile.portraitSrc}
           alt={profile.name}
@@ -40,7 +40,7 @@ export function DuelistHeader({ profile }: DuelistHeaderProps) {
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <Flag code={fifaToIso(profile.country)} className="text-base" />
-            <h1 className="text-xl font-bold">{profile.name}</h1>
+            <h1 className="text-title">{profile.name}</h1>
             <span className="text-sm text-muted-foreground">@{profile.username}</span>
           </div>
           <div className="flex flex-wrap items-center gap-3">

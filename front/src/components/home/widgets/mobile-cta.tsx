@@ -9,7 +9,7 @@ const MOBILE_URL = 'https://hat-trick.app';
 /** Closing banner: scan a QR code (or tap) to continue the experience on mobile. */
 export function MobileCta() {
   return (
-    <div className="flex flex-col items-center gap-8 rounded-2xl border border-neon/20 bg-surface-deep px-8 py-10 text-center md:flex-row md:justify-between md:text-left">
+    <div className="flex flex-col items-center gap-6 rounded-2xl border border-neon/20 bg-surface-deep px-5 py-8 text-center sm:px-8 sm:py-10 md:flex-row md:justify-between md:gap-8 md:text-left">
       <div className="flex flex-col items-center gap-3 md:items-start">
         <span className="text-eyebrow text-neon">Continue on your phone</span>
         <h2 className="text-display">

@@ -22,7 +22,7 @@ export function DuelistTile({ profile }: DuelistTileProps) {
       className="flex flex-col items-center gap-3 p-4 text-center"
     >
       {/* Portrait */}
-      <span className="relative grid size-16 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
+      <span className="relative grid size-16 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-border">
         <Image
           src={profile.portraitSrc}
           alt={profile.name}

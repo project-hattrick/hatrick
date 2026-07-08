@@ -15,7 +15,7 @@ export function MiniHoloCard({ card, className }: { card: PlayerCardData; classN
   return (
     <div
       className={cn(
-        'group relative aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-xl border border-white/10 shadow-md transition-transform duration-200 hover:-translate-y-1',
+        'group relative aspect-[5/7] w-[96px] shrink-0 overflow-hidden rounded-xl border border-white/10 shadow-e2 transition-transform duration-200 hover:-translate-y-1',
         className,
       )}
       style={{
@@ -40,7 +40,7 @@ export function MiniHoloCard({ card, className }: { card: PlayerCardData; classN
         <span className={cn(talero.className, 'text-lg text-white [text-shadow:0_1px_4px_rgb(0_0_0/0.7)]')}>
           {card.rating}
         </span>
-        <Flag code={card.code} className="text-[10px]" />
+        <Flag code={card.code} className="text-micro" />
       </div>
 
       {/* Name plate over the portrait */}

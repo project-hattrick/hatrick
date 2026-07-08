@@ -52,7 +52,7 @@ export default function ContactPage() {
 
         <div className="grid gap-8 md:grid-cols-[1fr_320px]">
           {/* Form */}
-          <GlassPanel tone="surface" className="p-6 md:p-8">
+          <GlassPanel tone="surface" className="p-5 md:p-8">
             <ContactForm />
           </GlassPanel>
 

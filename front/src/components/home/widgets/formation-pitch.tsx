@@ -16,14 +16,14 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
       style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
     >
       {open ? (
-          <span className="grid size-12 place-items-center rounded-full border-2 border-dashed border-neon/60 bg-black/30 text-neon shadow-[0_0_24px_rgba(174,240,25,0.08)] md:size-13">
+          <span className="grid size-12 place-items-center rounded-full border-2 border-dashed border-neon/60 bg-overlay/30 text-neon shadow-[0_0_24px_rgba(174,240,25,0.08)] md:size-13">
           <Plus className="size-4" />
         </span>
       ) : (
         <span className="relative">
           <span
             className={cn(
-              'relative block size-13 overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl md:size-14',
+              'relative block size-13 overflow-hidden rounded-full border bg-gradient-to-b from-surface-3 to-surface-deep shadow-e3 md:size-14',
               slot.highlight ? 'border-medal-gold ring-2 ring-medal-gold/70' : 'border-white/20',
             )}
           >
@@ -38,15 +38,15 @@ function PlayerDot({ slot }: { slot: FormationSlot }) {
               />
             ) : null}
           </span>
-          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-micro font-bold text-neon tabular-nums shadow">
+          <span className="absolute -right-1.5 -bottom-1 rounded-full border border-black/60 bg-surface-deep px-1.5 py-0.5 font-mono text-micro font-bold text-neon tabular-nums shadow-e1">
             {slot.rating}
           </span>
         </span>
       )}
       <span
         className={cn(
-          'max-w-[92px] truncate rounded-md border border-white/5 bg-black/55 px-2 py-0.5 text-eyebrow shadow-sm backdrop-blur-sm',
-          open ? 'text-neon/80' : 'text-white/90',
+          'max-w-[92px] truncate rounded-md border border-white/5 bg-overlay/55 px-2 py-0.5 text-eyebrow shadow-e1 backdrop-blur-sm',
+          open ? 'text-neon/80' : 'text-foreground',
         )}
       >
         {slot.label}
@@ -68,7 +68,7 @@ export function FormationPitch({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'pitch-stripes-v relative h-[500px] w-full overflow-hidden rounded-3xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_70px_rgba(0,0,0,0.22)] md:h-[540px]',
+        'pitch-stripes-v relative h-[500px] w-full overflow-hidden rounded-3xl border border-white/10 shadow-e4 md:h-[540px]',
         className,
       )}
     >
@@ -85,14 +85,14 @@ export function FormationPitch({ className }: { className?: string }) {
       <div className="pointer-events-none absolute top-3 left-3 size-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/14" />
       <div className="pointer-events-none absolute top-3 right-3 size-8 translate-x-1/2 -translate-y-1/2 rounded-full border border-white/14" />
 
-      <span className="absolute top-5 left-5 z-10 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 font-mono text-micro font-bold tracking-[0.14em] text-white/75 backdrop-blur-md">
+      <span className="absolute top-5 left-5 z-10 rounded-full border border-white/10 bg-overlay/35 px-3 py-1.5 font-mono text-micro font-bold tracking-[0.14em] text-foreground backdrop-blur-md">
         {formation.shape} · {formation.filled}/{formation.total} LINED UP
       </span>
 
       <button
         type="button"
         onClick={cycle}
-        className="absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-3 py-1.5 text-xs font-bold text-white/85 shadow-lg backdrop-blur-md transition hover:border-neon/50 hover:text-neon"
+        className="absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-overlay/45 px-3 py-1.5 text-xs font-bold text-foreground shadow-e3 backdrop-blur-md transition hover:border-neon/50 hover:text-neon"
       >
         <ArrowsLeftRight className="size-3.5" />
         Change formation

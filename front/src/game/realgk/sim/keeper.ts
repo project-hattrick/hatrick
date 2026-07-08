@@ -117,10 +117,14 @@ export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer)
   if (player.role !== Role.GK || player.actionTimer > 0 || player.saveCooldown > 0 || ball.ownerId || ball.z > 32) {
     return false;
   }
+  // The lane/range/reach windows are px values tuned on the hero pitch (fieldScale 1.5). The goal
+  // mouth scales with the world, so wider pitches (personas 1.85) must scale them too — otherwise
+  // corner-bound shots cross outside the fixed window and the keeper never reacts.
+  const windowScale = world.cfg.fieldScale / 1.5;
   const goalCenter = goalCenterForTeam(size, player.team);
   const towardGoal = player.team === Team.Blue ? ball.vx < -80 : ball.vx > 80;
-  const closeLane = Math.abs(ball.y - goalCenter.y) < 82;
-  const approachingKeeper = Math.abs(ball.x - player.x) < (isV2 ? DIVE2_TRIGGER_RANGE : 150);
+  const closeLane = Math.abs(ball.y - goalCenter.y) < 82 * windowScale;
+  const approachingKeeper = Math.abs(ball.x - player.x) < (isV2 ? DIVE2_TRIGGER_RANGE : 150) * windowScale;
   if (!towardGoal || !closeLane || !approachingKeeper) return false;
 
   // v2 aims at where the ball will actually cross the keeper's line; legacy uses the short fixed lead.
@@ -129,7 +133,7 @@ export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer)
     : clamp(0.1 + Math.abs(ball.vx) / 900, 0.1, 0.2);
   const targetX = ball.x + ball.vx * lead;
   const targetY = ball.y + ball.vy * lead;
-  if (Math.abs(targetY - player.y) > 54) return false;
+  if (Math.abs(targetY - player.y) > 54 * windowScale) return false;
 
   // Only dash toward the pitch — never backward into the keeper's own goal.
   return startKeeperDive(player, player.dir, targetX, targetY, diveAnimFor(world));

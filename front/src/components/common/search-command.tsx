@@ -42,7 +42,7 @@ export function SearchCommand() {
 
   return (
     <Dialog open={open} onOpenChange={setSearchOpen}>
-      <DialogContent showCloseButton={false} className="top-[12%] max-w-lg translate-y-0 gap-0 overflow-hidden p-0 sm:top-[12%]">
+      <DialogContent showCloseButton={false} className="top-[12%] max-w-[calc(100%-2rem)] translate-y-0 gap-0 overflow-hidden p-0 sm:top-[12%] sm:max-w-lg">
         <DialogTitle className="sr-only">Search players</DialogTitle>
         <DialogDescription className="sr-only">Find a player by name and open their profile.</DialogDescription>
 

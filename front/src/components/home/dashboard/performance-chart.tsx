@@ -56,7 +56,7 @@ export function PerformanceChart() {
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold">Graphic Performance</span>
-        <span className="rounded-md border border-white/10 px-2 py-0.5 text-micro font-semibold text-muted-foreground">
+        <span className="rounded-md border border-border px-2 py-0.5 text-micro font-semibold text-muted-foreground">
           Full time
         </span>
       </div>
@@ -70,11 +70,11 @@ export function PerformanceChart() {
       </svg>
 
       <div className="flex items-center justify-between">
-        <div className="flex gap-4 text-[10px] font-semibold text-muted-foreground">
+        <div className="flex gap-4 text-micro font-semibold text-muted-foreground">
           <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: performance.home.color }} />{performance.home.name}</span>
           <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: performance.away.color }} />{performance.away.name}</span>
         </div>
-        <div className="hidden gap-3 font-mono text-[9px] text-muted-foreground/70 sm:flex">
+        <div className="hidden gap-3 font-mono text-micro text-muted-foreground/70 sm:flex">
           {performance.labels.map((l) => (
             <span key={l}>{l}</span>
           ))}

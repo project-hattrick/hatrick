@@ -6,7 +6,7 @@ export function PlayerCard({ card, className }: { card: PlayerCardData; classNam
   return (
     <div
       className={cn(
-        'relative flex h-[124px] w-[88px] shrink-0 flex-col items-center rounded-xl p-2 text-white shadow-lg ring-1 ring-sky-300/40',
+        'relative flex h-[124px] w-[88px] shrink-0 flex-col items-center rounded-xl p-2 text-white shadow-e3 ring-1 ring-sky-300/40',
         'bg-gradient-to-b from-[#3b82f6] via-[#1e40af] to-[#0f1e4d]',
         className,
       )}

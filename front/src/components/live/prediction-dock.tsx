@@ -69,7 +69,7 @@ export function PredictionDock({ question, secondsLeft, yes, no, onPick, classNa
         {/* Everything stacked at the bottom. */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[8px] font-bold tracking-[0.16em] text-neon [text-shadow:0_1px_4px_rgba(0,0,0,0.85)]">
+            <span className="font-mono text-micro font-bold tracking-[0.16em] text-neon [text-shadow:0_1px_4px_rgba(0,0,0,0.85)]">
               ● LIVE PREDICTION · FREE
             </span>
             <span className="font-mono text-xs font-bold text-neon tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.85)]">

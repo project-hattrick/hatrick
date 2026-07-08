@@ -232,7 +232,7 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
 
   return (
     <div className="flex flex-col">
-      <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-xl ring-2 ring-neon/30">
+      <span className="relative z-10 -mt-14 grid size-24 shrink-0 place-items-end overflow-hidden rounded-2xl bg-gradient-to-b from-surface-3 to-surface-deep shadow-e3 ring-2 ring-neon/30">
         {(() => {
           const src = draft.portraitSrc || selfProfile.portraitSrc;
           const { className, style } = avatarImageProps(src);
@@ -251,7 +251,7 @@ export function ProfileIdentity({ editing, onEditingChange }: ProfileIdentityPro
       </span>
 
       <div className="mt-3 flex items-center gap-2">
-        <h1 className="text-xl font-bold">{displayName}</h1>
+        <h1 className="text-title">{displayName}</h1>
         <span className="grid size-5 place-items-center rounded-full bg-neon text-primary-foreground">
           <Crown className="size-3" weight="fill" />
         </span>

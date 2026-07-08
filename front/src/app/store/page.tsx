@@ -1,18 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  CaretRight,
-  ChartBar,
-  Stack,
-  type Icon,
-} from '@/components/common/icons';
+import { ArrowRight, CaretRight, ChartBar, Eye, Stack, type Icon } from '@/components/common/icons';
 import { SiteNavbar } from '@/components/common/site-navbar';
 import { SiteFooter } from '@/components/home/site-footer';
-import { GlassPanel } from '@/components/common/glass-panel';
+import { GlassPanel, glassPanelVariants } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
 import { ParallaxPack } from '@/components/store/parallax-pack';
-import { PackOpening } from '@/components/store/pack-opening';
+import { BuyPackFlow } from '@/components/store/buy-pack-flow';
+import { BundleCard, type Bundle } from '@/components/store/bundle-card';
+import { BadgeTone } from '@/components/store/store-badge';
+import { INTERACTIVE_CARD, REVEAL_ON_HOVER } from '@/components/store/interactive-card';
 import { userCards } from '@/config/fantasy-cards.config';
 import { cn } from '@/lib/utils';
 
@@ -33,12 +30,10 @@ const sidePacks = [
   { name: 'Starter Pack', label: 'Great start', players: 7, price: '0.5 SOL', caption: 'Build your squad.', highlight: false },
 ];
 
-type BundleTag = { text: string; className: string };
-
-const bundles: { name: string; caption: string; price: string; tag?: BundleTag }[] = [
-  { name: 'Limited Bundle', caption: 'Elite players. Limited time.', price: '3.5 SOL', tag: { text: 'Hot', className: 'bg-red-500 text-white' } },
-  { name: 'Midfield Bundle', caption: 'Balance your squad.', price: '2.5 SOL', tag: { text: 'New', className: 'bg-neon text-black' } },
-  { name: 'Attack Bundle', caption: 'Attack heavy. High upside.', price: '2.5 SOL' },
+const bundles: Bundle[] = [
+  { name: 'Limited Bundle', caption: 'Elite players. Limited time.', price: '3.5 SOL', tag: { text: 'Hot', tone: BadgeTone.Hot } },
+  { name: 'Midfield Bundle', caption: 'Balance your squad.', price: '2.5 SOL', tag: { text: 'New', tone: BadgeTone.Value } },
+  { name: 'Attack Bundle', caption: 'Attack heavy. High upside.', price: '2.5 SOL', soldOut: true },
 ];
 
 /** Highest-rated cards first — the "market picks" strip. */
@@ -46,19 +41,6 @@ const marketPicks = [...userCards].sort((a, b) => b.rating - a.rating);
 
 /** Mock market price scaled from the card rating (≈1.9–2.5 SOL for the star pool). */
 const cardPrice = (rating: number): string => `${((rating - 78) / 7.5).toFixed(1)} SOL`;
-
-/** The real foil pack render, with a plain dark drop shadow. */
-function PackArt({ className }: { className?: string }) {
-  return (
-    <Image
-      src="/cards/pack-foil.png"
-      alt=""
-      width={660}
-      height={1122}
-      className={cn('w-auto shrink-0 drop-shadow-[0_14px_24px_rgba(0,0,0,0.65)]', className)}
-    />
-  );
-}
 
 /** Coin icon + price, the shared buy-button content. */
 function CoinPrice({ price }: { price: string }) {
@@ -76,7 +58,7 @@ function SectionHeading({ icon: SectionIcon, label, action }: { icon: Icon; labe
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <SectionIcon className="size-5 text-neon" weight="fill" />
-        <h2 className="text-eyebrow font-bold tracking-widest text-foreground uppercase">{label}</h2>
+        <h2 className="text-eyebrow text-foreground">{label}</h2>
       </div>
       {action}
     </div>
@@ -98,34 +80,41 @@ export default function StorePage() {
             <GlassPanel
               radius="xl"
               tone="dark"
-              className="relative overflow-hidden border-neon/20 bg-[#050506] bg-cover bg-center lg:col-span-2"
+              className={cn(
+                'relative overflow-hidden border-neon/20 bg-surface-deep bg-cover bg-center lg:col-span-2',
+                INTERACTIVE_CARD,
+              )}
               style={{ backgroundImage: OPENING_BG }}
             >
               {/* Heavy black overlay — the stadium backdrop stays barely visible. */}
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/80" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-overlay/80" />
               <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/80 via-background/30 to-transparent" />
-              <div className="relative flex flex-col items-center gap-6 p-6 md:flex-row md:gap-8 md:p-8">
+              <div className="relative flex flex-col items-center gap-6 p-5 md:flex-row md:gap-8 md:p-8">
                 <div className="shrink-0">
-                  <ParallaxPack className="h-56 md:h-72" glow />
+                  <ParallaxPack className="h-64 transition-transform duration-200 group-hover:scale-[1.03] md:h-80" glow />
                 </div>
                 <div className="flex flex-1 flex-col items-start gap-4">
-                  <span className="flex items-center gap-1 text-eyebrow font-bold tracking-widest text-neon uppercase">
+                  <span className="flex items-center gap-1 text-eyebrow text-neon">
                     Featured drop <CaretRight className="size-3.5" weight="bold" />
                   </span>
-                  <div>
+                  <div className="flex flex-col gap-2">
                     <h2 className="font-talero text-4xl leading-none uppercase md:text-6xl">{featuredDrop.name}</h2>
-                    <p className="mt-3 max-w-sm text-body text-muted-foreground">{featuredDrop.tagline}</p>
+                    <p className="max-w-sm text-body text-muted-foreground">{featuredDrop.tagline}</p>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-4">
-                    <PackOpening
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-3">
+                    <BuyPackFlow
                       packName={featuredDrop.name}
                       packSize={featuredDrop.players}
+                      price={featuredDrop.price}
+                      tagline={featuredDrop.tagline}
                       ctaSize="lg"
                       ctaClassName="px-6 text-base font-bold"
                       cta={<CoinPrice price={`Buy · ${featuredDrop.price}`} />}
+                      showOdds
                     />
-                    <span className="text-caption text-muted-foreground">
-                      <span className="font-bold text-foreground">{featuredDrop.remainingToday}</span> left today
+                    <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
+                      <span aria-hidden className="size-1.5 rounded-full bg-neon" />
+                      <span className="font-semibold text-foreground">{featuredDrop.remainingToday}</span> left today
                     </span>
                   </div>
                 </div>
@@ -139,21 +128,31 @@ export default function StorePage() {
                   key={pack.name}
                   radius="xl"
                   tone="surface"
-                  className={cn('flex flex-1 items-center gap-4 p-5', pack.highlight && 'border-neon/25')}
+                  className={cn('flex flex-1 items-center gap-5 p-5', INTERACTIVE_CARD, pack.highlight && 'border-neon/25')}
                 >
-                  <ParallaxPack className="h-24" restTilt={{ rx: 4, ry: -14 }} tiltRange={10} />
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="text-eyebrow font-bold tracking-widest text-neon uppercase">{pack.label}</span>
-                    <h3 className="text-lead leading-tight font-black uppercase">{pack.name}</h3>
-                    <p className="text-caption leading-snug text-muted-foreground">{pack.caption}</p>
-                  </div>
-                  <PackOpening
-                    packName={pack.name}
-                    packSize={pack.players}
-                    ctaVariant="secondary"
-                    ctaClassName="self-end font-semibold"
-                    cta={<CoinPrice price={pack.price} />}
+                  <ParallaxPack
+                    className="h-32 shrink-0 transition-transform duration-200 group-hover:scale-[1.05] md:h-40"
+                    restTilt={{ rx: 4, ry: -14 }}
+                    tiltRange={10}
                   />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className={cn('text-eyebrow', pack.highlight ? 'text-neon' : 'text-muted-foreground')}>{pack.label}</span>
+                    <h3 className="text-title uppercase">{pack.name}</h3>
+                    <p className="text-caption text-muted-foreground">{pack.caption}</p>
+                    <BuyPackFlow
+                      packName={pack.name}
+                      packSize={pack.players}
+                      price={pack.price}
+                      tagline={pack.caption}
+                      ctaVariant="secondary"
+                      ctaSize="sm"
+                      ctaClassName="font-semibold"
+                      cta={<CoinPrice price={`Buy · ${pack.price}`} />}
+                      showOdds
+                      oddsReveal
+                      actionsClassName="mt-3"
+                    />
+                  </div>
                 </GlassPanel>
               ))}
             </div>
@@ -164,32 +163,7 @@ export default function StorePage() {
             <SectionHeading icon={Stack} label="Bundles" />
             <div className="grid gap-4 md:grid-cols-3">
               {bundles.map((bundle) => (
-                <GlassPanel key={bundle.name} radius="lg" tone="dark" className="flex items-center gap-3 p-5">
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-body leading-tight font-black uppercase">{bundle.name}</h3>
-                      {bundle.tag && (
-                        <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase', bundle.tag.className)}>
-                          {bundle.tag.text}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-caption leading-snug text-muted-foreground">{bundle.caption}</p>
-                    <span className="mt-1 flex items-center gap-1.5 text-caption font-bold">
-                      <Image src="/coin.png" alt="" width={14} height={14} className="size-3.5" />
-                      {bundle.price}
-                    </span>
-                  </div>
-                  {/* Fanned pack thumbnails — tilted like a spread hand */}
-                  <div className="flex shrink-0 items-center [perspective:800px]">
-                    {['-rotate-12', '', 'rotate-12'].map((rot, i) => (
-                      <PackArt
-                        key={i}
-                        className={cn('h-16 transition-transform duration-200 ease-out', rot, i > 0 && '-ml-7', i === 1 && 'z-10 scale-110')}
-                      />
-                    ))}
-                  </div>
-                </GlassPanel>
+                <BundleCard key={bundle.name} bundle={bundle} />
               ))}
             </div>
           </section>
@@ -208,40 +182,51 @@ export default function StorePage() {
             />
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {marketPicks.map((card) => (
-                <GlassPanel key={card.id} radius="lg" tone="dark" className="group relative flex flex-col overflow-hidden p-3">
-                  <div className="relative flex items-start justify-between">
+                <Link
+                  key={card.id}
+                  href="/fantasy/market"
+                  className={cn(glassPanelVariants({ tone: 'dark', radius: 'lg' }), INTERACTIVE_CARD, 'relative flex flex-col overflow-hidden p-3')}
+                >
+                  <div className="relative flex items-start justify-between gap-1">
                     <div className="z-10 flex flex-col gap-1 leading-none">
-                      <span className="font-talero text-2xl text-foreground [text-shadow:0_1px_4px_rgb(0_0_0/0.7)]">
-                        {card.rating}
-                      </span>
+                      <span className="font-talero text-3xl text-foreground [text-shadow:0_1px_4px_rgb(0_0_0/0.7)]">{card.rating}</span>
                       <Flag code={card.code} className="text-sm" />
                     </div>
-                    <div className="relative -mt-1 h-28 w-24 shrink-0">
+                    <div className="relative -mt-2 h-36 w-28 shrink-0">
                       <Image
                         src={card.portraitSrc}
                         alt={card.name}
                         fill
-                        sizes="96px"
-                        className="object-contain object-bottom transition-transform duration-200 group-hover:-translate-y-1"
+                        sizes="112px"
+                        className="object-contain object-bottom transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-110"
                       />
                     </div>
                   </div>
                   <div className="mt-1 border-t border-border/60 pt-2">
-                    <p className="truncate text-caption font-bold uppercase">{card.name}</p>
+                    <p className="truncate text-body font-bold uppercase">{card.name}</p>
                     <p className="text-micro text-muted-foreground">{card.position}</p>
-                    <span className="mt-2 flex items-center gap-1.5 text-caption font-bold">
-                      <Image src="/coin.png" alt="" width={14} height={14} className="size-3.5" />
-                      {cardPrice(card.rating)}
-                    </span>
+                    <div className="mt-2 flex items-center justify-between gap-1">
+                      <span className="flex items-center gap-1.5 text-caption font-bold">
+                        <Image src="/coin.png" alt="" width={14} height={14} className="size-3.5" />
+                        {cardPrice(card.rating)}
+                      </span>
+                      <span className={cn('flex items-center gap-1 text-micro font-bold text-neon', REVEAL_ON_HOVER)}>
+                        <Eye className="size-3.5" weight="bold" />
+                        View
+                      </span>
+                    </div>
                   </div>
-                </GlassPanel>
+                </Link>
               ))}
             </div>
           </section>
         </div>
       </main>
 
-      <SiteFooter />
+      {/* Footer dimmed so the premium store stays the focus — restores on hover. */}
+      <div className="opacity-60 transition-opacity duration-300 hover:opacity-100">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

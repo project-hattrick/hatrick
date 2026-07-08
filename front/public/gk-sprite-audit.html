@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GK Sprite Audit — Hat-trick</title>
+  <style>
+    :root { color-scheme: dark; --bg:#071018; --ui:#101b27; --line:#243447; --text:#e7edf4; --muted:#95a8bc; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:20px 24px 8px; }
+    h1 { margin:0; font-size:26px; text-transform:uppercase; letter-spacing:.04em; }
+    header p { color:var(--muted); max-width:900px; line-height:1.5; }
+    h2 { margin:28px 24px 4px; font-size:15px; text-transform:uppercase; letter-spacing:.1em; }
+    .group-note { margin:0 24px 12px; color:var(--muted); font-size:13px; }
+    .set { margin:0 24px 18px; border:1px solid var(--line); border-radius:8px; background:var(--ui); overflow:hidden; }
+    .set-head { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); }
+    .set-head .name { font:700 14px/1 Consolas, monospace; }
+    .set-head .path { color:var(--muted); font:11px/1 Consolas, monospace; }
+    .badge { padding:3px 8px; border-radius:99px; font:700 10px/1 Consolas, monospace; text-transform:uppercase; letter-spacing:.06em; }
+    .badge.used { background:#123d2a; color:#7cefc1; border:1px solid #1e5c40; }
+    .badge.v6 { background:#11324d; color:#7cc7ef; border:1px solid #1d4e75; }
+    .badge.legacy { background:#4d2a11; color:#efb37c; border:1px solid #75461d; }
+    .badge.oldrt { background:#3d1130; color:#ef7cc7; border:1px solid #5c1e4a; }
+    .note { color:var(--muted); font-size:12px; margin-left:auto; }
+    .set-body { display:flex; gap:14px; padding:12px 14px; align-items:flex-start; }
+    .preview { flex:0 0 170px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .stage { width:170px; height:170px; display:grid; place-items:center; border:1px solid var(--line); border-radius:6px;
+      background: repeating-conic-gradient(#16222e 0% 25%, #0d1722 0% 50%) 0 0 / 20px 20px; }
+    .stage img { max-width:150px; max-height:150px; image-rendering:pixelated; }
+    .preview .cap { font:10px/1 Consolas, monospace; color:var(--muted); }
+    .strip { flex:1; display:flex; flex-wrap:wrap; gap:8px; }
+    .cell { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .cell .box { width:92px; height:92px; display:grid; place-items:center; border:1px solid var(--line); border-radius:4px;
+      background: repeating-conic-gradient(#16222e 0% 25%, #0d1722 0% 50%) 0 0 / 14px 14px; }
+    .cell img { max-width:84px; max-height:84px; image-rendering:pixelated; }
+    .cell .dim { font:9.5px/1 Consolas, monospace; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GK Sprite Audit</h1>
+    <p>
+      Every goalkeeper sprite set shipped under <code>public/game</code>, cross-referenced with what the code
+      actually plays today. Groups: current personas/realgk keeper, v6-only pack, legacy (loaded but never
+      triggered), and the old shared-runtime keeper (chuva-v1 / arena-v1 checkpoints only).
+    </p>
+  </header>
+  <div id="root"></div>
+
+  <script>
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const realgk = (id, n) => Array.from({ length: n }, (_, i) => `/game/real-gk/${id}_frame_${pad2(i + 1)}.png`);
+    const actors = (dir, n) => Array.from({ length: n }, (_, i) => `/game/actors/goalkeeper/${dir}/frame_${pad2(i)}.png`);
+
+    const GROUPS = [
+      {
+        title: 'Current — realgk keeper (personas game plays these)',
+        note: 'Registered in items.ts, composited persona head, active in every realgk checkpoint.',
+        badge: ['used', 'IN USE'],
+        sets: [
+          { name: 'gk_dive_compact', frames: realgk('gk_dive_compact', 6), fps: 9, note: 'THE dive — default save everywhere except v6 (BodyAnim.GkDiveCompact)' },
+          { name: 'gk_light_save', frames: realgk('gk_light_save', 4), fps: 7, note: 'reflex block + idle stance base (BodyAnim.GkLightSave)' },
+          { name: 'gk_idle_34', frames: realgk('gk_idle_34', 4), fps: 2.2, note: 'idle — art regenerated to the light-save stance (BodyAnim.GkIdle)' },
+          { name: 'gk_ready_34', frames: realgk('gk_ready_34', 4), fps: 4.4, note: 'set stance while the shot comes (BodyAnim.GkReady)' },
+          { name: 'gk_shuffle_34', frames: realgk('gk_shuffle_34', 4), fps: 6, note: 'lateral shuffle along the goal line (BodyAnim.GkShuffle)' },
+          { name: 'gk_run_side', frames: realgk('gk_run_side', 8), fps: 10.5, note: 'keeper run in profile (BodyAnim.GkRunSide)' },
+        ],
+      },
+      {
+        title: 'v6-only — dive pack "Reflex"',
+        note: 'Plays ONLY when features.keeperDiveV2 is on — today that is the real-gk-v6 checkpoint.',
+        badge: ['v6', 'V6 ONLY'],
+        sets: [
+          { name: 'gk_dive_v2', frames: realgk('gk_dive_v2', 8), fps: 11, note: 'candidate_01: crouch → smeared launch → prone slide → recovery (BodyAnim.GkDiveV2)' },
+        ],
+      },
+      {
+        title: 'Legacy — loaded but never plays',
+        note: 'Still registered in items.ts and NOT feature-gated, so the loader fetches all 8 frames on every realgk boot — but diveAnimFor() never returns it since the compact dive became the default. Baked head (pre-persona style). Removal candidate.',
+        badge: ['legacy', 'LEGACY'],
+        sets: [
+          { name: 'gk_dive_save', frames: realgk('gk_dive_save', 8), fps: 11, note: 'the OLD dive (BodyAnim.GkDive) — unreachable in gameplay' },
+        ],
+      },
+      {
+        title: 'Old shared runtime — chuva-v1 / arena-v1 only',
+        note: 'The first engine (src/game, GoalkeeperAnim enum). Never appears in the personas game; only the two oldest sandbox checkpoints still play these.',
+        badge: ['oldrt', 'OLD RUNTIME'],
+        sets: [
+          { name: 'ready', frames: actors('ready', 5), fps: 8, note: 'GoalkeeperAnim.Ready' },
+          { name: 'shuffle', frames: actors('shuffle', 5), fps: 8, note: 'GoalkeeperAnim.Shuffle' },
+          { name: 'run', frames: actors('run', 20), fps: 10, note: 'GoalkeeperAnim.Run' },
+          { name: 'dive-full', frames: actors('dive-full', 14), fps: 10, note: 'GoalkeeperAnim.DiveFull — the previous full dive' },
+          { name: 'catch-high', frames: actors('catch-high', 5), fps: 8, note: 'GoalkeeperAnim.CatchHigh' },
+          { name: 'save-low', frames: actors('save-low', 6), fps: 8, note: 'GoalkeeperAnim.SaveLow' },
+          { name: 'goal-kick', frames: actors('goal-kick', 9), fps: 8, note: 'GoalkeeperAnim.GoalKick' },
+        ],
+      },
+    ];
+
+    const root = document.getElementById('root');
+    for (const group of GROUPS) {
+      const h2 = document.createElement('h2');
+      h2.textContent = group.title;
+      root.appendChild(h2);
+      const gn = document.createElement('p');
+      gn.className = 'group-note';
+      gn.textContent = group.note;
+      root.appendChild(gn);
+
+      for (const set of group.sets) {
+        const el = document.createElement('section');
+        el.className = 'set';
+        const dir = set.frames[0].slice(0, set.frames[0].lastIndexOf('/'));
+        el.innerHTML = `
+          <div class="set-head">
+            <span class="badge ${group.badge[0]}">${group.badge[1]}</span>
+            <span class="name">${set.name}</span>
+            <span class="path">${dir}/ · ${set.frames.length} frames · ${set.fps} fps</span>
+            <span class="note">${set.note}</span>
+          </div>
+          <div class="set-body">
+            <div class="preview">
+              <div class="stage"><img alt="${set.name} preview"></div>
+              <span class="cap">loop @ ${set.fps} fps</span>
+            </div>
+            <div class="strip"></div>
+          </div>`;
+        root.appendChild(el);
+
+        const strip = el.querySelector('.strip');
+        for (let i = 0; i < set.frames.length; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.innerHTML = `<div class="box"><img src="${set.frames[i]}" alt="f${i + 1}"></div><span class="dim">f${pad2(i + 1)}</span>`;
+          const img = cell.querySelector('img');
+          const dim = cell.querySelector('.dim');
+          img.onload = () => { dim.textContent = `f${pad2(i + 1)} · ${img.naturalWidth}×${img.naturalHeight}`; };
+          img.onerror = () => { dim.textContent = `f${pad2(i + 1)} · MISSING`; dim.style.color = '#ef7c7c'; };
+          strip.appendChild(cell);
+        }
+
+        const preview = el.querySelector('.stage img');
+        let i = 0;
+        preview.src = set.frames[0];
+        setInterval(() => { i = (i + 1) % set.frames.length; preview.src = set.frames[i]; }, Math.max(60, 1000 / set.fps));
+      }
+    }
+  </script>
+</body>
+</html>

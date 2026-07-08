@@ -17,7 +17,7 @@ function DuelistColumn({ player, reversed }: { player: PlayerProfile; reversed?:
       <Avatar
         name={player.name}
         src={player.portraitSrc}
-        className="size-10 shrink-0 ring-2 ring-white/15 sm:size-14"
+        className="size-10 shrink-0 ring-2 ring-border sm:size-14"
       />
       <div className={cn('flex flex-col gap-0.5', reversed ? 'items-end' : 'items-start')}>
         <span className="max-w-[7rem] truncate text-xs font-bold text-foreground/95 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-sm">

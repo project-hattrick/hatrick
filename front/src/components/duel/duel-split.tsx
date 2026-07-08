@@ -19,7 +19,7 @@ export function DuelSplit() {
 
   return (
     <div className="flex min-h-screen w-full flex-col gap-4 bg-background p-4 md:h-screen md:flex-row md:overflow-hidden">
-      <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-white/10 md:min-h-0">
+      <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-border md:min-h-0">
         <RealGkBackground bridgeHud />
         <HeroChrome>
           <div className="absolute top-4 left-4 z-10">

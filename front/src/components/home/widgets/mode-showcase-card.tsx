@@ -4,7 +4,9 @@ import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { buttonVariants } from '@/components/ui/button';
 import type { PlayMode } from '@/config/home.config';
+import { AppMode } from '@/enums/app-mode.enum';
 import { useHomeEntryStore } from '@/store/home-entry.store';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 
 /** Resting pose: leaning back into the stadium; the cursor gently steers it upright. */
 const REST_TILT = { rx: 9, ry: 0 };
@@ -18,7 +20,11 @@ function ModeShowcaseCard({ mode }: { mode: PlayMode }) {
   const [tilt, setTilt] = useState(REST_TILT);
   const [shift, setShift] = useState(REST_SHIFT);
   const openMode = useHomeEntryStore((state) => state.openMode);
+  const gate = useAuthGate();
   const Icon = mode.icon;
+  // Fantasy = the x1 entry, so it requires sign-in first; Live is watch-only and stays open.
+  const enterMode =
+    mode.key === AppMode.Fantasy ? gate(() => openMode(mode.key)) : () => openMode(mode.key);
 
   function handleMove(event: React.MouseEvent<HTMLDivElement>) {
     const rect = frameRef.current?.getBoundingClientRect();
@@ -42,9 +48,9 @@ function ModeShowcaseCard({ mode }: { mode: PlayMode }) {
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
         style={{ transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}
-        className="group rounded-[26px] bg-muted p-1.5 shadow-[0px_0px_0px_1px_rgba(255,255,255,0.05),0px_2px_6px_rgba(0,0,0,0.4),0px_16px_40px_-12px_rgba(0,0,0,0.55)] transition-transform duration-200 ease-out will-change-transform motion-reduce:transition-none"
+        className="group rounded-[26px] bg-muted p-1.5 shadow-e3 transition-transform duration-200 ease-out will-change-transform motion-reduce:transition-none"
       >
-        <div className="relative flex min-h-[26rem] flex-col overflow-hidden rounded-[20px] bg-surface-1 p-5 ring-1 ring-white/10 md:min-h-[30rem]">
+        <div className="relative flex min-h-[26rem] flex-col overflow-hidden rounded-[20px] bg-surface-1 p-5 ring-1 ring-border md:min-h-[30rem]">
           <div aria-hidden className="absolute inset-0">
             <Image
               src={mode.art}
@@ -100,7 +106,7 @@ function ModeShowcaseCard({ mode }: { mode: PlayMode }) {
 
             <button
               type="button"
-              onClick={() => openMode(mode.key)}
+              onClick={enterMode}
               className={buttonVariants({
                 size: 'lg',
                 className: 'h-12 w-full rounded-xl font-bold tracking-widest uppercase',

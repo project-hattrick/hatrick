@@ -47,8 +47,8 @@ export default function FixturesPage() {
                 const home = crestFor(fixture.Participant1);
                 const away = crestFor(fixture.Participant2);
                 return (
-                  <div key={fixture.FixtureId} className="flex items-center gap-4 px-4 py-3">
-                    <span className="w-28 text-[11px] text-muted-foreground">
+                  <div key={fixture.FixtureId} className="flex items-center gap-3 px-4 py-3 sm:gap-4">
+                    <span className="w-20 text-caption text-muted-foreground sm:w-28">
                       {live ? (
                         <span className="inline-flex items-center gap-1 font-bold text-live">
                           <Broadcast className="size-3.5" /> LIVE

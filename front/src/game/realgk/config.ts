@@ -281,7 +281,8 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   actorScale: { referee: 1.3, coach: 1.3 },
   // Frame the action higher, nearer the far-touchline billboards (telões).
   cameraLift: 0.12,
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true },
+  // celebrations OFF: goals keep the freeze + replay flow, but skip the arms-up run / jump routine.
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false },
 };
 
 /**

@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 function SideIdentity({ player, align }: { player: PlayerProfile; align: 'left' | 'right' }) {
   return (
     <div className={`flex items-center gap-2.5 ${align === 'right' ? 'flex-row-reverse text-right' : ''}`}>
-      <span className="relative grid size-14 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10 md:size-16">
+      <span className="relative grid size-14 shrink-0 place-items-end overflow-hidden rounded-full bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-border md:size-16">
         <Image
           src={player.portraitSrc}
           alt={player.name}
@@ -66,7 +66,7 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
             {bet !== null ? (
               <>
                 <span className="font-mono text-2xl font-black tabular-nums text-neon">{formatTokens(bet * 2)}</span>
-                <span className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Total pot</span>
+                <span className="text-micro uppercase tracking-[0.28em] text-muted-foreground">Total pot</span>
               </>
             ) : (
               <span className="neon-text font-heading text-xl font-black tracking-tight text-neon">VS</span>

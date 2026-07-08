@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const glassPanelVariants = cva('border border-border/70 shadow-2xl backdrop-blur-md', {
+const glassPanelVariants = cva('border border-border/70 shadow-e4 backdrop-blur-md', {
   variants: {
     tone: {
       blur: 'bg-overlay/72',

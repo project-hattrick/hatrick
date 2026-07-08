@@ -53,25 +53,25 @@ export function SignStep() {
   return (
     <div className="space-y-5">
       {/* Progress: connected → approve */}
-      <ol className="flex items-center gap-2 text-[11px] font-medium">
+      <ol className="flex items-center gap-2 text-caption font-medium">
         <li className="inline-flex items-center gap-1.5 text-neon">
           <Check className="size-3.5" weight="bold" /> Wallet connected
         </li>
-        <span className="h-px flex-1 bg-white/10" />
+        <span className="h-px flex-1 bg-surface-2" />
         <li className={cn('inline-flex items-center gap-1.5', busy ? 'text-foreground' : 'text-muted-foreground')}>
           <span className={cn('size-1.5 rounded-full', busy ? 'animate-pulse bg-neon' : 'bg-current')} /> Approve
         </li>
       </ol>
 
       {/* Connected wallet chip */}
-      <div className="flex items-center gap-3 rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3">
+      <div className="flex items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 py-3">
         {wallet?.adapter.icon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={wallet.adapter.icon} alt="" className="size-7 shrink-0 rounded-md" />
         ) : null}
         <span className="flex min-w-0 flex-col">
           <span className="font-mono text-sm">{short}</span>
-          <span className="text-[11px] text-muted-foreground">{wallet?.adapter.name ?? 'Wallet'}</span>
+          <span className="text-caption text-muted-foreground">{wallet?.adapter.name ?? 'Wallet'}</span>
         </span>
         <button
           type="button"
@@ -92,7 +92,7 @@ export function SignStep() {
       </div>
 
       {/* Reassurance */}
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-caption text-muted-foreground">
         <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-neon" /> Not a transaction</span>
         <span className="inline-flex items-center gap-1.5"><Check className="size-3.5 text-neon" weight="bold" /> Free · no gas</span>
       </div>

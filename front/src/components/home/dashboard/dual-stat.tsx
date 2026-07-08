@@ -18,7 +18,7 @@ export function DualStat({ label, home, away }: StatLine) {
           <div className="h-1.5 rounded-full bg-neon" style={{ width: `${homeShare}%` }} />
         </div>
         <div className="flex flex-1 justify-start">
-          <div className="h-1.5 rounded-full bg-[#e2b33c]" style={{ width: `${awayShare}%` }} />
+          <div className="h-1.5 rounded-full bg-warning" style={{ width: `${awayShare}%` }} />
         </div>
       </div>
     </div>

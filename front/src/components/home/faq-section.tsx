@@ -99,7 +99,7 @@ export function FaqSection() {
               className={cn(
                 'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-neon text-background shadow-sm'
+                  ? 'bg-neon text-background shadow-e1'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >

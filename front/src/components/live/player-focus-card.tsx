@@ -135,7 +135,7 @@ export function PlayerFocusCard() {
               type="button"
               aria-label="Previous player"
               onClick={focusPrev}
-              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-foreground/5 text-foreground transition hover:bg-foreground/10"
+              className="grid h-8 w-10 place-items-center rounded-lg border border-border bg-foreground/5 text-foreground transition hover:bg-foreground/10"
             >
               <CaretLeft className="size-4" />
             </button>
@@ -146,7 +146,7 @@ export function PlayerFocusCard() {
               type="button"
               aria-label="Next player"
               onClick={focusNext}
-              className="grid h-8 w-10 place-items-center rounded-lg border border-white/15 bg-foreground/5 text-foreground transition hover:bg-foreground/10"
+              className="grid h-8 w-10 place-items-center rounded-lg border border-border bg-foreground/5 text-foreground transition hover:bg-foreground/10"
             >
               <CaretRight className="size-4" />
             </button>

@@ -59,7 +59,7 @@ export function AccountMenu({ user, onSignOut, trigger }: AccountMenuProps) {
       <DropdownMenuContent className="min-w-72">
         {/* Mini profile card */}
         <div className="flex items-center gap-3 px-1 pt-1 pb-2">
-          <span className="grid size-14 shrink-0 place-items-end overflow-hidden rounded-xl bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-white/10">
+          <span className="grid size-14 shrink-0 place-items-end overflow-hidden rounded-xl bg-gradient-to-b from-surface-3 to-surface-deep ring-1 ring-border">
             <Image
               src={selfProfile.portraitSrc}
               alt={name}
@@ -81,12 +81,12 @@ export function AccountMenu({ user, onSignOut, trigger }: AccountMenuProps) {
         <button
           type="button"
           onClick={copyWallet}
-          className="flex w-full items-center gap-1.5 rounded-lg bg-white/[0.04] px-2.5 py-2 text-xs text-muted-foreground transition hover:bg-white/[0.08] hover:text-foreground"
+          className="flex w-full items-center gap-1.5 rounded-lg bg-surface-1 px-2.5 py-2 text-xs text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
           aria-label="Copy wallet address"
         >
           <Wallet className="size-3.5" />
           <span className="font-mono">{shortAddress(user.walletAddress)}</span>
-          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+          <span className="rounded bg-surface-2 px-1.5 py-0.5 text-micro uppercase tracking-wide">
             devnet
           </span>
           {copied ? (
@@ -100,10 +100,10 @@ export function AccountMenu({ user, onSignOut, trigger }: AccountMenuProps) {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col items-center rounded-lg bg-white/[0.04] px-1 py-2"
+              className="flex flex-col items-center rounded-lg bg-surface-1 px-1 py-2"
             >
               <span className="font-mono text-sm font-bold tabular-nums">{stat.value}</span>
-              <span className="text-[10px] text-muted-foreground">{stat.label}</span>
+              <span className="text-micro text-muted-foreground">{stat.label}</span>
             </div>
           ))}
         </div>
