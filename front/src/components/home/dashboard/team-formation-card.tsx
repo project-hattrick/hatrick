@@ -2,15 +2,18 @@
 
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
-import { teamFormation, type FormationDot } from '@/config/match-dashboard.config';
+import { formationDots, formationFor, type FormationDot } from '@/config/team-lineups.config';
 import { useDashboardMatch } from './use-dashboard-match';
+
+const HOME_COLOR = '#e5484d';
+const AWAY_COLOR = '#e2b33c';
 
 function Dots({ dots, color }: { dots: FormationDot[]; color: string }) {
   return (
     <>
       {dots.map((dot) => (
         <div
-          key={`${color}-${dot.number}-${dot.x}-${dot.y}`}
+          key={`${color}-${dot.number}`}
           className="absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-micro font-bold text-white shadow-e2 ring-2 ring-black/30 sm:size-7 sm:text-xs"
           style={{ left: `${dot.x}%`, top: `${dot.y}%`, backgroundColor: color }}
         >
@@ -33,26 +36,28 @@ function TeamTag({ name, shape, code, align }: { name: string; shape: string; co
   );
 }
 
-/** "Team Formation" — both line-ups on one horizontal pitch (identity from the selected match). */
+/** "Team Formation" — both line-ups on one horizontal pitch, shape + dots derived from the selected match. */
 export function TeamFormationCard() {
   const match = useDashboardMatch();
-  const { home, away } = teamFormation; // pitch geometry (dots/shape/colors) stays generic
+  const homeShape = formationFor(match.home.code);
+  const awayShape = formationFor(match.away.code);
+
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-1 flex-col gap-3 p-4">
       <span className="text-sm font-bold">Team Formation</span>
 
       <div className="flex items-center justify-between">
-        <TeamTag name={match.home.name} shape={home.shape} code={match.home.iso} />
+        <TeamTag name={match.home.name} shape={homeShape} code={match.home.iso} />
         <span className="font-mono text-micro font-bold text-muted-foreground">FT</span>
-        <TeamTag name={match.away.name} shape={away.shape} code={match.away.iso} align="right" />
+        <TeamTag name={match.away.name} shape={awayShape} code={match.away.iso} align="right" />
       </div>
 
       <div className="relative min-h-[220px] w-full flex-1 overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">
         <div className="pointer-events-none absolute inset-2 rounded-md border border-white/10" />
         <div className="pointer-events-none absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
         <div className="pointer-events-none absolute top-1/2 left-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
-        <Dots dots={home.dots} color={home.color} />
-        <Dots dots={away.dots} color={away.color} />
+        <Dots dots={formationDots(homeShape, 'home')} color={HOME_COLOR} />
+        <Dots dots={formationDots(awayShape, 'away')} color={AWAY_COLOR} />
       </div>
     </GlassPanel>
   );

@@ -10,7 +10,7 @@
   <h1 align="center">Hat-trick</h1>
 
   <p align="center">
-    One platform, two ways to live the 2026 World Cup — a 3D fantasy and a live 2D match view, both powered by the <strong>TxLINE</strong> real-time feed on <strong>Solana</strong>.
+    One platform, two ways to live the 2026 World Cup — simulated fantasy duels and a live 2D match arena, both driven by the same real-time data source: the <strong>TxLINE</strong> feed on <strong>Solana</strong>.
     <br />
     <a href="#" target="_blank">View Design System</a>
     ·
@@ -58,7 +58,7 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#architecture">Data &amp; Architecture — powered by TxLINE</a></li>
     <li><a href="#apps">Apps</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#compliance">Compliance</a></li>
@@ -85,8 +85,8 @@ Most fans watch with a phone in hand and a fragmented setup: score in one tab, f
 
 <div id="the-two-modes"></div>
 
-- **🎮 Fantasy** — open sticker packs, build your XI, and face other users in **3D simulated matches** where player attributes are driven by real tournament performance via TxLINE.
-- **📺 Live** — follow real matches as a **2D real-time abstraction** built from the TxLINE SSE feed, with live odds and in-match betting on one screen.
+- **🎮 Fantasy** — open sticker packs, build your XI, and face other users in **simulated 2D arena duels** where player attributes are driven by real tournament performance via TxLINE.
+- **📺 Live** — follow real matches as a **2D real-time arena** shaped live by the TxLINE SSE feed (possession, shots, goals, corners), with live odds and in-match betting on one screen.
 - **🗣️ Crowd layer** — internal chat + curated X posts become comic-style **speech balloons** over the stands, timed to the latest match event.
 
 > The defining mechanic: every event is emitted in **two states** — `during` (optimistic, animates instantly) and `after` (confirmed by TxLINE, authoritative). See [Architecture](#architecture).
@@ -104,8 +104,8 @@ Most fans watch with a phone in hand and a fragmented setup: score in one tab, f
 [![Docker][docker-badge]][docker-url]
 
 - **API:** NestJS · `@nestjs/event-emitter` (event-driven) · Socket.IO · Axios
-- **Front:** Next.js (App Router) · shadcn/ui · Zustand · React Query · Solana Wallet Adapter · Three.js *(planned)*
-- **Data:** TxLINE (SSE scores + odds, snapshots, Merkle proofs)
+- **Front:** Next.js (App Router) · shadcn/ui · Zustand · React Query · Solana Wallet Adapter · custom canvas game engine (framework-free TS)
+- **Data:** TxLINE (SSE scores + odds, REST snapshots, Merkle proofs) — see [Data & Architecture](#architecture)
 - **Chain:** Solana (devnet) · Anchor *(Phase 2)*
 - **Infra:** Docker (Postgres + Redis) · GitHub Actions CI
 
@@ -148,22 +148,43 @@ npm run dev                            # http://localhost:3000
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
-## Architecture
+## Data & Architecture — powered by TxLINE
 
 <div id="architecture"></div>
+
+Everything you see in Hat-trick originates from **[TxLINE](https://txline.txodds.com)**, TxODDS' real-time World Cup data product. There is no scraped or invented match data: one feed, one ingest path, many consumers.
+
+### Where the data comes from
+
+| Source | What it carries | How we use it |
+|---|---|---|
+| **TxLINE SSE — scores** | Live match events (goals, cards, corners, possession…) with a `confirmed` flag | The heartbeat of the whole app |
+| **TxLINE SSE — odds** | Real-time market prices | Odds boards + in-match betting markets |
+| **TxLINE REST snapshots** | Fixtures, lineups, current state | Fixture pages, initial state on connect |
+| **Solana devnet** | On-chain subscribe + activate for the TxLINE API token; Merkle proofs *(Phase 2 settlement)* | Access to the feed itself is provisioned on-chain |
+
+### One feed, two states, many consumers
 
 ```
 TxLINE SSE (scores + odds)
         ▼
-[api] ingest → normalizer ──emits──►  *.during (confirmed=false → animate)
-        │   in-memory state           *.after  (confirmed=true  → settle/recompute)
+[api] ingest → normalizer ──emits──►  *.during (confirmed=false → optimistic, animate now)
+        │   in-memory state           *.after  (confirmed=true  → authoritative, settle & recompute)
         ▼
-   EventEmitter2 ─► listeners (fantasy attrs · live markets · crowd)
+   EventEmitter2 ─► listeners (fantasy attributes · live markets · settlement)
         ▼
-[api] WebSocket gateway ──► [front] animate on .during, reconcile on .after
+[api] WebSocket gateway ──► [front] one WS → Zustand stores → surfaces
 ```
 
-Every event fires as `*.during` (optimistic) then `*.after` (confirmed by TxLINE); the WS gateway broadcasts both to the front.
+The core contract: **every domain event fires twice**. `*.during` is the optimistic read (TxLINE `confirmed=false`) — it drives instant animation. `*.after` is the authoritative read (`confirmed=true`) — it settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
+
+### What the feed drives on screen
+
+- **Live 2D arena** — a match director translates feed events (possession shifts, shots, goals, corners) into the simulated pitch in real time; the scoreboard is authoritative from `*.after`.
+- **Betting** — markets and odds mirror the odds stream; settlement only ever happens on confirmed events.
+- **Fantasy attributes** — player cards get stronger or weaker based on real tournament performance, recalculated on `*.after`.
+- **Hero backdrop** — the landing page itself is a live render driven by the same feed.
+- **Replay** — `POST /replay` re-plays a finished match through the *same* during/after pipeline, so every surface can be demonstrated 1:1 without waiting for kickoff.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -192,13 +213,13 @@ project/
 
 - [x] Monorepo scaffold (api + front), governance docs, CI, Docker infra
 - [x] Event-driven core with the `during` / `after` contract
-- [ ] **Live Mode** — 2D field, live odds, markets, in-match betting UI
-- [ ] **Fantasy Mode** — packs, dynamic attributes, 3D simulation, 1v1
+- [x] **TxLINE integration** — on-chain token activation, SSE ingest, snapshots, match **replay** through the live pipeline
+- [x] **Live Mode** — feed-driven 2D arena, live odds board, markets, in-match betting + settlement
+- [x] **Fantasy Mode** — packs, XI builder, dynamic attributes, 1v1 arena duels
+- [x] Responsible gaming — 18+ age gate, self-exclusion, stake limits
 - [ ] **Crowd** — chat + X balloons with moderation & ranking
-- [ ] Geo-blocking, deploy, demo video
+- [ ] Geo-blocking, public deploy, demo video
 - [ ] *(Phase 2)* On-chain escrow + `validate_stat` settlement + Merkle-proof UI
-
-Order: Live Mode first, then Fantasy, then Crowd; on-chain settlement is Phase 2.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -291,4 +312,3 @@ Team Hat-trick · Repository: [https://github.com/your-org/hat-trick](https://gi
 [sol-url]: https://solana.com/
 [docker-badge]: https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white
 [docker-url]: https://www.docker.com/
-# hat-trick

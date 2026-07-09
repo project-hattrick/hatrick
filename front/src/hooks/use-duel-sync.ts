@@ -7,7 +7,7 @@ import { useDuelStore } from '@/store/duel.store';
 import { DuelResult } from '@/enums/duel-result.enum';
 
 /** How long a duel runs (real time) before it settles. The engine plays continuously; this bounds it. */
-const DUEL_DURATION_MS = 90_000;
+const DUEL_DURATION_MS = 60_000;
 
 /** Score → result from the signed-in player's POV (blue = self, red = opponent). */
 const resultFor = (self: number, opp: number): DuelResult =>

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useWallet, type Wallet } from '@solana/wallet-adapter-react';
 import { WalletReadyState } from '@solana/wallet-adapter-base';
 
-import { Envelope, GoogleLogo, ShieldCheck, CaretRight, CircleNotch, UserCircle, Wallet as WalletIcon } from '@/components/common/icons';
+import { Envelope, GoogleLogo, ShieldCheck, CaretRight, CircleNotch, Trophy, Cards, Wallet as WalletIcon } from '@/components/common/icons';
 import { backendEnabled, signInAsGuest } from '@/services/session-mode';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
@@ -13,9 +13,11 @@ import { cn } from '@/lib/utils';
 const rank = (w: Wallet): number => (w.readyState === WalletReadyState.Installed ? 0 : 1);
 
 /**
- * Step 1 of login (ref "Conecte sua carteira"): our own wallet chooser over the
- * Wallet-Standard list, so we never bounce to the adapter's default modal.
- * Selecting a wallet triggers connect; the app-wide driver then auto-signs.
+ * Step 1 of login — a two-tier chooser:
+ *  - "I want to win": connect a Solana wallet (Phantom & co.) to compete with real ownership.
+ *  - "Just open packs & stats": casual Email/Google entry, no wallet required.
+ * Wallet rows come from the Wallet-Standard list so we never bounce to the adapter's
+ * default modal. Selecting a wallet triggers connect; the app-wide driver then auto-signs.
  */
 export function WalletStep() {
   const { wallets, select, wallet, connect, connecting } = useWallet();
@@ -30,7 +32,7 @@ export function WalletStep() {
   }, [wallet]);
 
   // Wallet-free demo sign-in: establish a local mock session and close the dialog.
-  const continueAsGuest = () => {
+  const continueCasual = () => {
     signInAsGuest();
     setLoginOpen(false);
   };
@@ -39,46 +41,68 @@ export function WalletStep() {
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-2">
-        {ordered.length === 0 ? (
-          <li className="flex items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 py-4 text-sm text-muted-foreground">
-            <WalletIcon className="size-5 shrink-0" />
-            No Solana wallet detected. Install Phantom or Solflare to continue.
-          </li>
-        ) : (
-          ordered.map((w) => (
-            <WalletRow
-              key={w.adapter.name}
-              wallet={w}
-              busy={connecting && wallet?.adapter.name === w.adapter.name}
-              onSelect={() => select(w.adapter.name)}
-            />
-          ))
-        )}
-      </ul>
+      {/* Tier 1 — compete with a wallet */}
+      <section className="space-y-2">
+        <TierHeading
+          icon={<Trophy className="size-4 text-neon" weight="duotone" />}
+          title="I want to win"
+          detail="Connect a wallet to compete for prizes and own your cards on-chain."
+        />
+        <ul className="space-y-2">
+          {ordered.length === 0 ? (
+            <li className="flex items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 py-4 text-sm text-muted-foreground">
+              <WalletIcon className="size-5 shrink-0" />
+              No Solana wallet detected. Install Phantom or Solflare to continue.
+            </li>
+          ) : (
+            ordered.map((w) => (
+              <WalletRow
+                key={w.adapter.name}
+                wallet={w}
+                busy={connecting && wallet?.adapter.name === w.adapter.name}
+                onSelect={() => select(w.adapter.name)}
+              />
+            ))
+          )}
+        </ul>
+      </section>
 
       <Divider label="or" />
 
-      <div className="space-y-2">
-        {/* Guest sign-in only makes sense in mock mode — in backend mode it'd create a session with no cookie. */}
-        {!backendEnabled ? (
-          <button
-            type="button"
-            onClick={continueAsGuest}
-            className="flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-neon/35 bg-neon/[0.06] px-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-neon/[0.1]"
-          >
-            <UserCircle className="size-5 text-neon" />
-            Continue as guest
-            <span className="ml-auto rounded-full border border-neon/35 px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-neon">Demo</span>
-          </button>
-        ) : null}
-        <AltRow icon={<Envelope className="size-5" />} label="Continue with Email" />
-        <AltRow icon={<GoogleLogo className="size-5" />} label="Continue with Google" />
-      </div>
+      {/* Tier 2 — casual, wallet-free entry */}
+      <section className="space-y-2">
+        <TierHeading
+          icon={<Cards className="size-4 text-neon" weight="duotone" />}
+          title="Just open packs & see stats"
+          detail="Play the fantasy game and follow live matches — no wallet needed."
+        />
+        <AltRow
+          icon={<Envelope className="size-5" />}
+          label="Continue with Email"
+          onSelect={backendEnabled ? undefined : continueCasual}
+        />
+        <AltRow
+          icon={<GoogleLogo className="size-5" />}
+          label="Continue with Google"
+          onSelect={backendEnabled ? undefined : continueCasual}
+        />
+      </section>
 
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-muted-foreground">
         <ShieldCheck className="size-3.5 text-neon" /> Self-custody · Solana devnet
       </p>
+    </div>
+  );
+}
+
+function TierHeading({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground">
+        {icon}
+        {title}
+      </p>
+      <p className="text-caption text-muted-foreground">{detail}</p>
     </div>
   );
 }
@@ -114,20 +138,34 @@ function WalletRow({ wallet, busy, onSelect }: { wallet: Wallet; busy: boolean; 
   );
 }
 
-/** Email/Google — visible for structure, gated until a backend supports them. */
-function AltRow({ icon, label }: { icon: React.ReactNode; label: string }) {
+/**
+ * Email/Google entry. With `onSelect` (mock mode) it starts the wallet-free demo
+ * session; without it (backend mode) it stays gated until the API supports them.
+ */
+function AltRow({ icon, label, onSelect }: { icon: React.ReactNode; label: string; onSelect?: () => void }) {
+  const enabled = Boolean(onSelect);
   return (
     <button
       type="button"
-      disabled
+      disabled={!enabled}
+      onClick={onSelect}
       className={cn(
-        'flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 text-left text-sm font-semibold text-muted-foreground',
-        'cursor-not-allowed opacity-60',
+        'flex h-[52px] w-full items-center gap-3 rounded-[14px] border border-border bg-surface-1 px-4 text-left text-sm font-semibold',
+        enabled
+          ? 'text-foreground transition-colors hover:bg-surface-2'
+          : 'cursor-not-allowed text-muted-foreground opacity-60',
       )}
     >
       <span className="text-muted-foreground">{icon}</span>
       {label}
-      <span className="ml-auto rounded-full border border-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide">Soon</span>
+      <span
+        className={cn(
+          'ml-auto rounded-full border px-2 py-0.5 text-micro font-bold uppercase tracking-wide',
+          enabled ? 'border-neon/35 text-neon' : 'border-border',
+        )}
+      >
+        {enabled ? 'Demo' : 'Soon'}
+      </span>
     </button>
   );
 }

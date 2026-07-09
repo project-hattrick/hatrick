@@ -12,6 +12,7 @@ import { TeamSide } from '@/enums/team-side.enum';
 import { useUpcomingFixtures } from '@/services/queries/use-replay';
 import type { FixtureDto } from '@/services/txline.service';
 import { heroMatch, type DashTeam, type HeroFigurePlacement } from '@/config/match-dashboard.config';
+import { teamColor } from '@/config/team-colors.config';
 
 const { days, hours, minutes, seconds } = heroMatch.countdown;
 const INITIAL = ((days * 24 + hours) * 60 + minutes) * 60 + seconds;
@@ -120,6 +121,8 @@ export function HeroCardShell({
   const h1 = home ?? { name: heroMatch.home.name, code: heroMatch.home.code };
   const a1 = away ?? { name: heroMatch.away.name, code: heroMatch.away.code };
   const heading = label ?? heroMatch.label;
+  const homeColor = teamColor(h1.code);
+  const awayColor = teamColor(a1.code);
 
   // Count down to the real kickoff (client-only so SSR never mismatches on wall-clock).
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -141,16 +144,16 @@ export function HeroCardShell({
     <GlassPanel tone="surface" radius="xl" className="relative h-[190px] overflow-hidden p-0">
       <div className="absolute inset-0 bg-[radial-gradient(120%_140%_at_50%_120%,#12160f_0%,#0a0c0a_60%,#070807_100%)]" />
 
-      {/* Angled colour beams — blue over the home half, green over the away half. */}
+      {/* Angled colour beams tinted by each team's brand colour (home left, away right). */}
       <div
         aria-hidden
-        className="absolute inset-y-0 left-0 w-1/2 bg-cover bg-left-top bg-no-repeat opacity-95 mix-blend-screen"
-        style={{ backgroundImage: 'url(/cards/beam-blue.svg)' }}
+        className="absolute inset-y-0 left-0 w-3/5 opacity-70 mix-blend-screen"
+        style={{ background: `linear-gradient(108deg, ${homeColor} 0%, transparent 68%)` }}
       />
       <div
         aria-hidden
-        className="absolute inset-y-0 right-0 w-1/2 bg-cover bg-right-top bg-no-repeat opacity-95 mix-blend-screen"
-        style={{ backgroundImage: 'url(/cards/beam-green.svg)' }}
+        className="absolute inset-y-0 right-0 w-3/5 opacity-70 mix-blend-screen"
+        style={{ background: `linear-gradient(252deg, ${awayColor} 0%, transparent 68%)` }}
       />
       {/* Soft central shade so the title/countdown stay legible over the beams. */}
       <div

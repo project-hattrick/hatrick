@@ -21,6 +21,9 @@ interface GameStageProps {
 export function GameStage({ checkpoint, contained, hideScore }: GameStageProps) {
   const apply = useSandboxStore((s) => s.apply);
   const goalActive = useSandboxStore((s) => s.goalActive);
+  const scoreBlue = useSandboxStore((s) => s.scoreBlue);
+  const scoreRed = useSandboxStore((s) => s.scoreRed);
+  const clock = useSandboxStore((s) => s.clock);
   const { canvasRef, handleRef } = useGameEngine(checkpoint, apply);
 
   return (
@@ -31,7 +34,7 @@ export function GameStage({ checkpoint, contained, hideScore }: GameStageProps) 
         height={CANVAS.height}
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <GoalBurst active={goalActive} />
+      <GoalBurst active={goalActive} scoreBlue={scoreBlue} scoreRed={scoreRed} clock={clock} />
       {!hideScore && <GameScoreboard />}
       <GameControls handle={handleRef} />
     </div>

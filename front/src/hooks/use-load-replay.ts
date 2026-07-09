@@ -39,6 +39,8 @@ export function useLoadReplay() {
         gameState: GameState.FullTime,
       });
       setIsLoadingScore(true);
+      // Safety net: clear the "switching" overlay even if the stream never delivers a first event.
+      window.setTimeout(() => useMatchStore.getState().setSwitching(false), 40_000);
       try {
         // Stream the finished match back through the live pipeline; the backend supersedes any prior replay.
         await replayService.start({
@@ -48,7 +50,8 @@ export function useLoadReplay() {
           speed: REPLAY_SPEED,
         });
       } catch {
-        /* replay couldn't start — the backdrop stays in attract mode, overlays at 0-0 */
+        // Replay couldn't start — drop the overlay so the UI isn't stuck buffering.
+        useMatchStore.getState().setSwitching(false);
       } finally {
         setIsLoadingScore(false);
       }

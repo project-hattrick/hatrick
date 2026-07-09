@@ -7,6 +7,7 @@ import { MatchBackground } from './match-background';
 import { MatchSelector } from './match-selector';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
+import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { HeroChrome } from './hero-chrome';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 
@@ -20,8 +21,9 @@ export function SplitDashboard() {
           <div className="absolute top-4 left-4 z-10">
             <ReplayBadge />
           </div>
-          <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2">
+          <div className="absolute top-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5">
             <Scoreboard />
+            <PoweredByTxline tone="hero" />
           </div>
           <div className="absolute top-4 right-4 z-10 hidden w-[240px] max-w-[calc(100%-2rem)] lg:block">
             <PlayerFocusCard />

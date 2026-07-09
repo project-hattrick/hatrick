@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { AppleLogo, Globe, Envelope, ChatCircle, Play, PaperPlaneTilt, type Icon } from '@/components/common/icons';
+import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { appBadges, footerColumns } from '@/config/home.config';
 
 const socials: { label: string; icon: Icon; href: string }[] = [
@@ -43,6 +44,7 @@ export function SiteFooter() {
               );
             })}
           </div>
+          <PoweredByTxline className="mt-1" />
         </div>
 
         {footerColumns.map((column) => (

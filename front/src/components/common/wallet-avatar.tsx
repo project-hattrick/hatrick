@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 import { cn } from '@/lib/utils';
+import { UserCircle } from '@/components/common/icons';
 import { useAuth } from '@/services/queries/use-auth';
 import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { signOutLocal } from '@/services/session-mode';
@@ -67,15 +68,14 @@ export function WalletAvatar() {
       // it as its dropdown trigger and owns the click.
       onClick={isAuthenticated && !onboarding ? undefined : openLogin}
     >
-      <UserAvatar
-        src={portraitSrc}
-        alt="Profile"
-        size={36}
-        className={cn(
-          'rounded-full border transition',
-          isAuthenticated ? 'border-neon' : 'border-border/60',
-        )}
-      />
+      {isAuthenticated ? (
+        <UserAvatar src={portraitSrc} alt="Profile" size={36} className="rounded-full border border-neon transition" />
+      ) : (
+        // Signed out: never show a persisted/default portrait — an empty placeholder reads as "not you (yet)".
+        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-border/80 bg-surface-1 text-muted-foreground transition hover:border-border hover:text-foreground">
+          <UserCircle className="size-5" />
+        </span>
+      )}
       <span
         className={cn(
           'absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-background transition',

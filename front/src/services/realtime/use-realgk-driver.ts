@@ -15,13 +15,12 @@ const teamOf = (participant?: number): Team | null =>
   participant === 1 ? Team.Blue : participant === 2 ? Team.Red : null;
 
 /**
- * Drives the hero's realgk backdrop from the chosen match's live/replay feed. The engine boots in
- * autonomous "attract mode"; the FIRST real event for the chosen fixture hands the pitch to the feed
- * (`setDriven(true)` → kickoff) so it only starts when there is data. Switching/clearing the match
- * returns it to attract mode. Kept out of React render — the engine runs its own RAF loop.
+ * Drives a realgk engine from an explicit fixture's live/replay feed. The engine boots in autonomous
+ * "attract mode"; the FIRST real event for the fixture hands the pitch to the feed (`setDriven(true)` →
+ * kickoff) so it only starts when there is data. Switching/clearing the fixture returns it to attract
+ * mode. Kept out of React render — the engine runs its own RAF loop.
  */
-export function useRealgkDriver(handleRef: MutableRefObject<RealGkHandle | null>): void {
-  const fixtureId = useMatchStore((state) => state.match?.fixtureId ?? null);
+export function useRealgkFeedDriver(handleRef: MutableRefObject<RealGkHandle | null>, fixtureId: number | null): void {
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -48,4 +47,10 @@ export function useRealgkDriver(handleRef: MutableRefObject<RealGkHandle | null>
       socket.off(`match-event.${EmissionState.After}`, onMatch);
     };
   }, [handleRef, fixtureId]);
+}
+
+/** The hero variant: drives the backdrop from the globally chosen match (match.store). */
+export function useRealgkDriver(handleRef: MutableRefObject<RealGkHandle | null>): void {
+  const fixtureId = useMatchStore((state) => state.match?.fixtureId ?? null);
+  useRealgkFeedDriver(handleRef, fixtureId);
 }

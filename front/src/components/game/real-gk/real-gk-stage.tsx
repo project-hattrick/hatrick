@@ -35,6 +35,9 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const teamRedName = useRealGkStore((s) => s.teamRedName);
   const teamBlueFlag = useRealGkStore((s) => s.teamBlueFlag);
   const teamRedFlag = useRealGkStore((s) => s.teamRedFlag);
+  const scoreBlue = useRealGkStore((s) => s.scoreBlue);
+  const scoreRed = useRealGkStore((s) => s.scoreRed);
+  const clock = useRealGkStore((s) => s.clock);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,7 +103,15 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   return (
     <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
-      <GoalBurst active={goalActive} />
+      <GoalBurst
+        active={goalActive}
+        team={goalTeam}
+        blueName={teamBlueName}
+        redName={teamRedName}
+        scoreBlue={scoreBlue}
+        scoreRed={scoreRed}
+        clock={clock}
+      />
       <ConfettiBurst active={goalActive} team={goalTeam} />
       {realGkConfigFor(checkpoint).crtFilter && <CrtOverlay />}
       <RedCardOverlay active={redCardActive} playerName={redCardName} />

@@ -148,6 +148,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind v4 preflight resets buttons to `cursor: default` — restore the pointer
+     for every enabled button (raw <button> tags included, not just ui/button). */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
   html {
     @apply font-sans;
     /* Firefox — thin thumb over the deep surface, matching the DS graphite palette. */

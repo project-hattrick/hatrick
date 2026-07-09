@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { featuredLiveMatch } from '@/config/home.config';
 import { AppMode } from '@/enums/app-mode.enum';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useHomeEntryStore } from '@/store/home-entry.store';
 import { useUiStore } from '@/store/ui.store';
 import { useDuelStore } from '@/store/duel.store';
@@ -64,6 +65,7 @@ function EntryOption({ icon: Icon, eyebrow, title, description, action, featured
 
 export function HomeModeDialogs() {
   const router = useRouter();
+  const gate = useAuthGate();
   const activeMode = useHomeEntryStore((state) => state.activeMode);
   const closeMode = useHomeEntryStore((state) => state.closeMode);
   const startMatchmaking = useHomeEntryStore((state) => state.startMatchmaking);
@@ -127,7 +129,7 @@ export function HomeModeDialogs() {
                   description="We will match you with a player around your current MMR."
                   featured
                   action={
-                    <Button size="lg" className="h-10 w-full gap-2 rounded-xl font-semibold" onClick={startMatchmaking}>
+                    <Button size="lg" className="h-10 w-full gap-2 rounded-xl font-semibold" onClick={gate(startMatchmaking)}>
                       <Sword className="size-4" />
                       Start matchmaking
                     </Button>

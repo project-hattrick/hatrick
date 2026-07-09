@@ -6,6 +6,7 @@ import { ReplayBadge } from './replay-badge';
 import { MatchTimeline } from './match-timeline';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
+import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { HeroChrome } from './hero-chrome';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 
@@ -19,9 +20,10 @@ export function ImmersiveDashboard() {
         <ReplayBadge />
       </div>
 
-      {/* Scoreboard — top-centre, cleared below the navbar + notch on mobile. */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 -translate-x-1/2 md:top-16">
+      {/* Scoreboard — top-centre, cleared below the navbar + notch on mobile. Data credit sits under it. */}
+      <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 md:top-16">
         <Scoreboard />
+        <PoweredByTxline tone="hero" className="pointer-events-auto" />
       </div>
 
       {/* Player focus + my predictions — desktop rail only (keeps the mobile hero uncluttered). */}

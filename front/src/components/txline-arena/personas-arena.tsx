@@ -5,24 +5,37 @@ import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Broadcast, CircleNotch, List } from '@/components/common/icons';
-import { createHeadsOnlyEngine, type HeadsOnlyHandle } from '@/game/headsonly/engine';
+import { GoalBurst } from '@/components/game/goal-burst';
+import { ConfettiBurst } from '@/components/game/real-gk/confetti-burst';
+import { RedCardOverlay } from '@/components/game/real-gk/red-card-overlay';
+import { RestartBanner } from '@/components/game/real-gk/restart-banner';
+import { createRealGkEngine } from '@/game/realgk/engine';
+import { REAL_GK_PERSONAS_CONFIG } from '@/game/realgk/config';
+import type { RealGkHandle } from '@/game/realgk/types';
+import { threatOf } from '@/services/realtime/match-director-map';
 import { useMatchFeed } from '@/services/realtime/use-match-feed';
-import { useHeadsDriver } from '@/services/realtime/use-heads-driver';
+import { useRealgkFeedDriver } from '@/services/realtime/use-realgk-driver';
 import { useStartReplay, useStopReplay } from '@/services/queries/use-replay';
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
+import { useRealGkStore } from '@/store/real-gk.store';
 import { MatchPicker } from './match-picker';
 
-const HOME = '#38bdf8';
-const AWAY = '#fb7185';
-const THREAT_VAL: Record<string, number> = { Safe: 0.2, Attack: 0.5, Danger: 0.78, HighDanger: 1 };
+/** Team accents mirror the engine's foot rings (Blue = home / participant 1, Red = away / participant 2). */
+const HOME = '#3b82f6';
+const AWAY = '#ef4444';
 
 type Selected = { fixtureId: number; home: string; away: string; mode: 'replay' | 'watch' };
 
-export function HeadsArena() {
+/**
+ * The persona match (realgk engine, full 11-a-side cast) as a feed-driven arena: pick a past replay or
+ * an upcoming fixture and the on-pitch action mirrors the API events (goals, shots, corners, cards,
+ * possession threat). The sim plays its autonomous attract mode until the chosen match has data.
+ */
+export function PersonasArena() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const handleRef = useRef<HeadsOnlyHandle | null>(null);
+  const handleRef = useRef<RealGkHandle | null>(null);
 
   const [selected, setSelected] = useState<Selected | null>(null);
   const [pickerOpen, setPickerOpen] = useState(true);
@@ -31,13 +44,25 @@ export function HeadsArena() {
   const startReplay = useStartReplay();
   const stopReplay = useStopReplay();
   const feed = useMatchFeed(selected?.fixtureId ?? null);
-  useHeadsDriver(handleRef, selected?.fixtureId ?? null);
+  useRealgkFeedDriver(handleRef, selected?.fixtureId ?? null);
 
-  // Mount the engine once (autonomous "attract mode" until a match is picked).
+  // Cinematic beats bridged from the engine HUD (goal flash, confetti, restart banner, red card).
+  const goalActive = useRealGkStore((s) => s.goalActive);
+  const goalTeam = useRealGkStore((s) => s.goalTeam);
+  const redCardActive = useRealGkStore((s) => s.redCardActive);
+  const redCardName = useRealGkStore((s) => s.redCardName);
+  const restartActive = useRealGkStore((s) => s.restartActive);
+  const restartLabel = useRealGkStore((s) => s.restartLabel);
+  const restartTeam = useRealGkStore((s) => s.restartTeam);
+  const scoreBlue = useRealGkStore((s) => s.scoreBlue);
+  const scoreRed = useRealGkStore((s) => s.scoreRed);
+  const clock = useRealGkStore((s) => s.clock);
+
+  // Mount the persona-match engine once (attract mode until a match is picked).
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = createHeadsOnlyEngine(canvas);
+    const handle = createRealGkEngine(canvas, { onHud: useRealGkStore.getState().apply, config: REAL_GK_PERSONAS_CONFIG });
     handleRef.current = handle;
     const observer = new ResizeObserver(() => handle.resize());
     if (containerRef.current) observer.observe(containerRef.current);
@@ -50,7 +75,6 @@ export function HeadsArena() {
 
   const pick = (s: Selected, replayInput?: { epochDay: number; startHour: number }) => {
     feed.reset();
-    handleRef.current?.setDriven(true); // reset to 0-0 kickoff and hand control to the feed
     setSelected(s);
     setPickerOpen(false);
     if (replayInput) startReplay.mutate({ fixtureId: s.fixtureId, ...replayInput, speed });
@@ -62,14 +86,35 @@ export function HeadsArena() {
 
   const last = feed.events[0];
   const attackingSide = last?.participant === 1 ? 'home' : last?.participant === 2 ? 'away' : null;
-  const threat = last?.possessionType ? THREAT_VAL[last.possessionType] ?? 0 : 0;
+  const threat = threatOf(last?.possessionType) ?? 0;
   const buffering = !!selected && feed.events.length === 0;
+  const teamBlueName = useRealGkStore((s) => s.teamBlueName);
+  const teamRedName = useRealGkStore((s) => s.teamRedName);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#03121a]">
+    <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
 
-      {/* ---- Top HUD ---- */}
+      {/* Engine cinematics */}
+      <GoalBurst
+        active={goalActive}
+        team={goalTeam}
+        blueName={selected?.home ?? teamBlueName}
+        redName={selected?.away ?? teamRedName}
+        scoreBlue={scoreBlue}
+        scoreRed={scoreRed}
+        clock={clock}
+      />
+      <ConfettiBurst active={goalActive} team={goalTeam} />
+      <RedCardOverlay active={redCardActive} playerName={redCardName} />
+      <RestartBanner
+        active={restartActive}
+        label={restartLabel}
+        team={restartTeam}
+        teamName={restartTeam === 'blue' ? teamBlueName : restartTeam === 'red' ? teamRedName : ''}
+      />
+
+      {/* ---- Top HUD (feed-authoritative score) ---- */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center gap-2 p-3">
         <div className="pointer-events-auto flex items-center gap-4 rounded-full border border-white/10 bg-black/55 px-5 py-2 backdrop-blur">
           <span className="max-w-[28vw] truncate text-right text-sm font-semibold" style={{ color: HOME }}>
@@ -82,7 +127,7 @@ export function HeadsArena() {
             {selected?.away ?? 'Away'}
           </span>
           <span className="ml-2 border-l border-white/15 pl-3 font-mono text-xs text-white/70">
-            {feed.minute != null ? `${feed.minute}'` : selected ? '—' : 'idle'}
+            {feed.matchEnd ? 'FT' : feed.minute != null ? `${feed.minute}'` : selected ? '—' : 'idle'}
           </span>
         </div>
 

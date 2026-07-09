@@ -1,10 +1,12 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
-import { groupStage, type MatchResult } from '@/config/match-dashboard.config';
+import { type MatchResult } from '@/config/match-dashboard.config';
+import { useDisplayMatch, useIsMatchLive, useIsReplay } from '@/store/match.store';
+import { deriveLiveGroups } from './derive-group-stage';
 import { cn } from '@/lib/utils';
 
 const GRID =
@@ -28,33 +30,58 @@ function Form({ form }: { form: MatchResult[] }) {
   );
 }
 
-/** World Cup group-stage standings with a group selector; the top two advance (cut line). */
+/** World Cup group-stage standings that fold in the selected match live; the top two advance (cut line). */
 export function GroupStageTable() {
-  const [active, setActive] = useState(groupStage[0].key);
-  const group = groupStage.find((g) => g.key === active) ?? groupStage[0];
+  const match = useDisplayMatch();
+  const isReplay = useIsReplay();
+  const isLive = useIsMatchLive();
+  const showLive = isReplay || isLive;
+
+  const { groups, liveKey } = useMemo(
+    () => deriveLiveGroups(match),
+    [match.home.code, match.away.code, match.score.home, match.score.away],
+  );
+
+  // Follow the selected match's group by default; a manual pick sticks until the match's group changes.
+  const [picked, setPicked] = useState<string | null>(null);
+  useEffect(() => setPicked(null), [liveKey]);
+  const activeKey = picked ?? liveKey;
+  const group = groups.find((g) => g.key === activeKey) ?? groups[0];
 
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-2 text-base font-bold">Group stage</span>
-          <span className="text-xs text-muted-foreground">Top two advance to the knockouts</span>
+          <span className="flex items-center gap-2 text-base font-bold">
+            Group stage
+            {showLive && group.key === liveKey ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-live/15 px-2 py-0.5 text-eyebrow font-bold text-live">
+                <span className="size-1.5 animate-pulse rounded-full bg-live" /> LIVE
+              </span>
+            ) : null}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {group.synthetic ? 'Live table for this match' : 'Top two advance to the knockouts'}
+          </span>
         </div>
         <div className="flex gap-1.5">
-          {groupStage.map((g) => (
+          {groups.map((g) => (
             <button
               key={g.key}
               type="button"
-              onClick={() => setActive(g.key)}
-              aria-pressed={g.key === active}
+              onClick={() => setPicked(g.key)}
+              aria-pressed={g.key === activeKey}
               className={cn(
-                'grid size-9 cursor-pointer place-items-center rounded-lg text-sm font-bold transition',
-                g.key === active
+                'relative grid size-9 cursor-pointer place-items-center rounded-lg text-sm font-bold transition',
+                g.key === activeKey
                   ? 'bg-neon text-primary-foreground'
                   : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10',
               )}
             >
               {g.key}
+              {g.key === liveKey && g.key !== activeKey ? (
+                <span className="absolute -right-0.5 -top-0.5 size-2 animate-pulse rounded-full bg-live ring-2 ring-background" />
+              ) : null}
             </button>
           ))}
         </div>
@@ -78,6 +105,7 @@ export function GroupStageTable() {
             {group.teams.map((team, i) => {
               const gd = team.gf - team.ga;
               const advances = i < 2;
+              const isLiveRow = team.live && showLive;
               return (
                 <Fragment key={team.code}>
                   {i === 2 ? <div className="my-1 border-t border-dashed border-neon/30" /> : null}
@@ -86,6 +114,7 @@ export function GroupStageTable() {
                       GRID,
                       'rounded-lg px-3 py-2.5 text-caption transition hover:bg-foreground/5',
                       advances && 'bg-neon/[0.06]',
+                      isLiveRow && 'bg-live/[0.08] ring-1 ring-inset ring-live/30',
                     )}
                   >
                     <span
@@ -99,6 +128,7 @@ export function GroupStageTable() {
                     <span className="flex min-w-0 items-center gap-2.5 font-semibold">
                       <Flag code={team.code} className="text-lg" />
                       <span className="truncate">{team.name}</span>
+                      {isLiveRow ? <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-live" /> : null}
                     </span>
                     <span className="text-center tabular-nums text-muted-foreground">{team.p}</span>
                     <span className="text-center tabular-nums">{team.w}</span>
@@ -107,7 +137,12 @@ export function GroupStageTable() {
                     <span className="text-center tabular-nums text-muted-foreground">{gd > 0 ? `+${gd}` : gd}</span>
                     <Form form={team.form} />
                     <span className="grid place-items-center">
-                      <span className="grid h-7 min-w-7 place-items-center rounded-md bg-neon/15 px-1.5 text-sm font-bold tabular-nums text-neon">
+                      <span
+                        className={cn(
+                          'grid h-7 min-w-7 place-items-center rounded-md px-1.5 text-sm font-bold tabular-nums',
+                          isLiveRow ? 'bg-live/15 text-live' : 'bg-neon/15 text-neon',
+                        )}
+                      >
                         {team.pts}
                       </span>
                     </span>

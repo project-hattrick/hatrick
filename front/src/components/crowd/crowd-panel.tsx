@@ -13,13 +13,16 @@ import { cn } from '@/lib/utils';
 
 const VIEWERS = 12_400;
 
-/** Right-rail live crowd chat — collapsible header + short scroll list + composer. */
+/**
+ * Right-rail live crowd chat. By default it fills the FULL HEIGHT of its rail (flex-1); the caret just
+ * toggles it between full and hidden (header only) — no in-between size.
+ */
 export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
   const messages = useCrowdMessages();
   const [open, setOpen] = useState(true);
 
   return (
-    <GlassPanel tone="surface" className="flex w-full flex-col overflow-hidden">
+    <GlassPanel tone="surface" className={cn('flex w-full flex-col overflow-hidden', open && 'min-h-0 flex-1')}>
       <SectionHeader
         title="Live Crowd"
         className="border-b border-border bg-surface-1/60"
@@ -42,7 +45,7 @@ export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
       />
       {open ? (
         <>
-          <div className="custom-scrollbar flex max-h-[220px] flex-1 flex-col-reverse gap-4 overflow-y-auto p-4">
+          <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden p-4">
             {[...messages].reverse().map((message) => (
               <CrowdMessage key={message.id} message={message} />
             ))}

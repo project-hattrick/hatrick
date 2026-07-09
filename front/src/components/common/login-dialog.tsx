@@ -39,8 +39,8 @@ enum LoginStep {
 
 const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
   [LoginStep.Connect]: {
-    title: 'Connect your wallet',
-    description: 'Sign in without a password and own your cards on-chain.',
+    title: 'How do you want to play?',
+    description: 'Connect a wallet to compete, or jump in casually to open packs and follow stats.',
   },
   [LoginStep.Sign]: {
     title: 'Confirm it’s you',

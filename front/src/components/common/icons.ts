@@ -22,6 +22,7 @@ export {
   Broadcast,
   CalendarDots,
   Camera,
+  Cards,
   ChartBar,
   CaretDown,
   CaretLeft,

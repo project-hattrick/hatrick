@@ -9,6 +9,9 @@ interface MatchStore {
   events: MatchEventPayload[];
   /** True while a picked past match is playing back (front-driven, seekable) rather than live. */
   isReplay: boolean;
+  /** True from picking a match until its first event lands — the backend replay buffers (~20-30s). */
+  switching: boolean;
+  setSwitching: (switching: boolean) => void;
   setMatch: (match: LiveMatch) => void;
   /** Switch to a freshly-picked match: set it and drop any prior events (clean slate for a new feed/replay). */
   startMatch: (match: LiveMatch) => void;
@@ -55,9 +58,11 @@ export const useMatchStore = create<MatchStore>((set) => ({
   match: null,
   events: [],
   isReplay: false,
+  switching: false,
+  setSwitching: (switching) => set({ switching }),
   setMatch: (match) => set({ match, isReplay: false }),
-  startMatch: (match) => set({ match, events: [], isReplay: false }),
-  beginReplay: (match) => set({ match, events: [], isReplay: true }),
+  startMatch: (match) => set({ match, events: [], isReplay: false, switching: false }),
+  beginReplay: (match) => set({ match, events: [], isReplay: true, switching: true }),
   setReplayFrame: (fixtureId, score, minute, events) =>
     set((state) =>
       state.match && state.match.fixtureId === fixtureId
@@ -80,7 +85,8 @@ export const useMatchStore = create<MatchStore>((set) => ({
       // Minute is monotonic within a match (during/after or out-of-order frames never rewind the clock);
       // a freshly picked match resets it via startMatch/beginReplay.
       const minute = Math.max(state.match.minute, event.minute ?? state.match.minute);
-      return { events, match: { ...state.match, score: resolveScore(events, state.match.score), minute } };
+      // The first real event means the replay is streaming — clear the "switching/buffering" state.
+      return { events, switching: false, match: { ...state.match, score: resolveScore(events, state.match.score), minute } };
     }),
 }));
 
@@ -93,6 +99,9 @@ export const useIsMatchLive = () =>
 
 /** True while a picked past match is playing back. */
 export const useIsReplay = () => useMatchStore((state) => state.isReplay);
+
+/** True while a freshly-picked match is still buffering (no events yet) — drives the "switching" overlay. */
+export const useIsSwitching = () => useMatchStore((state) => state.switching);
 
 /** The match to render — the live one when present, otherwise the finished recap fallback. */
 export const useDisplayMatch = () => useMatchStore((state) => state.match ?? recapMatch);
