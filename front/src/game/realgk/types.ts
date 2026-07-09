@@ -1,5 +1,5 @@
 import type { RealGkConfig } from './config';
-import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
+import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, DrivenPhase, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
 import type { DrivenClock } from './sim/driven-clock';
 
 export interface Vec2 {
@@ -323,6 +323,11 @@ export interface RealGkHud {
   restartTeam: string;
   /** Name of the player shown the red card ('' when none / not a foul card). */
   redCardName: string;
+  /** Match-structure beats (`features.matchStructure`): interval break + final-whistle result overlay. */
+  halfTimeActive: boolean;
+  fullTimeActive: boolean;
+  /** Winning team at full time ('blue' | 'red' | '' for a draw / not full time). */
+  winnerTeam: string;
   /** v5 team brands for the intro card (name + flag id per side; empty → generic). */
   teamBlueName: string;
   teamRedName: string;
@@ -377,6 +382,9 @@ export interface RealGkHandle {
   setScore: (blue: number, red: number) => void;
   /** Authoritative match minute from the feed — the driven clock sweeps toward it. */
   setClock: (minute: number) => void;
+  /** Match structure from the feed: half-time break, final whistle, (second-half) kickoff resume.
+   *  No-op unless the variant sets `features.matchStructure`. */
+  setPhase: (phase: DrivenPhase) => void;
   resize: () => void;
   destroy: () => void;
 }

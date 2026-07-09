@@ -4,7 +4,8 @@ import { PlayerFocusCard } from '@/components/live/player-focus-card';
 import { PredictionPrompt } from '@/components/live/prediction-prompt';
 import { HeroChrome } from '@/components/live/hero-chrome';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
-import { userCards } from '@/config/fantasy-cards.config';
+import { DUEL_ARENA_CONFIG, OPPONENT_DECK } from '@/config/duel-match.config';
+import type { RealGkHandle } from '@/game/realgk/types';
 import { useSelfDeck } from '@/hooks/use-self-deck';
 import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
@@ -12,18 +13,16 @@ import { DuelScoreboard } from './duel-scoreboard';
 import { DuelDeckRail } from './duel-deck-rail';
 import { DuelLayoutToggle } from './duel-layout-toggle';
 
-const OPPONENT_DECK = [...userCards].reverse();
-
 /** Immersive duel: full-bleed real-match engine with personalized glass widgets pinned to the screen edges. */
-export function DuelImmersive() {
+export function DuelImmersive({ onEngineReady }: { onEngineReady?: (handle: RealGkHandle | null) => void }) {
   const opponent = useDuelStore((s) => s.opponent);
   const selfDeck = useSelfDeck();
   const { displayName } = useSelfIdentity();
 
   return (
     <div className="relative mx-auto h-[100svh] min-h-[520px] w-full overflow-hidden">
-      {/* Real Match GK engine (hero parity) — auto-plays, bridges its HUD so the scoreboard reads the live score. */}
-      <RealGkBackground bridgeHud />
+      {/* Real Match GK engine (duel variant: match structure + driven filler) — the duel director drives it. */}
+      <RealGkBackground bridgeHud config={DUEL_ARENA_CONFIG} onReady={onEngineReady} />
       <HeroChrome>
         {/* Scoreboard — top-centre (avatars, not flags), just clear of the notch. */}
         <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-1/2 z-10 -translate-x-1/2 md:top-6">

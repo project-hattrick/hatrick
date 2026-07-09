@@ -38,6 +38,11 @@ export const Status = {
     text: 'The move ended in the net. Restart at center.',
   }),
   restart: (): Note => ({ title: 'Restart', text: 'Everything is set for the ball to roll again.' }),
+  halfTime: (): Note => ({ title: 'Half-time', text: 'The referee whistles the break — players head to the touchline.' }),
+  fullTime: (winner: Team | null): Note => ({
+    title: 'Full time',
+    text: winner ? `${winner === Team.Blue ? 'Blue' : 'Red'} takes the match. The final whistle goes.` : 'It ends level. The final whistle goes.',
+  }),
   replay: (): Note => ({ title: 'Instant replay', text: 'Watching the goal again in slow motion.' }),
   refereeCalled: (): Note => ({ title: 'Referee called', text: 'The referee left the patrol, turned and ran to the center.' }),
   redCard: (): Note => ({ title: 'Red card', text: 'The referee stopped and raised the card.' }),

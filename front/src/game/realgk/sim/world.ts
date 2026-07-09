@@ -1,6 +1,6 @@
 import { TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
-import { IntroStage, MatchPhase, RefMode, RefPhase, Role, ShotEffectStyle, Team } from '../enums';
+import { DrivenPhase, IntroStage, MatchPhase, RefMode, RefPhase, Role, ShotEffectStyle, Team } from '../enums';
 import { clearBallEffects, updateBallEffects } from '../effects';
 import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
@@ -12,6 +12,7 @@ import { freshCoach, resetCoach, updateCoach } from './coach';
 import { maybeTriggerFoul } from './foul';
 import { updateIntro } from './intro';
 import { BallText, Status } from './messages';
+import { enterFullTime, enterHalfTime, updateFullTime, updateHalfTime } from './phase';
 import { faceBall, placePlayersOffPitch, resetPlayers, updatePlayers } from './players';
 import { resetReferee, updateReferee } from './referee';
 import { updateRestart } from './restart';
@@ -215,6 +216,36 @@ export function kickoffReset(world: RealGkWorld): void {
   setStatus(world, note.title, note.text);
 }
 
+/**
+ * Match-structure signal from a feed/director (`handle.setPhase`). Gated on `features.matchStructure`
+ * and idempotent per phase, so double confirms (during+after) and legacy checkpoints are both safe.
+ * Kickoff doubles as the second-half resume from the break.
+ */
+export function setPhaseDriven(world: RealGkWorld, phase: DrivenPhase): void {
+  if (!world.cfg.features?.matchStructure) return;
+  const current = world.match.phase;
+  if (phase === DrivenPhase.HalfTime) {
+    if (current !== MatchPhase.HalfTime && current !== MatchPhase.FullTime) enterHalfTime(world);
+  } else if (phase === DrivenPhase.FullTime) {
+    if (current !== MatchPhase.FullTime) enterFullTime(world);
+  } else if (phase === DrivenPhase.Kickoff) {
+    resumeFromBreak(world);
+  }
+}
+
+/** Second-half kickoff: leaves the break for a fresh center restart. No-op unless at half-time. */
+export function resumeFromBreak(world: RealGkWorld): void {
+  if (world.match.phase !== MatchPhase.HalfTime) return;
+  world.match.phase = MatchPhase.Live;
+  world.match.phaseTimer = 0;
+  clearCelebrations(world);
+  resetPlayers(world);
+  resetBall(world, world.match.kickoffTeam);
+  resetReferee(world);
+  const note = Status.kickoff();
+  setStatus(world, note.title, note.text);
+}
+
 /** Advances the whole simulation by `dt` seconds (already scaled by speed). */
 export function step(world: RealGkWorld, dt: number): void {
   const { match } = world;
@@ -222,6 +253,15 @@ export function step(world: RealGkWorld, dt: number): void {
   // v5 pre-match entrance owns the tick until it kicks off.
   if (match.phase === MatchPhase.Intro) {
     updateIntro(world, dt);
+    return;
+  }
+  // Match-structure breaks (`features.matchStructure`): the phase module owns the tick.
+  if (match.phase === MatchPhase.HalfTime) {
+    updateHalfTime(world, dt);
+    return;
+  }
+  if (match.phase === MatchPhase.FullTime) {
+    updateFullTime(world, dt);
     return;
   }
   // v5 dead-ball restart: the ball rolls out, a taker sets up and puts it back in play.

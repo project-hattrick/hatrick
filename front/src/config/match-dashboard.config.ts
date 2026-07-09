@@ -48,6 +48,41 @@ export const heroMatch: HeroMatch = {
   countdown: { days: 3, hours: 12, minutes: 43, seconds: 14 },
 };
 
+/** Default figure placement per card side — used for portraits without a tuned override. */
+export const DEFAULT_FIGURE_PLACEMENT: Record<'home' | 'away', HeroFigurePlacement> = {
+  home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 5 },
+  away: { width: 170, x: -4, y: 6, scale: 1, flip: true, objectY: 5 },
+};
+
+/** Pixel-art portrait + optional per-side hand-tuned placements (tune in /sandbox/hero-figures). */
+export interface HeroPortrait {
+  src: string;
+  home?: HeroFigurePlacement;
+  away?: HeroFigurePlacement;
+}
+
+/** Hero portraits by FIFA code. Sides without a tuned placement use DEFAULT_FIGURE_PLACEMENT. */
+export const HERO_PORTRAITS: Record<string, HeroPortrait> = {
+  ARG: { src: '/cards/hero-arg.png', home: heroMatch.home.placement },
+  BRA: { src: '/cards/hero-bra.png', away: heroMatch.away.placement },
+  ENG: { src: '/cards/hero-eng.png' },
+  NOR: { src: '/cards/hero-nor.png' },
+  BEL: { src: '/cards/hero-bel.png' },
+  ESP: { src: '/cards/hero-esp.png' },
+  FRA: { src: '/cards/hero-fra.png' },
+  MAR: { src: '/cards/hero-mar.png' },
+  SUI: { src: '/cards/hero-sui.png' },
+};
+
+/** Hero figure (portrait + placement) for a fixture team — heroMatch default when no art exists. */
+export function heroTeamFor(name: string, fifaCode: string, side: 'home' | 'away'): HeroTeam {
+  const code = fifaCode.toUpperCase();
+  const entry = HERO_PORTRAITS[code];
+  if (!entry) return heroMatch[side];
+  const placement = entry[side] ?? DEFAULT_FIGURE_PLACEMENT[side];
+  return { name, short: code, code, portraitSrc: entry.src, placement };
+}
+
 export interface StatLine {
   label: string;
   home: number;

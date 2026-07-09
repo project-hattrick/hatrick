@@ -1,5 +1,13 @@
 import { EmissionState } from '@/enums/emission-state.enum';
+import { DrivenPhase } from '@/game/realgk/enums';
 import type { MatchEventPayload } from '@/types/match';
+
+/** Wire `Action` strings that carry match structure (see KNOWN_ACTIONS on the api normalizer). */
+enum WireAction {
+  Kickoff = 'kickoff',
+  HalfTime = 'halftime_finalised',
+  FullTime = 'game_finalised',
+}
 
 /**
  * Engine-agnostic mapping from a live match event onto a game engine's "director" API. Shared by every
@@ -17,6 +25,8 @@ export interface MatchDirector<T> {
   injectCard: (team: T) => void;
   /** Authoritative match minute (optional — only the realgk engine implements a driven clock). */
   setClock?: (minute: number) => void;
+  /** Match structure (kickoff / half-time / full-time) — optional; engines opt in per variant. */
+  setPhase?: (phase: DrivenPhase) => void;
 }
 
 /** possessionType → threat (0..1). */
@@ -41,9 +51,14 @@ export function driveMatchEvent<T>(
 ): void {
   if (p.score) director.setScore(p.score.home ?? 0, p.score.away ?? 0);
   if (typeof p.minute === 'number') director.setClock?.(p.minute);
+  const raw = (p.rawAction ?? '').toLowerCase();
+  // Match structure first — these are neutral (no participant) and must not fall through the team gate.
+  // The engine transitions are idempotent, so during+after copies of the same whistle are safe.
+  if (raw === WireAction.HalfTime) return void director.setPhase?.(DrivenPhase.HalfTime);
+  if (raw === WireAction.FullTime) return void director.setPhase?.(DrivenPhase.FullTime);
+  if (raw === WireAction.Kickoff) director.setPhase?.(DrivenPhase.Kickoff); // also resumes the second half
   const team = teamOf(p.participant);
   if (team == null) return;
-  const raw = (p.rawAction ?? '').toLowerCase();
   if (raw === 'goal') return void (p.state === EmissionState.After && director.injectGoal(team));
   if (raw === 'shot') return void (p.state === EmissionState.During && director.injectShot(team));
   if (raw === 'corner') return void (p.state === EmissionState.During && director.injectCorner(team));

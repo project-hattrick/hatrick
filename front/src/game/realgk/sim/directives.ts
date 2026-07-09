@@ -36,7 +36,9 @@ function applyDirective(world: RealGkWorld, d: PendingDirective): void {
   }
 }
 
-/** Runs a feed directive now, or queues it while the intro owns the pitch. */
+/** Runs a feed directive now, or queues it while the intro owns the pitch.
+ *  (Half/full-time gating happens in the engine's handle wrappers — see `direct` in engine.ts —
+ *  to keep this module free of a sim→world import cycle.) */
 export function directDriven(world: RealGkWorld, kind: DrivenDirective, team: Team, threat = 0): void {
   if (world.match.phase !== MatchPhase.Intro) {
     applyDirective(world, { kind, team, threat });

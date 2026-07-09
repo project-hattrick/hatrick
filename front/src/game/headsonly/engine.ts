@@ -10,6 +10,8 @@ import {
   triggerSlowMo,
   updateEffects,
 } from './effects';
+import { applyHeadsPhase, freshHeadsPhase, resetHeadsPhase, updateHeadsBreak } from './phase';
+import type { DrivenPhase } from '../realgk/enums';
 import { pitchRect, renderScene } from './render';
 import {
   FORMATION,
@@ -51,6 +53,8 @@ export interface HeadsOnlyHandle {
   injectCard: (team: Team) => void;
   /** Authoritative scoreboard (Blue = home / participant 1, Red = away / participant 2). */
   setScore: (blue: number, red: number) => void;
+  /** Match structure from the feed (half-time walk-off, full-time freeze, kickoff resume). */
+  setPhase: (phase: DrivenPhase) => void;
 }
 
 const KEY_MAP: Record<string, keyof InputState | undefined> = {
@@ -151,6 +155,7 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     intent: { attackingTeam: null, threat: 0 },
     driven: false,
   };
+  const phaseState = freshHeadsPhase();
   let paused = false;
   let raf = 0;
   let lastT = performance.now();
@@ -445,6 +450,10 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
 
   const update = (dt: number): void => {
     const sdt = dt * slowMoScale(state.effects);
+    if (updateHeadsBreak(phaseState, state, sdt)) {
+      updateFx(dt); // toasts keep decaying while the break owns the pitch
+      return;
+    }
     state.time += sdt;
     state.clock += sdt * TUNING.clockScale;
     state.shake = Math.max(0, state.shake - dt * 2.2);
@@ -596,6 +605,7 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
     },
     setDriven: (on: boolean) => {
       state.driven = on;
+      resetHeadsPhase(phaseState);
       if (on) {
         state.controlledId = null;
         state.intent = { attackingTeam: null, threat: 0 };
@@ -643,5 +653,6 @@ export function createHeadsOnlyEngine(canvas: HTMLCanvasElement): HeadsOnlyHandl
       state.scoreBlue = blue;
       state.scoreRed = red;
     },
+    setPhase: (phase: DrivenPhase) => applyHeadsPhase(phaseState, state, phase),
   };
 }

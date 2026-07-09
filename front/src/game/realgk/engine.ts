@@ -19,7 +19,7 @@ import { startPowerShot } from './sim/shot';
 import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
 import { freshDrivenClock, setClockDriven } from './sim/driven-clock';
-import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, step } from './sim/world';
+import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, resumeFromBreak, setPhaseDriven, step } from './sim/world';
 import { directDriven } from './sim/directives';
 import { setScoreDriven } from './sim/driver';
 import { armFiller } from './sim/filler';
@@ -164,6 +164,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     restartLabel: 'x',
     restartTeam: 'x',
     redCardName: 'x',
+    halfTimeActive: true,
+    fullTimeActive: true,
+    winnerTeam: 'x',
   };
 
   const syncHud = (): void => {
@@ -173,8 +176,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (match.red !== last.scoreRed) patch.scoreRed = last.scoreRed = match.red;
     const cs = clockStr(match.time);
     if (cs !== last.clock) patch.clock = last.clock = cs;
+    const halfTimeActive = match.phase === MatchPhase.HalfTime;
+    const fullTimeActive = match.phase === MatchPhase.FullTime;
+    if (halfTimeActive !== last.halfTimeActive) patch.halfTimeActive = last.halfTimeActive = halfTimeActive;
+    if (fullTimeActive !== last.fullTimeActive) patch.fullTimeActive = last.fullTimeActive = fullTimeActive;
+    const winnerTeam = fullTimeActive ? (match.blue > match.red ? Team.Blue : match.red > match.blue ? Team.Red : '') : '';
+    if (winnerTeam !== last.winnerTeam) patch.winnerTeam = last.winnerTeam = winnerTeam;
     // Driven clock is real match seconds; the attract clock has always fed phaseFor raw (legacy quirk).
-    const ph = phaseFor(world.driven ? match.time / 60 : match.time);
+    const ph = fullTimeActive ? 'Full time' : halfTimeActive ? 'Half-time' : phaseFor(world.driven ? match.time / 60 : match.time);
     if (ph !== last.phase) patch.phase = last.phase = ph;
     if (match.statusTitle !== last.statusTitle) patch.statusTitle = last.statusTitle = match.statusTitle;
     if (match.statusText !== last.statusText) patch.statusText = last.statusText = match.statusText;
@@ -237,7 +246,12 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       const rawDt = Math.min(MAX_DT, (now - lastT) / 1000);
       lastT = now;
       const phase = world.match.phase;
-      const simRunning = phase === MatchPhase.Intro || phase === MatchPhase.Live || phase === MatchPhase.Celebration;
+      const simRunning =
+        phase === MatchPhase.Intro ||
+        phase === MatchPhase.Live ||
+        phase === MatchPhase.Celebration ||
+        phase === MatchPhase.HalfTime ||
+        phase === MatchPhase.FullTime;
       const timeScale = shotSlowMoScale(world);
       // Red card / any state that halts the sim also halts the sprite animation clock.
       const cardFrozen = world.referee.active && world.referee.phase === RefPhase.Card;
@@ -257,7 +271,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       // Live camera follows play; the intro has its own choreography; the replay flow owns the camera (snap + track).
       if (!replayScene) {
         if (phase === MatchPhase.Intro) updateIntroCamera(cam, world);
-        else if (phase === MatchPhase.Live || phase === MatchPhase.Celebration) updateCamera(cam, world, rawDt);
+        else if (phase !== MatchPhase.ReplayIn && phase !== MatchPhase.Replay && phase !== MatchPhase.ReplayOut)
+          updateCamera(cam, world, rawDt); // Live / Celebration / HalfTime / FullTime all use the follow camera
       }
       render(ctx, replayScene?.world ?? world, assets, cam, replayScene?.now ?? animClock, flat);
       if (director) {
@@ -279,6 +294,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       console.error('[realgk] frame error (recovered)', err);
     }
     raf = requestAnimationFrame(frame);
+  };
+
+  // Feed directive gate: nothing restarts play after the final whistle, and any on-pitch directive
+  // during the break implies the second half is underway (feeds don't always re-send kickoff).
+  const direct = (kind: DrivenDirective, team: Team, threat = 0): void => {
+    if (world.match.phase === MatchPhase.FullTime) return;
+    if (world.match.phase === MatchPhase.HalfTime) resumeFromBreak(world);
+    directDriven(world, kind, team, threat);
   };
 
   resize();
@@ -458,13 +481,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         world.match.introHold = false; // a held intro completes into the attract match
       }
     },
-    setPossession: (team, threat) => directDriven(world, DrivenDirective.Possession, team, threat),
-    injectShot: (team) => directDriven(world, DrivenDirective.Shot, team),
-    injectGoal: (team) => directDriven(world, DrivenDirective.Goal, team),
-    injectCorner: (team) => directDriven(world, DrivenDirective.Corner, team),
-    injectCard: (team) => directDriven(world, DrivenDirective.Card, team),
+    setPossession: (team, threat) => direct(DrivenDirective.Possession, team, threat),
+    injectShot: (team) => direct(DrivenDirective.Shot, team),
+    injectGoal: (team) => direct(DrivenDirective.Goal, team),
+    injectCorner: (team) => direct(DrivenDirective.Corner, team),
+    injectCard: (team) => direct(DrivenDirective.Card, team),
     setScore: (blue, red) => setScoreDriven(world, blue, red),
     setClock: (minute) => setClockDriven(world, minute, performance.now()),
+    setPhase: (phase) => setPhaseDriven(world, phase),
     resize,
     destroy: () => {
       cancelAnimationFrame(raf);

@@ -125,6 +125,21 @@ export enum MatchPhase {
   ReplayIn = 'replay_in',
   Replay = 'replay',
   ReplayOut = 'replay_out',
+  /** Interval break: players walk off to the touchline and idle (`features.matchStructure` only). */
+  HalfTime = 'half_time',
+  /** Final whistle: winner celebrates, then the sim freezes under the result overlay (`matchStructure` only). */
+  FullTime = 'full_time',
+}
+
+/**
+ * External match-structure signal a feed/director can push via `handle.setPhase` (`features.matchStructure`
+ * only — a no-op elsewhere so legacy checkpoints stay byte-identical). Kickoff doubles as the second-half
+ * resume from HalfTime. Owned by the engine; the feed layer imports it from here.
+ */
+export enum DrivenPhase {
+  Kickoff = 'kickoff',
+  HalfTime = 'half_time',
+  FullTime = 'full_time',
 }
 
 /** Stages of the v5 match intro (drives the sim state machine + the overlay copy). */

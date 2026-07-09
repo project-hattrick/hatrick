@@ -4,9 +4,9 @@ import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import type { PlayerProfile } from '@/config/duelists.config';
 import { rankTierConfig } from '@/config/matchmaking.config';
+import { DuelPhase } from '@/enums/duel-phase.enum';
 import { useSelfProfile } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
-import { useRealGkStore } from '@/store/real-gk.store';
 
 /** One player identity column: avatar + name + tier badge. Mirrored when reversed. */
 function DuelistColumn({ player, reversed }: { player: PlayerProfile; reversed?: boolean }) {
@@ -34,27 +34,38 @@ function DuelistColumn({ player, reversed }: { player: PlayerProfile; reversed?:
   );
 }
 
+/** Clock chip copy per duel phase (minute while a half runs). */
+const clockLabel = (phase: DuelPhase, simMinute: number): string =>
+  phase === DuelPhase.HalfTime ? 'HT' : phase === DuelPhase.FullTime ? 'FT' : `${simMinute}'`;
+
 /**
  * Personalized 1v1 scoreline — profile avatars flank the live score (self left, opponent right).
- * Score is mirrored from the engine (self = Blue, opponent = Red), same source page.tsx reads.
+ * Score + simulated 90' clock come from the duel store (the chance-battle director is authoritative).
  */
 export function DuelScoreboard() {
   const self = useSelfProfile();
   const opponent = useDuelStore((s) => s.opponent);
-  const scoreBlue = useRealGkStore((s) => s.scoreBlue);
-  const scoreRed = useRealGkStore((s) => s.scoreRed);
+  const selfScore = useDuelStore((s) => s.selfScore);
+  const opponentScore = useDuelStore((s) => s.opponentScore);
+  const simMinute = useDuelStore((s) => s.simMinute);
+  const phase = useDuelStore((s) => s.phase);
 
   if (!opponent) return null;
 
   return (
-    <div className="flex items-center gap-3 sm:gap-5">
-      <DuelistColumn player={self} />
-      <div className="flex items-center gap-2 text-[34px] font-bold leading-none [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:gap-2.5 sm:text-[48px]">
-        <span>{scoreBlue}</span>
-        <span className="text-2xl text-muted-foreground sm:text-[30px]">–</span>
-        <span>{scoreRed}</span>
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center gap-3 sm:gap-5">
+        <DuelistColumn player={self} />
+        <div className="flex items-center gap-2 text-[34px] font-bold leading-none [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:gap-2.5 sm:text-[48px]">
+          <span>{selfScore}</span>
+          <span className="text-2xl text-muted-foreground sm:text-[30px]">–</span>
+          <span>{opponentScore}</span>
+        </div>
+        <DuelistColumn player={opponent} reversed />
       </div>
-      <DuelistColumn player={opponent} reversed />
+      <span className="rounded-full bg-black/55 px-2.5 py-0.5 font-mono text-xs font-bold tabular-nums text-white/85 backdrop-blur-sm">
+        {clockLabel(phase, simMinute)}
+      </span>
     </div>
   );
 }

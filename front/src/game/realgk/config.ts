@@ -57,6 +57,9 @@ export interface RealGkFeatures {
   /** Feed-driven filler: between real feed events, allow harmless autonomous action (saved/missed shots,
    *  slide tackles, intercepts) so a 90' watch stays alive. Goals/score remain feed-only. */
   drivenFiller?: boolean;
+  /** Match structure beats via `handle.setPhase`: half-time walk-off + banner, full-time whistle with the
+   *  winner celebrating, then a frozen sim under the final-score overlay. Off → setPhase is a no-op. */
+  matchStructure?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -291,7 +294,7 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   // Keeper stays on the compact pack end-to-end (idle/walk/dive share the compact outfit) — no keeperDiveSave.
   // deadBallSequence: staged restarts (ball rolls out, taker walks over) — also what keeps the DRIVEN
   // ball from ever snapping on out-of-play; drivenFiller keeps the 90' watch alive between feed events.
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false, deadBallSequence: true, drivenFiller: true },
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false, deadBallSequence: true, drivenFiller: true, matchStructure: true },
   // Mock matchup so scoreboards/goal overlay show real names + flags instead of generic Blue/Red.
   teams: {
     blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },

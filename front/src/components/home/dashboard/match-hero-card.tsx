@@ -11,7 +11,7 @@ import { teamInfoFromName } from '@/config/teams.config';
 import { TeamSide } from '@/enums/team-side.enum';
 import { useUpcomingFixtures } from '@/services/queries/use-replay';
 import type { FixtureDto } from '@/services/txline.service';
-import { heroMatch, type DashTeam, type HeroFigurePlacement } from '@/config/match-dashboard.config';
+import { heroMatch, heroTeamFor, type DashTeam, type HeroFigurePlacement } from '@/config/match-dashboard.config';
 import { teamColor } from '@/config/team-colors.config';
 
 const { days, hours, minutes, seconds } = heroMatch.countdown;
@@ -202,26 +202,25 @@ const kickoffLabel = (ms: number) =>
 
 /** Featured "next match" hero — the upcoming fixture from the API, with a live kickoff countdown. */
 export function MatchHeroCard({ placements }: { placements?: { home: HeroFigurePlacement; away: HeroFigurePlacement } }) {
-  const homeP = placements?.home ?? heroMatch.home.placement;
-  const awayP = placements?.away ?? heroMatch.away.placement;
-
   const { data: fixtures } = useUpcomingFixtures();
   const next = nextFixture(fixtures);
 
   // Real identity + flag (SVG) for the upcoming fixture; undefined falls back to the config default.
-  const home = next
-    ? { name: next.Participant1, code: fifaToIso(teamInfoFromName(next.Participant1, TeamSide.Home).code) }
-    : undefined;
-  const away = next
-    ? { name: next.Participant2, code: fifaToIso(teamInfoFromName(next.Participant2, TeamSide.Away).code) }
-    : undefined;
+  const homeFifa = next ? teamInfoFromName(next.Participant1, TeamSide.Home).code : undefined;
+  const awayFifa = next ? teamInfoFromName(next.Participant2, TeamSide.Away).code : undefined;
+  const home = next && homeFifa ? { name: next.Participant1, code: fifaToIso(homeFifa) } : undefined;
+  const away = next && awayFifa ? { name: next.Participant2, code: fifaToIso(awayFifa) } : undefined;
   const targetMs = next ? toMs(next.StartTime) : undefined;
   const label = next ? kickoffLabel(toMs(next.StartTime)) : undefined;
 
+  // Figures follow the fixture teams; teams without portrait art keep the default figures.
+  const homeFigure = next && homeFifa ? heroTeamFor(next.Participant1, homeFifa, 'home') : heroMatch.home;
+  const awayFigure = next && awayFifa ? heroTeamFor(next.Participant2, awayFifa, 'away') : heroMatch.away;
+
   return (
     <HeroCardShell home={home} away={away} label={label} targetMs={targetMs}>
-      <HeroFigure team={heroMatch.home} side="home" placement={homeP} />
-      <HeroFigure team={heroMatch.away} side="away" placement={awayP} />
+      <HeroFigure team={homeFigure} side="home" placement={placements?.home ?? homeFigure.placement} />
+      <HeroFigure team={awayFigure} side="away" placement={placements?.away ?? awayFigure.placement} />
     </HeroCardShell>
   );
 }

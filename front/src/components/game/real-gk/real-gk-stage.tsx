@@ -6,8 +6,10 @@ import { realGkConfigFor, type RealGkConfig } from '@/game/realgk/config';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { CheckpointId } from '@/game/checkpoints/registry';
 import { useRealGkStore } from '@/store/real-gk.store';
+import { DrivenPhase } from '@/game/realgk/enums';
 import { GoalBurst } from '../goal-burst';
 import { CrtOverlay } from './crt-overlay';
+import { FullTimeOverlay } from './full-time-overlay';
 import { MatchIntroOverlay } from './match-intro-overlay';
 import { RealGkControls } from './real-gk-controls';
 import { RealGkHud } from './real-gk-hud';
@@ -44,6 +46,9 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
   const scoreBlue = useRealGkStore((s) => s.scoreBlue);
   const scoreRed = useRealGkStore((s) => s.scoreRed);
   const clock = useRealGkStore((s) => s.clock);
+  const halfTimeActive = useRealGkStore((s) => s.halfTimeActive);
+  const fullTimeActive = useRealGkStore((s) => s.fullTimeActive);
+  const winnerTeam = useRealGkStore((s) => s.winnerTeam);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -94,6 +99,12 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         handle.debugFoul('penalty');
       } else if (k === '5') {
         handle.debugFoul('red');
+      } else if (k === '6') {
+        handle.setPhase(DrivenPhase.HalfTime); // no-op unless features.matchStructure
+      } else if (k === '7') {
+        handle.setPhase(DrivenPhase.FullTime);
+      } else if (k === '8') {
+        handle.setPhase(DrivenPhase.Kickoff); // second-half resume
       }
     };
     window.addEventListener('keydown', onKey);
@@ -134,6 +145,15 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         redName={teamRedName}
         blueFlag={teamBlueFlag}
         redFlag={teamRedFlag}
+      />
+      <RestartBanner active={halfTimeActive} label="HALF-TIME" team="" teamName="" />
+      <FullTimeOverlay
+        active={fullTimeActive}
+        blueName={teamBlueName}
+        redName={teamRedName}
+        scoreBlue={scoreBlue}
+        scoreRed={scoreRed}
+        winnerTeam={winnerTeam}
       />
       {!replayActive && !introActive && <RealGkHud />}
       {checkpoint === CheckpointId.EffectsLab && (

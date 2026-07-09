@@ -19,6 +19,8 @@ export interface MatchFeed {
   oddsCount: number;
   lastOdds: OddsEventPayload | null;
   matchEnd: MatchEndPayload | null;
+  /** True between the wire's `halftime_finalised` and the second-half resume. */
+  halfTime: boolean;
   reset: () => void;
 }
 
@@ -35,6 +37,7 @@ export function useMatchFeed(fixtureId: number | null): MatchFeed {
   const [oddsCount, setOddsCount] = useState(0);
   const [lastOdds, setLastOdds] = useState<OddsEventPayload | null>(null);
   const [matchEnd, setMatchEnd] = useState<MatchEndPayload | null>(null);
+  const [halfTime, setHalfTime] = useState(false);
 
   // Read the current fixture inside stable listeners without re-subscribing.
   const fixtureRef = useRef<number | null>(fixtureId);
@@ -47,6 +50,7 @@ export function useMatchFeed(fixtureId: number | null): MatchFeed {
     setOddsCount(0);
     setLastOdds(null);
     setMatchEnd(null);
+    setHalfTime(false);
   }, []);
 
   useEffect(() => {
@@ -61,6 +65,10 @@ export function useMatchFeed(fixtureId: number | null): MatchFeed {
       setEvents((prev) => [p, ...prev].slice(0, MAX_EVENTS));
       if (typeof p.minute === 'number') setMinute(p.minute);
       if (p.score) setScore((s) => ({ home: p.score?.home ?? s.home, away: p.score?.away ?? s.away }));
+      // Interval window: opened by the halftime whistle, closed by kickoff / any second-half event.
+      const raw = (p.rawAction ?? '').toLowerCase();
+      if (raw === 'halftime_finalised') setHalfTime(true);
+      else if (raw === 'kickoff' || (typeof p.minute === 'number' && p.minute > 45)) setHalfTime(false);
     };
     const onOdds = (p: OddsEventPayload) => {
       if (!mine(p.fixtureId)) return;
@@ -88,5 +96,5 @@ export function useMatchFeed(fixtureId: number | null): MatchFeed {
     };
   }, []);
 
-  return { connected, events, score, minute, oddsCount, lastOdds, matchEnd, reset };
+  return { connected, events, score, minute, oddsCount, lastOdds, matchEnd, halfTime, reset };
 }

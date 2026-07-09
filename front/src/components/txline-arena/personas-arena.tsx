@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Broadcast, CircleNotch, List } from '@/components/common/icons';
 import { GoalBurst } from '@/components/game/goal-burst';
+import { FullTimeOverlay } from '@/components/game/real-gk/full-time-overlay';
 import { RedCardOverlay } from '@/components/game/real-gk/red-card-overlay';
 import { RestartBanner } from '@/components/game/real-gk/restart-banner';
 import { createRealGkEngine } from '@/game/realgk/engine';
@@ -57,6 +58,9 @@ export function PersonasArena() {
   const scoreBlue = useRealGkStore((s) => s.scoreBlue);
   const scoreRed = useRealGkStore((s) => s.scoreRed);
   const clock = useRealGkStore((s) => s.clock);
+  const halfTimeActive = useRealGkStore((s) => s.halfTimeActive);
+  const fullTimeActive = useRealGkStore((s) => s.fullTimeActive);
+  const winnerTeam = useRealGkStore((s) => s.winnerTeam);
 
   // Mount the persona-match engine once (attract mode until a match is picked).
   useEffect(() => {
@@ -118,6 +122,15 @@ export function PersonasArena() {
         label={restartLabel}
         team={restartTeam}
         teamName={restartTeam === 'blue' ? teamBlueName : restartTeam === 'red' ? teamRedName : ''}
+      />
+      <RestartBanner active={halfTimeActive} label="HALF-TIME" team="" teamName="" />
+      <FullTimeOverlay
+        active={fullTimeActive}
+        blueName={selected?.home ?? teamBlueName}
+        redName={selected?.away ?? teamRedName}
+        scoreBlue={feed.score.home}
+        scoreRed={feed.score.away}
+        winnerTeam={winnerTeam || (feed.score.home > feed.score.away ? 'blue' : feed.score.away > feed.score.home ? 'red' : '')}
       />
 
       {/* ---- Top HUD (feed-authoritative score) ---- */}

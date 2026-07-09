@@ -12,6 +12,7 @@ const NOW = 1_782_000_000;
  */
 export const MOCK_FIXTURES: FixtureDto[] = [
   { FixtureId: MOCK_FIXTURE_ID, Participant1: 'Argentina', Participant2: 'France', StartTime: NOW - HOUR },
-  { FixtureId: 1002, Participant1: 'Brazil', Participant2: 'Portugal', StartTime: NOW + 4 * HOUR },
-  { FixtureId: 1003, Participant1: 'Spain', Participant2: 'Germany', StartTime: NOW + 28 * HOUR },
+  { FixtureId: 1002, Participant1: 'England', Participant2: 'Norway', StartTime: NOW + 4 * HOUR },
+  { FixtureId: 1003, Participant1: 'Belgium', Participant2: 'Morocco', StartTime: NOW + 28 * HOUR },
+  { FixtureId: 1004, Participant1: 'Spain', Participant2: 'Switzerland', StartTime: NOW + 52 * HOUR },
 ];

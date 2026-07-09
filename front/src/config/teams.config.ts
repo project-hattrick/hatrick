@@ -66,6 +66,12 @@ export function teamInfoFromName(name: string, side: TeamSide): TeamInfo {
   return { side, code: known.code, name, flag: known.flag };
 }
 
+/** Full team name for a FIFA code (reverse lookup), or the code itself when unknown. */
+export function teamNameFromCode(code: string): string {
+  const upper = code.toUpperCase();
+  return Object.keys(TEAM_BY_NAME).find((name) => TEAM_BY_NAME[name].code === upper) ?? upper;
+}
+
 /** flag-icons ISO for a recognised country name, or null when the name isn't a known nation. */
 export function flagIsoForName(name: string): string | null {
   const known = TEAM_BY_NAME[name];

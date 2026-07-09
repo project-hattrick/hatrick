@@ -82,7 +82,7 @@ export function HeadsArena() {
             {selected?.away ?? 'Away'}
           </span>
           <span className="ml-2 border-l border-white/15 pl-3 font-mono text-xs text-white/70">
-            {feed.minute != null ? `${feed.minute}'` : selected ? '—' : 'idle'}
+            {feed.matchEnd ? 'FT' : feed.halfTime ? 'HT' : feed.minute != null ? `${feed.minute}'` : selected ? '—' : 'idle'}
           </span>
         </div>
 

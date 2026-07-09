@@ -7,8 +7,11 @@ import { driveMatchEvent } from './match-director-map';
 import { EmissionState } from '@/enums/emission-state.enum';
 import type { MatchEventPayload } from '@/types/match';
 import type { RealGkHandle } from '@/game/realgk/types';
-import { Team } from '@/game/realgk/enums';
+import { DrivenPhase, Team } from '@/game/realgk/enums';
 import { useMatchStore } from '@/store/match.store';
+
+/** Authoritative end-of-match channel (same one use-match-feed listens on). */
+const CH_MATCH_END = 'match-end.after';
 
 /** Wire participant → realgk team (1 = Blue/home, 2 = Red/away). */
 const teamOf = (participant?: number): Team | null =>
@@ -49,11 +52,20 @@ export function useRealgkFeedDriver(
       }
       driveMatchEvent(h, teamOf, p);
     };
+    // FT backstop: replays that started mid-match may never carry a `game_finalised` raw action, but the
+    // normalizer always emits match-end once per fixture. setPhase is idempotent (and HMR-stale safe).
+    const onEnd = (p: { fixtureId: number }) => {
+      if (p.fixtureId !== fixtureId) return;
+      const h = handleRef.current;
+      if (typeof h?.setPhase === 'function') h.setPhase(DrivenPhase.FullTime);
+    };
     socket.on(`match-event.${EmissionState.During}`, onMatch);
     socket.on(`match-event.${EmissionState.After}`, onMatch);
+    socket.on(CH_MATCH_END, onEnd);
     return () => {
       socket.off(`match-event.${EmissionState.During}`, onMatch);
       socket.off(`match-event.${EmissionState.After}`, onMatch);
+      socket.off(CH_MATCH_END, onEnd);
     };
   }, [handleRef, fixtureId, cinematicIntro]);
 }
