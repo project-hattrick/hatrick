@@ -48,6 +48,7 @@
       <ul>
         <li><a href="#problem">Problem</a></li>
         <li><a href="#the-two-modes">The Two Modes</a></li>
+        <li><a href="#fan-journey">The Fan Journey</a></li>
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
@@ -59,6 +60,7 @@
       </ul>
     </li>
     <li><a href="#architecture">Data &amp; Architecture — powered by TxLINE</a></li>
+    <li><a href="#track-fit">Track Fit — Consumer &amp; Fan Experiences</a></li>
     <li><a href="#apps">Apps</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#compliance">Compliance</a></li>
@@ -90,6 +92,40 @@ Most fans watch with a phone in hand and a fragmented setup: score in one tab, f
 - **🗣️ Crowd layer** — internal chat + curated X posts become comic-style **speech balloons** over the stands, timed to the latest match event.
 
 > The defining mechanic: every event is emitted in **two states** — `during` (optimistic, animates instantly) and `after` (confirmed by TxLINE, authoritative). See [Architecture](#architecture).
+
+### The Fan Journey
+
+<div id="fan-journey"></div>
+
+One profile, one wallet ledger, two loops that feed each other:
+
+```mermaid
+flowchart LR
+    A([Fan arrives]) --> B{18+ age gate}
+    B -->|confirm| C[Sign in with Solana wallet]
+    C --> D{Pick a mode}
+
+    subgraph LIVE [📺 Live — real matches]
+        E[Watch the 2D arena<br/>shaped by TxLINE events] --> F[Odds move in real time]
+        F --> G[Place a bet<br/>during the match]
+        G --> H[Settled on confirmed<br/>*.after events]
+    end
+
+    subgraph FANTASY [🎮 Fantasy — simulated duels]
+        I[Open sticker packs] --> J[Build your XI]
+        J --> K[Challenge a friend<br/>to a 1v1 arena duel]
+        K --> L[Attributes evolve with real<br/>tournament performance]
+    end
+
+    D --> E
+    D --> I
+    H --> M[(Shared wallet ledger)]
+    L --> M
+    M --> N[Market: trade players,<br/>buy packs, bet again]
+    N --> D
+```
+
+Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting on. Responsible-gaming controls (self-exclusion, stake limits) sit on top of the same ledger.
 
 ### Built With
 
@@ -185,6 +221,24 @@ The core contract: **every domain event fires twice**. `*.during` is the optimis
 - **Fantasy attributes** — player cards get stronger or weaker based on real tournament performance, recalculated on `*.after`.
 - **Hero backdrop** — the landing page itself is a live render driven by the same feed.
 - **Replay** — `POST /replay` re-plays a finished match through the *same* during/after pipeline, so every surface can be demonstrated 1:1 without waiting for kickoff.
+
+<p align="right">(<a href="#readme-top">Back to top</a>)</p>
+
+## Track Fit — Consumer & Fan Experiences
+
+<div id="track-fit"></div>
+
+How Hat-trick answers each judging criterion of the track:
+
+| Criterion | How Hat-trick answers it |
+|---|---|
+| **Fan Accessibility & UX** | One platform instead of three tabs: watch, play, and bet share one profile, wallet, and design system. Two clear modes from a single home; built for a non-technical fan. |
+| **Real-Time Responsiveness** | The during/after contract makes latency a feature: the arena animates the instant an event arrives (`*.during`) and reconciles when TxLINE confirms it (`*.after`). One SSE ingest → WebSocket fan-out to every surface. |
+| **Originality & Value Creation** | Not another picks leaderboard or pundit bot — a **playable match simulation** driven by real data. Live matches become a 2D arena; fantasy cards get stronger from real performances; both are the same engine fed by the same feed. |
+| **Commercial Viability** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
+| **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation → live ingest → betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
+
+And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

@@ -3,7 +3,7 @@ import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
-import { MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import { DrivenDirective, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 import { pointOnField } from './field';
 import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
@@ -18,15 +18,11 @@ import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
 import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
+import { freshDrivenClock, setClockDriven } from './sim/driven-clock';
 import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, step } from './sim/world';
-import {
-  injectCardDriven,
-  injectCornerDriven,
-  injectGoalDriven,
-  injectShotDriven,
-  setPossessionDriven,
-  setScoreDriven,
-} from './sim/driver';
+import { directDriven } from './sim/directives';
+import { setScoreDriven } from './sim/driver';
+import { armFiller } from './sim/filler';
 import type { RealGkHandle, RealGkHudPatch } from './types';
 
 /** Broadcast banner copy per restart type/stage (enum → label; empty when the ball is live). */
@@ -177,7 +173,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     if (match.red !== last.scoreRed) patch.scoreRed = last.scoreRed = match.red;
     const cs = clockStr(match.time);
     if (cs !== last.clock) patch.clock = last.clock = cs;
-    const ph = phaseFor(match.time);
+    // Driven clock is real match seconds; the attract clock has always fed phaseFor raw (legacy quirk).
+    const ph = phaseFor(world.driven ? match.time / 60 : match.time);
     if (ph !== last.phase) patch.phase = last.phase = ph;
     if (match.statusTitle !== last.statusTitle) patch.statusTitle = last.statusTitle = match.statusTitle;
     if (match.statusText !== last.statusText) patch.statusText = last.statusText = match.statusText;
@@ -267,7 +264,14 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         const overlayState = director.overlay();
         if (overlayState.dressing) drawReplayDressing(ctx, world.view, world.dpr, now);
         if (overlayState.wipeProgress !== null) {
-          drawBroadcastWipe(ctx, world.view, world.dpr, overlayState.wipeProgress, [config.teams?.blue.flagId ?? '', config.teams?.red.flagId ?? '']);
+          drawBroadcastWipe(
+            ctx,
+            world.view,
+            world.dpr,
+            overlayState.wipeProgress,
+            [config.teams?.blue.flagId ?? '', config.teams?.red.flagId ?? ''],
+            [config.teams?.blue.colors, config.teams?.red.colors],
+          );
         }
       }
       syncHud();
@@ -419,21 +423,48 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       }
     },
     // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
+    beginDrivenIntro: () => {
+      // Match switch: run the cinematic entrance and HOLD it (camera loop) until the first real event.
+      director?.reset();
+      recorder?.clear();
+      world.driven = true;
+      world.intent = { attackingTeam: null, threat: 0 };
+      world.match.blue = 0;
+      world.match.red = 0;
+      world.match.time = 0;
+      world.drivenClock = freshDrivenClock();
+      world.possessionGrant = null;
+      world.pendingDirectives = [];
+      armFiller(world);
+      enterIntro(world);
+      world.match.introHold = true;
+    },
     setDriven: (on) => {
       world.driven = on;
       if (on) {
+        if (world.match.phase === MatchPhase.Intro && world.match.introHold) {
+          // First event during the buffering hold: release the intro (whistle → kickoff → Live).
+          // No enterDrivenKickoff — players are already at their homes and the ball is parked center.
+          world.match.introHold = false;
+          return;
+        }
         // Drop any in-flight goal replay so the mode switch starts on a clean live kickoff.
         director?.reset();
         recorder?.clear();
         enterDrivenKickoff(world);
+      } else {
+        world.drivenClock = null; // attract mode resumes the TIME_SCALE clock
+        world.pendingDirectives = [];
+        world.match.introHold = false; // a held intro completes into the attract match
       }
     },
-    setPossession: (team, threat) => setPossessionDriven(world, team, threat),
-    injectShot: (team) => injectShotDriven(world, team),
-    injectGoal: (team) => injectGoalDriven(world, team),
-    injectCorner: (team) => injectCornerDriven(world, team),
-    injectCard: (team) => injectCardDriven(world, team),
+    setPossession: (team, threat) => directDriven(world, DrivenDirective.Possession, team, threat),
+    injectShot: (team) => directDriven(world, DrivenDirective.Shot, team),
+    injectGoal: (team) => directDriven(world, DrivenDirective.Goal, team),
+    injectCorner: (team) => directDriven(world, DrivenDirective.Corner, team),
+    injectCard: (team) => directDriven(world, DrivenDirective.Card, team),
     setScore: (blue, red) => setScoreDriven(world, blue, red),
+    setClock: (minute) => setClockDriven(world, minute, performance.now()),
     resize,
     destroy: () => {
       cancelAnimationFrame(raf);

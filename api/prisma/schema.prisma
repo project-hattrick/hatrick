@@ -26,6 +26,16 @@ enum UserStatus {
 }
 
 /**
+ * Login-tier chosen at sign-up — mirrors front `AccountType`.
+ * Competitor = wallet-linked (plays for prizes, on-chain ownership);
+ * Collector = casual email/Google (opens packs, follows stats).
+ */
+enum AccountType {
+  Competitor
+  Collector
+}
+
+/**
  * Live availability in the duelist directory — mirrors front `Presence`.
  */
 enum Presence {
@@ -215,6 +225,9 @@ model User {
   avatarUrl     String?
   role          UserRole   @default(Player)
   status        UserStatus @default(Active)
+  // Wallet sign-in is the only live auth flow, so everyone starts as Competitor;
+  // email/Google registration (Collector) flips this when it lands.
+  accountType   AccountType @default(Competitor)
   balance       Decimal    @default(1000) @db.Decimal(18, 2)
   lastLoginAt   DateTime?
   createdAt     DateTime   @default(now())

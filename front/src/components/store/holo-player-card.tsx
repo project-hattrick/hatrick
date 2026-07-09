@@ -69,7 +69,7 @@ function HoloPlayerCard({
   } as CSSProperties;
 
   return (
-    <HologramSticker.Root style={holoStyle}>
+    <HologramSticker.Root style={holoStyle} className={styles.holoRoot}>
       <HologramSticker.Scene>
         <HologramSticker.Card width={width}>
           {/* Layer 1: solid base + card texture */}

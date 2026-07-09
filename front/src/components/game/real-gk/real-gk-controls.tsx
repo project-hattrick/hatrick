@@ -43,6 +43,9 @@ export function RealGkControls({ handle, effectsLab = false }: { handle: RefObje
       <button type="button" className={controlClass} onClick={() => handle.current?.spawnReferee()}>
         Spawn referee
       </button>
+      <button type="button" className={controlClass} onClick={() => handle.current?.debugGoal()}>
+        Goal (G)
+      </button>
       {effectsLab && (
         <>
           <button type="button" className={controlClass} onClick={() => handle.current?.cycleShotEffect()}>

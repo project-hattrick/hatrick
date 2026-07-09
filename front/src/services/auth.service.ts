@@ -1,3 +1,4 @@
+import { AccountType } from '@/enums/account-type.enum';
 import { RankTier } from '@/enums/rank-tier.enum';
 import { Presence } from '@/enums/presence.enum';
 import { toAuthUser, type ApiUserDto } from '@/lib/user-mapper';
@@ -8,6 +9,8 @@ import { api } from './http';
 export interface AuthUser {
   id: string;
   walletAddress: string;
+  /** Login tier — Competitor (wallet) vs Collector (casual email/Google). */
+  accountType: AccountType;
   displayName: string | null;
   balance: string;
   username: string | null;

@@ -1,6 +1,6 @@
-/* Broadcast goal sequence, compressed to the engine's ~3.6s post-goal freeze.
-   Timeline: 0.0 scrim → 0.05 letters in (stagger) → 0.3 rule → 0.5 caption →
-   1.35 letters out → 1.75 scoreboard rises → 2.45 digit rolls + accent kick.
+/* Broadcast goal sequence, self-held for ~4.6s (plays over the replay cut like a broadcast graphic).
+   Timeline: 0.0 scrim → 0.05 letters in (stagger) → 0.35 rule → 0.55 caption →
+   1.5 letters out → 1.9 scoreboard rises → 2.6 digit rolls + accent kick → 4.2 fade out.
    --goal-accent = scoring team color (DS neon when unknown). */
 
 .overlay {
@@ -9,15 +9,21 @@
   z-index: 20;
   pointer-events: none;
   --goal-soft: color-mix(in srgb, var(--goal-accent) 50%, transparent);
+  transition: opacity 0.4s ease;
 }
 
+.exit {
+  opacity: 0;
+}
+
+/* Darker than the mock: the scoreboard is backgroundless, so the center needs real coverage too. */
 .scrim {
   position: absolute;
   inset: 0;
   opacity: 0;
   background:
-    radial-gradient(78% 68% at 50% 46%, transparent 6%, color-mix(in srgb, var(--color-overlay) 72%, transparent) 66%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-overlay) 56%, transparent), color-mix(in srgb, var(--color-overlay) 20%, transparent) 42%, color-mix(in srgb, var(--color-overlay) 80%, transparent));
+    radial-gradient(78% 68% at 50% 46%, color-mix(in srgb, var(--color-overlay) 42%, transparent) 6%, color-mix(in srgb, var(--color-overlay) 84%, transparent) 66%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-overlay) 62%, transparent), color-mix(in srgb, var(--color-overlay) 30%, transparent) 42%, color-mix(in srgb, var(--color-overlay) 86%, transparent));
   animation: goScrim 0.35s ease-out forwards;
 }
 
@@ -58,16 +64,22 @@
   width: 100%;
 }
 
+/* The WORD is the single reveal window: one overflow box with generous bleed so the italic 900
+   overhang, the entry blur and the overshoot never touch an edge. Per-letter clipping (masks) sliced
+   glyphs and their shadows into hard rectangles. The drop-shadow applies after the clip. */
 .word {
   display: flex;
-  gap: 0.015em;
+  overflow: hidden;
+  font-size: clamp(56px, 11vw, 148px);
+  height: 1.16em;
+  padding: 0.12em 0.18em 0.04em;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
 }
 
+/* Spacing wrapper only — the reveal clip lives on .word. */
 .mask {
-  overflow: hidden;
   display: block;
-  font-size: clamp(56px, 11vw, 148px);
-  height: 0.82em;
+  padding: 0 0.01em;
 }
 
 .mask b {
@@ -75,10 +87,9 @@
   font-weight: 900;
   font-style: italic;
   font-size: 1em;
-  line-height: 0.82;
+  line-height: 1;
   letter-spacing: -0.03em;
   color: var(--color-foreground, #f2f3f5);
-  text-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
   transform: translateY(115%);
   animation:
     letterIn 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) var(--in) forwards,
@@ -120,8 +131,8 @@
   border-radius: 2px;
   background: linear-gradient(90deg, transparent, var(--goal-accent) 18%, var(--goal-accent) 82%, transparent);
   animation:
-    ruleIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards,
-    ruleOut 0.35s cubic-bezier(0.6, 0, 0.85, 0.2) 1.4s forwards;
+    ruleIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards,
+    ruleOut 0.35s cubic-bezier(0.6, 0, 0.85, 0.2) 1.55s forwards;
 }
 
 @keyframes ruleIn {
@@ -141,20 +152,28 @@
   }
 }
 
+/* Glass chip under the caption — the scrim is transparent at center, so bare muted text sat
+   straight on the bright pitch and was unreadable. */
 .sub {
   margin-top: 1rem;
   opacity: 0;
   transform: translateY(12px);
+  padding: 0.55em 1.1em 0.55em 1.45em; /* extra left visually balances the letter-spacing tail */
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-overlay, #07080b) 62%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   font-family: var(--font-mono, monospace);
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(10px, 1.3vw, 14px);
-  letter-spacing: 0.38em;
+  letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-foreground, #f2f3f5) 62%, transparent);
+  color: color-mix(in srgb, var(--color-foreground, #f2f3f5) 94%, transparent);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
   animation:
-    subIn 0.45s ease-out 0.5s forwards,
-    subOut 0.35s ease-in 1.35s forwards;
+    subIn 0.45s ease-out 0.55s forwards,
+    subOut 0.35s ease-in 1.5s forwards;
 }
 
 @keyframes subIn {
@@ -171,7 +190,8 @@
   }
 }
 
-/* ── phase 2: the scoreboard pill rises to center ── */
+/* ── phase 2: the scoreboard rises to center — the hero's backgroundless scoreline
+   (flag above the 3-letter code, big white digits, muted dash, heavy text shadows). ── */
 .board {
   position: absolute;
   left: 50%;
@@ -180,15 +200,8 @@
   opacity: 0;
   display: flex;
   align-items: center;
-  border-radius: 999px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--color-surface-1, #141519) 72%, transparent);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.7);
-  animation:
-    boardUp 0.7s cubic-bezier(0.18, 1.02, 0.28, 1) 1.75s forwards,
-    boardKick 0.45s cubic-bezier(0.3, 1.4, 0.4, 1) 2.45s;
+  gap: clamp(16px, 2.6vw, 28px);
+  animation: boardUp 0.7s cubic-bezier(0.18, 1.02, 0.28, 1) 1.9s forwards;
 }
 
 @keyframes boardUp {
@@ -205,52 +218,45 @@
   }
 }
 
-@keyframes boardKick {
-  0% {
-    box-shadow: 0 34px 90px rgba(0, 0, 0, 0.7), 0 0 0 0 var(--goal-soft);
-  }
-  100% {
-    box-shadow: 0 34px 90px rgba(0, 0, 0, 0.7), 0 0 0 26px transparent;
-  }
-}
-
-.side {
+.teamColumn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.7em;
-  padding: 0.85em 1.4em;
-  color: var(--color-foreground, #f2f3f5);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-size: clamp(12px, 1.8vw, 20px);
-  white-space: nowrap;
+  gap: 0.5rem;
 }
 
-.dot {
-  width: 0.5em;
-  height: 0.5em;
-  border-radius: 50%;
+/* flag-icons sizes off font-size (width 1.333em). */
+.flag {
+  font-size: 34px;
   flex: none;
 }
 
-.plate {
+.code {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-foreground, #f2f3f5) 90%, transparent);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* Shadow via filter (applied after the roll windows clip their digits) — a text-shadow inside
+   the overflow:hidden roll would get sliced at its edges. */
+.scoreline {
   display: flex;
   align-items: center;
-  gap: 0.42em;
-  padding: 0.5em 1em;
-  background: var(--color-neon, #aef019);
-  color: #0b0c0f;
-  font-family: var(--font-mono, monospace);
+  gap: 0.19em;
+  font-size: clamp(52px, 8.5vw, 84px);
   font-weight: 700;
-  font-size: clamp(24px, 3.8vw, 44px);
   line-height: 1;
+  color: var(--color-foreground, #f2f3f5);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.8));
   font-variant-numeric: tabular-nums;
 }
 
-.sep {
-  opacity: 0.3;
-  font-size: 0.56em;
+.dash {
+  font-size: 0.65em;
+  color: var(--color-muted-foreground, #8b8d94);
 }
 
 .roll {
@@ -272,7 +278,7 @@
 }
 
 .rollScored .rollColumn {
-  animation: rollUp 0.6s cubic-bezier(0.2, 1.05, 0.3, 1) 2.45s forwards;
+  animation: rollUp 0.6s cubic-bezier(0.2, 1.05, 0.3, 1) 2.6s forwards;
 }
 
 @keyframes rollUp {

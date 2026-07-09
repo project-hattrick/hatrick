@@ -1,4 +1,5 @@
 import { env } from '@/lib/env';
+import { AccountType } from '@/enums/account-type.enum';
 import { RankTier } from '@/enums/rank-tier.enum';
 import { Presence } from '@/enums/presence.enum';
 import { useAuthStore } from '@/store/auth.store';
@@ -26,9 +27,13 @@ export const isBackendSession = (): boolean =>
 export const MOCK_SEED_BALANCE = 28_105_820;
 
 /** Build a local session user from a connected wallet (mock mode — no server). */
-export const mockUser = (walletAddress: string): AuthUser => ({
+export const mockUser = (
+  walletAddress: string,
+  accountType: AccountType = AccountType.Competitor,
+): AuthUser => ({
   id: `mock-${walletAddress.slice(0, 10)}`,
   walletAddress,
+  accountType,
   displayName: null,
   balance: String(MOCK_SEED_BALANCE),
   username: null,
@@ -51,7 +56,8 @@ const GUEST_ADDRESS = 'GuestDemo1111111111111111111111111111111111';
 
 /** Wallet-free demo sign-in — establishes a local mock session with no extension, signing or network. */
 export const signInAsGuest = (): void => {
-  useAuthStore.getState().setSession(mockUser(GUEST_ADDRESS));
+  // Casual tier: no wallet means no staked play — packs, stats and friendlies only.
+  useAuthStore.getState().setSession(mockUser(GUEST_ADDRESS, AccountType.Collector));
 };
 
 /** Local sign-out — clears the session and resets the play-money stores (no wallet to disconnect). */

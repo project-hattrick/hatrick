@@ -4,8 +4,11 @@
  * same interactive language. Pair with `group` on the same element to drive
  * child reveals (hover-revealed actions, sprite scale, etc.).
  */
+// NB: the hover lift is `-translate-y-*`, which animates the `translate` property
+// in Tailwind v4 (not `transform`) — the property list MUST include `translate`
+// or the lift snaps with no transition.
 export const INTERACTIVE_CARD =
-  'group transition-[transform,border-color,box-shadow] duration-200 ease-out ' +
+  'group transition-[translate,border-color,box-shadow] duration-200 ease-out ' +
   'hover:-translate-y-1 hover:border-neon/40 hover:shadow-[0_0_44px_-10px_rgba(174,240,25,0.22)] ' +
   'motion-reduce:transition-none motion-reduce:hover:translate-y-0';
 

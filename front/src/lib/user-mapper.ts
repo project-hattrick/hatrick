@@ -1,3 +1,4 @@
+import { AccountType } from '@/enums/account-type.enum';
 import { RankTier } from '@/enums/rank-tier.enum';
 import { Presence } from '@/enums/presence.enum';
 import { shortAddress } from '@/lib/format';
@@ -18,6 +19,7 @@ export interface ApiUserDto {
   portraitSrc: string | null;
   role: string;
   status: string;
+  accountType: string;
   mmr: number;
   tier: string;
   division: string | null;
@@ -33,12 +35,15 @@ export interface ApiUserDto {
 
 /** Api enum keys are PascalCase (e.g. "Gold"); front enum keys match → value lookup. */
 const toRankTier = (t: string): RankTier => RankTier[t as keyof typeof RankTier] ?? RankTier.Bronze;
+const toAccountType = (a: string): AccountType =>
+  AccountType[a as keyof typeof AccountType] ?? AccountType.Competitor;
 const toPresence = (p: string): Presence => Presence[p as keyof typeof Presence] ?? Presence.Offline;
 
 /** Api user → session `AuthUser` (front enums, stats carried through). */
 export const toAuthUser = (u: ApiUserDto): AuthUser => ({
   id: u.id,
   walletAddress: u.walletAddress,
+  accountType: toAccountType(u.accountType),
   displayName: u.displayName,
   balance: u.balance,
   username: u.username,

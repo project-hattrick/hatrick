@@ -3,10 +3,9 @@
 import { type ReactNode } from 'react';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
 import { useAutoReplay } from '@/hooks/use-auto-replay';
-import { useAmbientCrowd } from '@/hooks/use-ambient-crowd';
+import { useCrowdDirector } from '@/hooks/use-crowd-director';
 import { ImmersiveDashboard } from './immersive-dashboard';
 import { SplitDashboard } from './split-dashboard';
-import { MatchSwitchingOverlay } from './match-switching-overlay';
 import { HeroLayout } from '@/enums/hero-layout.enum';
 import { useUiStore } from '@/store/ui.store';
 
@@ -20,7 +19,7 @@ const LAYOUTS: Record<HeroLayout, ReactNode> = {
 export function LiveDashboard() {
   useLiveFeed();
   useAutoReplay();
-  useAmbientCrowd();
+  useCrowdDirector();
   const heroLayout = useUiStore((state) => state.heroLayout);
 
   return (
@@ -31,7 +30,6 @@ export function LiveDashboard() {
       <div key={heroLayout} className="hero-fade hidden h-full md:block">
         {LAYOUTS[heroLayout]}
       </div>
-      <MatchSwitchingOverlay />
     </section>
   );
 }

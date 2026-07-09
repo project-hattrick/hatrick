@@ -3,6 +3,7 @@
 import { type ReactNode } from 'react';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
 import { useDuelSync } from '@/hooks/use-duel-sync';
+import { useCrowdDirector } from '@/hooks/use-crowd-director';
 import { DuelLayout } from '@/enums/duel-layout.enum';
 import { useDuelStore } from '@/store/duel.store';
 import { DuelImmersive } from './duel-immersive';
@@ -23,6 +24,7 @@ const LAYOUTS: Record<DuelLayout, ReactNode> = {
 export function DuelDashboard() {
   useLiveFeed();
   useDuelSync();
+  useCrowdDirector();
   const layout = useDuelStore((s) => s.layout);
 
   return (

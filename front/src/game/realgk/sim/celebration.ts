@@ -3,8 +3,9 @@ import { fieldBounds } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp, lerp } from '../util';
 
-/** Live celebration window before the broadcast replay kicks in (v4). */
-export const CELEBRATION_LIVE_SECONDS = 2.0;
+/** Live celebration window before the broadcast replay kicks in (v4) — the play sits "paused" under
+ *  the GoalBurst overlay for its full timeline (HOLD = 4.6s), THEN the replay wipe takes over. */
+export const CELEBRATION_LIVE_SECONDS = 4.6;
 
 /** How many nearby teammates join the scorer with the arms-up run. */
 const MAX_JOINERS = 2;

@@ -2,6 +2,7 @@ import { IntroStage, MatchPhase, RefPhase, Role } from '../enums';
 import { centerSpot, pointOnField } from '../field';
 import type { RealGkWorld } from '../types';
 import { updateCoach } from './coach';
+import { flushDirectives } from './directives';
 import { Status } from './messages';
 import { moveToward } from './players';
 import { spawnRefereeKickoff, updateReferee } from './referee';
@@ -63,11 +64,29 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
         }
       }
       if (allHome || match.introTimer >= RISE_TIMEOUT_SECONDS) {
+        // Feed-driven buffering: hold the cinematic loop until the first real event releases the kickoff.
+        if (match.introHold) {
+          advance(world, IntroStage.HoldLoop);
+          return;
+        }
         spawnRefereeKickoff(world);
         advance(world, IntroStage.RefWhistle);
       }
       return;
     }
+
+    case IntroStage.HoldLoop:
+      // Squads idle at their homes; the camera side loops its beats off introTimer.
+      for (const p of world.players) {
+        p.vx *= 0.8;
+        p.vy *= 0.8;
+        p.mode = p.idleMode;
+      }
+      if (!match.introHold) {
+        spawnRefereeKickoff(world);
+        advance(world, IntroStage.RefWhistle);
+      }
+      return;
 
     case IntroStage.RefWhistle:
       // Hold players at home; the referee run-to-center + whistle is driven by updateReferee above.
@@ -95,6 +114,8 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
         match.phase = MatchPhase.Live;
         const note = Status.kickoff();
         setStatus(world, note.title, note.text);
+        // Anything the feed sent during the intro lands on the pitch now.
+        flushDirectives(world);
       }
       return;
   }

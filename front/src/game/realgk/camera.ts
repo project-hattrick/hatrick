@@ -36,6 +36,8 @@ const REF_SHAKE_PX = 9;
 
 /** v5 sponsor sweep timing: the intro pan length, the in-play pan length, and the gap between in-play sweeps. */
 const INTRO_SWEEP_SECONDS = 3.4;
+/** Length of one HoldLoop camera cycle (board glide → team push-ins → wide crane). */
+const HOLD_CYCLE_SECONDS = 14;
 const SPONSOR_LIVE_SECONDS = 3.4;
 const SPONSOR_COOLDOWN_SECONDS = 80;
 
@@ -130,6 +132,36 @@ export function updateIntroCamera(cam: RealGkCamera, world: RealGkWorld): void {
       ty = n ? sy / n : centerY;
       const t = clamp(match.introTimer / 3, 0, 1);
       zt = lerp(0.85, preset.zoom, t) + 0.07 * Math.sin(match.introTimer * 1.6);
+      break;
+    }
+    case IntroStage.HoldLoop: {
+      // Buffering hold (feed-driven): loop cinematic beats until the first event releases the kickoff.
+      // 14s cycle: board glide (direction alternates per cycle) → push-in on Blue → on Red → wide crane.
+      const cycle = match.introTimer % HOLD_CYCLE_SECONDS;
+      const reverse = Math.floor(match.introTimer / HOLD_CYCLE_SECONDS) % 2 === 1;
+      if (cycle < 5) {
+        const band = sponsorBand(world);
+        const p = cycle / 5;
+        tx = lerp(reverse ? band.xRight : band.xLeft, reverse ? band.xLeft : band.xRight, p);
+        ty = band.y;
+        zt = 1.25;
+      } else if (cycle < 12) {
+        const team = cycle < 8.5 ? Team.Blue : Team.Red;
+        let sx = 0;
+        let sy = 0;
+        let n = 0;
+        for (const pl of world.players) {
+          if (pl.team !== team) continue;
+          sx += pl.x;
+          sy += pl.y;
+          n += 1;
+        }
+        tx = n ? sx / n : centerX;
+        ty = n ? sy / n : centerY;
+        zt = preset.zoom * 1.35 + 0.06 * Math.sin(match.introTimer * 1.3);
+      } else {
+        zt = 0.75; // wide crane over the full pitch before the next pass
+      }
       break;
     }
     case IntroStage.RefWhistle:

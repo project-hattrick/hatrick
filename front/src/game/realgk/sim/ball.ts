@@ -5,6 +5,7 @@ import { cornerSpot, fieldBounds, fieldRatios, goalKickSpot, pointOnField, throw
 import type { Ball, BallKickOptions, RealGkWorld, RealGkPlayer, Vec2 } from '../types';
 import { clamp, lerp } from '../util';
 import { BallText, Status } from './messages';
+import { parryDrivenMouth } from './filler';
 import { goal, setStatus } from './rules';
 
 export function forwardVector(player: RealGkPlayer): Vec2 {
@@ -70,6 +71,8 @@ export function maybeClaimBall(world: RealGkWorld): void {
   for (const player of players) {
     const reach = player.role === Role.GK ? (player.action === PlayerAction.Dive ? 44 : 34) : 28;
     const d = Math.hypot(player.x - ball.x, player.y - ball.y);
+    // Possession-grant window (driven): the granted team wins the loose ball unless someone else is on top of it.
+    if (world.possessionGrant && player.team !== world.possessionGrant.team && d > 14) continue;
     if (d < reach && d < bestDist) {
       best = player;
       bestDist = d;
@@ -245,11 +248,36 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   const topLineY = lerp(bounds.topY, bounds.bottomY, PLAY_LINES.depthTop);
   const bottomLineY = lerp(bounds.topY, bounds.bottomY, PLAY_LINES.depthBottom);
 
+  // Feed-driven: a shot arriving at the goal is killed EARLY — keeper or post — a margin before the
+  // line, over the mouth plus a post apron, so a miss can never sail into the goal area/net. Real
+  // goals only via injectGoal (which runs the celebration flow, not this flight).
+  if (world.driven) {
+    const PARRY_MARGIN = 26;
+    const leftTop = lerp(bounds.topY, bounds.bottomY, leftGoal.depthTop);
+    const leftBottom = lerp(bounds.topY, bounds.bottomY, leftGoal.depthBottom);
+    const rightTop = lerp(bounds.topY, bounds.bottomY, rightGoal.depthTop);
+    const rightBottom = lerp(bounds.topY, bounds.bottomY, rightGoal.depthBottom);
+    const apronL = (leftBottom - leftTop) * 0.3;
+    const apronR = (rightBottom - rightTop) * 0.3;
+    if (ball.vx < -60 && ball.x <= leftLineX + PARRY_MARGIN && ball.y >= leftTop - apronL && ball.y <= leftBottom + apronL && ball.z < GOAL_MAX_Z * 1.5) {
+      parryDrivenMouth(world, Team.Blue, 1, leftLineX + PARRY_MARGIN);
+      return;
+    }
+    if (ball.vx > 60 && ball.x >= rightLineX - PARRY_MARGIN && ball.y >= rightTop - apronR && ball.y <= rightBottom + apronR && ball.z < GOAL_MAX_Z * 1.5) {
+      parryDrivenMouth(world, Team.Red, -1, rightLineX - PARRY_MARGIN);
+      return;
+    }
+  }
+
   // Goal lines (left/right) take priority: goal in the mouth, else corner / goal kick.
   // While feed-driven, a ball in the mouth never self-scores — goals come only via injectGoal; the
-  // stray ball takes the byline restart instead so the feed stays authoritative on the scoreline.
+  // keeper/post parries it back into play so the feed stays authoritative on the scoreline.
   if (ball.x < leftLineX) {
-    if (inLeftMouth && !world.driven) {
+    if (inLeftMouth) {
+      if (world.driven) {
+        parryDrivenMouth(world, Team.Blue, 1, leftLineX);
+        return;
+      }
       goal(world, Team.Red);
       return;
     }
@@ -257,7 +285,11 @@ export function updateBall(world: RealGkWorld, dt: number): void {
     return;
   }
   if (ball.x > rightLineX) {
-    if (inRightMouth && !world.driven) {
+    if (inRightMouth) {
+      if (world.driven) {
+        parryDrivenMouth(world, Team.Red, -1, rightLineX);
+        return;
+      }
       goal(world, Team.Blue);
       return;
     }

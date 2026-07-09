@@ -2,11 +2,12 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { lookup } from '@/lib/lookup';
-import { X, ChatCircle, type Icon } from '@/components/common/icons';
+import { X, ChatCircle, Robot, type Icon } from '@/components/common/icons';
 import { Flag } from '@/components/common/flag';
 import { fifaToIso } from '@/lib/country';
 import { teamSideConfig, teamSideFallback } from '@/config/team-side.config';
 import { CrowdSource } from '@/enums/crowd-source.enum';
+import { HatBotMessage } from '@/components/crowd/hatbot-message';
 import type { CrowdMessage as CrowdMessageModel } from '@/types/crowd';
 
 interface SourceMeta {
@@ -18,11 +19,13 @@ interface SourceMeta {
 const sourceConfig: Record<CrowdSource, SourceMeta> = {
   [CrowdSource.Twitter]: { icon: X, className: 'bg-black text-white' },
   [CrowdSource.Community]: { icon: ChatCircle, className: 'bg-surface-3 text-muted-foreground' },
+  [CrowdSource.HatBot]: { icon: Robot, className: 'bg-neon text-black' }, // rendered via HatBotMessage; kept for record completeness
 };
 const sourceFallback = sourceConfig[CrowdSource.Community];
 
 /** A single crowd chat message row (flag + avatar + country + source badge). */
 export function CrowdMessage({ message }: { message: CrowdMessageModel }) {
+  if (message.source === CrowdSource.HatBot) return <HatBotMessage message={message} />;
   const meta = lookup(teamSideConfig, message.side, teamSideFallback);
   const source = lookup(sourceConfig, message.source, sourceFallback);
   const SourceIcon = source.icon;

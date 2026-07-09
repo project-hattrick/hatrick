@@ -7,6 +7,7 @@ import { PERSONA_COUNT } from '../assets/manifest';
 import { spawnFootDust } from '../effects';
 import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
+import { fillerShotAllowed } from './filler';
 import { FORMATION } from './formation';
 import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
@@ -19,6 +20,20 @@ import { setStatus } from './rules';
 
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
 
+/**
+ * Persistent persona casting: fixed shuffled permutations of the 11 head sets per team, keyed by squad
+ * slot — every squad fields all 11 distinct faces in a scrambled order, the assignment never re-rolls
+ * across kickoffs/matches, and a slot's direct opponent (mirrored formation) never wears the same face.
+ */
+const BLUE_PERSONAS = [3, 7, 0, 9, 4, 1, 10, 5, 2, 8, 6];
+const RED_PERSONAS = [8, 2, 6, 1, 10, 7, 3, 0, 9, 5, 4];
+
+/** The persona head index for a team's squad slot (stable; shared with replay playback). */
+export function personaIdFor(team: Team, slot: number): number {
+  const order = team === Team.Red ? RED_PERSONAS : BLUE_PERSONAS;
+  return order[((slot % order.length) + order.length) % order.length] % Math.max(1, PERSONA_COUNT);
+}
+
 /** Builds one player object at (lat, depth) for the given team. */
 function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, depth: number, name: string, slotIndex?: number): RealGkPlayer {
   const dir = team === Team.Blue ? 1 : -1;
@@ -27,9 +42,8 @@ function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, d
   const id = world.nextPlayerId++;
   return {
     id,
-    // One distinct persona head per squad slot (0..10) so no face repeats within a team, and the Red team
-    // uses a rotated head set so opponents don't mirror the same faces. Inert unless `personaHeads` is on.
-    personaId: ((slotIndex ?? id) + (team === Team.Red ? Math.floor(PERSONA_COUNT / 2) : 0)) % Math.max(1, PERSONA_COUNT),
+    // Persistent shuffled casting per team slot — see personaIdFor. Inert unless `personaHeads` is on.
+    personaId: personaIdFor(team, slotIndex ?? id),
     name,
     team,
     dir,
@@ -427,9 +441,9 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
     return;
   }
 
-  // Autonomous shot on goal — suppressed while feed-driven (shots come from injectShot); the owner then
-  // circulates the ball via the pass/loft branches below instead of self-shooting.
-  if (distToGoal < 180 && !world.driven) {
+  // Autonomous shot on goal — suppressed while feed-driven (shots come from injectShot), except the
+  // occasional drivenFiller attempt (which the goal-mouth parry keeps harmless).
+  if (distToGoal < 180 && (!world.driven || fillerShotAllowed(world))) {
     commitShot(world, owner);
     return;
   }
@@ -557,8 +571,9 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       updateReceive(world, player, dt);
       continue;
     }
-    // Slide tackles are pure steals — suppressed while feed-driven (possession follows the feed).
-    if (!world.driven && maybeTriggerSlideTackle(world, player)) {
+    // Slide tackles are pure steals — suppressed while feed-driven (possession follows the feed),
+    // unless drivenFiller keeps them as harmless between-events action.
+    if ((!world.driven || world.cfg.features?.drivenFiller === true) && maybeTriggerSlideTackle(world, player)) {
       updateSlideTackle(world, player, dt);
       continue;
     }

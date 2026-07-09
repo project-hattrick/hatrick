@@ -1,7 +1,6 @@
 import { Scoreboard } from './scoreboard';
 import { PlayerFocusCard } from './player-focus-card';
 import { HeroCenterDock } from './hero-center-dock';
-import { ReplayBadge } from './replay-badge';
 import { MatchTimeline } from './match-timeline';
 import { MatchBackground } from './match-background';
 import { MatchSelector } from './match-selector';
@@ -19,11 +18,12 @@ export function SplitDashboard() {
         <MatchBackground scrim={false} />
         <HeroChrome>
           <div className="absolute top-4 left-4 z-10">
-            <ReplayBadge />
+            <span className="inline-flex items-center rounded-full border border-white/15 bg-overlay/55 px-3 py-1.5 backdrop-blur-md">
+              <PoweredByTxline tone="hero" />
+            </span>
           </div>
-          <div className="absolute top-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5">
+          <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2">
             <Scoreboard />
-            <PoweredByTxline tone="hero" />
           </div>
           <div className="absolute top-4 right-4 z-10 hidden w-[240px] max-w-[calc(100%-2rem)] lg:block">
             <PlayerFocusCard />

@@ -2,6 +2,7 @@
 
 import { useWallet } from '@solana/wallet-adapter-react';
 
+import { AccountType } from '@/enums/account-type.enum';
 import { useAuthStore } from '@/store/auth.store';
 
 /**
@@ -23,5 +24,7 @@ export function useAuth() {
     isConnecting: connecting,
     isAuthenticated: status === 'authed',
     isAuthenticating: authenticating,
+    /** Wallet-linked tier — gates staked/on-chain features; Collectors see packs & stats only. */
+    isCompetitor: status === 'authed' && user?.accountType === AccountType.Competitor,
   };
 }

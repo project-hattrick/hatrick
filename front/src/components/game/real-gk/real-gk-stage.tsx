@@ -2,18 +2,24 @@
 
 import { useEffect, useRef } from 'react';
 import { createRealGkEngine } from '@/game/realgk/engine';
-import { realGkConfigFor } from '@/game/realgk/config';
+import { realGkConfigFor, type RealGkConfig } from '@/game/realgk/config';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { CheckpointId } from '@/game/checkpoints/registry';
 import { useRealGkStore } from '@/store/real-gk.store';
 import { GoalBurst } from '../goal-burst';
-import { ConfettiBurst } from './confetti-burst';
 import { CrtOverlay } from './crt-overlay';
 import { MatchIntroOverlay } from './match-intro-overlay';
 import { RealGkControls } from './real-gk-controls';
 import { RealGkHud } from './real-gk-hud';
 import { RedCardOverlay } from './red-card-overlay';
 import { RestartBanner } from './restart-banner';
+
+/** Scorer's country color (flag palette) for the goal overlay accent; undefined without team brands. */
+function goalAccentFor(teams: RealGkConfig['teams'], goalTeam: string): string | undefined {
+  if (goalTeam === 'blue') return teams?.blue.colors[0];
+  if (goalTeam === 'red') return teams?.red.colors[0];
+  return undefined;
+}
 
 /** Full-bleed Real Match GK stage: stadium backdrop + engine canvas + HUD/controls. */
 export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint?: CheckpointId }) {
@@ -111,8 +117,8 @@ export function RealGkStage({ checkpoint = CheckpointId.RealGkV2 }: { checkpoint
         scoreBlue={scoreBlue}
         scoreRed={scoreRed}
         clock={clock}
+        accent={goalAccentFor(realGkConfigFor(checkpoint).teams, goalTeam)}
       />
-      <ConfettiBurst active={goalActive} team={goalTeam} />
       {realGkConfigFor(checkpoint).crtFilter && <CrtOverlay />}
       <RedCardOverlay active={redCardActive} playerName={redCardName} />
       <RestartBanner

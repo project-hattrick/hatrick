@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { env } from '@/lib/env';
-import { hydrateFromMock, startMockCrowd } from '@/services/mock/live-feed.mock';
+import { hydrateFromMock, startMockMatchEvents } from '@/services/mock/live-feed.mock';
 import { getSocket } from './socket';
 import { useMatchStore } from '@/store/match.store';
 import { EmissionState } from '@/enums/emission-state.enum';
@@ -13,7 +13,8 @@ export function useLiveFeed(): void {
   useEffect(() => {
     if (env.useMock) {
       hydrateFromMock();
-      return startMockCrowd();
+      // Crowd chatter is the director's job now — the mock only drives match events.
+      return startMockMatchEvents();
     }
 
     const socket = getSocket();

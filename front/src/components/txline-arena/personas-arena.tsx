@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Broadcast, CircleNotch, List } from '@/components/common/icons';
 import { GoalBurst } from '@/components/game/goal-burst';
-import { ConfettiBurst } from '@/components/game/real-gk/confetti-burst';
 import { RedCardOverlay } from '@/components/game/real-gk/red-card-overlay';
 import { RestartBanner } from '@/components/game/real-gk/restart-banner';
 import { createRealGkEngine } from '@/game/realgk/engine';
@@ -19,6 +18,7 @@ import { useStartReplay, useStopReplay } from '@/services/queries/use-replay';
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
 import { useRealGkStore } from '@/store/real-gk.store';
+import { EventBacklog } from './event-backlog';
 import { MatchPicker } from './match-picker';
 
 /** Team accents mirror the engine's foot rings (Blue = home / participant 1, Red = away / participant 2). */
@@ -44,7 +44,7 @@ export function PersonasArena() {
   const startReplay = useStartReplay();
   const stopReplay = useStopReplay();
   const feed = useMatchFeed(selected?.fixtureId ?? null);
-  useRealgkFeedDriver(handleRef, selected?.fixtureId ?? null);
+  useRealgkFeedDriver(handleRef, selected?.fixtureId ?? null, { cinematicIntro: true });
 
   // Cinematic beats bridged from the engine HUD (goal flash, confetti, restart banner, red card).
   const goalActive = useRealGkStore((s) => s.goalActive);
@@ -104,8 +104,14 @@ export function PersonasArena() {
         scoreBlue={scoreBlue}
         scoreRed={scoreRed}
         clock={clock}
+        accent={
+          goalTeam === 'blue'
+            ? REAL_GK_PERSONAS_CONFIG.teams?.blue.colors[0]
+            : goalTeam === 'red'
+              ? REAL_GK_PERSONAS_CONFIG.teams?.red.colors[0]
+              : undefined
+        }
       />
-      <ConfettiBurst active={goalActive} team={goalTeam} />
       <RedCardOverlay active={redCardActive} playerName={redCardName} />
       <RestartBanner
         active={restartActive}
@@ -173,6 +179,10 @@ export function PersonasArena() {
           </span>
         ) : null}
       </div>
+
+      {selected && feed.events.length > 0 ? (
+        <EventBacklog events={feed.events} home={selected.home} away={selected.away} />
+      ) : null}
 
       <MatchPicker
         open={pickerOpen}

@@ -8,7 +8,7 @@ import { useReplayCatalog, useUpcomingFixtures } from '@/services/queries/use-re
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
 
-const SPEEDS = [4, 8, 20, 60];
+const SPEEDS = [1, 4, 8, 20, 60];
 const fmt = (ms: number) => new Date(ms).toLocaleString(undefined, { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 interface MatchPickerProps {

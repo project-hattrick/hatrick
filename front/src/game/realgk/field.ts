@@ -27,12 +27,12 @@ export function metrics(size: Size): Metrics {
   return {
     width,
     height,
-    topY: height * 0.346,
-    bottomY: height * 0.697,
-    topLeft: width * 0.239,
+    topY: height * 0.341,
+    bottomY: height * 0.708,
+    topLeft: width * 0.24,
     topRight: width * 0.759,
-    bottomLeft: width * 0.137,
-    bottomRight: width * 0.864,
+    bottomLeft: width * 0.132,
+    bottomRight: width * 0.871,
   };
 }
 
@@ -76,8 +76,8 @@ export interface GoalGeom {
 export const GOAL_MAX_Z = 24;
 
 export const GOALS: Record<Team, GoalGeom> = {
-  [Team.Blue]: { lat: 0.0, depthTop: 0.36, depthBottom: 0.535 },
-  [Team.Red]: { lat: 1.0, depthTop: 0.36, depthBottom: 0.64 },
+  [Team.Blue]: { lat: 0.002, depthTop: 0.359, depthBottom: 0.527 },
+  [Team.Red]: { lat: 0.996, depthTop: 0.359, depthBottom: 0.627 },
 };
 
 export function goalCenterForTeam(size: Size, team: Team): Vec2 {
@@ -90,13 +90,13 @@ export function goalCenterForTeam(size: Size, team: Team): Vec2 {
  * `/sandbox/field-calibrator`; `lat` is measured from the team's OWN goal line (Blue ≈ 0, Red ≈ 1).
  */
 export const RESTART = {
-  /** Corner flag: laterally on the goal line, at the near/far touchline corner. */
-  cornerLatInset: 0.02,
-  cornerDepthTop: 0.06,
-  cornerDepthBottom: 0.94,
-  /** Throw-in: on the touchline, just inside it. */
-  throwDepthTop: 0.03,
-  throwDepthBottom: 0.97,
+  /** Corner flag: ON the goal-line/touchline intersection (hair inside PLAY_LINES so the ball reads in play). */
+  cornerLatInset: 0.004,
+  cornerDepthTop: 0.015,
+  cornerDepthBottom: 0.958,
+  /** Throw-in: ON the crossed touchline. */
+  throwDepthTop: 0.012,
+  throwDepthBottom: 0.955,
   /** Goal kick: inside the goal area, at its top/bottom corner. */
   goalKickLat: 0.12,
   goalKickDepthTop: 0.4,
@@ -141,7 +141,9 @@ export const PLAY_LINES = {
   latLeft: 0.001,
   latRight: 0.995,
   depthTop: 0.01,
-  depthBottom: 0.99,
+  // Pulled in from the traced 0.99: the court art's bottom rows (covered seats, pinned at lat ~0.25 /
+  // ~0.75, depth 1.0) overlap the trapezoid base — play stops before the ball reads as "on the stands".
+  depthBottom: 0.965,
 };
 
 /** Halfway spot — the kickoff / mapping "center" reference (the painted center circle). */

@@ -6,16 +6,20 @@ import { clamp } from './util';
 const LETTERBOX_RATIO = 0.1;
 const TAG_BLINK_HZ = 1.4;
 
-interface WipeBand {
-  from: string;
-  to: string;
-  fromLeft: boolean;
-}
-
-const BANDS: WipeBand[] = [
-  { from: '#3b82f6', to: '#0b3a63', fromLeft: true },
-  { from: '#ef4444', to: '#5c1010', fromLeft: false },
+/** Wipe band palettes when no team brand is configured: [main, leading-edge, unused] per band. */
+const DEFAULT_BAND_COLORS: [[string, string, string], [string, string, string]] = [
+  ['#3b82f6', '#ffffff', '#0b3a63'],
+  ['#ef4444', '#ffffff', '#5c1010'],
 ];
+
+/** Multiplies a #rrggbb color toward black (f in [0,1]). */
+function shade(hex: string, f: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * f);
+  const g = Math.round(((n >> 8) & 255) * f);
+  const b = Math.round((n & 255) * f);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 /**
  * Fallback band palettes when no team flag id is configured (legacy v4/match wipes): tricolor vertical
@@ -114,49 +118,56 @@ function paintFlagBody(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   }
 }
 
-/** Draws a small flag-on-a-pole centered on (cx, cy) — the real flag when `flagId` is known. */
+/** Draws a small flag centered on (cx, cy) — the real flag when `flagId` is known. No pole. */
 function drawFlag(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, flagId: string, fallback: [string, string, string]): void {
   const h = w * 0.64;
   const x = cx - w / 2;
   const y = cy - h / 2;
-  ctx.fillStyle = 'rgba(232, 237, 241, 0.95)'; // pole
-  ctx.fillRect(x - 6, y - 10, 4, h + 24);
   paintFlagBody(ctx, x, y, w, h, flagId, fallback);
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
 }
 
-function drawBand(ctx: CanvasRenderingContext2D, view: Size, band: WipeBand, coverage: number, yTop: number, yBottom: number): void {
+/** One wipe band tinted by a team palette: main color body (shaded toward the back) + palette accent edge. */
+function drawBand(
+  ctx: CanvasRenderingContext2D,
+  view: Size,
+  colors: [string, string, string],
+  fromLeft: boolean,
+  coverage: number,
+  yTop: number,
+  yBottom: number,
+): void {
   const skew = view.height * 0.35;
   const reach = (view.width + skew * 2) * coverage;
-  const gradient = ctx.createLinearGradient(band.fromLeft ? 0 : view.width, 0, band.fromLeft ? view.width : 0, 0);
-  gradient.addColorStop(0, band.from);
-  gradient.addColorStop(1, band.to);
+  const gradient = ctx.createLinearGradient(fromLeft ? 0 : view.width, 0, fromLeft ? view.width : 0, 0);
+  gradient.addColorStop(0, colors[0]);
+  gradient.addColorStop(1, shade(colors[0], 0.32));
 
-  const edgeX = band.fromLeft ? reach - skew : view.width - reach + skew;
-  const backX = band.fromLeft ? -skew : view.width + skew;
+  const edgeX = fromLeft ? reach - skew : view.width - reach + skew;
+  const backX = fromLeft ? -skew : view.width + skew;
 
   ctx.beginPath();
   ctx.moveTo(backX, yTop);
-  ctx.lineTo(edgeX + (band.fromLeft ? skew : -skew), yTop);
+  ctx.lineTo(edgeX + (fromLeft ? skew : -skew), yTop);
   ctx.lineTo(edgeX, yBottom);
   ctx.lineTo(backX, yBottom);
   ctx.closePath();
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  // Bright leading edge so the wipe reads like a TV sweep.
+  // Leading edge in the palette's accent color so the wipe reads like a TV sweep in team colors.
   ctx.save();
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.9;
   ctx.beginPath();
-  const stripe = 12 * (band.fromLeft ? 1 : -1);
-  ctx.moveTo(edgeX + (band.fromLeft ? skew : -skew), yTop);
-  ctx.lineTo(edgeX + (band.fromLeft ? skew : -skew) + stripe, yTop);
+  const stripe = 12 * (fromLeft ? 1 : -1);
+  ctx.moveTo(edgeX + (fromLeft ? skew : -skew), yTop);
+  ctx.lineTo(edgeX + (fromLeft ? skew : -skew) + stripe, yTop);
   ctx.lineTo(edgeX + stripe, yBottom);
   ctx.lineTo(edgeX, yBottom);
   ctx.closePath();
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = colors[1];
   ctx.fill();
   ctx.restore();
 }
@@ -164,17 +175,25 @@ function drawBand(ctx: CanvasRenderingContext2D, view: Size, band: WipeBand, cov
 /**
  * TV transition for `p` in [0,1]: two skewed bands sweep in from both sides, fully covering the
  * screen at p=0.5 (where the scene cut happens), then sweep back out; a white flash peaks at the cut.
- * `flags` = [top/blue flag id, bottom/red flag id] — real national flags when the variant sets teams.
+ * `flags` = [top/blue flag id, bottom/red flag id] and `palettes` = each team's flag palette — the
+ * bands are tinted by the palettes when the variant sets teams (fallback: generic blue/red).
  */
-export function drawBroadcastWipe(ctx: CanvasRenderingContext2D, view: Size, dpr: number, p: number, flags: [string, string] = ['', '']): void {
+export function drawBroadcastWipe(
+  ctx: CanvasRenderingContext2D,
+  view: Size,
+  dpr: number,
+  p: number,
+  flags: [string, string] = ['', ''],
+  palettes: [[string, string, string]?, [string, string, string]?] = [],
+): void {
   const coverage = Math.sin(clamp(p, 0, 1) * Math.PI);
   if (coverage <= 0.001) return;
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const midY = view.height / 2;
-  drawBand(ctx, view, BANDS[0], coverage, 0, midY);
-  drawBand(ctx, view, BANDS[1], coverage, midY, view.height);
+  drawBand(ctx, view, palettes[0] ?? DEFAULT_BAND_COLORS[0], true, coverage, 0, midY);
+  drawBand(ctx, view, palettes[1] ?? DEFAULT_BAND_COLORS[1], false, coverage, midY, view.height);
 
   // Country flags fade in as the bands close over the screen (peak at the cut).
   const flagAlpha = clamp((coverage - 0.5) / 0.4, 0, 1);

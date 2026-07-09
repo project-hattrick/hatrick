@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Presence, RankTier, UserRole, UserStatus, type User } from '@prisma/client';
+import { AccountType, Presence, RankTier, UserRole, UserStatus, type User } from '@prisma/client';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -59,6 +59,12 @@ export class UserResponseDto {
 
   @ApiProperty({ description: 'Account lifecycle state', enum: UserStatus })
   status!: UserStatus;
+
+  @ApiProperty({
+    description: 'Login tier — Competitor (wallet) or Collector (casual email/Google)',
+    enum: AccountType,
+  })
+  accountType!: AccountType;
 
   @ApiProperty({ description: 'Cached rating', example: 1420 })
   mmr!: number;
@@ -120,6 +126,7 @@ export class UserResponseDto {
     dto.portraitSrc = user.portraitSrc;
     dto.role = user.role;
     dto.status = user.status;
+    dto.accountType = user.accountType;
     dto.mmr = user.mmr;
     dto.tier = user.tier;
     dto.division = user.division;

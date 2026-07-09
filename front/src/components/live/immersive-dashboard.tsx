@@ -2,7 +2,6 @@ import { Scoreboard } from './scoreboard';
 import { PlayerFocusCard } from './player-focus-card';
 import { MyPredictionsPanel } from './my-predictions-panel';
 import { HeroCenterDock } from './hero-center-dock';
-import { ReplayBadge } from './replay-badge';
 import { MatchTimeline } from './match-timeline';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
@@ -15,15 +14,16 @@ export function ImmersiveDashboard() {
   return (
     <div className="relative mx-auto h-full min-h-0 w-full overflow-hidden">
       <HeroChrome>
-      {/* Replay tag — top-left, marks the hero as a match replay when no game is live. */}
+      {/* Data-provider credit — top-left, in a chip so it reads over the pitch. */}
       <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+4.25rem)] z-10 md:left-6 md:top-20">
-        <ReplayBadge />
+        <span className="inline-flex items-center rounded-full border border-white/15 bg-overlay/55 px-3 py-1.5 backdrop-blur-md">
+          <PoweredByTxline tone="hero" className="pointer-events-auto" />
+        </span>
       </div>
 
-      {/* Scoreboard — top-centre, cleared below the navbar + notch on mobile. Data credit sits under it. */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5 md:top-16">
+      {/* Scoreboard — top-centre, cleared below the navbar + notch on mobile. */}
+      <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 -translate-x-1/2 md:top-16">
         <Scoreboard />
-        <PoweredByTxline tone="hero" className="pointer-events-auto" />
       </div>
 
       {/* Player focus + my predictions — desktop rail only (keeps the mobile hero uncluttered). */}

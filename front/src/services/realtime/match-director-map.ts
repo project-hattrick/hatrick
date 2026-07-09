@@ -15,6 +15,8 @@ export interface MatchDirector<T> {
   injectGoal: (team: T) => void;
   injectCorner: (team: T) => void;
   injectCard: (team: T) => void;
+  /** Authoritative match minute (optional — only the realgk engine implements a driven clock). */
+  setClock?: (minute: number) => void;
 }
 
 /** possessionType → threat (0..1). */
@@ -38,6 +40,7 @@ export function driveMatchEvent<T>(
   p: MatchEventPayload,
 ): void {
   if (p.score) director.setScore(p.score.home ?? 0, p.score.away ?? 0);
+  if (typeof p.minute === 'number') director.setClock?.(p.minute);
   const team = teamOf(p.participant);
   if (team == null) return;
   const raw = (p.rawAction ?? '').toLowerCase();

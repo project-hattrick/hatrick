@@ -6,6 +6,7 @@ import { PackOpening } from '@/components/store/pack-opening';
 import { PackBuyDialog } from '@/components/store/pack-buy-dialog';
 import { OddsButton } from '@/components/store/drop-rates-dialog';
 import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { cn } from '@/lib/utils';
 
 /** Minimum settling beat between confirm and the opening overlay — a real purchase feels like a transaction. */
@@ -57,6 +58,8 @@ export function BuyPackFlow({
   const purchase = usePurchaseItem();
   const stock = useItemStock(slug);
   const soldOut = stock !== undefined && stock <= 0;
+  // Signed out → open the login dialog (same as the navbar) instead of the buy modal.
+  const gate = useAuthGate();
 
   const confirm = async () => {
     setProcessing(true);
@@ -76,7 +79,7 @@ export function BuyPackFlow({
           size={ctaSize}
           className={ctaClassName}
           disabled={soldOut}
-          onClick={() => setConfirming(true)}
+          onClick={gate(() => setConfirming(true))}
         >
           {soldOut ? 'Sold out' : cta}
         </Button>

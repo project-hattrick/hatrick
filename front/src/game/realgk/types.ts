@@ -1,5 +1,6 @@
 import type { RealGkConfig } from './config';
-import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
+import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
+import type { DrivenClock } from './sim/driven-clock';
 
 export interface Vec2 {
   x: number;
@@ -214,6 +215,8 @@ export interface MatchState {
   /** Intro sequence stage + clock (v5 matchIntro; inert while phase !== Intro). */
   introStage: IntroStage;
   introTimer: number;
+  /** Feed-driven buffering hold: the intro loops HoldLoop after RiseIn until this clears (first event). */
+  introHold: boolean;
   /** Active out-of-play restart (v5 deadBallSequence; null while the ball is live). */
   restart: RestartState | null;
   /** Real seconds until the next foul may be called (v5 fouls; inert otherwise). */
@@ -249,6 +252,30 @@ export interface RealGkWorld {
   driven: boolean;
   /** Which team the feed says is pressing + how threatening (0..1). Steers the shape while `driven`. */
   intent: DrivenIntent;
+  /** Feed-driven match clock state (null → attract mode, clock ticks at TIME_SCALE). */
+  drivenClock: DrivenClock | null;
+  /**
+   * Short window after the feed hands possession to a team: that team's receivers get trap/claim
+   * priority so the pass launched by the driver lands with the intended side (no instant snaps).
+   */
+  possessionGrant: PossessionGrant | null;
+  /** Seconds until the next driven-filler autonomous shot may fire (`features.drivenFiller`). */
+  fillerShotCooldown: number;
+  /** Feed directives that arrived during the intro — flushed onto the pitch at kickoff. */
+  pendingDirectives: PendingDirective[];
+}
+
+/** A queued feed directive (see `sim/directives.ts`). */
+export interface PendingDirective {
+  kind: DrivenDirective;
+  team: Team;
+  threat: number;
+}
+
+/** See RealGkWorld.possessionGrant. */
+export interface PossessionGrant {
+  team: Team;
+  timer: number;
 }
 
 /** Held movement keys for the controlled player (playable sandbox). */
@@ -332,6 +359,8 @@ export interface RealGkHandle {
   /** v5: forces a foul (free kick / penalty / straight red) so the sanction flow can be tested on demand. */
   debugFoul: (kind: 'free' | 'penalty' | 'red') => void;
   // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
+  /** Match switch: run the cinematic entrance and hold its camera loop until `setDriven(true)` releases it. */
+  beginDrivenIntro: () => void;
   /** Enter/leave feed-driven mode (suppresses autonomous goals, shots, steals and fouls). */
   setDriven: (on: boolean) => void;
   /** The team currently on the ball + how threatening (0..1). Steers the whole shape. */
@@ -346,6 +375,8 @@ export interface RealGkHandle {
   injectCard: (team: Team) => void;
   /** Authoritative scoreboard (Blue = home / participant 1, Red = away / participant 2). */
   setScore: (blue: number, red: number) => void;
+  /** Authoritative match minute from the feed — the driven clock sweeps toward it. */
+  setClock: (minute: number) => void;
   resize: () => void;
   destroy: () => void;
 }

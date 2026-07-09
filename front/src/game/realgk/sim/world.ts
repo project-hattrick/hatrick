@@ -6,6 +6,8 @@ import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
 import { clearCelebrations } from './celebration';
+import { freshDrivenClock, tickDrivenClock } from './driven-clock';
+import { armFiller, tickFiller } from './filler';
 import { freshCoach, resetCoach, updateCoach } from './coach';
 import { maybeTriggerFoul } from './foul';
 import { updateIntro } from './intro';
@@ -57,6 +59,7 @@ const freshMatch = (): MatchState => ({
   scorer: null,
   introStage: IntroStage.Showcase,
   introTimer: 0,
+  introHold: false,
   restart: null,
   foulCooldown: 12,
 });
@@ -117,6 +120,7 @@ export function enterIntro(world: RealGkWorld): void {
   world.match.phase = MatchPhase.Intro;
   world.match.introStage = IntroStage.Showcase;
   world.match.introTimer = 0;
+  world.match.introHold = false;
   world.match.celebration = 0;
   world.match.restart = null;
   const note = Status.intro();
@@ -165,6 +169,10 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     sentOffNames: [],
     driven: false,
     intent: { attackingTeam: null, threat: 0 },
+    drivenClock: null,
+    possessionGrant: null,
+    fillerShotCooldown: 0,
+    pendingDirectives: [],
   };
   restartMatch(world);
   return world;
@@ -178,6 +186,11 @@ export function enterDrivenKickoff(world: RealGkWorld): void {
   world.intent = { attackingTeam: null, threat: 0 };
   world.match.blue = 0;
   world.match.red = 0;
+  world.match.time = 0;
+  world.drivenClock = freshDrivenClock();
+  world.possessionGrant = null;
+  world.pendingDirectives = [];
+  armFiller(world);
   world.match.celebration = 0;
   world.match.celebrantId = null;
   world.match.scorer = null;
@@ -241,9 +254,17 @@ export function step(world: RealGkWorld, dt: number): void {
     return;
   }
 
-  match.time += dt * TIME_SCALE;
+  // Driven mode: the clock follows the feed minute (players keep animating at 1×); attract keeps TIME_SCALE.
+  if (world.driven) tickDrivenClock(world, dt);
+  else match.time += dt * TIME_SCALE;
   // Feed-driven mode: the pressing team's threat decays over ~7s so a stale event doesn't pin the shape.
   if (world.intent.threat > 0) world.intent.threat *= Math.exp(-(dt * TIME_SCALE) / 7);
+  // Possession-grant window (driven): the feed's intended receivers keep priority while it lasts.
+  if (world.possessionGrant) {
+    world.possessionGrant.timer -= dt;
+    if (world.possessionGrant.timer <= 0) world.possessionGrant = null;
+  }
+  tickFiller(world, dt);
   // v5 fouls: a contested challenge may stop play — the sanction flow runs via updateRestart next tick.
   // Suppressed while driven: cards come from the feed via injectCard, not the autonomous challenge AI.
   if (!world.driven && maybeTriggerFoul(world, dt)) return;

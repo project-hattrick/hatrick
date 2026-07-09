@@ -45,8 +45,8 @@ export const DIVE_LENGTH = 0.78;
 /** Ball gravity (vz -= BALL_GRAVITY * dt). */
 export const BALL_GRAVITY = 760;
 
-/** Goal celebration freeze (seconds). */
-export const CELEBRATION = 3.6;
+/** Goal celebration freeze (seconds) — matches the GoalBurst overlay timeline (HOLD = 4.6s). */
+export const CELEBRATION = 4.6;
 
 /** Max real frame delta fed into the sim. */
 export const MAX_DT = 0.04;

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { HoloPlayerCard } from '@/components/store/holo-player-card';
 import { PickBuyDialog } from '@/components/store/pick-buy-dialog';
 import { useItemStock } from '@/services/queries/use-store-item';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { rarityFor, RARITY_THEME } from '@/config/card-rarity.config';
 import { pickSlug } from '@/config/store-catalog.config';
 import { statOrder, type PlayerCardData } from '@/config/fantasy-cards.config';
@@ -25,13 +26,15 @@ export function MarketPickCard({ card }: { card: PlayerCardData }) {
   const price = cardPrice(card.rating);
   const stock = useItemStock(pickSlug(card.id));
   const soldOut = stock !== undefined && stock <= 0;
+  // Signed out → open the login dialog (same as the navbar) instead of the buy modal.
+  const gate = useAuthGate();
 
   return (
     <>
       <button
         type="button"
         disabled={soldOut}
-        onClick={() => setBuying(true)}
+        onClick={gate(() => setBuying(true))}
         className={cn(
           'relative flex flex-col overflow-hidden rounded-xl border bg-surface-deep text-left transition-transform duration-300 ease-out',
           soldOut

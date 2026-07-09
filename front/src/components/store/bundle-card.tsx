@@ -19,6 +19,7 @@ import { StoreBadge, BadgeTone } from '@/components/store/store-badge';
 import { INTERACTIVE_CARD } from '@/components/store/interactive-card';
 import { ItemShowcase } from '@/components/store/item-showcase';
 import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { BundleTrait, type Bundle } from '@/config/store-bundles.config';
 import { cn } from '@/lib/utils';
 
@@ -78,6 +79,8 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   const purchase = usePurchaseItem();
   const stock = useItemStock(slug);
   const soldOut = stock !== undefined && stock <= 0;
+  // Signed out → open the login dialog (same as the navbar) instead of the confirm modal.
+  const gate = useAuthGate();
 
   const buy = async () => {
     const ok = await purchase(slug);
@@ -91,7 +94,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       <button
         type="button"
         disabled={soldOut}
-        onClick={() => setConfirming(true)}
+        onClick={gate(() => setConfirming(true))}
         style={{ backgroundImage: BUNDLE_BG }}
         className={cn(
           glassPanelVariants({ tone: 'dark', radius: 'lg' }),

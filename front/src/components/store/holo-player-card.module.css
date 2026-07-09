@@ -1,3 +1,17 @@
+/* The lib snaps the hover tilt (it injects `transition: transform 0s` on
+   `.sticker-card.active:hover`) and uses a strong 25deg / -20deg rotation. With
+   the scene's perspective + translateZ that reads as the card abruptly jumping
+   in size on hover. Soften per-card: a gentler tilt + a short eased transition
+   so the card grows/settles smoothly instead of popping. */
+.holoRoot {
+  --sticker-rotate-x: 12deg;
+  --sticker-rotate-y: -10deg;
+}
+
+.holoRoot :global(.sticker-card.active:hover) {
+  transition: transform 0.14s ease-out;
+}
+
 /* Refraction color override — the lib hard-codes its rainbow in injected CSS
    and ignores the `colors` prop, so we re-declare the gradients with vars.
    --holo-1/2/3 are set inline per card (country flag colors); gold fallback. */

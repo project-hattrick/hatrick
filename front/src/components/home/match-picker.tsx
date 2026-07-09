@@ -9,7 +9,7 @@ import { CaretDown, CircleNotch, Clock, ClockCounterClockwise, MagnifyingGlass, 
 import { useReplayCatalog, useUpcomingFixtures } from '@/services/queries/use-replay';
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
-import { useDisplayMatch, useIsMatchLive, useIsReplay, useMatchStore } from '@/store/match.store';
+import { useDisplayMatch, useIsMatchLive, useIsReplay, useIsSwitching, useMatchStore } from '@/store/match.store';
 import { useLoadReplay } from '@/hooks/use-load-replay';
 import { teamInfoFromName } from '@/config/teams.config';
 import { gameStateConfig, gameStateFallback } from '@/config/game-state.config';
@@ -69,18 +69,23 @@ function PickerTrigger({ variant }: { variant: PickerVariant }) {
   const match = useDisplayMatch();
   const isLive = useIsMatchLive();
   const isReplay = useIsReplay();
+  const switching = useIsSwitching();
 
   if (variant === 'hero') {
     const phase = lookup(gameStateConfig, match.gameState, gameStateFallback);
-    const state = isReplay ? 'Replay' : isLive ? 'Live' : 'Full-time';
-    const detail = isReplay || isLive ? formatMinute(match.minute) : null;
-    const sub = isLive ? phase.label : null;
+    const state = switching ? 'Loading' : isReplay ? 'Replay' : isLive ? 'Live' : 'Full-time';
+    const detail = switching ? null : isReplay || isLive ? formatMinute(match.minute) : null;
+    const sub = switching || !isLive ? null : phase.label;
     const accent = isReplay ? 'text-neon' : isLive ? 'text-live' : 'text-muted-foreground';
     const dot = isReplay ? 'bg-neon' : isLive ? 'animate-pulse bg-live' : 'bg-muted-foreground';
     return (
       <Popover.Trigger className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-overlay/45 py-1 pl-2.5 pr-2 backdrop-blur-md transition hover:bg-overlay/60">
-        <span className={cn('size-1.5 rounded-full', dot)} />
-        <span className={cn('text-[11px] font-semibold', accent)}>{state}</span>
+        {switching ? (
+          <CircleNotch className="size-3 animate-spin text-neon" />
+        ) : (
+          <span className={cn('size-1.5 rounded-full', dot)} />
+        )}
+        <span className={cn('text-[11px] font-semibold', switching ? 'text-neon' : accent)}>{state}</span>
         {detail ? <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{detail}</span> : null}
         {sub ? <span className="text-[11px] text-muted-foreground">· {sub}</span> : null}
         <CaretDown className="size-3 text-muted-foreground" />
@@ -99,7 +104,11 @@ function PickerTrigger({ variant }: { variant: PickerVariant }) {
       </span>
       <span className="hidden sm:inline">{match.away.code}</span>
       <Flag code={fifaToIso(match.away.code)} className="text-base" />
-      <CaretDown className="size-3.5 text-muted-foreground" />
+      {switching ? (
+        <CircleNotch className="size-3.5 animate-spin text-neon" />
+      ) : (
+        <CaretDown className="size-3.5 text-muted-foreground" />
+      )}
     </Popover.Trigger>
   );
 }

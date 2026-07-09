@@ -54,6 +54,9 @@ export interface RealGkFeatures {
   /** Lifelike positioning: stable per-player position jitter + varied facings (not everyone staring at the
    *  ball) + a sweeper-keeper that comes off its line. Only affects gated checkpoints. */
   livelyMatch?: boolean;
+  /** Feed-driven filler: between real feed events, allow harmless autonomous action (saved/missed shots,
+   *  slide tackles, intercepts) so a 90' watch stays alive. Goals/score remain feed-only. */
+  drivenFiller?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -286,7 +289,14 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   cameraLift: 0.12,
   // celebrations OFF: goals keep the freeze + replay flow, but skip the arms-up run / jump routine.
   // Keeper stays on the compact pack end-to-end (idle/walk/dive share the compact outfit) — no keeperDiveSave.
-  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false },
+  // deadBallSequence: staged restarts (ball rolls out, taker walks over) — also what keeps the DRIVEN
+  // ball from ever snapping on out-of-play; drivenFiller keeps the 90' watch alive between feed events.
+  features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false, deadBallSequence: true, drivenFiller: true },
+  // Mock matchup so scoreboards/goal overlay show real names + flags instead of generic Blue/Red.
+  teams: {
+    blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },
+    red: { name: 'Argentina', flagId: 'argentina', colors: ['#75AADB', '#FFFFFF', '#75AADB'] },
+  },
 };
 
 /**
@@ -302,6 +312,10 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   actorScale: { referee: 1.3, coach: 1.3 },
   cameraLift: 0.12,
   features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
+  teams: {
+    blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },
+    red: { name: 'Argentina', flagId: 'argentina', colors: ['#75AADB', '#FFFFFF', '#75AADB'] },
+  },
 };
 
 /** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */

@@ -135,6 +135,9 @@ export enum IntroStage {
   SponsorSweep = 'sponsor_sweep',
   /** Players walk on from below the pitch to their formation homes, staggered back-to-front. */
   RiseIn = 'rise_in',
+  /** Feed-driven buffering hold: squads idle at their homes while the camera loops cinematic beats
+   *  (board glides + formation push-ins) until the first real event releases the kickoff. */
+  HoldLoop = 'hold_loop',
   /** Referee runs to center and blows the whistle. */
   RefWhistle = 'ref_whistle',
   /** Ball is placed at center and handed to the kickoff team — the last beat before Live. */
@@ -167,6 +170,15 @@ export enum RestartStage {
   Ready = 'ready',
   /** Taker strikes the ball back into play; the match resumes. */
   Taking = 'taking',
+}
+
+/** Discrete feed directives that can be queued while the intro plays (flushed on kickoff). */
+export enum DrivenDirective {
+  Possession = 'possession',
+  Shot = 'shot',
+  Goal = 'goal',
+  Corner = 'corner',
+  Card = 'card',
 }
 
 export enum CelebrationKind {

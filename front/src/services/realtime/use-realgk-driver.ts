@@ -20,13 +20,22 @@ const teamOf = (participant?: number): Team | null =>
  * kickoff) so it only starts when there is data. Switching/clearing the fixture returns it to attract
  * mode. Kept out of React render — the engine runs its own RAF loop.
  */
-export function useRealgkFeedDriver(handleRef: MutableRefObject<RealGkHandle | null>, fixtureId: number | null): void {
+export function useRealgkFeedDriver(
+  handleRef: MutableRefObject<RealGkHandle | null>,
+  fixtureId: number | null,
+  opts?: { cinematicIntro?: boolean },
+): void {
   const startedRef = useRef(false);
+  const cinematicIntro = opts?.cinematicIntro === true;
 
   useEffect(() => {
-    // New/absent fixture: back to autonomous attract mode until this match's data arrives.
+    // New/absent fixture: back to autonomous attract mode until this match's data arrives — or, with
+    // the cinematic intro, straight into the held entrance (camera loop) while the feed buffers.
+    // typeof guard: an HMR-stale engine handle may predate beginDrivenIntro — fall back to attract.
     startedRef.current = false;
-    handleRef.current?.setDriven(false);
+    const handle = handleRef.current;
+    if (fixtureId != null && cinematicIntro && typeof handle?.beginDrivenIntro === 'function') handle.beginDrivenIntro();
+    else handle?.setDriven(false);
     if (fixtureId == null) return;
 
     const socket = getSocket();
@@ -46,7 +55,7 @@ export function useRealgkFeedDriver(handleRef: MutableRefObject<RealGkHandle | n
       socket.off(`match-event.${EmissionState.During}`, onMatch);
       socket.off(`match-event.${EmissionState.After}`, onMatch);
     };
-  }, [handleRef, fixtureId]);
+  }, [handleRef, fixtureId, cinematicIntro]);
 }
 
 /** The hero variant: drives the backdrop from the globally chosen match (match.store). */

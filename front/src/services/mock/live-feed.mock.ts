@@ -96,9 +96,58 @@ export function hydrateFromMock(): void {
   prediction.setPrompt(seedPrompt);
 }
 
-/** Simulated live chat — pushes one new balloon every ~2.6s until stopped. */
-export function startMockCrowd(): () => void {
-  const add = useCrowdStore.getState().add;
-  const timer = setInterval(() => add(randomCrowdMessage()), 2600);
+interface ScriptedEvent {
+  action: MatchAction;
+  participant: number;
+  label: string;
+}
+
+/** One believable stretch of second-half drama, then a non-scoring loop (score stays sane). */
+const eventScript: ScriptedEvent[] = [
+  { action: MatchAction.Corner, participant: 2, label: 'France' },
+  { action: MatchAction.YellowCard, participant: 1, label: 'R. De Paul' },
+  { action: MatchAction.Goal, participant: 2, label: 'K. Mbappé' },
+  { action: MatchAction.Var, participant: 2, label: 'Goal check' },
+  { action: MatchAction.Penalty, participant: 1, label: 'Argentina' },
+  { action: MatchAction.Goal, participant: 1, label: 'L. Messi' },
+];
+
+const eventLoop: ScriptedEvent[] = [
+  { action: MatchAction.Corner, participant: 1, label: 'Argentina' },
+  { action: MatchAction.FreeKick, participant: 2, label: 'A. Griezmann' },
+  { action: MatchAction.Substitution, participant: 2, label: 'O. Giroud' },
+  { action: MatchAction.YellowCard, participant: 2, label: 'A. Tchouaméni' },
+  { action: MatchAction.Corner, participant: 2, label: 'France' },
+  { action: MatchAction.FreeKick, participant: 1, label: 'L. Messi' },
+];
+
+const MOCK_EVENT_INTERVAL_MS = 20_000;
+
+/**
+ * Simulated match feed — emits one scripted event every ~20s through the same
+ * `applyEvent` seam the real socket uses, so everything downstream (score, stats,
+ * crowd director) behaves identically in mock mode.
+ */
+export function startMockMatchEvents(): () => void {
+  let seq = seedEvents.length;
+  let step = 0;
+  const timer = setInterval(() => {
+    const scripted = step < eventScript.length ? eventScript[step] : eventLoop[(step - eventScript.length) % eventLoop.length];
+    step += 1;
+    seq += 1;
+    const state = useMatchStore.getState();
+    const minute = Math.min((state.match?.minute ?? 67) + 2, 90);
+    state.applyEvent({
+      fixtureId: MOCK_FIXTURE_ID,
+      action: scripted.action,
+      state: EmissionState.After,
+      confirmed: true,
+      seq,
+      ts: Date.now(),
+      minute,
+      participant: scripted.participant,
+      label: scripted.label,
+    });
+  }, MOCK_EVENT_INTERVAL_MS);
   return () => clearInterval(timer);
 }

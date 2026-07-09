@@ -2,4 +2,5 @@
 export enum CrowdSource {
   Twitter = 'twitter',
   Community = 'community',
+  HatBot = 'hatbot',
 }

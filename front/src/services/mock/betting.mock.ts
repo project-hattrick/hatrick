@@ -13,7 +13,7 @@ function resolve(bet: Bet): BetStatus {
 /**
  * Simulated settlement — the mock stand-in for the authoritative `*.after`
  * TxLINE events. Every tick it settles any open bet whose window has elapsed,
- * crediting the payout on a win. Same start/stop contract as startMockCrowd.
+ * crediting the payout on a win. Same start/stop contract as startMockMatchEvents.
  * The backend swap replaces this with a match-event subscription (see betting-markets.config).
  */
 export function startMockSettlement(): () => void {

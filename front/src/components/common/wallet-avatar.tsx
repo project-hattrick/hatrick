@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-import { cn } from '@/lib/utils';
-import { UserCircle } from '@/components/common/icons';
+import { UserCircle, CircleNotch } from '@/components/common/icons';
 import { useAuth } from '@/services/queries/use-auth';
 import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { signOutLocal } from '@/services/session-mode';
@@ -50,48 +49,39 @@ export function WalletAvatar() {
     setAutoOpened(false);
   }
 
-  const label = isAuthenticated
-    ? 'Account'
-    : busy
-      ? 'Signing in…'
-      : isConnected
-        ? 'Sign in'
-        : 'Connect wallet';
-
+  // Signed-in avatar button — the AccountMenu wraps it as its dropdown trigger (or it opens the
+  // onboarding dialog directly for a freshly-registered account).
   const avatar = (
     <button
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label="Account"
+      title="Account"
       className="relative shrink-0"
-      // When signed out the button opens the login dialog; when signed in the AccountMenu wraps
-      // it as its dropdown trigger and owns the click.
-      onClick={isAuthenticated && !onboarding ? undefined : openLogin}
+      onClick={onboarding ? openLogin : undefined}
     >
-      {isAuthenticated ? (
-        <UserAvatar src={portraitSrc} alt="Profile" size={36} className="rounded-full border border-neon transition" />
-      ) : (
-        // Signed out: never show a persisted/default portrait — an empty placeholder reads as "not you (yet)".
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-border/80 bg-surface-1 text-muted-foreground transition hover:border-border hover:text-foreground">
-          <UserCircle className="size-5" />
-        </span>
-      )}
-      <span
-        className={cn(
-          'absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-background transition',
-          isAuthenticated ? 'bg-neon' : busy ? 'animate-pulse bg-warning' : 'bg-muted-foreground',
-        )}
-      />
+      <UserAvatar src={portraitSrc} alt="Profile" size={36} className="rounded-full border border-neon transition" />
+      <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-background bg-neon" />
     </button>
   );
 
+  if (isAuthenticated && user && !onboarding) {
+    return <AccountMenu user={user} trigger={avatar} onSignOut={signOut} />;
+  }
+  if (isAuthenticated) {
+    return avatar; // mid-onboarding
+  }
+
+  // Signed out → a clear, centred "Sign in" button (an empty avatar placeholder read as broken/unintuitive).
   return (
-    <>
-      {isAuthenticated && user && !onboarding ? (
-        <AccountMenu user={user} trigger={avatar} onSignOut={signOut} />
-      ) : (
-        avatar
-      )}
-    </>
+    <button
+      type="button"
+      onClick={openLogin}
+      disabled={busy}
+      aria-label={busy ? 'Signing in' : 'Sign in'}
+      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neon px-3.5 text-sm font-semibold text-primary-foreground shadow-e1 transition hover:bg-neon-hover disabled:opacity-70"
+    >
+      {busy ? <CircleNotch className="size-4 animate-spin" /> : <UserCircle className="size-4" weight="fill" />}
+      {busy ? 'Signing in…' : 'Sign in'}
+    </button>
   );
 }

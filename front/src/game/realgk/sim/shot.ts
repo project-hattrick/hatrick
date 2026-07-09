@@ -1,4 +1,4 @@
-import { BodyAnim, KickIntent, PlayerAction, Team } from '../enums';
+import { BodyAnim, KickIntent, PlayerAction, Role, Team } from '../enums';
 import { pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -14,7 +14,14 @@ function shotTiming(mode: BodyAnim): { dur: number; contact: number } {
 
 /** The goal the player is attacking — the exact point the strike is aimed at (shared by start + update). */
 function goalPointFor(world: RealGkWorld, player: RealGkPlayer): { x: number; y: number } {
-  return pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
+  const target = pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
+  // Feed-driven: shots are ALWAYS saved — aim straight at the keeper (dive/claim wins it); the
+  // goal-mouth parry backstops anything that slips past. Real goals arrive only via injectGoal.
+  if (world.driven) {
+    const keeper = world.players.find((p) => p.team !== player.team && p.role === Role.GK);
+    if (keeper) return { x: target.x, y: keeper.y + (Math.random() - 0.5) * 24 };
+  }
+  return target;
 }
 
 /**
@@ -65,7 +72,7 @@ export function commitShot(world: RealGkWorld, owner: RealGkPlayer): void {
     startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
     return;
   }
-  const goalPoint = pointOnField(world.size, owner.team === Team.Blue ? 0.98 : 0.02, 0.5);
+  const goalPoint = goalPointFor(world, owner);
   kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
   const note = Status.shot(owner.name);
   setStatus(world, note.title, note.text);
