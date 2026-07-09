@@ -37,7 +37,7 @@ export function GroupStageTable() {
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-2 text-base font-bold">🌍 Group stage</span>
+          <span className="flex items-center gap-2 text-base font-bold">Group stage</span>
           <span className="text-xs text-muted-foreground">Top two advance to the knockouts</span>
         </div>
         <div className="flex gap-1.5">

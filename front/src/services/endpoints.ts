@@ -21,6 +21,10 @@ export const endpoints = {
     buy: '/market/buy',
     sell: '/market/sell',
   },
+  store: {
+    catalog: '/store/catalog',
+    purchase: '/store/purchase',
+  },
   fantasy: {
     cards: '/fantasy/cards',
     collection: '/fantasy/collection',

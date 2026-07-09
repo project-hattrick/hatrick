@@ -26,16 +26,12 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <div className="flex flex-col gap-6">
         <ProfileHero initialEdit={edit === '1'} />
 
-        <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
-          <SectionHeader title="Collection" action={<CollectionCount />} />
-          <CollectionCarousel />
-        </GlassPanel>
-
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <DuelHistoryList />
-          <ProfileBets />
-          <WalletActivity />
-          <GlassPanel radius="xl" tone="surface" className="overflow-hidden lg:col-span-2 xl:col-span-1">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden lg:col-span-2">
+            <SectionHeader title="Collection" action={<CollectionCount />} />
+            <CollectionCarousel />
+          </GlassPanel>
+          <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden">
             <SectionHeader
               title="Starting XI"
               action={
@@ -46,6 +42,12 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             />
             <StartingXiPreview />
           </GlassPanel>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <DuelHistoryList />
+          <ProfileBets />
+          <WalletActivity />
         </div>
       </div>
     </PageShell>

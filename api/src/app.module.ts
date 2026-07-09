@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { WalletModule } from './wallet/wallet.module';
 import { MarketModule } from './market/market.module';
+import { StoreModule } from './store/store.module';
 import { ChainModule } from './chain/chain.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { ChainModule } from './chain/chain.module';
     AuthModule,
     WalletModule,
     MarketModule,
+    StoreModule,
     ChainModule,
   ],
   controllers: [AppController],

@@ -10,8 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Check, Copy, SignOut, UserCircle, Wallet } from '@/components/common/icons';
+import { Check, Copy, GearSix, SignOut, UserCircle, Wallet } from '@/components/common/icons';
 import { UserAvatar } from '@/components/common/user-avatar';
+import { SettingsDialog } from '@/components/profile/settings-dialog';
 import { TierBadge } from '@/components/duelists/tier-badge';
 import { formatThousands, shortAddress } from '@/lib/format';
 import { winRate } from '@/config/profile-mock';
@@ -35,6 +36,7 @@ export function AccountMenu({ user, onSignOut, trigger }: AccountMenuProps) {
   const draft = useProfileStore();
   const self = useSelfProfile();
   const [copied, setCopied] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const name = draft.displayName || user.displayName || shortAddress(user.walletAddress);
   const handle = draft.username
@@ -105,10 +107,15 @@ export function AccountMenu({ user, onSignOut, trigger }: AccountMenuProps) {
         <DropdownMenuItem render={<Link href="/profile" />}>
           <UserCircle className="size-4" /> My profile
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+          <GearSix className="size-4" /> Settings
+        </DropdownMenuItem>
         <DropdownMenuItem className="text-live data-highlighted:text-live" onClick={onSignOut}>
           <SignOut className="size-4" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} user={user} onSignOut={onSignOut} />
     </DropdownMenu>
   );
 }

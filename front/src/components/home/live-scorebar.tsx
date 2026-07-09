@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Flag } from '@/components/common/flag';
-import { useMatch } from '@/store/match.store';
+import { MatchPicker } from './match-picker';
+import { useDisplayMatch, useIsMatchLive, useIsReplay } from '@/store/match.store';
 import { usePredictionPrompt } from '@/store/prediction.store';
 import { usePlacePrediction } from '@/services/queries';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { gameStateConfig, gameStateFallback } from '@/config/game-state.config';
 import { lookup } from '@/lib/lookup';
-import { fifaToIso } from '@/lib/country';
 import { formatMinute } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +33,9 @@ function OddPill({ label, odds, onClick }: { label: string; odds: number; onClic
  * the way down the dashboard. A 1px sentinel above it drives a drop shadow once it has pinned.
  */
 export function LiveScorebar() {
-  const match = useMatch();
+  const match = useDisplayMatch();
+  const isLive = useIsMatchLive();
+  const isReplay = useIsReplay();
   const prompt = usePredictionPrompt();
   const placePrediction = usePlacePrediction();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -51,9 +52,11 @@ export function LiveScorebar() {
     return () => io.disconnect();
   }, []);
 
-  if (!match) return null;
-
   const phase = lookup(gameStateConfig, match.gameState, gameStateFallback);
+  const outcome =
+    match.score.home === match.score.away
+      ? 'Draw'
+      : `${match.score.home > match.score.away ? match.home.code : match.away.code} win`;
 
   const onPick = (label: 'YES' | 'NO') => {
     if (!prompt) return;
@@ -78,37 +81,49 @@ export function LiveScorebar() {
         )}
       >
         <div className="mx-auto flex h-[52px] w-full max-w-6xl items-center gap-3 px-4 md:gap-4 md:px-6">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-1.5 animate-pulse rounded-full bg-live motion-reduce:animate-none" />
-            <span className="font-mono text-eyebrow text-live">LIVE</span>
-          </span>
-
-          <span className="flex items-center gap-2 font-mono text-sm font-bold">
-            <Flag code={fifaToIso(match.home.code)} className="text-base" />
-            <span className="hidden sm:inline">{match.home.code}</span>
-            <span className="tabular-nums">
-              {match.score.home}
-              <span className="mx-1.5 text-muted-foreground">×</span>
-              {match.score.away}
+          {isReplay ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-neon" />
+              <span className="font-mono text-eyebrow text-neon">REPLAY</span>
             </span>
-            <span className="hidden sm:inline">{match.away.code}</span>
-            <Flag code={fifaToIso(match.away.code)} className="text-base" />
-          </span>
+          ) : isLive ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 animate-pulse rounded-full bg-live motion-reduce:animate-none" />
+              <span className="font-mono text-eyebrow text-live">LIVE</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="font-mono text-eyebrow text-muted-foreground">ENDED</span>
+            </span>
+          )}
+
+          <MatchPicker />
 
           <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
-            {formatMinute(match.minute)} · {phase.label}
+            {isReplay || isLive ? `${formatMinute(match.minute)} · ${phase.label}` : phase.label}
           </span>
 
-          {/* Live market quick-bet — same action as the hero prediction dock. */}
-          {prompt ? (
+          {isLive ? (
+            /* Live market quick-bet — same action as the hero prediction dock. */
+            prompt ? (
+              <div className="ml-auto flex items-center gap-2">
+                <span className="hidden max-w-[240px] truncate text-xs text-muted-foreground lg:block">
+                  {prompt.question}
+                </span>
+                <OddPill label="YES" odds={prompt.yesOdds} onClick={() => onPick('YES')} />
+                <OddPill label="NO" odds={prompt.noOdds} onClick={() => onPick('NO')} />
+              </div>
+            ) : null
+          ) : (
+            /* Finished match — betting is closed, so the seam shows the settled result instead. */
             <div className="ml-auto flex items-center gap-2">
-              <span className="hidden max-w-[240px] truncate text-xs text-muted-foreground lg:block">
-                {prompt.question}
+              <span className="hidden text-xs text-muted-foreground sm:inline">Full-time result</span>
+              <span className="inline-flex items-center rounded-md border border-border bg-surface-2 px-2.5 py-1 font-mono text-xs font-semibold">
+                {outcome}
               </span>
-              <OddPill label="YES" odds={prompt.yesOdds} onClick={() => onPick('YES')} />
-              <OddPill label="NO" odds={prompt.noOdds} onClick={() => onPick('NO')} />
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </>

@@ -58,21 +58,21 @@ export function WalletActivity() {
   const rows = data?.slice(0, 6) ?? [];
 
   return (
-    <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+    <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden">
       <SectionHeader
         title="Wallet activity"
         action={<span className="text-micro text-muted-foreground">coins · devnet</span>}
       />
       {!isAuthenticated ? (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
           Sign in to see your coin ledger.
         </p>
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <div className="flex flex-1 items-center justify-center py-8 text-muted-foreground">
           <CircleNotch className="size-5 animate-spin" />
         </div>
       ) : isError ? (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
           Couldn&apos;t load your wallet activity.
         </p>
       ) : rows.length ? (
@@ -82,7 +82,9 @@ export function WalletActivity() {
           ))}
         </div>
       ) : (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">No activity yet.</p>
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+          No activity yet.
+        </p>
       )}
     </GlassPanel>
   );

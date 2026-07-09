@@ -1,7 +1,8 @@
 import { Scoreboard } from './scoreboard';
-import { PlaybackControls } from './playback-controls';
 import { PlayerFocusCard } from './player-focus-card';
-import { PredictionPrompt } from './prediction-prompt';
+import { HeroCenterDock } from './hero-center-dock';
+import { ReplayBadge } from './replay-badge';
+import { MatchTimeline } from './match-timeline';
 import { MatchBackground } from './match-background';
 import { MatchSelector } from './match-selector';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
@@ -17,7 +18,7 @@ export function SplitDashboard() {
         <MatchBackground scrim={false} />
         <HeroChrome>
           <div className="absolute top-4 left-4 z-10">
-            <PlaybackControls />
+            <ReplayBadge />
           </div>
           <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2">
             <Scoreboard />
@@ -25,8 +26,11 @@ export function SplitDashboard() {
           <div className="absolute top-4 right-4 z-10 hidden w-[240px] max-w-[calc(100%-2rem)] lg:block">
             <PlayerFocusCard />
           </div>
-          <div className="absolute inset-x-4 bottom-0 z-20 flex justify-center md:inset-x-auto md:left-1/2 md:-translate-x-1/2">
-            <PredictionPrompt />
+          <div className="absolute inset-x-4 bottom-20 z-20 flex justify-center md:inset-x-auto md:left-1/2 md:-translate-x-1/2">
+            <HeroCenterDock />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3">
+            <MatchTimeline />
           </div>
         </HeroChrome>
       </div>

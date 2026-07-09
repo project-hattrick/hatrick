@@ -2,10 +2,12 @@
 
 import { type ReactNode } from 'react';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
+import { useDuelSync } from '@/hooks/use-duel-sync';
 import { DuelLayout } from '@/enums/duel-layout.enum';
 import { useDuelStore } from '@/store/duel.store';
 import { DuelImmersive } from './duel-immersive';
 import { DuelSplit } from './duel-split';
+import { DuelResultDialog } from './duel-result-dialog';
 
 // Branching is data, not control flow — pick the body by layout.
 const LAYOUTS: Record<DuelLayout, ReactNode> = {
@@ -20,11 +22,13 @@ const LAYOUTS: Record<DuelLayout, ReactNode> = {
  */
 export function DuelDashboard() {
   useLiveFeed();
+  useDuelSync();
   const layout = useDuelStore((s) => s.layout);
 
   return (
     <section key={layout} className="hero-fade relative min-h-screen w-full">
       {LAYOUTS[layout]}
+      <DuelResultDialog />
     </section>
   );
 }

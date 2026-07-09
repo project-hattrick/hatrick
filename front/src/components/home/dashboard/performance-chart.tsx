@@ -1,5 +1,7 @@
+'use client';
+
 import { GlassPanel } from '@/components/common/glass-panel';
-import { performance } from '@/config/match-dashboard.config';
+import { useDashboardMatch } from './use-dashboard-match';
 
 const W = 300;
 const H = 120;
@@ -50,8 +52,10 @@ function Series({ points, color, id }: { points: number[]; color: string; id: st
   );
 }
 
-/** "Graphic Performance" — two smooth series over the match timeline. */
+/** "Graphic Performance" — two smooth series over the selected match's timeline. */
 export function PerformanceChart() {
+  const match = useDashboardMatch();
+
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
@@ -65,17 +69,17 @@ export function PerformanceChart() {
         {[0.25, 0.5, 0.75].map((f) => (
           <line key={f} x1={PAD} x2={W - PAD} y1={PAD + f * (H - PAD * 2)} y2={PAD + f * (H - PAD * 2)} stroke="currentColor" strokeOpacity={0.08} className="text-white" />
         ))}
-        <Series points={performance.away.points} color={performance.away.color} id="perf-away" />
-        <Series points={performance.home.points} color={performance.home.color} id="perf-home" />
+        <Series points={match.perfAway} color={match.away.color} id="perf-away" />
+        <Series points={match.perfHome} color={match.home.color} id="perf-home" />
       </svg>
 
       <div className="flex items-center justify-between">
         <div className="flex gap-4 text-micro font-semibold text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: performance.home.color }} />{performance.home.name}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: performance.away.color }} />{performance.away.name}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: match.home.color }} />{match.home.name}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: match.away.color }} />{match.away.name}</span>
         </div>
         <div className="hidden gap-3 font-mono text-micro text-muted-foreground/70 sm:flex">
-          {performance.labels.map((l) => (
+          {match.perfLabels.map((l) => (
             <span key={l}>{l}</span>
           ))}
         </div>

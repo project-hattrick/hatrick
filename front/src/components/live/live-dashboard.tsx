@@ -2,6 +2,8 @@
 
 import { type ReactNode } from 'react';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
+import { useAutoReplay } from '@/hooks/use-auto-replay';
+import { useAmbientCrowd } from '@/hooks/use-ambient-crowd';
 import { ImmersiveDashboard } from './immersive-dashboard';
 import { SplitDashboard } from './split-dashboard';
 import { HeroLayout } from '@/enums/hero-layout.enum';
@@ -16,6 +18,8 @@ const LAYOUTS: Record<HeroLayout, ReactNode> = {
 /** First viewport: live widgets over the fullscreen stage, in the selected layout. */
 export function LiveDashboard() {
   useLiveFeed();
+  useAutoReplay();
+  useAmbientCrowd();
   const heroLayout = useUiStore((state) => state.heroLayout);
 
   return (

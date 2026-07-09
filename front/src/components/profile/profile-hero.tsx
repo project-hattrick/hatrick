@@ -35,7 +35,7 @@ export function ProfileHero({ initialEdit = false }: { initialEdit?: boolean }) 
       <div className="grid gap-6 px-5 pb-6 sm:px-7 lg:grid-cols-[280px_1fr]">
         <ProfileIdentity editing={editing} onEditingChange={setEditing} />
         <div className="mt-4 flex min-w-0 flex-col gap-4">
-          <ProfileStatGrid profile={selfProfile} />
+          <ProfileStatGrid profile={selfProfile} className="flex-1" />
           <ProfileAchievements />
         </div>
       </div>

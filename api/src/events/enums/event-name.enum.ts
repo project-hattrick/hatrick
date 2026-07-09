@@ -29,4 +29,7 @@ export enum EventName {
 
   /** Full tournament snapshot pushed to new realtime clients. */
   TournamentStateSync = 'tournament-state.sync',
+
+  /** A limited store item was bought (stock decremented, coins debited). */
+  StorePurchaseAfter = 'store-purchase.after',
 }

@@ -6,7 +6,7 @@
  *
  * Run: `npx ts-node prisma/seed.ts` (idempotent — skips if already populated).
  */
-import { CardRarity, PlayerPosition, Presence, PrismaClient, RankTier, type Prisma } from '@prisma/client';
+import { CardRarity, PlayerPosition, Presence, PrismaClient, RankTier, StoreItemKind, type Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -215,10 +215,37 @@ async function backfillCurrentUserStats(): Promise<void> {
   console.log(`Backfilled starter stats for ${fresh.length} real user(s).`);
 }
 
+// ── Store catalog — limited-stock items (prices in coins; display SOL = /100k) ─
+const storeItems: Array<{ slug: string; kind: StoreItemKind; name: string; price: number; stock: number }> = [
+  { slug: 'legendary-pack', kind: StoreItemKind.Pack, name: 'Legendary Pack', price: 200_000, stock: 12 },
+  { slug: 'pro-pack', kind: StoreItemKind.Pack, name: 'Pro Pack', price: 120_000, stock: 25 },
+  { slug: 'starter-pack', kind: StoreItemKind.Pack, name: 'Starter Pack', price: 50_000, stock: 40 },
+  { slug: 'limited-bundle', kind: StoreItemKind.Bundle, name: 'Limited Bundle', price: 350_000, stock: 8 },
+  { slug: 'midfield-bundle', kind: StoreItemKind.Bundle, name: 'Midfield Bundle', price: 250_000, stock: 15 },
+  { slug: 'card-mbappe', kind: StoreItemKind.Card, name: 'Mbappé', price: 295_000, stock: 3 },
+  { slug: 'card-haaland', kind: StoreItemKind.Card, name: 'Haaland', price: 245_000, stock: 5 },
+  { slug: 'card-messi', kind: StoreItemKind.Card, name: 'Messi', price: 235_000, stock: 5 },
+  { slug: 'card-vini', kind: StoreItemKind.Card, name: 'Vini Jr', price: 215_000, stock: 8 },
+  { slug: 'card-bellingham', kind: StoreItemKind.Card, name: 'Bellingham', price: 185_000, stock: 10 },
+];
+
+/** Store items — upsert by slug so new items land without resetting live stock. */
+async function seedStoreItems(): Promise<void> {
+  for (const item of storeItems) {
+    await prisma.storeItem.upsert({
+      where: { slug: item.slug },
+      update: {}, // never touch live stock on re-seed
+      create: item,
+    });
+  }
+  console.log(`Seeded ${storeItems.length} store items.`);
+}
+
 async function main(): Promise<void> {
   await seedCards();
   await seedDuelistUsers();
   await backfillCurrentUserStats();
+  await seedStoreItems();
 }
 
 main()

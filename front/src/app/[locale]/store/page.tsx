@@ -10,6 +10,7 @@ import { userCards } from '@/config/fantasy-cards.config';
 
 const storePacks: StorePack[] = [
   {
+    slug: 'legendary-pack',
     name: 'Legendary Pack',
     players: 5,
     price: '2.0 SOL',
@@ -17,8 +18,8 @@ const storePacks: StorePack[] = [
     caption: '5 players guaranteed, at least one rated 90+.',
     highlight: true,
   },
-  { name: 'Pro Pack', players: 11, price: '1.2 SOL', label: 'Top pick', caption: 'Top tier odds. More stars.' },
-  { name: 'Starter Pack', players: 7, price: '0.5 SOL', label: 'Great start', caption: 'Build your squad.' },
+  { slug: 'pro-pack', name: 'Pro Pack', players: 11, price: '1.2 SOL', label: 'Top pick', caption: 'Top tier odds. More stars.' },
+  { slug: 'starter-pack', name: 'Starter Pack', players: 7, price: '0.5 SOL', label: 'Great start', caption: 'Build your squad.' },
 ];
 
 /** Highest-rated cards first — the "market picks" strip. */
@@ -70,9 +71,9 @@ export default function StorePage() {
           {/* Market picks */}
           <section className="flex flex-col gap-3">
             <SectionHeading icon={ChartBar} label="Market picks" />
-            <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-2 sm:grid-cols-3 lg:grid-cols-5">
-              {marketPicks.map((card, index) => (
-                <MarketPickCard key={card.id} card={card} index={index} total={marketPicks.length} />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {marketPicks.map((card) => (
+                <MarketPickCard key={card.id} card={card} />
               ))}
             </div>
           </section>

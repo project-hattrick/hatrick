@@ -35,11 +35,11 @@ export function DuelHistoryList() {
   const rows = data.filter((d) => d.hostResult);
 
   return (
-    <GlassPanel tone="surface" radius="xl" className="overflow-hidden">
+    <GlassPanel tone="surface" radius="xl" className="flex flex-col overflow-hidden">
       <SectionHeader title="Recent Duels" />
 
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
           {isLoading ? 'Loading…' : 'No duels yet — challenge a rival to start your record.'}
         </p>
       ) : (

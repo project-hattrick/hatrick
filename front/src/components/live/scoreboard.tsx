@@ -1,8 +1,8 @@
 'use client';
 
-import { useMatch, useMatchEvents } from '@/store/match.store';
-import { gameStateConfig, gameStateFallback } from '@/config/game-state.config';
+import { useDisplayMatch, useDisplayEvents } from '@/store/match.store';
 import { matchActionConfig, matchActionFallback } from '@/config/match-action.config';
+import { MatchPicker } from '@/components/home/match-picker';
 import { Flag } from '@/components/common/flag';
 import { lookup } from '@/lib/lookup';
 import { fifaToIso } from '@/lib/country';
@@ -24,21 +24,15 @@ function TeamColumn({ code }: { code: string }) {
 
 /** Minimal, backgroundless scoreline (wire 3a): LIVE badge · flags + score · event chips. */
 export function Scoreboard() {
-  const match = useMatch();
-  const events = useMatchEvents();
-  if (!match) return null;
+  const match = useDisplayMatch();
+  const events = useDisplayEvents();
 
-  const phase = lookup(gameStateConfig, match.gameState, gameStateFallback);
   const recent = [...events].reverse().slice(0, MAX_EVENTS);
 
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
-      <div className="inline-flex items-center gap-2 rounded-full border border-live/30 bg-overlay/45 px-3 py-1 backdrop-blur-md">
-        <span className="size-1.5 animate-pulse rounded-full bg-live" />
-        <span className="font-mono text-eyebrow text-live">
-          LIVE {formatMinute(match.minute)} · {phase.label}
-        </span>
-      </div>
+      {/* Phase badge doubles as the match switcher (LIVE / FULL-TIME · ENDED + caret). */}
+      <MatchPicker variant="hero" />
 
       <div className="flex items-center gap-4 sm:gap-6">
         <TeamColumn code={match.home.code} />

@@ -8,7 +8,9 @@ export function useReplayCatalog(days = 6) {
   return useQuery({
     queryKey: queryKeys.replayCatalog(days),
     queryFn: () => replayService.getCatalog(days),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -22,6 +24,11 @@ export function useUpcomingFixtures() {
 
 export function useStartReplay() {
   return useMutation({ mutationFn: (input: StartReplayInput) => replayService.start(input) });
+}
+
+/** On-demand authoritative score for a fixture (snapshot baseline). */
+export function useFixtureScore() {
+  return useMutation({ mutationFn: (fixtureId: number) => replayService.getScore(fixtureId) });
 }
 
 export function useStopReplay() {

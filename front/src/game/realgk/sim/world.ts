@@ -163,9 +163,34 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     dpr: 1,
     controlId: 0,
     sentOffNames: [],
+    driven: false,
+    intent: { attackingTeam: null, threat: 0 },
   };
   restartMatch(world);
   return world;
+}
+
+/**
+ * Enters feed-driven mode with a clean live kickoff: clears the intent + score and resets to a fresh
+ * kickoff (Blue centre). Called by the handle's `setDriven(true)`. Leaves `world.driven` to the caller.
+ */
+export function enterDrivenKickoff(world: RealGkWorld): void {
+  world.intent = { attackingTeam: null, threat: 0 };
+  world.match.blue = 0;
+  world.match.red = 0;
+  world.match.celebration = 0;
+  world.match.celebrantId = null;
+  world.match.scorer = null;
+  world.match.restart = null;
+  world.match.phase = MatchPhase.Live;
+  world.match.kickoffTeam = Team.Blue;
+  clearCelebrations(world);
+  resetPlayers(world);
+  resetBall(world, Team.Blue);
+  resetReferee(world);
+  resetCoach(world);
+  const note = Status.kickoff();
+  setStatus(world, note.title, note.text);
 }
 
 /** Kickoff reset after a goal: fresh formations, ball at center, restart status. Leaves `phase` to the caller. */
@@ -217,8 +242,11 @@ export function step(world: RealGkWorld, dt: number): void {
   }
 
   match.time += dt * TIME_SCALE;
+  // Feed-driven mode: the pressing team's threat decays over ~7s so a stale event doesn't pin the shape.
+  if (world.intent.threat > 0) world.intent.threat *= Math.exp(-(dt * TIME_SCALE) / 7);
   // v5 fouls: a contested challenge may stop play — the sanction flow runs via updateRestart next tick.
-  if (maybeTriggerFoul(world, dt)) return;
+  // Suppressed while driven: cards come from the feed via injectCard, not the autonomous challenge AI.
+  if (!world.driven && maybeTriggerFoul(world, dt)) return;
   updatePlayers(world, dt);
   updateBall(world, dt);
   faceBall(world);

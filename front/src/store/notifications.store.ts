@@ -6,10 +6,13 @@ import type { AppNotification } from '@/types/notification';
 
 interface NotificationsStore {
   notifications: AppNotification[];
-  /** Push a new notification to the top (id/ts/read filled in). */
+  /** When true, new pushes are dropped — the in-app notifications toggle in Settings. */
+  muted: boolean;
+  /** Push a new notification to the top (id/ts/read filled in). No-op while muted. */
   push: (notification: Omit<AppNotification, 'id' | 'ts' | 'read'>) => void;
   /** Mark every notification as read (called when the bell menu opens). */
   markAllRead: () => void;
+  setMuted: (muted: boolean) => void;
 }
 
 const noopStorage = {
@@ -59,15 +62,21 @@ export const useNotificationsStore = create<NotificationsStore>()(
   persist(
     (set) => ({
       notifications: seedNotifications(),
+      muted: false,
       push: (notification) =>
-        set((state) => ({
-          notifications: [
-            { ...notification, id: crypto.randomUUID(), ts: Date.now(), read: false },
-            ...state.notifications,
-          ].slice(0, 30),
-        })),
+        set((state) =>
+          state.muted
+            ? state
+            : {
+                notifications: [
+                  { ...notification, id: crypto.randomUUID(), ts: Date.now(), read: false },
+                  ...state.notifications,
+                ].slice(0, 30),
+              },
+        ),
       markAllRead: () =>
         set((state) => ({ notifications: state.notifications.map((n) => ({ ...n, read: true })) })),
+      setMuted: (muted) => set({ muted }),
     }),
     {
       name: 'hat-trick-notifications',

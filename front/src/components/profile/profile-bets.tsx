@@ -13,7 +13,7 @@ export function ProfileBets() {
   const rows = [...open, ...settled].slice(0, 6);
 
   return (
-    <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+    <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden">
       <SectionHeader
         title="Bet & prediction history"
         action={
@@ -29,9 +29,9 @@ export function ProfileBets() {
           ))}
         </div>
       ) : (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
           No bets yet —{' '}
-          <Link href="/bets" className="text-neon">
+          <Link href="/bets" className="mx-1 text-neon">
             place your first
           </Link>
           .

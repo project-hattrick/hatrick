@@ -38,6 +38,7 @@ export {
   Eye,
   Flag,
   GameController,
+  GearSix,
   Gift,
   Globe,
   GoogleLogo,

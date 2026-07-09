@@ -13,4 +13,5 @@ export const queryKeys = {
   duelist: (username: string) => ['duelist', username] as const,
   duelistSearch: (query: string) => ['duelists', 'search', query] as const,
   duels: () => ['duels'] as const,
+  storeCatalog: () => ['store', 'catalog'] as const,
 };

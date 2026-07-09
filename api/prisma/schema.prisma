@@ -173,12 +173,22 @@ enum WalletTxType {
   PackPurchase
   MarketSale
   MarketPurchase
+  StorePurchase
   BetStake
   BetPayout
   BetRefund
   DuelStake
   DuelReward
   Adjustment
+}
+
+/**
+ * What a limited store item unlocks — mirrors the front /store sections.
+ */
+enum StoreItemKind {
+  Pack
+  Bundle
+  Card
 }
 
 /**
@@ -503,6 +513,25 @@ model WalletTransaction {
   @@index([userId])
   @@index([refType, refId])
   @@map("wallet_transactions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Store — limited-stock catalog (each purchase decrements; 0 = sold out)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model StoreItem {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  kind      StoreItemKind
+  name      String
+  price     Decimal       @db.Decimal(18, 2)
+  stock     Int
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([kind])
+  @@map("store_items")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -371,9 +371,10 @@ function applyShake(cam: RealGkCamera, dt: number): void {
   cam.y += Math.cos(cam.shakePhase * 47) * mag * 0.7;
 }
 
-/** Slow-mo replay camera: tight eased track on the recorded ball, no velocity lead (it jitters at 0.4×). */
-export function updateReplayCamera(cam: RealGkCamera, world: RealGkWorld, targetX: number, targetY: number): void {
-  const zt = clamp(cam.presets[0].zoom * 1.8, 2.6, 3.4);
+/** Slow-mo replay camera: tight eased track on the recorded ball, no velocity lead (it jitters at 0.4×).
+ *  `progress01` is the playback position (goal = 1): the zoom ramps in so the final shot reads closest. */
+export function updateReplayCamera(cam: RealGkCamera, world: RealGkWorld, targetX: number, targetY: number, progress01 = 0): void {
+  const zt = clamp(cam.presets[0].zoom * 1.8 * (1 + 0.5 * progress01 * progress01), 2.6, 4.6);
   cam.x += (targetX - cam.x) * 0.14;
   cam.y += (targetY - cam.y) * 0.14;
   cam.z += (zt - cam.z) * 0.08;

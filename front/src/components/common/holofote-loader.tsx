@@ -7,10 +7,10 @@ export function HolofoteLoader() {
       <div className="fixed inset-0 z-[70] grid place-items-center bg-black px-8">
         <div className="flex flex-col items-center gap-6">
           <div className="relative grid place-items-center">
-            {/* Soft neon halo so the mark reads warm, not flat, on black. */}
+            {/* Soft neutral halo so the mark reads warm, not flat, on black. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute size-[min(64vw,340px)] rounded-full bg-neon/10 blur-[70px]"
+              className="pointer-events-none absolute size-[min(64vw,340px)] rounded-full bg-white/[0.06] blur-[70px]"
             />
             <Image
               src="/logo.png"

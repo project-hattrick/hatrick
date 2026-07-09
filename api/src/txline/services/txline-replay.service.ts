@@ -36,6 +36,25 @@ export interface ReplayCatalogItem {
 type Frame = { ts: number; kind: 'score' | 'odds'; ev: WireScoreEvent | WireOddsEvent };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const NOTABLE_ACTIONS = new Set(['goal', 'yellow_card', 'red_card', 'corner', 'penalty']);
+
+/** One notable moment on a fixture's timeline, carrying the authoritative score at that point. */
+export interface TimelineEvent {
+  minute: number;
+  action: string;
+  participant?: number;
+  home: number;
+  away: number;
+}
+
+export interface FixtureTimeline {
+  fixtureId: number;
+  events: TimelineEvent[];
+  finalHome: number;
+  finalAway: number;
+  durationMin: number;
+}
+
 /**
  * Replays a past fixture from the historical `/updates` endpoints through the
  * same normalizer as the live SSE — so `*.during`/`*.after`, odds and match-end
@@ -142,6 +161,36 @@ export class TxlineReplayService implements OnModuleInit {
     return { team, comp };
   }
 
+  /**
+   * The full notable-event timeline for a fixture (goals/cards/corners with the authoritative
+   * cumulative score at each), for a FRONT-driven, seekable replay — no live stream needed.
+   */
+  async timeline(opts: ReplayOptions): Promise<FixtureTimeline> {
+    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, opts.hours ?? DEFAULT_HOURS);
+    let home = 0;
+    let away = 0;
+    let lastMinute = 0;
+    const seen = new Set<number>();
+    const events: TimelineEvent[] = [];
+
+    for (const f of frames) {
+      if (f.kind !== 'score') continue;
+      const raw = mapWireScore(f.ev as WireScoreEvent);
+      if (!raw || !raw.confirmed) continue; // authoritative frames only
+      if (raw.homeGoals !== undefined) home = raw.homeGoals;
+      if (raw.awayGoals !== undefined) away = raw.awayGoals;
+      const minute = raw.dataSoccer?.Minutes ?? lastMinute;
+      lastMinute = Math.max(lastMinute, minute);
+      const action = raw.action ?? '';
+      if (!NOTABLE_ACTIONS.has(action) || seen.has(raw.seq)) continue;
+      seen.add(raw.seq);
+      events.push({ minute, action, participant: raw.dataSoccer?.Participant, home, away });
+    }
+
+    events.sort((a, b) => a.minute - b.minute);
+    return { fixtureId: opts.fixtureId, events, finalHome: home, finalAway: away, durationMin: Math.max(90, lastMinute) };
+  }
+
   /** Load a fixture's history, order by Ts, and play it through the normalizer. */
   async start(opts: ReplayOptions): Promise<{ frames: number; goals: [number, number] }> {
     const myId = ++this.runId; // supersede any prior replay
@@ -163,14 +212,27 @@ export class TxlineReplayService implements OnModuleInit {
     let prevTs = frames[0].ts;
     let emitted = 0;
 
+    const superseded = () => myId !== this.runId;
     for (const f of frames) {
-      if (myId !== this.runId) {
+      if (superseded()) {
         this.logger.log('replay superseded/stopped — exiting loop');
         return { frames: emitted, goals: [final.home ?? tally[0], final.away ?? tally[1]] };
       }
-      const wait = Math.min(MAX_GAP_MS, Math.max(0, (f.ts - prevTs) / speed));
+      // At 1:1 (speed ≤ 1) honor the real inter-event gap so the match plays back in true real time; faster
+      // speeds keep the idle-gap cap so quiet stretches don't stall. Sleep in ≤1s chunks so a stop/supersede
+      // is picked up promptly even across a long real gap (e.g. half-time).
+      const realGap = Math.max(0, (f.ts - prevTs) / speed);
+      let wait = speed <= 1 ? realGap : Math.min(MAX_GAP_MS, realGap);
       prevTs = f.ts;
-      if (wait) await sleep(wait);
+      while (wait > 0) {
+        if (superseded()) {
+          this.logger.log('replay superseded/stopped — exiting loop');
+          return { frames: emitted, goals: [final.home ?? tally[0], final.away ?? tally[1]] };
+        }
+        const chunk = Math.min(wait, 1_000);
+        await sleep(chunk);
+        wait -= chunk;
+      }
 
       if (f.kind === 'odds') {
         const ev = mapWireOdds(f.ev as WireOddsEvent);

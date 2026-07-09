@@ -50,6 +50,8 @@ export function maybeTriggerReceive(world: RealGkWorld, player: RealGkPlayer): b
   // Steal if an opponent kicked it last (cutting their pass); trap if it's your own team's ball.
   const lastTeam = world.players.find((p) => p.id === ball.lastKickerId)?.team ?? null;
   const steal = lastTeam !== null && lastTeam !== player.team;
+  // While feed-driven the feed dictates possession — allow own-team traps, suppress opponent intercepts.
+  if (steal && world.driven) return false;
   return startReceive(world, player, steal);
 }
 

@@ -19,11 +19,11 @@ const sections = [
   },
   {
     heading: 'Self-exclusion',
-    body: 'If you feel your engagement is becoming problematic, you can self-exclude from prediction and betting surfaces at any time via your Profile settings. Self-exclusion is effective immediately and lasts for a minimum of 24 hours. Reactivation requires a cooling-off confirmation.',
+    body: 'If you feel your engagement is becoming problematic, you can self-exclude from prediction and betting surfaces at any time via Settings in your account menu. Self-exclusion is effective immediately and lasts for a minimum of 24 hours. Reactivation requires a cooling-off confirmation.',
   },
   {
     heading: 'Deposit & stake limits',
-    body: 'While this demo uses play-money only, we model responsible-gaming controls: daily and weekly stake limits are configurable from your Profile. Limits take effect instantly and can only be reduced — an increase requires a 24-hour review period.',
+    body: 'While this demo uses play-money only, we model responsible-gaming controls: daily and weekly stake limits are configurable from Settings in your account menu. Limits take effect instantly and can only be reduced — an increase requires a 24-hour review period.',
   },
   {
     heading: 'Help resources',

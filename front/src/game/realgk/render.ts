@@ -61,7 +61,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const personaOn = world.cfg.features?.personaHeads === true && assets.personaHeads.length > 0;
   const personaLoco = personaOn && !isGk && !!assets.personaBodies[player.mode]?.length && locomotionConfigFor(player.mode) !== null;
   const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
-  const frame = personaLoco ? assets.personaBodies[player.mode]![frameIdx] : assets.body[player.mode][frameIdx];
+  // Resilient frame lookup: a not-yet-loaded or missing mode/frame must never crash the draw (it used to
+  // flood "recovered draw errors" and leave the pitch as bare shadows). Fall back to the mode's frame 0,
+  // then a neutral idle, and skip cleanly if even that is unavailable.
+  const bodyFrames = personaLoco ? assets.personaBodies[player.mode] : assets.body[player.mode];
+  const frame =
+    bodyFrames?.[frameIdx] ??
+    bodyFrames?.[0] ??
+    assets.body[BodyAnim.IdleFront]?.[0] ??
+    assets.body[BodyAnim.GkIdle]?.[0];
+  if (!frame) return;
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
   const outfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode, frameIdx) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const diving = isGk && player.action === PlayerAction.Dive;
@@ -199,9 +208,11 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   paintSprite();
 
   // Overhead pixel arrow (built from stacked rects) bobbing above the controlled player.
+  // spriteHeight is the BODY only — composited heads extend above it, so lift the arrow clear of the head.
   if (isActive) {
+    const headLift = composedCfg ? spriteHeight * Math.max(0, composedCfg.headScale - composedCfg.offsetYRatio) : 0;
     const ax = Math.round(player.x);
-    const ay = Math.round(footY - spriteHeight - 9 + (Math.floor(now / 180) % 3) - 1);
+    const ay = Math.round(footY - spriteHeight - headLift - 22 + (Math.floor(now / 180) % 3) - 1);
     ctx.save();
     ctx.fillStyle = markColor;
     ctx.fillRect(ax - 4, ay, 9, 2);

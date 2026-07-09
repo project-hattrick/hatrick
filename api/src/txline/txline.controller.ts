@@ -4,6 +4,7 @@ import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestj
 import { TxlineSnapshotService } from './services/txline-snapshot.service';
 import { TxlineReplayService } from './services/txline-replay.service';
 import { FixtureDto } from './dto/fixture.dto';
+import { FixtureScoreDto } from './dto/fixture-score.dto';
 import { OddsSnapshotItemDto } from './dto/odds-snapshot.dto';
 import { ScoreSnapshotItemDto } from './dto/score-snapshot.dto';
 import { ReplayRequestDto } from './dto/replay-request.dto';
@@ -32,6 +33,14 @@ export class TxlineController {
     }) as Promise<FixtureDto[]>;
   }
 
+  @Get('fixtures/:fixtureId/score')
+  @ApiOperation({ summary: 'Authoritative current/final score for a fixture (baseline before the SSE stream).' })
+  @ApiParam({ name: 'fixtureId', type: Number })
+  @ApiOkResponse({ type: FixtureScoreDto })
+  getFixtureScore(@Param('fixtureId', ParseIntPipe) fixtureId: number): Promise<FixtureScoreDto> {
+    return this.snapshots.getFixtureScore(fixtureId);
+  }
+
   @Get('fixtures/:fixtureId/odds')
   @ApiOperation({ summary: 'Latest odds snapshot for a single fixture (baseline before the SSE stream).' })
   @ApiParam({ name: 'fixtureId', type: Number })
@@ -53,6 +62,26 @@ export class TxlineController {
   @ApiQuery({ name: 'days', required: false, type: Number })
   getReplayCatalog(@Query('days') days?: string) {
     return this.replay.catalog(days ? Number(days) : undefined);
+  }
+
+  @Get('replay/timeline')
+  @ApiOperation({ summary: 'Full notable-event timeline of a past fixture for a front-driven, seekable replay.' })
+  @ApiQuery({ name: 'fixtureId', type: Number })
+  @ApiQuery({ name: 'epochDay', type: Number })
+  @ApiQuery({ name: 'startHour', type: Number })
+  @ApiQuery({ name: 'hours', required: false, type: Number })
+  getReplayTimeline(
+    @Query('fixtureId') fixtureId: string,
+    @Query('epochDay') epochDay: string,
+    @Query('startHour') startHour: string,
+    @Query('hours') hours?: string,
+  ) {
+    return this.replay.timeline({
+      fixtureId: Number(fixtureId),
+      epochDay: Number(epochDay),
+      startHour: Number(startHour),
+      hours: hours ? Number(hours) : undefined,
+    });
   }
 
   @Post('replay')

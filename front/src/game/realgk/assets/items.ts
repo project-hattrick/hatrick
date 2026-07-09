@@ -21,16 +21,13 @@ const RAW: RawItem[] = [
   { id: BodyAnim.WalkFront, fps: 4.5, frameCount: 4, bboxes: [[73, 69, 413, 614], [3, 69, 343, 614], [73, 3, 413, 548], [3, 3, 343, 548]] },
   { id: BodyAnim.RunFront, fps: 7.2, frameCount: 4, bboxes: [[99, 49, 458, 664], [18, 38, 370, 671], [83, 3, 443, 631], [3, 12, 355, 625]] },
   { id: BodyAnim.RunSide, fps: 7.2, frameCount: 4, bboxes: [[98, 62, 370, 613], [3, 70, 335, 591], [129, 3, 387, 519], [15, 10, 320, 528]] },
-  // Idle now uses the light-save stance (pre-trimmed, drawn whole) instead of the old green sheet — no bboxes.
+  // Idle + shuffle now ship the playground's compact keeper pack (pre-trimmed, drawn whole) — no bboxes.
   { id: BodyAnim.GkIdle, fps: 2.2, frameCount: 4 },
   { id: BodyAnim.GkReady, fps: 4.4, frameCount: 4, bboxes: [[209, 135, 467, 455], [154, 136, 409, 455], [195, 89, 451, 411], [133, 96, 407, 406]] },
-  { id: BodyAnim.GkShuffle, fps: 6.0, frameCount: 4, bboxes: [[225, 145, 471, 461], [142, 145, 390, 461], [204, 69, 462, 387], [152, 74, 415, 387]] },
-  {
-    id: BodyAnim.GkRunSide,
-    fps: 10.5,
-    frameCount: 8,
-    bboxes: [[112, 106, 347, 349], [69, 111, 315, 352], [77, 112, 258, 351], [32, 112, 271, 352], [112, 64, 347, 307], [63, 64, 291, 288], [94, 57, 255, 300], [16, 55, 265, 294]],
-  },
+  { id: BodyAnim.GkShuffle, fps: 6.0, frameCount: 4 },
+  // Lateral movement now ships the compact keeper walk pack (headless, pre-trimmed, drawn whole) — the
+  // full 8-frame cycle whose frames 1/2/5/6 also back GkShuffle.
+  { id: BodyAnim.GkRunSide, fps: 8.0, frameCount: 8 },
   {
     id: BodyAnim.GkDive,
     fps: 11.0,

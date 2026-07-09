@@ -11,23 +11,23 @@ export const metadata = buildMetadata({
 const sections = [
   {
     heading: 'What are cookies?',
-    body: 'Cookies are small text files placed on your device when you visit a website. Hat-trick uses browser cookies and local storage to remember your preferences, keep you logged in via your wallet session, and understand how the platform is used — so we can improve it.',
+    body: 'Cookies are small text files placed on your device when you visit a website. Hat-trick uses a single browser cookie plus local storage, only to keep you signed in and remember your preferences — never to track you across the web or serve advertising.',
   },
   {
     heading: 'Essential cookies',
-    body: 'These are required for the platform to function. They manage your wallet authentication session, theme and language preferences, and your squad / bet-slip state between page reloads. You cannot opt out of essential cookies while using Hat-trick.',
+    body: 'We set one strictly-necessary cookie (ht_session) that holds your wallet authentication session. It is httpOnly (unreadable by page scripts), same-site, and expires with your session. It is required to stay logged in, so it is exempt from consent — you cannot opt out while using Hat-trick.',
   },
   {
-    heading: 'Analytics cookies',
-    body: 'We use aggregate, anonymised analytics to understand which features are popular and where errors occur. Analytics data is never tied to your identity or wallet address and is not sold or shared with third parties. Analytics are disabled during self-exclusion.',
+    heading: 'Functional local storage',
+    body: 'Your theme and language preferences, fantasy squad and bet-slip state, and onboarding progress are kept in your browser\'s local storage for fast reloads. This data stays on your device and is only sent to our servers when you explicitly sync your profile.',
   },
   {
-    heading: 'Performance & local storage',
-    body: 'Match state, fantasy squad data and UI preferences are stored in browser local storage for fast, offline-capable access. This data stays on your device; it is not sent to our servers unless you explicitly sync your profile.',
+    heading: 'No tracking or advertising',
+    body: 'Hat-trick currently runs no third-party analytics, advertising, or cross-site tracking cookies. If we introduce optional analytics in the future, we will ask for your consent first and update this policy before any such cookie is set.',
   },
   {
     heading: 'Managing cookies',
-    body: 'You can clear all cookies and local storage at any time from your browser settings. Clearing session storage will sign you out. You can also disable analytics from the Privacy toggle in your Profile settings. Blocking essential cookies may prevent the platform from functioning correctly.',
+    body: 'You can clear all cookies and local storage at any time from your browser settings. Clearing the session cookie will sign you out; clearing local storage resets your on-device preferences. Blocking the essential cookie may prevent the platform from functioning correctly.',
   },
   {
     heading: 'Updates to this policy',
@@ -39,7 +39,7 @@ export default function CookiesPage() {
   return (
     <LegalDoc
       title="Cookie Policy"
-      updated="July 4, 2026"
+      updated="July 8, 2026"
       intro="This policy explains how Hat-trick uses cookies and browser storage, and how you can control them. Wireframe copy — final text pending legal review."
       sections={sections}
     />

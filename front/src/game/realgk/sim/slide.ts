@@ -11,14 +11,19 @@ const SLIDE_DURATION = 0.66;
 const SLIDE_COOLDOWN = 1.6;
 /** The poke lands early (~30% in), where the leg is fully extended. */
 const CONTACT_T = 0.3;
-/** Forward glide speed the slide launches with (decays over the lunge). */
-const SLIDE_LUNGE = 96;
-/** Reach of the poke at contact (px). */
+/** Forward glide launch speed, tuned on the hero pitch (fieldScale 1.5); with the 0.93 decay the whole
+ *  lunge covers ~2–3 body lengths so the carrinho visibly travels instead of playing in place. */
+const SLIDE_LUNGE = 300;
+const SLIDE_DECAY = 0.93;
+/** Reach of the poke at contact (px, fieldScale 1.5). */
 const REACH_X = 36;
 const REACH_Y = 24;
 
+/** Pitch-size compensation: px tunables above were authored at fieldScale 1.5 (see keeper.ts). */
+const windowScale = (world: RealGkWorld): number => world.cfg.fieldScale / 1.5;
+
 /** Begins a slide tackle: lunge along the current facing, poke the ball at the contact frame. */
-export function startSlideTackle(player: RealGkPlayer): boolean {
+export function startSlideTackle(world: RealGkWorld, player: RealGkPlayer): boolean {
   if (player.role === Role.GK) return false;
   player.action = PlayerAction.SlideTackle;
   player.actionTimer = SLIDE_DURATION;
@@ -26,7 +31,7 @@ export function startSlideTackle(player: RealGkPlayer): boolean {
   player.mode = BodyAnim.SlideTackle;
   player.modeLock = SLIDE_DURATION;
   player.slideHit = false;
-  player.vx = player.facing * SLIDE_LUNGE;
+  player.vx = player.facing * SLIDE_LUNGE * windowScale(world);
   player.vy = 0;
   return true;
 }
@@ -37,14 +42,15 @@ export function maybeTriggerSlideTackle(world: RealGkWorld, player: RealGkPlayer
   if (player.action !== PlayerAction.None || player.actionTimer > 0 || player.slideCooldown > 0) return false;
   const owner = ballOwner(world);
   if (!owner || owner.team === player.team) return false;
+  const ws = windowScale(world);
   const dx = owner.x - player.x;
   const dy = owner.y - player.y;
   // Reachable by a mostly-horizontal lunge: some room to slide (dx) with the carrier roughly level (dy).
-  if (Math.abs(dx) < 12 || Math.abs(dx) > 42 || Math.abs(dy) > 26) return false;
+  if (Math.abs(dx) < 12 * ws || Math.abs(dx) > 60 * ws || Math.abs(dy) > 26 * ws) return false;
   // Occasional, so defenders don't all pile in at once (cooldown + chance gate it).
   if (Math.random() > 0.03) return false;
   player.facing = dx < 0 ? -1 : 1;
-  return startSlideTackle(player);
+  return startSlideTackle(world, player);
 }
 
 /** Ticks an in-progress slide: glide forward, poke/strip the ball at contact if in reach, then recover. */
@@ -55,7 +61,7 @@ export function updateSlideTackle(world: RealGkWorld, player: RealGkPlayer, dt: 
   const t = clamp(player.actionElapsed / SLIDE_DURATION, 0, 1);
 
   // Decelerating forward glide along the pitch.
-  player.vx *= Math.pow(0.9, dt * 60);
+  player.vx *= Math.pow(SLIDE_DECAY, dt * 60);
   player.vy = 0;
   player.x += player.vx * dt;
   const bounds = fieldBounds(world.size, player.y);
@@ -63,8 +69,9 @@ export function updateSlideTackle(world: RealGkWorld, player: RealGkPlayer, dt: 
 
   if (!player.slideHit && t >= CONTACT_T) {
     player.slideHit = true;
+    const ws = windowScale(world);
     const { ball } = world;
-    const inReach = Math.abs(ball.x - player.x) < REACH_X && Math.abs(ball.y - player.y) < REACH_Y;
+    const inReach = Math.abs(ball.x - player.x) < REACH_X * ws && Math.abs(ball.y - player.y) < REACH_Y * ws;
     if (inReach) {
       // Strip possession and knock the ball forward + up (a cleared poke).
       ball.ownerId = null;

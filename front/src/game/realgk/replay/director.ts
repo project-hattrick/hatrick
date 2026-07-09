@@ -112,7 +112,9 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
     } else if (match.phase === MatchPhase.Replay) {
       progress += rawDt * REPLAY_SPEED;
       const sample = currentSample();
-      if (sample) updateReplayCamera(cam, world, sample.ball.x, sample.ball.y);
+      if (sample && playback) {
+        updateReplayCamera(cam, world, sample.ball.x, sample.ball.y, Math.min(1, progress / playback.durationSeconds));
+      }
       if (!playback || progress >= playback.durationSeconds) {
         match.phase = MatchPhase.ReplayOut;
         match.phaseTimer = 0;

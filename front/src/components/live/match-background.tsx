@@ -1,5 +1,5 @@
 import { GameBackground } from '@/components/game/game-background';
-import { RealGkBackground } from '@/components/game/real-gk/real-gk-background';
+import { PersonaHeroBackdrop } from '@/components/game/real-gk/persona-hero-backdrop';
 import { HERO_CHECKPOINT, RuntimeKind, getCheckpointMeta } from '@/game/checkpoints/registry';
 
 /** Live match playing behind the hero — the engine (picked by runtime) as an ambient backdrop. */
@@ -8,7 +8,7 @@ export function MatchBackground({ scrim = true, bridgeHud = false }: { scrim?: b
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
       {isRealGk ? (
-        <RealGkBackground className="absolute inset-0" bridgeHud={bridgeHud} />
+        <PersonaHeroBackdrop className="absolute inset-0" bridgeHud={bridgeHud} />
       ) : (
         <GameBackground checkpoint={HERO_CHECKPOINT} className="absolute inset-0" />
       )}

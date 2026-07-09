@@ -6,6 +6,8 @@ import 'flag-icons/css/flag-icons.min.css';
 import { talero } from '@/lib/fonts';
 import { AppProviders } from '@/providers/app-providers';
 import { Toaster } from '@/components/ui/sonner';
+import { CookieNotice } from '@/components/common/cookie-notice';
+import { AgeGate } from '@/components/common/age-gate';
 import { SmoothScroll } from '@/components/common/smooth-scroll';
 import { SITE } from '@/lib/seo';
 import { JsonLd, siteJsonLd } from '@/components/common/json-ld';
@@ -87,6 +89,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <SmoothScroll>
           <AppProviders locale={locale} dictionary={dictionary}>
             <main className="flex flex-1 flex-col">{children}</main>
+            <CookieNotice />
+            <AgeGate />
             <Toaster />
           </AppProviders>
         </SmoothScroll>

@@ -6,10 +6,24 @@ import Image from 'next/image';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
 import { cn } from '@/lib/utils';
+import { fifaToIso } from '@/lib/country';
+import { teamInfoFromName } from '@/config/teams.config';
+import { TeamSide } from '@/enums/team-side.enum';
+import { useUpcomingFixtures } from '@/services/queries/use-replay';
+import type { FixtureDto } from '@/services/txline.service';
 import { heroMatch, type DashTeam, type HeroFigurePlacement } from '@/config/match-dashboard.config';
 
 const { days, hours, minutes, seconds } = heroMatch.countdown;
 const INITIAL = ((days * 24 + hours) * 60 + minutes) * 60 + seconds;
+
+/** StartTime is epoch ms on the real API but seconds in the mock — normalise to ms. */
+const toMs = (startTime: number) => (startTime < 1e12 ? startTime * 1000 : startTime);
+
+/** Team identity for the card header — real name + flag-icons ISO code. */
+interface HeroCardTeam {
+  name: string;
+  code: string;
+}
 
 /** Inline style that positions a hero figure from its placement — shared by the card + the editor. */
 export function heroFigureStyle(side: 'home' | 'away', p: HeroFigurePlacement): CSSProperties {
@@ -90,19 +104,38 @@ function CountUnit({ value, label }: { value: number; label: string }) {
 /** The hero card frame — pitch/beams backdrop + centered title & countdown. Figures render as
  *  children (behind the title); the centered content never intercepts pointer events, so figures
  *  stay draggable in the editor. */
-export function HeroCardShell({ children }: { children?: ReactNode }) {
-  const [remaining, setRemaining] = useState(INITIAL);
+export function HeroCardShell({
+  children,
+  home,
+  away,
+  label,
+  targetMs,
+}: {
+  children?: ReactNode;
+  home?: HeroCardTeam;
+  away?: HeroCardTeam;
+  label?: string;
+  targetMs?: number;
+}) {
+  const h1 = home ?? { name: heroMatch.home.name, code: heroMatch.home.code };
+  const a1 = away ?? { name: heroMatch.away.name, code: heroMatch.away.code };
+  const heading = label ?? heroMatch.label;
 
+  // Count down to the real kickoff (client-only so SSR never mismatches on wall-clock).
+  const [remaining, setRemaining] = useState<number | null>(null);
   useEffect(() => {
-    if (remaining <= 0) return;
-    const id = window.setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
+    const target = targetMs ?? Date.now() + INITIAL * 1000;
+    const tick = () => setRemaining(Math.max(0, Math.floor((target - Date.now()) / 1000)));
+    tick();
+    const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [remaining]);
+  }, [targetMs]);
 
-  const d = Math.floor(remaining / 86400);
-  const h = Math.floor((remaining % 86400) / 3600);
-  const m = Math.floor((remaining % 3600) / 60);
-  const s = remaining % 60;
+  const r = remaining ?? INITIAL;
+  const d = Math.floor(r / 86400);
+  const h = Math.floor((r % 86400) / 3600);
+  const m = Math.floor((r % 3600) / 60);
+  const s = r % 60;
 
   return (
     <GlassPanel tone="surface" radius="xl" className="relative h-[190px] overflow-hidden p-0">
@@ -129,13 +162,13 @@ export function HeroCardShell({ children }: { children?: ReactNode }) {
 
       <div className="pointer-events-none relative flex h-full flex-col items-center justify-center gap-0.5 text-center">
         <div className="flex items-center gap-2">
-          <Flag code={heroMatch.home.code} className="text-base" />
+          <Flag code={h1.code} className="text-base" />
           <span className="text-[15px] font-bold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-            {heroMatch.home.name} <span className="text-white/45">vs</span> {heroMatch.away.name}
+            {h1.name} <span className="text-white/45">vs</span> {a1.name}
           </span>
-          <Flag code={heroMatch.away.code} className="text-base" />
+          <Flag code={a1.code} className="text-base" />
         </div>
-        <div className="text-xs text-white/55">{heroMatch.label}</div>
+        <div className="text-xs text-white/55">{heading}</div>
 
         <div className="mt-2.5 flex items-start gap-3 rounded-xl bg-black/45 px-4 py-2 ring-1 ring-white/10 backdrop-blur-md">
           <CountUnit value={d} label="Days" />
@@ -151,13 +184,39 @@ export function HeroCardShell({ children }: { children?: ReactNode }) {
   );
 }
 
-/** Featured match hero — two pixel-art players over a pitch, with a kickoff countdown. */
+/** Earliest fixture that hasn't kicked off yet (falls back to the first listed). */
+function nextFixture(fixtures: FixtureDto[] | undefined): FixtureDto | undefined {
+  if (!fixtures?.length) return undefined;
+  const now = Date.now();
+  const future = fixtures
+    .filter((f) => toMs(f.StartTime) > now)
+    .sort((a, b) => toMs(a.StartTime) - toMs(b.StartTime));
+  return future[0] ?? fixtures[0];
+}
+
+const kickoffLabel = (ms: number) =>
+  new Date(ms).toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Featured "next match" hero — the upcoming fixture from the API, with a live kickoff countdown. */
 export function MatchHeroCard({ placements }: { placements?: { home: HeroFigurePlacement; away: HeroFigurePlacement } }) {
   const homeP = placements?.home ?? heroMatch.home.placement;
   const awayP = placements?.away ?? heroMatch.away.placement;
 
+  const { data: fixtures } = useUpcomingFixtures();
+  const next = nextFixture(fixtures);
+
+  // Real identity + flag (SVG) for the upcoming fixture; undefined falls back to the config default.
+  const home = next
+    ? { name: next.Participant1, code: fifaToIso(teamInfoFromName(next.Participant1, TeamSide.Home).code) }
+    : undefined;
+  const away = next
+    ? { name: next.Participant2, code: fifaToIso(teamInfoFromName(next.Participant2, TeamSide.Away).code) }
+    : undefined;
+  const targetMs = next ? toMs(next.StartTime) : undefined;
+  const label = next ? kickoffLabel(toMs(next.StartTime)) : undefined;
+
   return (
-    <HeroCardShell>
+    <HeroCardShell home={home} away={away} label={label} targetMs={targetMs}>
       <HeroFigure team={heroMatch.home} side="home" placement={homeP} />
       <HeroFigure team={heroMatch.away} side="away" placement={awayP} />
     </HeroCardShell>

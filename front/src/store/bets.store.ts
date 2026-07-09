@@ -10,6 +10,14 @@ import { betService, type SettleStatus } from '@/services/bet.service';
 import { isBackendSession } from '@/services/session-mode';
 import { useWalletStore } from '@/store/wallet.store';
 import { useNotificationsStore } from '@/store/notifications.store';
+import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
+import {
+  useStakeLimitsStore,
+  effectiveLimit,
+  sumStakesSince,
+  DAY_MS,
+  WEEK_MS,
+} from '@/store/stake-limits.store';
 
 /** Random settlement delay so a placed bet resolves within a demo window. */
 const MIN_SETTLE_MS = 6_000;
@@ -56,7 +64,17 @@ export const useBetsStore = create<BetsStore>()(
       place: () => {
         const { slip, stake } = get();
         if (!slip || stake <= 0) return null;
+        // Responsible-gaming gate: a self-excluded user cannot stake, even if the UI is bypassed.
+        if (useResponsibleGamingStore.getState().excludedUntil !== null) return null;
         const now = Date.now();
+        // Stake-limit gate (defensive): block if this stake would breach the active daily/weekly cap.
+        const limits = useStakeLimitsStore.getState();
+        limits.applyMatured();
+        const ledger = [...get().open, ...get().settled];
+        const dailyCap = effectiveLimit(limits.daily, now);
+        const weeklyCap = effectiveLimit(limits.weekly, now);
+        if (dailyCap !== null && sumStakesSince(ledger, now - DAY_MS) + stake > dailyCap) return null;
+        if (weeklyCap !== null && sumStakesSince(ledger, now - WEEK_MS) + stake > weeklyCap) return null;
         const bet: Bet = {
           ...slip,
           id: crypto.randomUUID(),

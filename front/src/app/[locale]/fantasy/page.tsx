@@ -40,14 +40,14 @@ export default function FantasyPage() {
         {hasCards && (
           <>
             <div className="grid gap-4 lg:grid-cols-[1fr_1.15fr]">
-              <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+              <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden">
                 <SectionHeader
                   title="Your collection"
                   action={<span className="text-micro text-muted-foreground">{collection.length} players</span>}
                 />
                 <CollectionGrid />
               </GlassPanel>
-              <GlassPanel radius="xl" tone="surface" className="overflow-hidden">
+              <GlassPanel radius="xl" tone="surface" className="flex flex-col overflow-hidden">
                 <SectionHeader title="Starting XI" />
                 <XiBuilder />
               </GlassPanel>

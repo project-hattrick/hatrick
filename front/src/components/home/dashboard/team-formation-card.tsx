@@ -1,6 +1,9 @@
+'use client';
+
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
 import { teamFormation, type FormationDot } from '@/config/match-dashboard.config';
+import { useDashboardMatch } from './use-dashboard-match';
 
 function Dots({ dots, color }: { dots: FormationDot[]; color: string }) {
   return (
@@ -30,17 +33,18 @@ function TeamTag({ name, shape, code, align }: { name: string; shape: string; co
   );
 }
 
-/** "Team Formation" — both line-ups on one horizontal pitch. */
+/** "Team Formation" — both line-ups on one horizontal pitch (identity from the selected match). */
 export function TeamFormationCard() {
-  const { home, away } = teamFormation;
+  const match = useDashboardMatch();
+  const { home, away } = teamFormation; // pitch geometry (dots/shape/colors) stays generic
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-1 flex-col gap-3 p-4">
       <span className="text-sm font-bold">Team Formation</span>
 
       <div className="flex items-center justify-between">
-        <TeamTag name={home.name} shape={home.shape} code={home.code} />
+        <TeamTag name={match.home.name} shape={home.shape} code={match.home.iso} />
         <span className="font-mono text-micro font-bold text-muted-foreground">FT</span>
-        <TeamTag name={away.name} shape={away.shape} code={away.code} align="right" />
+        <TeamTag name={match.away.name} shape={away.shape} code={match.away.iso} align="right" />
       </div>
 
       <div className="relative min-h-[220px] w-full flex-1 overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">

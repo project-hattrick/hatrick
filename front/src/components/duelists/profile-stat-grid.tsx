@@ -4,15 +4,15 @@ import { statTiles } from '@/config/profile-mock';
 import type { PlayerProfile } from '@/config/duelists.config';
 
 /** Four headline stat tiles (duels, win rate, MMR, cards). */
-export function ProfileStatGrid({ profile }: { profile: PlayerProfile }) {
+export function ProfileStatGrid({ profile, className }: { profile: PlayerProfile; className?: string }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4', className)}>
       {statTiles(profile).map((tile) => (
         <GlassPanel
           key={tile.label}
           tone="dark"
           radius="xl"
-          className={cn('p-4', tile.accent && 'border-neon/25')}
+          className={cn('flex flex-col justify-center p-4', tile.accent && 'border-neon/25')}
         >
           <div
             className={cn(

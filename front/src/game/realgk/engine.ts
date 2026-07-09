@@ -18,7 +18,15 @@ import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
 import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
-import { createWorld, enterIntro, resetBall, restartMatch, step } from './sim/world';
+import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, step } from './sim/world';
+import {
+  injectCardDriven,
+  injectCornerDriven,
+  injectGoalDriven,
+  injectShotDriven,
+  setPossessionDriven,
+  setScoreDriven,
+} from './sim/driver';
 import type { RealGkHandle, RealGkHudPatch } from './types';
 
 /** Broadcast banner copy per restart type/stage (enum → label; empty when the ball is live). */
@@ -112,7 +120,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         }
       } else if (k === 'f') {
         const p = controlled();
-        if (p && p.actionTimer <= 0 && p.slideCooldown <= 0) startSlideTackle(p); // f = slide tackle (carrinho)
+        if (p && p.actionTimer <= 0 && p.slideCooldown <= 0) startSlideTackle(world, p); // f = slide tackle (carrinho)
       } else {
         setKey(e, true);
         return;
@@ -410,6 +418,22 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         ball.lastKickerId = blue?.id ?? null;
       }
     },
+    // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
+    setDriven: (on) => {
+      world.driven = on;
+      if (on) {
+        // Drop any in-flight goal replay so the mode switch starts on a clean live kickoff.
+        director?.reset();
+        recorder?.clear();
+        enterDrivenKickoff(world);
+      }
+    },
+    setPossession: (team, threat) => setPossessionDriven(world, team, threat),
+    injectShot: (team) => injectShotDriven(world, team),
+    injectGoal: (team) => injectGoalDriven(world, team),
+    injectCorner: (team) => injectCornerDriven(world, team),
+    injectCard: (team) => injectCardDriven(world, team),
+    setScore: (blue, red) => setScoreDriven(world, blue, red),
     resize,
     destroy: () => {
       cancelAnimationFrame(raf);

@@ -38,6 +38,9 @@ export interface RealGkFeatures {
   /** v6 keeper: the approved candidate_01 dive pack — crouch anticipation, smeared ghost-trail launch,
    *  prone slide and kneel recovery — instead of the legacy 8-frame dive. */
   keeperDiveV2: boolean;
+  /** Keeper save = the assets-playground `gk_dive_save` pack (8-frame lateral dive with the composited
+   *  side/front head) instead of the compact dive. Ignored when `keeperDiveV2` is on. */
+  keeperDiveSave?: boolean;
   /** Ground-contact particles for the ball: dust bloom and small turf flecks. */
   ballEffects?: boolean;
   /** Persona casting: outfield players wear headless bodies + per-persona composited heads (no baked
@@ -272,16 +275,17 @@ export const REAL_GK_V6_CONFIG: RealGkConfig = {
 export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   ...REAL_GK_MATCH_CONFIG,
   // Hero match script/bounds/lighting, but persona-cast + an animated strike (regen shot body) and the
-  // ball dust/impact effects from the Effects Lab. Smaller actors than the hero (~22%) so the composited
+  // ball dust/impact effects from the Effects Lab. Smaller actors than the hero so the composited
   // persona heads read cleaner on the pitch. Wider pitch so the shape spreads like a real match.
   fieldScale: 1.85,
-  spriteMinH: 20,
-  spriteMaxH: 34,
+  spriteMinH: 23,
+  spriteMaxH: 38,
   // Players shrank (composited head reads at the base height), so bump the referee/coach whole-sprites to match.
   actorScale: { referee: 1.3, coach: 1.3 },
   // Frame the action higher, nearer the far-touchline billboards (telões).
   cameraLift: 0.12,
   // celebrations OFF: goals keep the freeze + replay flow, but skip the arms-up run / jump routine.
+  // Keeper stays on the compact pack end-to-end (idle/walk/dive share the compact outfit) — no keeperDiveSave.
   features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false },
 };
 
@@ -293,8 +297,8 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
  */
 export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   ...REAL_GK_PLAY_CONFIG,
-  spriteMinH: 20,
-  spriteMaxH: 34,
+  spriteMinH: 23,
+  spriteMaxH: 38,
   actorScale: { referee: 1.3, coach: 1.3 },
   cameraLift: 0.12,
   features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },

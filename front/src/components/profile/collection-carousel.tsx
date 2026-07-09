@@ -35,7 +35,7 @@ export function CollectionCarousel() {
 
   if (!collection.length) {
     return (
-      <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+      <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
         No players yet — open a pack to start your collection.
       </p>
     );

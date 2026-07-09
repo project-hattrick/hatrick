@@ -56,6 +56,21 @@ export function startPowerShot(world: RealGkWorld, player: RealGkPlayer, persona
   return true;
 }
 
+/**
+ * Fires a shot on goal from the owner — the animated persona/power wind-up when enabled, else the legacy
+ * instant strike. Shared by the autonomous owner AI (decideOwnerAction) and the feed director (injectShot).
+ */
+export function commitShot(world: RealGkWorld, owner: RealGkPlayer): void {
+  if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
+    startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
+    return;
+  }
+  const goalPoint = pointOnField(world.size, owner.team === Team.Blue ? 0.98 : 0.02, 0.5);
+  kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
+  const note = Status.shot(owner.name);
+  setStatus(world, note.title, note.text);
+}
+
 /** Ticks the wind-up (ball stays glued to the foot), blasts the goal at contact, then releases. */
 export function updatePowerShot(world: RealGkWorld, player: RealGkPlayer, dt: number): boolean {
   if (player.action !== PlayerAction.PowerShot) return false;

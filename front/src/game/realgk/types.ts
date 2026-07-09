@@ -241,6 +241,14 @@ export interface RealGkWorld {
   controlId: number;
   /** Names of players sent off this match — kept off the pitch across kickoff resets (v5 fouls). */
   sentOffNames: string[];
+  /**
+   * Feed-driven mode: when true, the external match feed dictates goals/shots/score/cards and the
+   * autonomous outcome AI is suppressed. Lives on the root world (not `match`) so it survives the
+   * kickoff resets that zero `match` after each injected goal — only `setDriven` flips it.
+   */
+  driven: boolean;
+  /** Which team the feed says is pressing + how threatening (0..1). Steers the shape while `driven`. */
+  intent: DrivenIntent;
 }
 
 /** Held movement keys for the controlled player (playable sandbox). */
@@ -249,6 +257,16 @@ export interface ControlInput {
   down: boolean;
   left: boolean;
   right: boolean;
+}
+
+/**
+ * Feed-driven mode intent (mirrors the headsonly engine). While `driven`, the match OUTCOMES (goals,
+ * shots, score, cards) come from the external match feed instead of the autonomous AI — `attackingTeam`
+ * + `threat` (0..1, decays over ~7s) bias the on-pitch shape toward the team the feed says is pressing.
+ */
+export interface DrivenIntent {
+  attackingTeam: Team | null;
+  threat: number;
 }
 
 /** HUD snapshot pushed to React on change. */
@@ -313,6 +331,21 @@ export interface RealGkHandle {
   debugRestart: (kind: 'throwin' | 'corner' | 'goalkick') => void;
   /** v5: forces a foul (free kick / penalty / straight red) so the sanction flow can be tested on demand. */
   debugFoul: (kind: 'free' | 'penalty' | 'red') => void;
+  // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
+  /** Enter/leave feed-driven mode (suppresses autonomous goals, shots, steals and fouls). */
+  setDriven: (on: boolean) => void;
+  /** The team currently on the ball + how threatening (0..1). Steers the whole shape. */
+  setPossession: (team: Team, threat: number) => void;
+  /** Commit a shot on goal from the attacking team. */
+  injectShot: (team: Team) => void;
+  /** Celebrate a goal (score comes from setScore — the feed is authoritative). */
+  injectGoal: (team: Team) => void;
+  /** Stage a corner for the attacking team. */
+  injectCorner: (team: Team) => void;
+  /** Card toast for a team. */
+  injectCard: (team: Team) => void;
+  /** Authoritative scoreboard (Blue = home / participant 1, Red = away / participant 2). */
+  setScore: (blue: number, red: number) => void;
   resize: () => void;
   destroy: () => void;
 }

@@ -1,16 +1,21 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { PackOpening } from '@/components/store/pack-opening';
 import { PackBuyDialog } from '@/components/store/pack-buy-dialog';
 import { OddsButton } from '@/components/store/drop-rates-dialog';
+import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
 import { cn } from '@/lib/utils';
 
-/** Short settling beat between confirm and the opening overlay — makes the buy feel like a real transaction. */
+/** Minimum settling beat between confirm and the opening overlay — a real purchase feels like a transaction. */
 const PROCESSING_MS = 650;
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 interface BuyPackFlowProps {
+  /** Store catalog slug — drives stock and the purchase call. */
+  slug: string;
   packName: string;
   /** Cards drawn per opening. */
   packSize: number;
@@ -27,14 +32,13 @@ interface BuyPackFlowProps {
   showOdds?: boolean;
   /** Fade the odds action in only on card hover (compact tiles). */
   oddsReveal?: boolean;
-  /** Disabled, out-of-stock state. */
-  soldOut?: boolean;
   /** Layout for the actions row (defaults to an inline gap). */
   actionsClassName?: string;
 }
 
-/** Buy button → purchase-confirm modal → processing → pack-opening flow, with an optional odds action. */
+/** Buy button → purchase-confirm modal → real purchase (stock claim + debit) → pack-opening flow. */
 export function BuyPackFlow({
+  slug,
   packName,
   packSize,
   price,
@@ -45,23 +49,23 @@ export function BuyPackFlow({
   ctaVariant,
   showOdds = false,
   oddsReveal = false,
-  soldOut = false,
   actionsClassName,
 }: BuyPackFlowProps) {
   const [confirming, setConfirming] = useState(false);
   const [opening, setOpening] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(null);
+  const purchase = usePurchaseItem();
+  const stock = useItemStock(slug);
+  const soldOut = stock !== undefined && stock <= 0;
 
-  useEffect(() => () => clearTimeout(timer.current ?? undefined), []);
-
-  const confirm = () => {
+  const confirm = async () => {
     setProcessing(true);
-    timer.current = setTimeout(() => {
-      setProcessing(false);
-      setConfirming(false);
-      setOpening(true);
-    }, PROCESSING_MS);
+    // Keep the settling beat even when the server answers instantly.
+    const [ok] = await Promise.all([purchase(slug), delay(PROCESSING_MS)]);
+    setProcessing(false);
+    if (!ok) return; // reason already toasted — keep the dialog open
+    setConfirming(false);
+    setOpening(true);
   };
 
   return (
@@ -94,7 +98,7 @@ export function BuyPackFlow({
         price={price}
         tagline={tagline}
         processing={processing}
-        onConfirm={confirm}
+        onConfirm={() => void confirm()}
       />
 
       <PackOpening open={opening} onClose={() => setOpening(false)} hideTrigger packName={packName} packSize={packSize} />

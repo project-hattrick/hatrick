@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { marketTypeConfig, marketTypeFallback } from '@/config/market-type.config';
 import { BETTING_MARKETS } from '@/config/betting-markets.config';
 import { useBetsStore } from '@/store/bets.store';
+import { useDisplayMatch } from '@/store/match.store';
 import type { BetSelection } from '@/types/bet';
 
 /** One tappable odds cell — highlights when it's the active bet-slip selection. */
@@ -32,6 +33,13 @@ function OddsCell({ selection, active, onPick }: { selection: BetSelection; acti
 export function MarketsPanel() {
   const slip = useBetsStore((state) => state.slip);
   const select = useBetsStore((state) => state.select);
+  const match = useDisplayMatch();
+
+  // Reflect the selected match: home/away selections carry the live team names instead of the static ARG/FRA.
+  const label = (selection: BetSelection): BetSelection => {
+    const team = selection.selectionId === 'home' ? match.home.name : selection.selectionId === 'away' ? match.away.name : null;
+    return team ? { ...selection, label: team } : selection;
+  };
 
   return (
     <GlassPanel radius="xl" tone="surface" className="flex flex-col divide-y divide-border/40 overflow-hidden">
@@ -44,16 +52,17 @@ export function MarketsPanel() {
               {meta.label}
             </div>
             <div className="flex flex-wrap gap-2">
-              {def.selections.map((selection) => (
-                <OddsCell
-                  key={selection.selectionId}
-                  selection={selection}
-                  active={
-                    slip?.market === selection.market && slip?.selectionId === selection.selectionId
-                  }
-                  onPick={() => select(selection)}
-                />
-              ))}
+              {def.selections.map((selection) => {
+                const display = label(selection);
+                return (
+                  <OddsCell
+                    key={selection.selectionId}
+                    selection={display}
+                    active={slip?.market === selection.market && slip?.selectionId === selection.selectionId}
+                    onPick={() => select(display)}
+                  />
+                );
+              })}
             </div>
           </section>
         );

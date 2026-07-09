@@ -27,6 +27,10 @@ export const SIDE_MODES = new Set<BodyAnim>([
   BodyAnim.GkDiveCompact,
   BodyAnim.PowerShotSide,
   BodyAnim.SlideTackle,
+  // Persona strike bodies are authored kicking RIGHT — mirror with facing so the swing matches where
+  // the ball actually goes (startPowerShot faces the goal before locking the mode).
+  BodyAnim.ShotFront,
+  BodyAnim.ShotBack,
 ]);
 
 /** Maps a composited-head view to the loaded head-set key. */

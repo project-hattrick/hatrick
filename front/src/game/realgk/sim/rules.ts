@@ -9,12 +9,19 @@ export function setStatus(world: RealGkWorld, title: string, text: string): void
   world.match.statusText = text;
 }
 
-/** Registers a goal, freezes play for the celebration, and flips the kickoff. */
-export function goal(world: RealGkWorld, team: Team): void {
+/**
+ * Registers a goal, freezes play for the celebration, and flips the kickoff.
+ * `count` (default true) increments the scoreline; pass `false` in feed-driven mode where the score is
+ * authoritative from the feed (`setScore`) — this runs the full celebration/replay flow without counting,
+ * so the same goal event carrying `score` doesn't double-count.
+ */
+export function goal(world: RealGkWorld, team: Team, count = true): void {
   const { match, ball } = world;
   const features = world.cfg.features;
-  if (team === Team.Blue) match.blue += 1;
-  else match.red += 1;
+  if (count) {
+    if (team === Team.Blue) match.blue += 1;
+    else match.red += 1;
+  }
   match.scorer = team;
   match.kickoffTeam = team === Team.Blue ? Team.Red : Team.Blue;
   if (features?.celebrations || features?.replay) {

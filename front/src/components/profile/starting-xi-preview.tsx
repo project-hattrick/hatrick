@@ -13,9 +13,9 @@ export function StartingXiPreview() {
 
   if (!squad.length) {
     return (
-      <p className="m-4 rounded-2xl border border-dashed border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
+      <p className="m-4 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
         No XI yet —{' '}
-        <Link href="/fantasy" className="text-neon">
+        <Link href="/fantasy" className="ml-1 text-neon">
           build your squad
         </Link>
         .
@@ -24,7 +24,7 @@ export function StartingXiPreview() {
   }
 
   return (
-    <div className="pitch-stripes-v relative m-4 h-44 overflow-hidden rounded-2xl border border-white/10">
+    <div className="pitch-stripes-v relative m-4 min-h-44 flex-1 overflow-hidden rounded-2xl border border-white/10">
       <div className="pointer-events-none absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
       {formation.slots.map((slot, i) => {
         const card = collection[squad[i]];

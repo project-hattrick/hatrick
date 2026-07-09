@@ -31,12 +31,12 @@ export function StoreBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-px text-micro leading-4 font-semibold tracking-wide uppercase',
+        'inline-flex items-center gap-1 rounded-sm px-1 py-px text-[0.5625rem] leading-3 font-semibold tracking-wide uppercase',
         toneClass[tone],
         className,
       )}
     >
-      {BadgeIcon && <BadgeIcon className="size-3" weight="fill" />}
+      {BadgeIcon && <BadgeIcon className="size-2.5" weight="fill" />}
       {children}
     </span>
   );

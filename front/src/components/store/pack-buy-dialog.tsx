@@ -11,7 +11,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { MetalButton } from '@/components/ui/metal-button';
 import { ParallaxPack } from '@/components/store/parallax-pack';
+import { ItemShowcase } from '@/components/store/item-showcase';
 
 interface PackBuyDialogProps {
   open: boolean;
@@ -29,7 +31,7 @@ interface PackBuyDialogProps {
   processing?: boolean;
 }
 
-/** Confirm-purchase dialog for a store pack — shows the pack, its size and price before opening. */
+/** Confirm-purchase dialog for a store pack — the pack staged on the opening podium. */
 export function PackBuyDialog({
   open,
   onOpenChange,
@@ -42,26 +44,37 @@ export function PackBuyDialog({
 }: PackBuyDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => !processing && onOpenChange(next)}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Confirm purchase</DialogTitle>
           <DialogDescription>Coins move from your play-money balance (devnet).</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <ParallaxPack className="h-40" glow />
-          <span className="text-lg font-black uppercase">{packName}</span>
-          <span className="text-caption text-muted-foreground">{packSize} players guaranteed</span>
-          {tagline && <p className="max-w-xs text-caption text-muted-foreground">{tagline}</p>}
-          <span className="flex items-center gap-1.5 font-mono text-sm font-bold text-neon">
-            <Image src="/coin.png" alt="" width={14} height={14} className="size-3.5" />
+        <ItemShowcase>
+          <ParallaxPack className="h-44" glow />
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="text-lg leading-tight font-black uppercase">{packName}</span>
+            <span className="text-caption text-muted-foreground">{packSize} players guaranteed</span>
+            {tagline && <p className="max-w-xs text-caption text-muted-foreground">{tagline}</p>}
+          </div>
+          <span className="flex items-center gap-2 font-mono text-lead font-bold text-neon">
+            <Image src="/coin.png" alt="" width={18} height={18} className="size-4.5" />
             {price}
           </span>
-        </div>
+        </ItemShowcase>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={processing}>
+          <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => onOpenChange(false)} disabled={processing}>
             Cancel
           </Button>
-          <Button onClick={onConfirm} disabled={processing}>
+          <MetalButton
+            preset="chromatic"
+            strength={1}
+            ringCssPx={3}
+            size="lg"
+            metalFxClassName="visible! w-full flex-1 opacity-100!"
+            onClick={onConfirm}
+            disabled={processing}
+            className="h-11 w-full px-8 text-sm font-bold"
+          >
             {processing ? (
               <>
                 <CircleNotch className="size-4 animate-spin" weight="bold" />
@@ -70,7 +83,7 @@ export function PackBuyDialog({
             ) : (
               'Confirm & open'
             )}
-          </Button>
+          </MetalButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

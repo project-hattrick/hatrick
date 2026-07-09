@@ -14,8 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { MetalButton } from '@/components/ui/metal-button';
 import { StoreBadge, BadgeTone } from '@/components/store/store-badge';
 import { INTERACTIVE_CARD } from '@/components/store/interactive-card';
+import { ItemShowcase } from '@/components/store/item-showcase';
+import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
 import { BundleTrait, type Bundle } from '@/config/store-bundles.config';
 import { cn } from '@/lib/utils';
 
@@ -70,10 +73,15 @@ function MetaItem({ icon: MetaIcon, label }: { icon: Icon; label: string }) {
  */
 export function BundleCard({ bundle }: { bundle: Bundle }) {
   const [confirming, setConfirming] = useState(false);
-  const { name, caption, price, trait, tag, soldOut } = bundle;
+  const { slug, name, caption, price, trait, tag } = bundle;
   const traitMeta = TRAIT_META[trait];
+  const purchase = usePurchaseItem();
+  const stock = useItemStock(slug);
+  const soldOut = stock !== undefined && stock <= 0;
 
-  const buy = () => {
+  const buy = async () => {
+    const ok = await purchase(slug);
+    if (!ok) return; // reason already toasted — keep the dialog open
     setConfirming(false);
     toast.success(`${name} purchased.`);
   };
@@ -103,8 +111,12 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-title uppercase">{name}</h3>
-              {tag && <StoreBadge tone={tag.tone}>{tag.text}</StoreBadge>}
-              {soldOut && <StoreBadge tone={BadgeTone.Info}>Sold out</StoreBadge>}
+              {tag && !soldOut && <StoreBadge tone={tag.tone}>{tag.text}</StoreBadge>}
+              {stock !== undefined && (
+                <StoreBadge tone={soldOut ? BadgeTone.Info : BadgeTone.Value}>
+                  {soldOut ? 'Sold out' : `${stock} left`}
+                </StoreBadge>
+              )}
             </div>
             <p className="text-body text-muted-foreground">{caption}</p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -121,25 +133,37 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       </button>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>Coins move from your play-money balance (devnet).</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-2 py-2 text-center">
-            <PackFan />
-            <span className="mt-1 text-lg font-black uppercase">{name}</span>
-            <p className="max-w-xs text-caption text-muted-foreground">{caption}</p>
-            <span className="flex items-center gap-1.5 font-mono text-sm font-bold text-neon">
-              <Image src="/coin.png" alt="" width={14} height={14} className="size-3.5" />
+          <ItemShowcase>
+            <PackFan packClassName="h-28" />
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-lg leading-tight font-black uppercase">{name}</span>
+              <p className="max-w-xs text-caption text-muted-foreground">{caption}</p>
+            </div>
+            <span className="flex items-center gap-2 font-mono text-lead font-bold text-neon">
+              <Image src="/coin.png" alt="" width={18} height={18} className="size-4.5" />
               {price}
             </span>
-          </div>
+          </ItemShowcase>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirming(false)}>
+            <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => setConfirming(false)}>
               Cancel
             </Button>
-            <Button onClick={buy}>Confirm buy</Button>
+            <MetalButton
+              preset="chromatic"
+              strength={1}
+              ringCssPx={3}
+              size="lg"
+              metalFxClassName="visible! w-full flex-1 opacity-100!"
+              onClick={() => void buy()}
+              className="h-11 w-full px-8 text-sm font-bold"
+            >
+              Confirm buy
+            </MetalButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

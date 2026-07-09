@@ -16,12 +16,13 @@ export interface FrameCfg {
 const repeat = (cfg: FrameCfg, n: number): FrameCfg[] => Array.from({ length: n }, () => cfg);
 
 export const KEEPER_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
-  // Idle = light-save block stance (front 3/4), same head seating as GkLightSave.
-  // Keeper head size settled at 0.405 across the whole set (tuned in /sandbox/personas-match-editor).
-  [BodyAnim.GkIdle]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.405, offsetXRatio: 0, offsetYRatio: 0.14 }, 4),
+  // Idle + shuffle = the playground's compact keeper bodies (headless, pre-trimmed); head seating ported
+  // from the playground's keeperHeadConfig (0.47 front head, chin overlap 0.14 / 0.13).
+  [BodyAnim.GkIdle]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0, offsetYRatio: 0.14 }, 4),
   [BodyAnim.GkReady]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.405, offsetXRatio: 0.0, offsetYRatio: 0.14 }, 4),
-  [BodyAnim.GkShuffle]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.405, offsetXRatio: 0.0, offsetYRatio: 0.13 }, 4),
-  [BodyAnim.GkRunSide]: repeat({ headView: HeadView.Side, bodyScale: 0.68, headScale: 0.405, offsetXRatio: 0.18677396993231044, offsetYRatio: 0.05288377325392865 }, 8),
+  [BodyAnim.GkShuffle]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0.0, offsetYRatio: 0.13 }, 4),
+  // Lateral movement = the compact keeper walk (3/4-front, headless); front head seated like the shuffle.
+  [BodyAnim.GkRunSide]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0.0, offsetYRatio: 0.13 }, 8),
   // Light save — 3/4-front reflex block; front head seated like GkReady. Tune in /sandbox/sprite-editor.
   [BodyAnim.GkLightSave]: repeat({ headView: HeadView.Front, bodyScale: 0.68, headScale: 0.405, offsetXRatio: 0, offsetYRatio: 0.14 }, 4),
   // Compact lateral dive (authored diving right; mirrors for left). Side head; per-frame headScale rises as
@@ -116,9 +117,18 @@ export const OUTFIELD_FRAME_CONFIG: Partial<Record<BodyAnim, FrameCfg[]>> = {
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.09, offsetYRatio: 0.075 },
     { headView: HeadView.Side, bodyScale: 1, headScale: 0.42, offsetXRatio: 0.16, offsetYRatio: 0.06 },
   ],
-  // Slide tackle (carrinho, regen v1) — side head, mirrors with facing. sizeScale keeps the tightly-cropped
-  // horizontal pose from inflating under normalizedSizes.
-  [BodyAnim.SlideTackle]: repeat({ headView: HeadView.Side, bodyScale: 1, headScale: 0.56, offsetXRatio: 0.1, offsetYRatio: 0.1, sizeScale: 0.62 }, 6),
+  // Slide tackle (carrinho, regen v1) — side head, mirrors with facing. The body flattens (243→176px src)
+  // but every frame is drawn at frame 0's height, so a constant headScale keeps the head a constant drawn
+  // size; 0.78 matches the run-side head. offsetX tracks the neck hole (left of center once prone) and
+  // offsetY deepens the chin overlap as the collar drops. sizeScale keeps the pose from inflating.
+  [BodyAnim.SlideTackle]: [
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.03, offsetYRatio: 0.12, sizeScale: 0.74 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.09, offsetYRatio: 0.14, sizeScale: 0.74 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.14, offsetYRatio: 0.16, sizeScale: 0.74 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.15, offsetYRatio: 0.16, sizeScale: 0.74 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.15, offsetYRatio: 0.17, sizeScale: 0.74 },
+    { headView: HeadView.Side, bodyScale: 1, headScale: 0.78, offsetXRatio: -0.16, offsetYRatio: 0.17, sizeScale: 0.74 },
+  ],
   // Knee-celebration pack (now body-only regen) — front head throughout; per-frame offsets from the
   // preview's KNEE_CONFIG so the head seats through the slide → rise → jump. Replaces the old baked faces.
   // Knee celebration removed from the goal routine (arms-up only); configs kept for the sprite editor.

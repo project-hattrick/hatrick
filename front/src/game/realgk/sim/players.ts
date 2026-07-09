@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationKind, CelebrationPhase, KickIntent, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
 import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -11,7 +11,7 @@ import { FORMATION } from './formation';
 import { isControlled, updateControlledPlayer } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
-import { startPowerShot, updatePowerShot } from './shot';
+import { commitShot, updatePowerShot } from './shot';
 import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
 import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
@@ -427,16 +427,10 @@ function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
     return;
   }
 
-  if (distToGoal < 180) {
-    // v4: wind up an animated power shot (fires at the contact frame); legacy: instant strike.
-    // `personaShot` animates the strike with the regen shot body without turning on the rest of extraAnims.
-    if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
-      startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
-    } else {
-      kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
-      const note = Status.shot(owner.name);
-      setStatus(world, note.title, note.text);
-    }
+  // Autonomous shot on goal — suppressed while feed-driven (shots come from injectShot); the owner then
+  // circulates the ball via the pass/loft branches below instead of self-shooting.
+  if (distToGoal < 180 && !world.driven) {
+    commitShot(world, owner);
     return;
   }
   if (forwardMate && Math.random() < 0.63) {
@@ -563,7 +557,8 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       updateReceive(world, player, dt);
       continue;
     }
-    if (maybeTriggerSlideTackle(world, player)) {
+    // Slide tackles are pure steals — suppressed while feed-driven (possession follows the feed).
+    if (!world.driven && maybeTriggerSlideTackle(world, player)) {
       updateSlideTackle(world, player, dt);
       continue;
     }

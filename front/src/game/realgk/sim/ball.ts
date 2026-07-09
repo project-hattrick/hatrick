@@ -246,8 +246,10 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   const bottomLineY = lerp(bounds.topY, bounds.bottomY, PLAY_LINES.depthBottom);
 
   // Goal lines (left/right) take priority: goal in the mouth, else corner / goal kick.
+  // While feed-driven, a ball in the mouth never self-scores — goals come only via injectGoal; the
+  // stray ball takes the byline restart instead so the feed stays authoritative on the scoreline.
   if (ball.x < leftLineX) {
-    if (inLeftMouth) {
+    if (inLeftMouth && !world.driven) {
       goal(world, Team.Red);
       return;
     }
@@ -255,7 +257,7 @@ export function updateBall(world: RealGkWorld, dt: number): void {
     return;
   }
   if (ball.x > rightLineX) {
-    if (inRightMouth) {
+    if (inRightMouth && !world.driven) {
       goal(world, Team.Blue);
       return;
     }
