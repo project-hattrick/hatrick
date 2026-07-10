@@ -20,7 +20,7 @@ const storeIcons: Record<string, Icon> = {
 export function SiteFooter() {
   return (
     <footer className="relative z-10 border-t border-border bg-background px-6 py-10 md:py-14">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:gap-10">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:gap-10">
         <div className="flex flex-col gap-4">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="Hat-trick" width={472} height={481} className="h-8 w-auto" />
@@ -79,7 +79,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mx-auto mt-10 flex w-full max-w-6xl flex-col gap-2 border-t border-border/40 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto mt-10 flex w-full max-w-7xl flex-col gap-2 border-t border-border/40 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
         <span>© 2026 Hat-trick. All rights reserved.</span>
         <span>Devnet demo · play-money only · not affiliated with FIFA.</span>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { WalletStep } from '@/components/common/login/wallet-step';
 import { SignStep } from '@/components/common/login/sign-step';
+import { EmailStep } from '@/components/common/login/email-step';
 import { PackOpening } from '@/components/store/pack-opening';
 import { usePackDeck } from '@/services/queries/use-pack-deck';
 import { PackType } from '@/services/fantasy.service';
@@ -31,10 +32,11 @@ interface LoginDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Which screen the flow is on, derived purely from wallet + auth state. */
+/** Which screen the flow is on — wallet + auth state, plus the explicit email branch. */
 enum LoginStep {
   Connect = 'connect',
   Sign = 'sign',
+  Email = 'email',
 }
 
 const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
@@ -45,6 +47,10 @@ const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
   [LoginStep.Sign]: {
     title: 'Confirm it’s you',
     description: 'Approve a one-time signature in your wallet to finish signing in.',
+  },
+  [LoginStep.Email]: {
+    title: 'Continue with email',
+    description: 'Sign in or create a casual Collector account — open packs and follow live matches.',
   },
 };
 
@@ -62,6 +68,12 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const complete = useOnboardingStore((s) => s.complete);
   const controller = useOnboardingController();
   const resolveDeck = usePackDeck(PackType.Welcome);
+  const [emailMode, setEmailMode] = useState(false);
+
+  // Fresh chooser every time the dialog opens.
+  useEffect(() => {
+    if (!open) setEmailMode(false);
+  }, [open]);
 
   const wallet = user?.walletAddress ?? null;
   // First registration: continue into onboarding right here.
@@ -79,7 +91,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     if (path) router.push(path);
   };
 
-  const step = connected ? LoginStep.Sign : LoginStep.Connect;
+  const step = emailMode ? LoginStep.Email : connected ? LoginStep.Sign : LoginStep.Connect;
   const heading = HEADINGS[step];
   const packing = onboarding && controller.packOpen;
 
@@ -118,7 +130,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               <DialogDescription>{heading.description}</DialogDescription>
             </DialogHeader>
 
-            {step === LoginStep.Sign ? <SignStep /> : <WalletStep />}
+            {step === LoginStep.Email ? (
+              <EmailStep onBack={() => setEmailMode(false)} />
+            ) : step === LoginStep.Sign ? (
+              <SignStep />
+            ) : (
+              <WalletStep onEmail={() => setEmailMode(true)} />
+            )}
           </>
         )}
       </DialogContent>

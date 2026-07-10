@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BetStatus, WalletTxType, type Bet, type User } from '@prisma/client';
+import {
+  AccountType,
+  BetStatus,
+  WalletTxType,
+  type Bet,
+  type User,
+} from '@prisma/client';
 
 import { UserRepository, WalletRepository } from '../../users/repositories';
 import { BetRepository } from '../repositories';
@@ -37,6 +43,11 @@ export class BettingService {
   async place(userId: string, dto: CreateBetDto): Promise<BetResultDto> {
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundException('User not found');
+    if (user.accountType === AccountType.Collector) {
+      throw new ForbiddenException(
+        'Collectors cannot place bets — sign in with a wallet to compete',
+      );
+    }
     if (Number(user.balance) < dto.stake) {
       throw new BadRequestException('Not enough coins for this stake');
     }

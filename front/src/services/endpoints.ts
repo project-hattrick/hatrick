@@ -6,6 +6,7 @@ export const endpoints = {
   auth: {
     nonce: '/auth/nonce',
     verify: '/auth/verify',
+    email: '/auth/email',
     me: '/auth/me',
     logout: '/auth/logout',
   },

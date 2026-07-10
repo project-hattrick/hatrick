@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { AccountType } from '@/enums/account-type.enum';
 import { BetStatus } from '@/enums/bet-status.enum';
 import { NotificationType } from '@/enums/notification-type.enum';
 import type { Bet, BetSelection } from '@/types/bet';
@@ -8,6 +9,7 @@ import { BETTING_MATCH_LABEL } from '@/config/betting-markets.config';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { betService, type SettleStatus } from '@/services/bet.service';
 import { isBackendSession } from '@/services/session-mode';
+import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useNotificationsStore } from '@/store/notifications.store';
 import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
@@ -66,6 +68,9 @@ export const useBetsStore = create<BetsStore>()(
         if (!slip || stake <= 0) return null;
         // Responsible-gaming gate: a self-excluded user cannot stake, even if the UI is bypassed.
         if (useResponsibleGamingStore.getState().excludedUntil !== null) return null;
+        // Account-tier gate (defensive): Collectors can't bet — packs and live view only.
+        const sessionUser = useAuthStore.getState().user;
+        if (sessionUser && sessionUser.accountType !== AccountType.Competitor) return null;
         const now = Date.now();
         // Stake-limit gate (defensive): block if this stake would breach the active daily/weekly cap.
         const limits = useStakeLimitsStore.getState();

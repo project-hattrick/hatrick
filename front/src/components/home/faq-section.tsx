@@ -75,7 +75,7 @@ export function FaqSection() {
   );
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-16 md:py-20">
+    <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-16 md:py-20">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-eyebrow text-neon">Need help?</span>

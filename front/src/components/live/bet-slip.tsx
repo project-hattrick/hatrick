@@ -5,12 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Ticket, X, ShieldWarning } from '@/components/common/icons';
+import { Ticket, X, ShieldWarning, Trophy } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useZodForm } from '@/hooks/use-zod-form';
+import { useAuth } from '@/services/queries/use-auth';
 import { useRequireAuth } from '@/services/queries/use-require-auth';
 import { useBetsStore } from '@/store/bets.store';
 import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
@@ -49,12 +50,15 @@ export function BetSlip() {
   const weeklyLimit = useStakeLimitsStore((state) => state.weekly);
   const balance = useBalance();
   const requireAuth = useRequireAuth();
+  const { isAuthenticated, isCompetitor } = useAuth();
 
   // Mounted gate: store values rehydrate from localStorage on the client only, so we
   // treat the user as active/unlimited until mounted to avoid a hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const selfExcluded = mounted && excludedUntil !== null;
+  // Collectors (email tier) watch and collect — betting is Competitor-only.
+  const collectorOnly = mounted && isAuthenticated && !isCompetitor;
 
   const ledger = [...openBets, ...settledBets];
   const now = mounted ? Date.now() : 0;
@@ -79,6 +83,10 @@ export function BetSlip() {
       return;
     }
     if (!requireAuth()) return;
+    if (collectorOnly) {
+      toast.error('Betting is for Competitors — sign in with a wallet to place bets.');
+      return;
+    }
     if (values.stake > balance) {
       toast.error('Not enough coins for this stake.');
       return;
@@ -112,6 +120,14 @@ export function BetSlip() {
               your profile
             </Link>
             .
+          </span>
+        </div>
+      ) : collectorOnly ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+          <Trophy className="size-6 text-neon" weight="duotone" />
+          <span className="text-sm font-medium text-foreground">Competitors only</span>
+          <span className="text-micro text-muted-foreground">
+            Betting needs a wallet-linked account. Packs and live stats are all yours.
           </span>
         </div>
       ) : slip ? (

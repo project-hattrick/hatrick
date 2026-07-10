@@ -6,6 +6,8 @@ import { REAL_GK_MATCH_CONFIG } from '@/game/realgk/config';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { useRealgkDriver } from '@/services/realtime/use-realgk-driver';
 import { useHeroEngineStore, type HeroEngineControls } from '@/store/hero-engine.store';
+import { useMatchStore } from '@/store/match.store';
+import { recapMatch } from '@/config/recap-match.config';
 import { RealGkBackground } from './real-gk-background';
 
 /**
@@ -17,6 +19,10 @@ import { RealGkBackground } from './real-gk-background';
  */
 export function PersonaHeroBackdrop({ bridgeHud = false, className }: { bridgeHud?: boolean; className?: string }) {
   const setControls = useHeroEngineStore((state) => state.setControls);
+  // Name-only selectors: the match object is replaced on EVERY stream event — subscribing to it
+  // would re-render the backdrop tree for each minute/score tick just to pass two strings.
+  const blueName = useMatchStore((state) => (state.match ?? recapMatch).home.name);
+  const redName = useMatchStore((state) => (state.match ?? recapMatch).away.name);
   const handleRef = useRef<RealGkHandle | null>(null);
 
   const onReady = useCallback(
@@ -34,6 +40,12 @@ export function PersonaHeroBackdrop({ bridgeHud = false, className }: { bridgeHu
   useRealgkDriver(handleRef);
 
   return (
-    <RealGkBackground config={REAL_GK_MATCH_CONFIG} bridgeHud={bridgeHud} onReady={onReady} className={className} />
+    <RealGkBackground
+      config={REAL_GK_MATCH_CONFIG}
+      bridgeHud={bridgeHud}
+      onReady={onReady}
+      className={className}
+      teamNames={{ blue: blueName, red: redName }}
+    />
   );
 }

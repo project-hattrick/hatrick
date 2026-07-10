@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { WalletTxType } from '@prisma/client';
+import { WalletTxType, type User } from '@prisma/client';
 
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { UserRepository, WalletRepository } from '../users/repositories';
@@ -8,6 +8,11 @@ import { JwtPayload } from './auth.types';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { NonceResponseDto } from './dto/nonce-response.dto';
 import { NonceStore } from './nonce.store';
+import {
+  hashPassword,
+  syntheticWalletAddress,
+  verifyPassword,
+} from './password.util';
 import { verifyWalletSignature } from './signature.util';
 
 /**
@@ -63,9 +68,50 @@ export class AuthService {
         balanceAfter: user.balance,
       });
     }
+    return this.mintSession(user, isNew);
+  }
+
+  /**
+   * Email sign-in-or-register (Collector tier). New email → create a Collector
+   * with a synthetic wallet address; existing email → verify the password.
+   */
+  async signInWithEmail(
+    email: string,
+    password: string,
+  ): Promise<AuthResponseDto> {
+    const existing = await this.users.findByEmail(email);
+    if (existing) {
+      if (
+        !existing.passwordHash ||
+        !(await verifyPassword(password, existing.passwordHash))
+      ) {
+        throw new UnauthorizedException('Wrong password for this email');
+      }
+      // Off the critical path — lastLoginAt staleness is harmless.
+      this.users.touchLastLogin(existing.id).catch(() => {});
+      return this.mintSession(existing, false);
+    }
+
+    const user = await this.users.createCollector(
+      email,
+      await hashPassword(password),
+      syntheticWalletAddress(),
+    );
+    await this.wallet.record({
+      user: { connect: { id: user.id } },
+      type: WalletTxType.WelcomeGrant,
+      amount: user.balance,
+      balanceAfter: user.balance,
+    });
+    return this.mintSession(user, true);
+  }
+
+  private async mintSession(
+    user: User,
+    isNew: boolean,
+  ): Promise<AuthResponseDto> {
     const payload: JwtPayload = { sub: user.id, wallet: user.walletAddress };
     const token = await this.jwt.signAsync(payload);
-
     return { token, user: UserResponseDto.fromEntity(user), isNew };
   }
 }

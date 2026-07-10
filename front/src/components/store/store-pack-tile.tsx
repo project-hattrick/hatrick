@@ -94,6 +94,7 @@ export function StorePackTile({ pack }: { pack: StorePack }) {
   return (
     <MetalFx
       preset="chromatic"
+      theme="dark"
       strength={0.9}
       ringCssPx={3}
       borderRadius={16}

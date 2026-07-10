@@ -94,10 +94,10 @@ export function HeroFigure({ team, side, placement, editable, selected, onSelect
 function CountUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="font-mono text-2xl font-bold tabular-nums text-white sm:text-[28px]">
+      <span className="font-mono text-base font-bold tabular-nums text-white sm:text-lg">
         {String(value).padStart(2, '0')}
       </span>
-      <span className="text-eyebrow text-white/60">{label}</span>
+      <span className="text-[9px] uppercase tracking-wider text-white/60">{label}</span>
     </div>
   );
 }
@@ -163,23 +163,27 @@ export function HeroCardShell({
 
       {children}
 
-      <div className="pointer-events-none relative flex h-full flex-col items-center justify-center gap-0.5 text-center">
-        <div className="flex items-center gap-2">
-          <Flag code={h1.code} className="text-base" />
-          <span className="text-[15px] font-bold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-            {h1.name} <span className="text-white/45">vs</span> {a1.name}
-          </span>
-          <Flag code={a1.code} className="text-base" />
+      {/* Title stays centred; the countdown is a compact chip anchored to the card's bottom edge,
+          keeping the hero figures' faces clear. */}
+      <div className="pointer-events-none relative flex h-full flex-col items-center text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-6">
+          <div className="flex items-center gap-2">
+            <Flag code={h1.code} className="text-base" />
+            <span className="text-[15px] font-bold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+              {h1.name} <span className="text-white/45">vs</span> {a1.name}
+            </span>
+            <Flag code={a1.code} className="text-base" />
+          </div>
+          <div className="text-xs text-white/55">{heading}</div>
         </div>
-        <div className="text-xs text-white/55">{heading}</div>
 
-        <div className="mt-2.5 flex items-start gap-3 rounded-xl bg-black/45 px-4 py-2 ring-1 ring-white/10 backdrop-blur-md">
+        <div className="mb-3 flex items-start gap-2 rounded-lg bg-black/45 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur-md sm:gap-2.5">
           <CountUnit value={d} label="Days" />
-          <span className="pt-1 text-xl font-bold text-white/40">:</span>
+          <span className="pt-px text-sm font-bold text-white/40">:</span>
           <CountUnit value={h} label="Hours" />
-          <span className="pt-1 text-xl font-bold text-white/40">:</span>
+          <span className="pt-px text-sm font-bold text-white/40">:</span>
           <CountUnit value={m} label="Minutes" />
-          <span className="pt-1 text-xl font-bold text-white/40">:</span>
+          <span className="pt-px text-sm font-bold text-white/40">:</span>
           <CountUnit value={s} label="Seconds" />
         </div>
       </div>

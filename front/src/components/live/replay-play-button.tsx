@@ -2,16 +2,21 @@
 
 import { Play, ClockCounterClockwise } from '@/components/common/icons';
 import { useIsMatchLive } from '@/store/match.store';
+import { useReplaySessionStore } from '@/store/replay-session.store';
+import { useLoadReplay } from '@/hooks/use-load-replay';
 import { useHeroControls } from '@/store/hero-engine.store';
 import { useUiStore } from '@/store/ui.store';
 
 /**
  * Center replay control over the pitch. You can't bet on a finished match, so the hero centre offers
- * a Replay: it restarts the personas sim from kickoff (with the intro). Hidden while a match is live
- * and playing; shows as a Play when paused.
+ * a Replay: it re-streams the picked match from kickoff through the backend pipeline (falling back
+ * to a sim restart when nothing was picked). Hidden while a match is live and playing; shows as a
+ * Play when paused.
  */
 export function ReplayPlayButton() {
   const isLive = useIsMatchLive();
+  const hasSource = useReplaySessionStore((state) => state.source !== null);
+  const { restartReplay } = useLoadReplay();
   const controls = useHeroControls();
   const playing = useUiStore((state) => state.playing);
   const togglePlaying = useUiStore((state) => state.togglePlaying);
@@ -21,7 +26,10 @@ export function ReplayPlayButton() {
 
   const isReplay = !isLive;
   const onClick = () => {
-    if (isReplay) controls?.restart();
+    if (isReplay) {
+      if (hasSource) restartReplay();
+      else controls?.restart();
+    }
     if (!playing) togglePlaying();
   };
 

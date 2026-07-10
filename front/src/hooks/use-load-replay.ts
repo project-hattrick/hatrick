@@ -4,32 +4,34 @@ import { useCallback, useState } from 'react';
 
 import { replayService, type ReplayCatalogItem } from '@/services/replay.service';
 import { useMatchStore } from '@/store/match.store';
-import { useReplayPlaybackStore } from '@/store/replay-playback.store';
+import { useReplaySessionStore } from '@/store/replay-session.store';
 import { teamInfoFromName } from '@/config/teams.config';
 import { GameState } from '@/enums/game-state.enum';
 import { TeamSide } from '@/enums/team-side.enum';
 
 /**
- * Ambient replay pace for the landing. True 1:1 (speed 1) leaves the scoreline/minute visibly frozen for
- * ~60s at a time — reads as a delay/bug on a marketing hero — so picked past matches stream a bit faster
- * while still faithfully reflecting the real match. LIVE matches are untouched: they arrive over the real
- * SSE feed in genuine real time.
- */
-const REPLAY_SPEED = 6;
-
-/**
  * Loads a finished fixture as a real-time-feeling replay: switch to it, then stream its history back
  * through the backend during/after pipeline (`POST /replay`). The events arrive on the SAME realtime
  * channels as a live match, so `useLiveFeed` climbs the store (scoreboard/timeline/dashboard) and
- * `useRealgkDriver` mirrors them on the hero pitch. Shared by the picker and the hero auto-replay.
+ * `useRealgkDriver` mirrors them on the hero pitch. Shared by the picker, the hero auto-replay and
+ * the replay controls — a backend stream cannot seek, so restart/speed re-run the same stream.
  */
 export function useLoadReplay() {
   const beginReplay = useMatchStore((state) => state.beginReplay);
   const [isLoadingScore, setIsLoadingScore] = useState(false);
 
   const loadReplay = useCallback(
-    async (game: ReplayCatalogItem) => {
-      useReplayPlaybackStore.getState().clear(); // drop any legacy front-driven playback state
+    async (game: ReplayCatalogItem, speedOverride?: number) => {
+      const session = useReplaySessionStore.getState();
+      session.setSource(game);
+      // Kill any running stream BEFORE resetting the store: its events share our channels (and, on a
+      // same-fixture restart, the same fixtureId), so stragglers landing after the reset would stick a
+      // stale minute/score (minute is monotonic; resolveScore trusts the highest seq).
+      try {
+        await replayService.stop();
+      } catch {
+        // No active replay (or a transient error) — nothing to stop.
+      }
       beginReplay({
         fixtureId: game.fixtureId,
         home: teamInfoFromName(game.home, TeamSide.Home),
@@ -47,7 +49,7 @@ export function useLoadReplay() {
           fixtureId: game.fixtureId,
           epochDay: game.epochDay,
           startHour: game.startHour,
-          speed: REPLAY_SPEED,
+          speed: speedOverride ?? session.speed,
         });
       } catch {
         // Replay couldn't start — drop the overlay so the UI isn't stuck buffering.
@@ -59,5 +61,17 @@ export function useLoadReplay() {
     [beginReplay],
   );
 
-  return { loadReplay, isLoadingScore };
+  /** "Rewind": restart the current fixture's stream from kickoff (backend streams cannot seek). */
+  const restartReplay = useCallback(() => {
+    const { source } = useReplaySessionStore.getState();
+    if (source) void loadReplay(source);
+  }, [loadReplay]);
+
+  /** Cycle the stream pace and restart from kickoff at the new speed (pace is a start parameter). */
+  const cycleReplaySpeed = useCallback(() => {
+    const session = useReplaySessionStore.getState();
+    if (session.source) void loadReplay(session.source, session.cycleSpeed());
+  }, [loadReplay]);
+
+  return { loadReplay, restartReplay, cycleReplaySpeed, isLoadingScore };
 }

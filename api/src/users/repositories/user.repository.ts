@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DuelResult, Prisma, UserStatus, type User } from '@prisma/client';
+import { AccountType, DuelResult, Prisma, UserStatus, type User } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { rankFromMmr, nextStreak } from '../../fantasy/ranking.util';
@@ -28,6 +28,30 @@ export class UserRepository {
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: { id, ...UserRepository.notDeleted },
+    });
+  }
+
+  findByEmail(email: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { email, ...UserRepository.notDeleted },
+    });
+  }
+
+  /** Email registration — Collector tier, no real wallet (address is synthetic). */
+  createCollector(
+    email: string,
+    passwordHash: string,
+    walletAddress: string,
+  ): Promise<User> {
+    return this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        walletAddress,
+        accountType: AccountType.Collector,
+        balance: WELCOME_GRANT_COINS,
+        lastLoginAt: new Date(),
+      },
     });
   }
 

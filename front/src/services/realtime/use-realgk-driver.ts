@@ -26,10 +26,13 @@ const teamOf = (participant?: number): Team | null =>
 export function useRealgkFeedDriver(
   handleRef: MutableRefObject<RealGkHandle | null>,
   fixtureId: number | null,
-  opts?: { cinematicIntro?: boolean },
+  opts?: { cinematicIntro?: boolean; resetKey?: number },
 ): void {
   const startedRef = useRef(false);
   const cinematicIntro = opts?.cinematicIntro === true;
+  // Restarting the SAME fixture (replay from kickoff) must also reset the engine — the caller bumps
+  // this key so the effect re-runs even though the fixtureId is unchanged.
+  const resetKey = opts?.resetKey ?? 0;
 
   useEffect(() => {
     // New/absent fixture: back to autonomous attract mode until this match's data arrives — or, with
@@ -67,11 +70,12 @@ export function useRealgkFeedDriver(
       socket.off(`match-event.${EmissionState.After}`, onMatch);
       socket.off(CH_MATCH_END, onEnd);
     };
-  }, [handleRef, fixtureId, cinematicIntro]);
+  }, [handleRef, fixtureId, cinematicIntro, resetKey]);
 }
 
 /** The hero variant: drives the backdrop from the globally chosen match (match.store). */
 export function useRealgkDriver(handleRef: MutableRefObject<RealGkHandle | null>): void {
   const fixtureId = useMatchStore((state) => state.match?.fixtureId ?? null);
-  useRealgkFeedDriver(handleRef, fixtureId);
+  const replayNonce = useMatchStore((state) => state.replayNonce);
+  useRealgkFeedDriver(handleRef, fixtureId, { cinematicIntro: true, resetKey: replayNonce });
 }

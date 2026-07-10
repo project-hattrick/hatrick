@@ -21,7 +21,7 @@ export function ModeShowcaseSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-16 md:py-20">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16 md:py-20">
         <div className="flex items-center gap-5">
           <span aria-hidden className="h-px flex-1 bg-gradient-to-r from-transparent to-border" />
           <h2 className="text-title text-center tracking-[0.3em] uppercase">Two modes. Endless ways to win.</h2>

@@ -166,7 +166,7 @@ export function MatchPicker({ variant = 'bar' }: { variant?: PickerVariant }) {
 
       <Popover.Portal>
         <Popover.Positioner sideOffset={10} align={variant === 'hero' ? 'center' : 'start'} className="z-50">
-          <Popover.Popup className="flex max-h-[70vh] w-80 flex-col overflow-hidden rounded-[20px] border border-white/10 bg-surface-1/95 p-2 text-sm text-foreground shadow-2xl backdrop-blur-2xl outline-none origin-[var(--transform-origin)] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+          <Popover.Popup className="flex max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-[20px] border border-white/10 bg-surface-1/95 p-2 text-sm text-foreground shadow-2xl backdrop-blur-2xl outline-none origin-[var(--transform-origin)] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
             <div className="flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2">
               <MagnifyingGlass className="size-4 shrink-0 text-muted-foreground" />
               <input

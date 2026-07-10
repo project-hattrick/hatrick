@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import type { Adapter } from '@solana/wallet-adapter-base';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { IconContext, type IconProps } from '@/components/common/icons';
 import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import { SearchCommand } from '@/components/common/search-command';
@@ -34,8 +35,12 @@ export function AppProviders({
   dictionary: Dictionary;
 }) {
   const [queryClient] = useState(createQueryClient);
-  // Wallet Standard auto-detects Phantom/Solflare — no explicit adapters needed.
-  const wallets = useMemo<Adapter[]>(() => [], []);
+  // Wallet Standard auto-detects Phantom/Solflare on desktop with the extension.
+  // On mobile browsers nothing is injected, so we register the explicit Phantom
+  // adapter: it reports `Loadable` and, on connect, deep-links into Phantom's
+  // in-app browser (where the provider IS injected and the sign-in flow resumes).
+  // WalletProvider dedupes it against the Standard entry, so desktop shows one row.
+  const wallets = useMemo<Adapter[]>(() => [new PhantomWalletAdapter()], []);
 
   return (
     <QueryClientProvider client={queryClient}>

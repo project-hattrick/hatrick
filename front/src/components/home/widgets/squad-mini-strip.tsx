@@ -14,12 +14,13 @@ export function SquadMiniStrip() {
   const slots = Array.from({ length: SQUAD_SLOTS }, (_, index) => squad[index] ?? null);
 
   return (
-    <div className="grid w-full grid-flow-col auto-cols-fr gap-2.5">
+    // Mobile: edge-to-edge swipe carousel (bleeds past the page padding); md+: the original even grid.
+    <div className="custom-scrollbar -mx-6 flex snap-x gap-2.5 overflow-x-auto px-6 pb-1 md:mx-0 md:grid md:w-full md:auto-cols-fr md:grid-flow-col md:overflow-visible md:px-0 md:pb-0">
       {slots.map((player, index) =>
         player ? (
           <div
             key={player.id}
-            className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface-2"
+            className="flex w-[104px] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-border bg-surface-2 md:w-auto"
           >
             <div className="relative aspect-[100/76] bg-gradient-to-b from-surface-3 to-surface-1">
               <span className="absolute top-1 left-2 z-10 font-talero text-lg text-neon">{player.number}</span>
@@ -44,7 +45,7 @@ export function SquadMiniStrip() {
           <Link
             key={`empty-${index}`}
             href={`/${AppMode.Fantasy}`}
-            className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-1/40 p-2 text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon"
+            className="group flex w-[104px] shrink-0 snap-start flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-1/40 p-2 text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon md:w-auto"
           >
             <UserPlus className="text-2xl opacity-70 transition-opacity group-hover:opacity-100" />
             <span className="text-micro font-semibold">Empty slot</span>

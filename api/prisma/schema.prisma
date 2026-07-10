@@ -221,12 +221,13 @@ model User {
   id            String     @id @default(cuid())
   walletAddress String     @unique
   email         String?    @unique
+  // scrypt hash (`scrypt$<salt>$<hash>`); null for wallet-only accounts.
+  passwordHash  String?
   displayName   String?
   avatarUrl     String?
   role          UserRole   @default(Player)
   status        UserStatus @default(Active)
-  // Wallet sign-in is the only live auth flow, so everyone starts as Competitor;
-  // email/Google registration (Collector) flips this when it lands.
+  // Wallet sign-in creates Competitors; email registration creates Collectors.
   accountType   AccountType @default(Competitor)
   balance       Decimal    @default(1000) @db.Decimal(18, 2)
   lastLoginAt   DateTime?

@@ -2,6 +2,7 @@ import { Scoreboard } from './scoreboard';
 import { PlayerFocusCard } from './player-focus-card';
 import { MyPredictionsPanel } from './my-predictions-panel';
 import { HeroCenterDock } from './hero-center-dock';
+import { HeroQuickActions } from './hero-quick-actions';
 import { MatchTimeline } from './match-timeline';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
@@ -14,8 +15,9 @@ export function ImmersiveDashboard() {
   return (
     <div className="relative mx-auto h-full min-h-0 w-full overflow-hidden">
       <HeroChrome>
-      {/* Data-provider credit — top-left, in a chip so it reads over the pitch. */}
-      <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+4.25rem)] z-10 md:left-6 md:top-20">
+      {/* Data-provider credit — top-left chip on desktop; on mobile it moves to the bottom row so it
+          never overlaps the centred scoreboard/match switcher. */}
+      <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+4.25rem)] z-10 hidden md:left-6 md:top-20 md:block">
         <span className="inline-flex items-center rounded-full border border-white/15 bg-overlay/55 px-3 py-1.5 backdrop-blur-md">
           <PoweredByTxline tone="hero" className="pointer-events-auto" />
         </span>
@@ -34,9 +36,18 @@ export function ImmersiveDashboard() {
         </div>
       </div>
 
-      {/* Live prediction — the hero CTA; bottom-centre, above the timeline. */}
-      <div className="absolute inset-x-3 bottom-20 z-20 flex justify-center sm:inset-x-4 md:inset-x-auto md:bottom-24 md:left-1/2 md:-translate-x-1/2">
+      {/* Live prediction — the hero CTA; bottom-centre, above the quick actions + timeline. */}
+      <div className="absolute inset-x-3 bottom-[7.5rem] z-20 flex justify-center sm:inset-x-4 md:inset-x-auto md:bottom-24 md:left-1/2 md:-translate-x-1/2">
         <HeroCenterDock />
+      </div>
+
+      {/* Mobile-only row above the replay bar: quick actions (chat / predictions / on the ball)
+          plus the data-provider credit tucked bottom-right. */}
+      <div className="absolute inset-x-3 bottom-[4.25rem] z-30 flex items-center justify-between gap-2 md:hidden">
+        <HeroQuickActions />
+        <span className="inline-flex items-center rounded-full border border-white/15 bg-overlay/55 px-2.5 py-1 backdrop-blur-md">
+          <PoweredByTxline tone="hero" className="pointer-events-auto" />
+        </span>
       </div>
 
       {/* Cards + crowd — desktop rail only; anchored low so the crowd sits near the bottom. */}

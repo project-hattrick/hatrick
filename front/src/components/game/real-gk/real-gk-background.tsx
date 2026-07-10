@@ -21,6 +21,8 @@ interface RealGkBackgroundProps {
   config?: RealGkConfig;
   /** Receives the live handle on boot (and null on teardown) so a sibling HUD can drive restart/speed. */
   onReady?: (handle: RealGkHandle | null) => void;
+  /** Overrides the intro overlay's team names (the hero shows the PICKED match, not the engine's static cast). */
+  teamNames?: { blue: string; red: string };
 }
 
 /**
@@ -33,6 +35,7 @@ export function RealGkBackground({
   bridgeHud = false,
   config = REAL_GK_MATCH_CONFIG,
   onReady,
+  teamNames,
 }: RealGkBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -97,8 +100,8 @@ export function RealGkBackground({
       <MatchIntroOverlay
         active={introActive}
         stage={introStage}
-        blueName={teamBlueName}
-        redName={teamRedName}
+        blueName={teamNames?.blue ?? teamBlueName}
+        redName={teamNames?.red ?? teamRedName}
         blueFlag={teamBlueFlag}
         redFlag={teamRedFlag}
       />

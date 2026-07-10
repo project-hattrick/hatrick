@@ -67,7 +67,7 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
         solid ? 'border-border bg-surface-1' : 'border-transparent',
       )}
     >
-      <div className="mx-auto flex h-full w-full items-center justify-between px-3 sm:px-4 md:px-6">
+      <div className="relative mx-auto flex h-full w-full items-center justify-between px-3 sm:px-4 md:px-6">
         <MobileNavMenu />
         <div className="hidden flex-1 items-center gap-6 text-sm font-semibold md:flex">
           {navLinks.map((link) => (
@@ -82,28 +82,39 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
           ))}
         </div>
 
-        <Link href={localizedPath('/')} aria-label={t('common.home')} className="shrink-0">
+        {/* Below md the sides are uneven (hamburger vs sign-in/avatar), so the logo is pinned to the
+            true centre; md+ keeps it in flow between the equal flex-1 sides. */}
+        <Link
+          href={localizedPath('/')}
+          aria-label={t('common.home')}
+          className="absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0"
+        >
           <Image src="/logo.png" alt="Hat-trick" width={472} height={481} priority className="h-8 w-auto md:h-10" />
         </Link>
 
         <div className="flex items-center justify-end gap-2 sm:gap-3 md:flex-1 md:gap-5">
-          <IconButton label={t('common.searchPlayers')} onClick={() => openSearch(true)}>
-            <MagnifyingGlass className="size-5" />
-          </IconButton>
-          <LanguageSwitcher />
-          <span className="hidden sm:inline-flex">
+          {/* Below md the bar is just hamburger | logo | avatar — everything else lives in the menu. */}
+          <span className="hidden md:inline-flex">
+            <IconButton label={t('common.searchPlayers')} onClick={() => openSearch(true)}>
+              <MagnifyingGlass className="size-5" />
+            </IconButton>
+          </span>
+          <span className="hidden md:inline-flex">
+            <LanguageSwitcher />
+          </span>
+          <span className="hidden md:inline-flex">
             <NotificationsMenu />
           </span>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Image src="/coin.png" alt="Coins" width={22} height={22} className="size-4 sm:size-5" />
-            <span suppressHydrationWarning className="text-xs font-bold text-foreground tabular-nums sm:text-sm">
+          <div className="hidden items-center gap-2 md:flex">
+            <Image src="/coin.png" alt="Coins" width={22} height={22} className="size-5" />
+            <span suppressHydrationWarning className="text-sm font-bold text-foreground tabular-nums">
               {formatThousands(coins)}
             </span>
             <button
               type="button"
               aria-label={t('common.addCoins')}
               onClick={topUp}
-              className="flex size-5 items-center justify-center rounded-full bg-neon text-primary-foreground transition hover:bg-neon-hover sm:size-6"
+              className="flex size-6 items-center justify-center rounded-full bg-neon text-primary-foreground transition hover:bg-neon-hover"
             >
               <Plus className="size-3" />
             </button>

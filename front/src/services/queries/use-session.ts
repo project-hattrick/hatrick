@@ -29,17 +29,37 @@ async function fetchSession(signal?: AbortSignal): Promise<AuthUser | null> {
 export function useSession() {
   const setSession = useAuthStore((s) => s.setSession);
   const setGuest = useAuthStore((s) => s.setGuest);
+  const persistedUser = useAuthStore((s) => s.user);
   const hydrateProfile = useProfileStore((s) => s.hydrateFromServer);
   const hydrateWallet = useWalletStore((s) => s.hydrate);
   const resetWallet = useWalletStore((s) => s.reset);
 
+  // No persisted user → nothing to re-validate: skip the /auth/me probe (saves a
+  // guaranteed 401 round-trip on every anonymous visit) and resolve to guest.
+  // Decisions wait for the persist rehydrate — the first render sees user=null even
+  // for a signed-in reload, and acting on it would overwrite the stored session.
+  const hasSessionHint = persistedUser !== null;
+
   const query = useQuery({
     queryKey: queryKeys.authMe(),
     queryFn: ({ signal }) => fetchSession(signal),
-    enabled: backendEnabled, // mock mode drives the session locally (useWalletAuth)
+    enabled: backendEnabled && hasSessionHint, // mock mode drives the session locally (useWalletAuth)
     retry: false,
     staleTime: 60_000,
   });
+
+  useEffect(() => {
+    if (!backendEnabled || hasSessionHint) return;
+    const resolveGuest = () => {
+      const s = useAuthStore.getState();
+      if (s.user === null && s.status === 'unknown') setGuest();
+    };
+    if (useAuthStore.persist.hasHydrated()) {
+      resolveGuest();
+      return;
+    }
+    return useAuthStore.persist.onFinishHydration(resolveGuest);
+  }, [hasSessionHint, setGuest]);
 
   useEffect(() => {
     if (!query.isSuccess) return;

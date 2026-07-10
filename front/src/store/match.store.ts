@@ -7,8 +7,10 @@ import type { LiveMatch, MatchEventPayload, MatchScore } from '@/types/match';
 interface MatchStore {
   match: LiveMatch | null;
   events: MatchEventPayload[];
-  /** True while a picked past match is playing back (front-driven, seekable) rather than live. */
+  /** True while a picked past match is streaming back through the pipeline rather than live. */
   isReplay: boolean;
+  /** Bumped on every beginReplay so the hero driver resets even when the same fixture restarts. */
+  replayNonce: number;
   /** True from picking a match until its first event lands — the backend replay buffers (~20-30s). */
   switching: boolean;
   setSwitching: (switching: boolean) => void;
@@ -58,11 +60,13 @@ export const useMatchStore = create<MatchStore>((set) => ({
   match: null,
   events: [],
   isReplay: false,
+  replayNonce: 0,
   switching: false,
   setSwitching: (switching) => set({ switching }),
   setMatch: (match) => set({ match, isReplay: false }),
   startMatch: (match) => set({ match, events: [], isReplay: false, switching: false }),
-  beginReplay: (match) => set({ match, events: [], isReplay: true, switching: true }),
+  beginReplay: (match) =>
+    set((state) => ({ match, events: [], isReplay: true, switching: true, replayNonce: state.replayNonce + 1 })),
   setReplayFrame: (fixtureId, score, minute, events) =>
     set((state) =>
       state.match && state.match.fixtureId === fixtureId

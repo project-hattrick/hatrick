@@ -55,6 +55,15 @@ const verify = async (walletAddress: string, signature: string): Promise<AuthSes
   return { token: res.token, user: toAuthUser(res.user), isNew: res.isNew };
 };
 
+/** Email sign-in-or-register (Collector tier); the api sets the httpOnly session cookie. */
+const signInWithEmail = async (email: string, password: string): Promise<AuthSession> => {
+  const res = await api.post<{ token: string; user: ApiUserDto; isNew: boolean }>(
+    endpoints.auth.email,
+    { email, password },
+  );
+  return { token: res.token, user: toAuthUser(res.user), isNew: res.isNew };
+};
+
 /** Validate the session cookie and hydrate the current user (used on boot). */
 const me = async (signal?: AbortSignal): Promise<AuthUser> =>
   toAuthUser(await api.get<ApiUserDto>(endpoints.auth.me, signal));
@@ -62,4 +71,4 @@ const me = async (signal?: AbortSignal): Promise<AuthUser> =>
 /** End the session — clears the httpOnly cookie server-side. */
 const logout = (): Promise<void> => api.post<void>(endpoints.auth.logout);
 
-export const authService = { requestNonce, verify, me, logout };
+export const authService = { requestNonce, verify, signInWithEmail, me, logout };

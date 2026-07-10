@@ -13,19 +13,30 @@ import { cn } from '@/lib/utils';
 const rank = (w: Wallet): number => (w.readyState === WalletReadyState.Installed ? 0 : 1);
 
 /**
+ * A wallet we can actually start a connection with:
+ *  - `Installed` → injected provider present (desktop extension / Phantom in-app browser).
+ *  - `Loadable`  → not injected here, but connectable via deep link (Phantom on mobile).
+ * `NotDetected`/`Unsupported` rows are hidden so we don't offer dead buttons.
+ */
+const isConnectable = (w: Wallet): boolean =>
+  w.readyState === WalletReadyState.Installed || w.readyState === WalletReadyState.Loadable;
+
+/**
  * Step 1 of login — a two-tier chooser:
  *  - "I want to win": connect a Solana wallet (Phantom & co.) to compete with real ownership.
  *  - "Just open packs & stats": casual Email/Google entry, no wallet required.
  * Wallet rows come from the Wallet-Standard list so we never bounce to the adapter's
  * default modal. Selecting a wallet triggers connect; the app-wide driver then auto-signs.
  */
-export function WalletStep() {
+export function WalletStep({ onEmail }: { onEmail?: () => void }) {
   const { wallets, select, wallet, connect, connecting } = useWallet();
   const setLoginOpen = useUiStore((s) => s.setLoginOpen);
 
   // select() lands async — connect once the selected wallet is actually set.
+  // Loadable (mobile Phantom) also connects: connect() triggers the deep link
+  // that reopens the app inside Phantom's in-app browser.
   useEffect(() => {
-    if (wallet?.readyState === WalletReadyState.Installed) {
+    if (wallet && isConnectable(wallet)) {
       void connect().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,7 +48,8 @@ export function WalletStep() {
     setLoginOpen(false);
   };
 
-  const ordered = [...wallets].sort((a, b) => rank(a) - rank(b));
+  // Only show wallets we can connect to; sort installed/detected on top.
+  const ordered = wallets.filter(isConnectable).sort((a, b) => rank(a) - rank(b));
 
   return (
     <div className="space-y-4">
@@ -79,11 +91,13 @@ export function WalletStep() {
         <AltRow
           icon={<Envelope className="size-5" />}
           label="Continue with Email"
-          onSelect={backendEnabled ? undefined : continueCasual}
+          badge={backendEnabled ? null : 'Demo'}
+          onSelect={backendEnabled ? onEmail : continueCasual}
         />
         <AltRow
           icon={<GoogleLogo className="size-5" />}
           label="Continue with Google"
+          badge={backendEnabled ? 'Soon' : 'Demo'}
           onSelect={backendEnabled ? undefined : continueCasual}
         />
       </section>
@@ -109,6 +123,8 @@ function TierHeading({ icon, title, detail }: { icon: React.ReactNode; title: st
 
 function WalletRow({ wallet, busy, onSelect }: { wallet: Wallet; busy: boolean; onSelect: () => void }) {
   const detected = wallet.readyState === WalletReadyState.Installed;
+  // Loadable = connectable via deep link (Phantom on a mobile browser).
+  const loadable = wallet.readyState === WalletReadyState.Loadable;
   return (
     <li>
       <button
@@ -121,7 +137,9 @@ function WalletRow({ wallet, busy, onSelect }: { wallet: Wallet; busy: boolean; 
         <img src={wallet.adapter.icon} alt="" className="size-7 shrink-0 rounded-md" />
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-body font-bold">{wallet.adapter.name}</span>
-          <span className="text-caption text-muted-foreground">{detected ? 'Browser wallet' : 'Not installed'}</span>
+          <span className="text-caption text-muted-foreground">
+            {detected ? 'Browser wallet' : loadable ? 'Open in the app' : 'Not installed'}
+          </span>
         </span>
         <span className="ml-auto flex items-center gap-2">
           {detected && !busy ? (
@@ -139,10 +157,20 @@ function WalletRow({ wallet, busy, onSelect }: { wallet: Wallet; busy: boolean; 
 }
 
 /**
- * Email/Google entry. With `onSelect` (mock mode) it starts the wallet-free demo
- * session; without it (backend mode) it stays gated until the API supports them.
+ * Email/Google entry. `onSelect` opens the email form (backend mode) or starts
+ * the wallet-free demo session (mock mode); without it the row stays gated.
  */
-function AltRow({ icon, label, onSelect }: { icon: React.ReactNode; label: string; onSelect?: () => void }) {
+function AltRow({
+  icon,
+  label,
+  badge,
+  onSelect,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge: string | null;
+  onSelect?: () => void;
+}) {
   const enabled = Boolean(onSelect);
   return (
     <button
@@ -158,14 +186,16 @@ function AltRow({ icon, label, onSelect }: { icon: React.ReactNode; label: strin
     >
       <span className="text-muted-foreground">{icon}</span>
       {label}
-      <span
-        className={cn(
-          'ml-auto rounded-full border px-2 py-0.5 text-micro font-bold uppercase tracking-wide',
-          enabled ? 'border-neon/35 text-neon' : 'border-border',
-        )}
-      >
-        {enabled ? 'Demo' : 'Soon'}
-      </span>
+      {badge && (
+        <span
+          className={cn(
+            'ml-auto rounded-full border px-2 py-0.5 text-micro font-bold uppercase tracking-wide',
+            enabled ? 'border-neon/35 text-neon' : 'border-border',
+          )}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   );
 }

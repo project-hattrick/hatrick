@@ -41,7 +41,7 @@ export const heroMatch: HeroMatch = {
   },
   away: {
     name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png',
-    placement: { width: 150, x: -2, y: 5, scale: 1, flip: false, objectY: 8 },
+    placement: { width: 150, x: 2, y: 4, scale: 1, flip: false, objectY: 8 },
   },
   label: 'Sunday, 21 January',
   // Countdown target as a fixed remaining offset (days/hours/mins/secs) — mock, not wall-clock.
@@ -65,13 +65,17 @@ export interface HeroPortrait {
 export const HERO_PORTRAITS: Record<string, HeroPortrait> = {
   ARG: { src: '/cards/hero-arg.png', home: heroMatch.home.placement },
   BRA: { src: '/cards/hero-bra.png', away: heroMatch.away.placement },
-  ENG: { src: '/cards/hero-eng.png' },
-  NOR: { src: '/cards/hero-nor.png' },
-  BEL: { src: '/cards/hero-bel.png' },
-  ESP: { src: '/cards/hero-esp.png' },
-  FRA: { src: '/cards/hero-fra.png' },
-  MAR: { src: '/cards/hero-mar.png' },
-  SUI: { src: '/cards/hero-sui.png' },
+  ENG: { src: '/cards/hero-eng.png', away: { width: 170, x: -143, y: 5, scale: 1, flip: true, objectY: 0 } },
+  NOR: { src: '/cards/hero-nor.png', away: { width: 170, x: -145, y: 5, scale: 1, flip: true, objectY: 0 } },
+  BEL: { src: '/cards/hero-bel.png', away: { width: 170, x: -157, y: 9, scale: 1, flip: true, objectY: 0 } },
+  ESP: { src: '/cards/hero-esp.png', home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 } },
+  FRA: {
+    src: '/cards/hero-fra.png',
+    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 5 },
+    away: { width: 170, x: -144, y: 6, scale: 1, flip: true, objectY: 5 },
+  },
+  MAR: { src: '/cards/hero-mar.png', away: { width: 170, x: -155, y: 6, scale: 1, flip: true, objectY: 0 } },
+  SUI: { src: '/cards/hero-sui.png', away: { width: 170, x: -155, y: 4, scale: 1, flip: true, objectY: 0 } },
 };
 
 /** Hero figure (portrait + placement) for a fixture team — heroMatch default when no art exists. */

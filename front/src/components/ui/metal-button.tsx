@@ -79,7 +79,9 @@ export const MetalButton = forwardRef<HTMLDivElement, MetalButtonProps>(
       metalFxClassName,
       metalFxStyle,
       preset = "chromatic",
-      theme = "auto",
+      // Fixed: the app is dark-only (Neon Turf); "auto" resolves via matchMedia on the
+      // client but not during SSR, which throws a hydration mismatch for light-OS users.
+      theme = "dark",
       strength = 0.9,
       paused,
       borderRadius,

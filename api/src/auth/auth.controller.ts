@@ -25,6 +25,7 @@ import { AuthService } from './auth.service';
 import type { AuthenticatedUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { EmailSignInDto } from './dto/email-sign-in.dto';
 import { NonceResponseDto } from './dto/nonce-response.dto';
 import { RequestNonceDto } from './dto/request-nonce.dto';
 import { VerifySignatureDto } from './dto/verify-signature.dto';
@@ -66,6 +67,24 @@ export class AuthController {
     const session = await this.auth.verify(dto.walletAddress, dto.signature);
     // The JWT rides in an httpOnly cookie (source of truth for the browser); it's
     // still echoed in the body for Swagger/non-browser clients.
+    res.cookie(SESSION_COOKIE, session.token, sessionCookieOptions());
+    return session;
+  }
+
+  @Post('email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Email sign-in or register (Collector tier)',
+    description:
+      'Signs in with email + password; a new email registers a Collector account (packs & stats, no betting).',
+  })
+  @ApiOkResponse({ description: 'Session token + user', type: AuthResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Wrong password for this email' })
+  async emailSignIn(
+    @Body() dto: EmailSignInDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const session = await this.auth.signInWithEmail(dto.email, dto.password);
     res.cookie(SESSION_COOKIE, session.token, sessionCookieOptions());
     return session;
   }

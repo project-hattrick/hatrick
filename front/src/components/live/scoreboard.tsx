@@ -1,10 +1,9 @@
 'use client';
 
 import { useDisplayMatch, useDisplayEvents } from '@/store/match.store';
-import { matchActionConfig, matchActionFallback } from '@/config/match-action.config';
+import { describeMatchEvent } from '@/config/match-action.config';
 import { MatchPicker } from '@/components/home/match-picker';
 import { Flag } from '@/components/common/flag';
-import { lookup } from '@/lib/lookup';
 import { fifaToIso } from '@/lib/country';
 import { formatMinute } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,13 @@ export function Scoreboard() {
   const match = useDisplayMatch();
   const events = useDisplayEvents();
 
-  const recent = [...events].reverse().slice(0, MAX_EVENTS);
+  const recent = [...events]
+    .reverse()
+    .flatMap((event) => {
+      const meta = describeMatchEvent(event);
+      return meta ? [{ event, meta }] : [];
+    })
+    .slice(0, MAX_EVENTS);
 
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
@@ -46,8 +51,7 @@ export function Scoreboard() {
 
       {recent.length > 0 ? (
         <div className="hidden flex-wrap justify-center gap-1.5 md:flex">
-          {recent.map((event) => {
-            const meta = lookup(matchActionConfig, event.action, matchActionFallback);
+          {recent.map(({ event, meta }) => {
             const teamCode = event.participant === 1 ? match.home.code : match.away.code;
             return (
               <span

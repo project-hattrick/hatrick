@@ -80,7 +80,7 @@ export function LiveScorebar() {
           stuck ? 'shadow-e3' : 'shadow-none',
         )}
       >
-        <div className="mx-auto flex h-[52px] w-full max-w-6xl items-center gap-3 px-4 md:gap-4 md:px-6">
+        <div className="mx-auto flex h-[52px] w-full max-w-7xl items-center gap-3 px-4 md:gap-4 md:px-6">
           {isReplay ? (
             <span className="inline-flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-neon" />
