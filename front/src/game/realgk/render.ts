@@ -9,6 +9,7 @@ import type { RealGkCamera } from './camera';
 import { locomotionConfigFor, outfieldConfigFor, type FrameCfg } from './assets/configs';
 import { SIDE_MODES, gkHead, spriteHeightForBase, drawSprite, drawTrimmedSprite, drawComposedHead } from './composite';
 import { ITEM_MAP } from './assets/items';
+import { PERSONA_GK_BODY_ANIMS } from './assets/manifest';
 import type { HeadKey, HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
 import { DIVE2_HEIGHT_RATIO, dive2SmearAt, keeperConfigFor } from './sim/keeper';
@@ -16,6 +17,9 @@ import { frameIndexFor } from './sim/players';
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
+
+/** Keeper anims eligible for family (persona-root) bodies — see PERSONA_GK_BODY_ANIMS. */
+const PERSONA_GK_MODES = new Set<string>(PERSONA_GK_BODY_ANIMS);
 
 /** Actor height at `depth` — thin wrapper over the shared `spriteHeightForBase` (see composite.ts). */
 function spriteHeightFor(world: RealGkWorld, depth: number, frameCfg: FrameCfg | null): number {
@@ -67,7 +71,11 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   const rawPersonaCfg = !isGk
     ? locomotionConfigFor(player.mode, frameIdx) ?? outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase)
     : null;
-  const personaBody = personaOn && !isGk && !!assets.personaBodies[player.mode]?.length && rawPersonaCfg !== null;
+  // Keepers join the persona-body path ONLY for gk_* anims (family roots like /game/franca ship those
+  // cuts). Shared anims a keeper can enter (celebrations) must keep the legacy path — their persona
+  // geometry lives in outfieldConfigFor, which the keeper draw (keeperConfigFor) has no frames for.
+  const gkPersonaMode = isGk && PERSONA_GK_MODES.has(player.mode);
+  const personaBody = personaOn && !!assets.personaBodies[player.mode]?.length && (isGk ? gkPersonaMode : rawPersonaCfg !== null);
   const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
   // Resilient frame lookup: a not-yet-loaded or missing mode/frame must never crash the draw (it used to
   // flood "recovered draw errors" and leave the pitch as bare shadows). Fall back to the mode's frame 0,
@@ -79,9 +87,9 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     assets.body[BodyAnim.IdleFront]?.[0] ??
     assets.body[BodyAnim.GkIdle]?.[0];
   if (!frame) return;
-  const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
-  const rawOutfieldCfg = isGk ? null : personaBody ? rawPersonaCfg : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const personaHeadScale = personaBody ? world.cfg.personaHeadScale ?? 1 : 1;
+  const keeperCfg = isGk ? scalePersonaHead(keeperConfigFor(player.mode, frameIdx), personaHeadScale) : null;
+  const rawOutfieldCfg = isGk ? null : personaBody ? rawPersonaCfg : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
   const outfieldCfg = scalePersonaHead(rawOutfieldCfg, personaHeadScale);
   const diving = isGk && player.action === PlayerAction.Dive;
   // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
@@ -94,7 +102,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // the stretched sprite reads like a normal player instead of inflating off its short height.
   // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.
   const diveV2 = diving && player.mode === BodyAnim.GkDiveV2;
-  const diveBox = diving && !diveV2 ? modeItem?.bboxes[frameIdx] : null;
+  const fullFrameBbox = (): number[] | null => (frame.complete && frame.naturalWidth ? [0, 0, frame.naturalWidth, frame.naturalHeight] : null);
+  // Persona keeper frames are pre-trimmed, so their own dims (not the shared pack's bboxes) drive the
+  // constant-dive-length normalization.
+  const diveBox = diving && !diveV2 ? (personaBody ? fullFrameBbox() : modeItem?.bboxes[frameIdx]) : null;
   const spriteHeight = diveV2
     ? spriteHeightFor(world, depth, sizeCfg) * DIVE2_HEIGHT_RATIO[frameIdx]
     : diveBox
@@ -115,7 +126,6 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
   const composedCfg = keeperCfg ?? outfieldCfg;
-  const fullFrameBbox = (): number[] | null => (frame.complete && frame.naturalWidth ? [0, 0, frame.naturalWidth, frame.naturalHeight] : null);
   const paintSprite = (): void => {
     if (composedCfg) {
       // Persona locomotion frames are freshly sliced/trimmed — draw the whole frame (their own bboxes in
@@ -201,12 +211,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     if (smear) {
       const baseH = spriteHeightFor(world, depth, sizeCfg);
       const paintGhost = (idx: number, k: number, alpha: number): void => {
-        const ghostFrame = assets.body[player.mode][idx];
-        const ghostBox = modeItem?.bboxes[idx];
+        const ghostFrame = (personaBody ? assets.personaBodies[player.mode] : assets.body[player.mode])?.[idx];
+        const ghostBox = personaBody
+          ? ghostFrame?.complete && ghostFrame.naturalWidth
+            ? [0, 0, ghostFrame.naturalWidth, ghostFrame.naturalHeight]
+            : null
+          : modeItem?.bboxes[idx];
         if (!ghostFrame || !ghostBox) return;
         const gx = lerp(player.diveStartX, player.x, k);
         const gy = lerp(player.diveStartY, player.y, k);
-        const cfg = keeperConfigFor(player.mode, idx);
+        const cfg = scalePersonaHead(keeperConfigFor(player.mode, idx), personaHeadScale) ?? keeperConfigFor(player.mode, idx);
         ctx.save();
         ctx.globalAlpha = alpha;
         const rect = drawTrimmedSprite(ctx, ghostFrame, ghostBox, gx, gy, baseH * DIVE2_HEIGHT_RATIO[idx], mirror);

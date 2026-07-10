@@ -6,12 +6,14 @@ import { toast } from 'sonner';
 import { Copy, WhatsappLogo, ShareNetwork, UserPlus, Check, Crown, Users } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
+import { UserAvatar } from '@/components/common/user-avatar';
 import { Button } from '@/components/ui/button';
 import { RoomMemberRole } from '@/enums/room-event.enum';
 import { duelists } from '@/config/duelists.config';
 import { useFriendsStore } from '@/store/friends.store';
 import { useRoomMembers, useRoomPresence } from '@/store/room.store';
 import { buildWhatsAppUrl, buildXIntentUrl, openShareUrl } from '@/lib/share';
+import { personaFor } from '@/lib/persona-fallback';
 import { cn } from '@/lib/utils';
 
 interface RoomInvitePanelProps {
@@ -96,7 +98,7 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
                   key={friend.id}
                   className="flex items-center gap-2 rounded-lg border border-border/40 bg-surface-2/40 px-2.5 py-1.5"
                 >
-                  <span className="size-6 shrink-0 rounded-full bg-gradient-to-br from-surface-3 to-surface-deep" />
+                  <UserAvatar src={friend.portraitSrc} alt={friend.name} size={28} className="rounded-full" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{friend.name}</span>
                   <Button
                     variant={isInvited ? 'ghost' : 'outline'}
@@ -122,8 +124,13 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
           ) : (
             members.map((member) => (
               <div key={member.id} className="flex items-center gap-2 px-1 py-1">
-                <span className="size-6 shrink-0 rounded-full bg-gradient-to-br from-neon/40 to-neon/5" />
-                <span className="min-w-0 flex-1 truncate text-sm">{member.displayName}</span>
+                <UserAvatar
+                  src={member.avatarUrl ?? personaFor(member.userId)}
+                  alt={member.displayName}
+                  size={28}
+                  className="rounded-full"
+                />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{member.displayName}</span>
                 {member.role === RoomMemberRole.Host && (
                   <span className={cn('flex items-center gap-1 text-micro font-semibold text-neon')}>
                     <Crown className="size-3" /> Host

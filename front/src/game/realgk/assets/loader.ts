@@ -8,6 +8,7 @@ import {
   HEAD_PATHS,
   PERSONA_BODY_ANIMS,
   PERSONA_COUNT,
+  PERSONA_GK_BODY_ANIMS,
   personaBodyFrames,
   personaHeadPaths,
   REF_SPRITE_PATHS,
@@ -77,6 +78,14 @@ export function loadRealGkAssets(includeV4 = false, includePersonas = false, per
     for (const anim of PERSONA_BODY_ANIMS) {
       const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
       personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount).map((src) => loadImage(src));
+    }
+    // Team-specific keeper bodies only exist in custom family roots (e.g. /game/franca) — the default
+    // personas pack has none, so skipping avoids a wall of 404s there.
+    if (personaBodyRoot) {
+      for (const anim of PERSONA_GK_BODY_ANIMS) {
+        const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
+        personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount).map((src) => loadImage(src));
+      }
     }
   }
 

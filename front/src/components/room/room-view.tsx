@@ -7,7 +7,11 @@ import { SiteNavbar } from '@/components/common/site-navbar';
 import { ParallaxStage } from '@/components/home/parallax-stage';
 import { Scoreboard } from '@/components/live/scoreboard';
 import { MatchTimeline } from '@/components/live/match-timeline';
-import { RoomDock } from './room-dock';
+import { MarketsPanel } from '@/components/live/markets-panel';
+import { BetSlip } from '@/components/live/bet-slip';
+import { RoomInvitePanel } from './room-invite-panel';
+import { RoomChatPanel } from './room-chat-panel';
+import { RoomMobileActions } from './room-mobile-actions';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
 import { useAutoReplay } from '@/hooks/use-auto-replay';
 import { useJoinRoom, useRoom, useRoomMembersQuery, useRoomMessagesQuery } from '@/services/queries';
@@ -72,26 +76,33 @@ export function RoomView({ roomId }: { roomId: string }) {
         {/* Engine backdrop — the live pitch fills the screen (fixes the black bg). */}
         <ParallaxStage />
 
-        {/* Trimmed, game-focused overlays over the pitch. */}
+        {/* Trimmed, game-focused overlays over the pitch — pinned like the hero. */}
         <div className="relative z-10 h-full">
           {/* Scoreboard — top-centre, cleared below the navbar. */}
-          <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 -translate-x-1/2 md:top-16">
+          <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 -translate-x-1/2 md:top-16">
             <Scoreboard />
           </div>
+
+          {/* Bet widget — desktop left rail (odds board + slip). */}
+          <div className="custom-scrollbar hidden md:absolute md:top-20 md:bottom-24 md:left-6 md:flex md:w-[330px] md:flex-col md:gap-3 md:overflow-y-auto">
+            <MarketsPanel />
+            <BetSlip />
+          </div>
+
+          {/* Room widgets — desktop right rail: invite/members on top, chat fills below. */}
+          <div className="hidden md:absolute md:top-20 md:right-6 md:bottom-24 md:flex md:w-[340px] md:flex-col md:gap-3">
+            <RoomInvitePanel inviteToken={inviteToken} inviteUrl={inviteUrl} />
+            <RoomChatPanel roomId={roomId} />
+          </div>
+
+          {/* Mobile — room widgets as pills that open in a modal. */}
+          <RoomMobileActions roomId={roomId} inviteToken={inviteToken} inviteUrl={inviteUrl} />
 
           {/* Playback transport + event timeline. */}
           <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3 md:px-6 md:pb-4">
             <MatchTimeline />
           </div>
         </div>
-
-        {/* The single floating room widget (invite · bet · chat). */}
-        <RoomDock
-          roomId={roomId}
-          roomName={room?.name ?? 'Private room'}
-          inviteToken={inviteToken}
-          inviteUrl={inviteUrl}
-        />
       </section>
     </div>
   );

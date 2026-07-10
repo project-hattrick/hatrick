@@ -5,10 +5,13 @@ import { z } from 'zod';
 import { ChatCircle } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
+import { UserAvatar } from '@/components/common/user-avatar';
 import { useZodForm } from '@/hooks/use-zod-form';
+import { useSelfIdentity } from '@/hooks/use-self-identity';
 import { usePostRoomMessage } from '@/services/queries';
 import { useAuthStore } from '@/store/auth.store';
-import { useRoomMessages } from '@/store/room.store';
+import { useRoomMessages, useRoomMembers } from '@/store/room.store';
+import { personaFor } from '@/lib/persona-fallback';
 import { cn } from '@/lib/utils';
 
 const schema = z.object({ body: z.string().trim().min(1).max(200) });
@@ -22,7 +25,9 @@ type FormValues = z.infer<typeof schema>;
  */
 export function RoomChatPanel({ roomId, embedded = false }: { roomId: string; embedded?: boolean }) {
   const messages = useRoomMessages();
+  const members = useRoomMembers();
   const selfId = useAuthStore((s) => s.user?.id);
+  const self = useSelfIdentity();
   const post = usePostRoomMessage(roomId);
   const form = useZodForm<FormValues>(schema, { defaultValues: { body: '' } });
 
@@ -31,25 +36,39 @@ export function RoomChatPanel({ roomId, embedded = false }: { roomId: string; em
     form.reset();
   });
 
+  // Messages carry no photo — resolve it from the room members (self via identity).
+  const avatarOf = (userId: string): string => {
+    if (userId === selfId) return self.portraitSrc;
+    return members.find((m) => m.userId === userId)?.avatarUrl ?? personaFor(userId);
+  };
+
   const body = (
     <>
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse gap-2 overflow-y-auto overflow-x-hidden p-4">
+      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse gap-3 overflow-y-auto overflow-x-hidden p-4">
         {messages.length === 0 ? (
-          <span className="m-auto text-xs text-muted-foreground">Say hi to the room 👋</span>
+          <span className="m-auto text-xs text-muted-foreground">Be the first to say hi.</span>
         ) : (
           [...messages].reverse().map((message) => {
             const mine = message.userId === selfId;
             return (
-              <div key={message.id} className={cn('flex flex-col gap-0.5', mine && 'items-end')}>
-                <span className="text-micro text-muted-foreground">{mine ? 'You' : message.author}</span>
-                <span
-                  className={cn(
-                    'max-w-[85%] rounded-2xl px-3 py-1.5 text-sm',
-                    mine ? 'bg-neon/20 text-foreground' : 'bg-surface-2/70 text-foreground',
-                  )}
-                >
-                  {message.body}
-                </span>
+              <div key={message.id} className={cn('flex items-end gap-2', mine && 'flex-row-reverse')}>
+                <UserAvatar
+                  src={avatarOf(message.userId)}
+                  alt={message.author}
+                  size={26}
+                  className="rounded-full"
+                />
+                <div className={cn('flex min-w-0 flex-col gap-0.5', mine && 'items-end')}>
+                  <span className="text-micro text-muted-foreground">{mine ? 'You' : message.author}</span>
+                  <span
+                    className={cn(
+                      'w-fit max-w-[85%] rounded-2xl px-3 py-1.5 text-sm',
+                      mine ? 'bg-neon/20 text-foreground' : 'bg-surface-2/70 text-foreground',
+                    )}
+                  >
+                    {message.body}
+                  </span>
+                </div>
               </div>
             );
           })

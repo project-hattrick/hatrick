@@ -47,7 +47,7 @@ export default function StorePage() {
       <StoreHero />
 
       <div className="relative z-10 -mt-20 px-6 pb-16">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8">
           {/* Packs */}
           <section className="flex flex-col gap-3">
             <SectionHeading icon={Package} label="Packs" />

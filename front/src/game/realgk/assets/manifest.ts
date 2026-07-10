@@ -77,6 +77,21 @@ export const PERSONA_BODY_ANIMS = [
   'celebrate_knee_jump',
 ] as const;
 
+/**
+ * Keeper anims that may ship team-specific headless bodies (BodyAnim value = file prefix). Only loaded
+ * when a custom `personaBodyRoot` is set — the default personas pack has no keeper cuts.
+ */
+export const PERSONA_GK_BODY_ANIMS = [
+  'gk_idle_34',
+  'gk_ready_34',
+  'gk_shuffle_34',
+  'gk_run_side',
+  'gk_dive_save',
+  'gk_dive_v2',
+  'gk_light_save',
+  'gk_dive_compact',
+] as const;
+
 export const personaBodyFrames = (anim: string, root = PERSONAS_ROOT, count = 4): string[] =>
   Array.from({ length: count }, (_, i) => `${root}/players/${anim}_frame_${String(i + 1).padStart(2, '0')}.png`);
 
