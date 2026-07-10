@@ -53,8 +53,8 @@ export const PERSONA_COUNT = 11;
 /** Headless outfield anims that carry a per-frame sliced body (BodyAnim value = file prefix). */
 export const PERSONA_BODY_ANIMS = ['idle_front', 'walk_front', 'run_front', 'idle_back', 'walk_back', 'run_back', 'run_side', 'shot_front', 'shot_back'] as const;
 
-export const personaBodyFrames = (anim: string): string[] =>
-  [1, 2, 3, 4].map((n) => `${PERSONAS_ROOT}/players/${anim}_frame_0${n}.png`);
+export const personaBodyFrames = (anim: string, root = PERSONAS_ROOT): string[] =>
+  [1, 2, 3, 4].map((n) => `${root}/players/${anim}_frame_0${n}.png`);
 
 /** Per-persona head bust paths (front / back / side_right), pNN = 1-based. */
 export const personaHeadPaths = (index: number): { front: string; back: string; side: string } => {

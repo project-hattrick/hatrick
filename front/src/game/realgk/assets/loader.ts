@@ -57,7 +57,7 @@ function loadImage(src: string): HTMLImageElement {
  * Resolves sprites (images start loading immediately; draws guard on `complete`).
  * The v4 anim pack is only fetched when `includeV4` — legacy/hero boots stay at the original request set.
  */
-export function loadRealGkAssets(includeV4 = false, includePersonas = false): RealGkAssets {
+export function loadRealGkAssets(includeV4 = false, includePersonas = false, personaBodyRoot?: string): RealGkAssets {
   const body = Object.fromEntries(
     ITEMS.map((item) => [
       item.id,
@@ -75,7 +75,7 @@ export function loadRealGkAssets(includeV4 = false, includePersonas = false): Re
   const personaBodies: Partial<Record<BodyAnim, HTMLImageElement[]>> = {};
   if (includePersonas) {
     for (const anim of PERSONA_BODY_ANIMS) {
-      personaBodies[anim as BodyAnim] = personaBodyFrames(anim).map((src) => loadImage(src));
+      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot).map((src) => loadImage(src));
     }
   }
 

@@ -5,6 +5,7 @@ import { MetalFx } from 'metal-fx';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { BuyPackFlow } from '@/components/store/buy-pack-flow';
 import { INTERACTIVE_CARD } from '@/components/store/interactive-card';
+import { PackPreviewStrip } from '@/components/store/pack-preview-strip';
 import { StoreBadge, BadgeTone } from '@/components/store/store-badge';
 import { useItemStock } from '@/services/queries/use-store-item';
 import { cn } from '@/lib/utils';
@@ -68,6 +69,7 @@ export function StorePackTile({ pack }: { pack: StorePack }) {
         </div>
         <h3 className="text-lead leading-tight font-black uppercase">{pack.name}</h3>
         <p className="text-caption text-muted-foreground">{pack.caption}</p>
+        <PackPreviewStrip slug={pack.slug} />
         <BuyPackFlow
           slug={pack.slug}
           packName={pack.name}

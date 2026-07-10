@@ -78,6 +78,25 @@ const fromDuelists: PackCard[] = duelists.map((d) => {
 /** Every character in the game as a pullable card: the fantasy stars + all duelist personas. */
 export const PACK_POOL: PackCard[] = [...fromFantasy, ...fromDuelists];
 
+/** Deterministic preview — `count` distinct cards seeded by the pack slug, best-rated first. */
+export function packPreview(slug: string, count = 4): PackCard[] {
+  let state = hash(slug) || 1;
+  const next = (): number => {
+    // mulberry32 — tiny seeded PRNG so the preview is stable across renders/reloads.
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const pool = [...PACK_POOL];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(count, pool.length)).sort((a, b) => (b.number ?? 0) - (a.number ?? 0));
+}
+
 /** Random pack draw — `size` distinct cards from the full pool (call client-side on open). */
 export function drawPack(size: number): PackCard[] {
   const pool = [...PACK_POOL];

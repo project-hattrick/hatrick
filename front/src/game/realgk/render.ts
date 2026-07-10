@@ -22,6 +22,11 @@ function spriteHeightFor(world: RealGkWorld, depth: number, frameCfg: FrameCfg |
   return spriteHeightForBase(lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth), frameCfg, world.cfg.features?.normalizedSizes === true);
 }
 
+function scalePersonaHead(frameCfg: FrameCfg | null, multiplier: number): FrameCfg | null {
+  if (!frameCfg || multiplier === 1) return frameCfg;
+  return { ...frameCfg, headScale: frameCfg.headScale * multiplier };
+}
+
 /** Whole-sprite referee (v2): idle 3/4, side-walk cycle, or red card — head embedded, no compositing. */
 function refereeImage(ref: RefereeSprites, mode: RefMode, elapsed: number, now: number): HTMLImageElement {
   if (mode === RefMode.Red) return ref.redFront;
@@ -72,10 +77,13 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     assets.body[BodyAnim.GkIdle]?.[0];
   if (!frame) return;
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
-  const outfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode, frameIdx) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
+  const rawOutfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode, frameIdx) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
+  const personaHeadScale = personaLoco ? world.cfg.personaHeadScale ?? 1 : 1;
+  const outfieldCfg = scalePersonaHead(rawOutfieldCfg, personaHeadScale);
   const diving = isGk && player.action === PlayerAction.Dive;
   // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
-  const sizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  const rawSizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  const sizeCfg = personaLoco ? scalePersonaHead(rawSizeCfg, personaHeadScale) : rawSizeCfg;
   // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
   // the stretched sprite reads like a normal player instead of inflating off its short height.
   // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.

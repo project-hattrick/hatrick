@@ -102,6 +102,10 @@ export interface RealGkConfig {
   cameraLift?: number;
   /** Team brands for the v5 intro showcase (flags + names). Unset → generic Blue/Red. */
   teams?: { blue: TeamBrand; red: TeamBrand };
+  /** Optional root for custom persona body frames. Defaults to /game/personas. */
+  personaBodyRoot?: string;
+  /** Optional multiplier for persona head composition. Defaults to 1. */
+  personaHeadScale?: number;
   /** Light retro-TV overlay on the stage (faint scanlines + RGB mask + vignette). */
   crtFilter?: boolean;
 }
@@ -318,6 +322,18 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   teams: {
     blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },
     red: { name: 'Argentina', flagId: 'argentina', colors: ['#75AADB', '#FFFFFF', '#75AADB'] },
+  },
+};
+
+/** France kit review sandbox - playable persona arena using the approved France body cuts. */
+export const REAL_GK_FRANCE_PLAY_CONFIG: RealGkConfig = {
+  ...REAL_GK_PERSONA_PLAY_CONFIG,
+  personaBodyRoot: '/game/franca',
+  personaHeadScale: 0.82,
+  playableRoster: 1,
+  teams: {
+    blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
+    red: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
   },
 };
 
