@@ -75,7 +75,8 @@ export function loadRealGkAssets(includeV4 = false, includePersonas = false, per
   const personaBodies: Partial<Record<BodyAnim, HTMLImageElement[]>> = {};
   if (includePersonas) {
     for (const anim of PERSONA_BODY_ANIMS) {
-      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot).map((src) => loadImage(src));
+      const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
+      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount).map((src) => loadImage(src));
     }
   }
 

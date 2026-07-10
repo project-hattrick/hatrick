@@ -64,12 +64,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // Persona casting: outfield players use a headless sliced body + composited persona head (no baked
   // face). Gated + guarded so any missing asset falls back to the legacy single-sprite path.
   const personaOn = world.cfg.features?.personaHeads === true && assets.personaHeads.length > 0;
-  const personaLoco = personaOn && !isGk && !!assets.personaBodies[player.mode]?.length && locomotionConfigFor(player.mode) !== null;
+  const rawPersonaCfg = !isGk
+    ? locomotionConfigFor(player.mode, frameIdx) ?? outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase)
+    : null;
+  const personaBody = personaOn && !isGk && !!assets.personaBodies[player.mode]?.length && rawPersonaCfg !== null;
   const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
   // Resilient frame lookup: a not-yet-loaded or missing mode/frame must never crash the draw (it used to
   // flood "recovered draw errors" and leave the pitch as bare shadows). Fall back to the mode's frame 0,
   // then a neutral idle, and skip cleanly if even that is unavailable.
-  const bodyFrames = personaLoco ? assets.personaBodies[player.mode] : assets.body[player.mode];
+  const bodyFrames = personaBody ? assets.personaBodies[player.mode] : assets.body[player.mode];
   const frame =
     bodyFrames?.[frameIdx] ??
     bodyFrames?.[0] ??
@@ -77,13 +80,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     assets.body[BodyAnim.GkIdle]?.[0];
   if (!frame) return;
   const keeperCfg = isGk ? keeperConfigFor(player.mode, frameIdx) : null;
-  const rawOutfieldCfg = isGk ? null : personaLoco ? locomotionConfigFor(player.mode, frameIdx) : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
-  const personaHeadScale = personaLoco ? world.cfg.personaHeadScale ?? 1 : 1;
+  const rawOutfieldCfg = isGk ? null : personaBody ? rawPersonaCfg : outfieldConfigFor(player.mode, frameIdx, player.celebrationPhase);
+  const personaHeadScale = personaBody ? world.cfg.personaHeadScale ?? 1 : 1;
   const outfieldCfg = scalePersonaHead(rawOutfieldCfg, personaHeadScale);
   const diving = isGk && player.action === PlayerAction.Dive;
   // Size off the anim's first-frame config so per-frame head offsets never pulse the body height.
-  const rawSizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaLoco ? locomotionConfigFor(player.mode, 0) : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
-  const sizeCfg = personaLoco ? scalePersonaHead(rawSizeCfg, personaHeadScale) : rawSizeCfg;
+  const rawPersonaSizeCfg = !isGk
+    ? locomotionConfigFor(player.mode, 0) ?? outfieldConfigFor(player.mode, 0, player.celebrationPhase)
+    : null;
+  const rawSizeCfg = keeperCfg ?? outfieldCfg ? (isGk ? keeperConfigFor(player.mode, 0) : personaBody ? rawPersonaSizeCfg : outfieldConfigFor(player.mode, 0, player.celebrationPhase)) : null;
+  const sizeCfg = personaBody ? scalePersonaHead(rawSizeCfg, personaHeadScale) : rawSizeCfg;
   // The dive is a horizontal pose: normalize its LONGEST side (usually width) to the standing height so
   // the stretched sprite reads like a normal player instead of inflating off its short height.
   // The v6 dive instead keeps the per-frame height ratios approved in the candidates editor.
@@ -114,7 +120,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     if (composedCfg) {
       // Persona locomotion frames are freshly sliced/trimmed — draw the whole frame (their own bboxes in
       // items.ts describe the baked sprites, not these). Everything else keeps its per-frame trim box.
-      const bbox = personaLoco ? fullFrameBbox() : modeItem?.bboxes[frameIdx] ?? fullFrameBbox();
+      const bbox = personaBody ? fullFrameBbox() : modeItem?.bboxes[frameIdx] ?? fullFrameBbox();
       const bodyRect = drawTrimmedSprite(ctx, frame, bbox, player.x, footY, spriteHeight, mirror);
       if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg);
     } else {

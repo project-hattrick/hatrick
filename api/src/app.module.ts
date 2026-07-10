@@ -16,6 +16,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { MarketModule } from './market/market.module';
 import { StoreModule } from './store/store.module';
 import { ChainModule } from './chain/chain.module';
+import { RoomModule } from './room/room.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ChainModule } from './chain/chain.module';
     MarketModule,
     StoreModule,
     ChainModule,
+    RoomModule,
   ],
   controllers: [AppController],
   providers: [AppService],

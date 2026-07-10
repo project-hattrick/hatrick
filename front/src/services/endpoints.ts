@@ -41,4 +41,11 @@ export const endpoints = {
     settle: (id: string) => `/bets/${id}/settle`,
     build: '/bets/build',
   },
+  rooms: {
+    base: '/rooms',
+    byId: (id: string) => `/rooms/${id}`,
+    join: '/rooms/join',
+    members: (id: string) => `/rooms/${id}/members`,
+    messages: (id: string) => `/rooms/${id}/messages`,
+  },
 } as const;

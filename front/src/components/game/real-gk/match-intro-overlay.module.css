@@ -56,8 +56,10 @@
   font-size: clamp(26px, 4.5vw, 54px);
   font-weight: 900;
   font-style: italic;
-  color: #ffd34d;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+  color: var(--color-neon);
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.7),
+    0 0 10px color-mix(in oklch, var(--color-neon) 45%, transparent);
   animation: popIn 0.45s ease-out 0.18s both;
 }
 

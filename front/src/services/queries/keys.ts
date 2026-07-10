@@ -14,4 +14,7 @@ export const queryKeys = {
   duelistSearch: (query: string) => ['duelists', 'search', query] as const,
   duels: () => ['duels'] as const,
   storeCatalog: () => ['store', 'catalog'] as const,
+  room: (id: string) => ['room', id] as const,
+  roomMembers: (id: string) => ['room', id, 'members'] as const,
+  roomMessages: (id: string) => ['room', id, 'messages'] as const,
 };

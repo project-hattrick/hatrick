@@ -15,3 +15,4 @@ export { CrowdActionKind } from './crowd-action-kind.enum';
 export { PredictionStatus } from './prediction-status.enum';
 export { TeamSide } from './team-side.enum';
 export { Tone } from './tone.enum';
+export { RoomEvent, RoomStatus, RoomMemberRole } from './room-event.enum';
