@@ -1,11 +1,15 @@
-import Link from 'next/link';
+'use client';
+
 import { UserPlus, Users } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { AppMode } from '@/enums/app-mode.enum';
+import { useHomeEntryStore } from '@/store/home-entry.store';
 
-/** Invite card in the live rail: start a watch-together session with friends. */
+/** Invite card in the live rail: opens the "How do you want to watch?" chooser. */
 export function WatchTogetherCard() {
+  const openMode = useHomeEntryStore((state) => state.openMode);
+
   return (
     <GlassPanel
       tone="surface"
@@ -26,10 +30,10 @@ export function WatchTogetherCard() {
         </span>
         <span className="ml-1 text-xs text-muted-foreground">2 friends online</span>
       </div>
-      <Link href={`/${AppMode.Live}`} className={buttonVariants({ className: 'h-9 w-full gap-1.5 font-semibold' })}>
+      <Button className="h-9 w-full gap-1.5 font-semibold" onClick={() => openMode(AppMode.Live)}>
         <UserPlus className="size-4" />
         Start session
-      </Link>
+      </Button>
     </GlassPanel>
   );
 }

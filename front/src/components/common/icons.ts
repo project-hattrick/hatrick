@@ -48,6 +48,7 @@ export {
   Info,
   Keyboard,
   Lightning,
+  Lock,
   Package,
   Palette,
   PaperPlaneTilt,

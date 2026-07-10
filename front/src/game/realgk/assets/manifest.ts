@@ -73,6 +73,8 @@ export const PERSONA_BODY_ANIMS = [
   'shot_back',
   'celebrate_jump',
   'celebrate_knee_slide',
+  'celebrate_knee_rise',
+  'celebrate_knee_jump',
 ] as const;
 
 export const personaBodyFrames = (anim: string, root = PERSONAS_ROOT, count = 4): string[] =>

@@ -26,6 +26,7 @@ import {
 import { featuredLiveMatch } from '@/config/home.config';
 import { AppMode } from '@/enums/app-mode.enum';
 import { useAuthGate } from '@/hooks/use-auth-gate';
+import { useCreateRoom } from '@/services/queries';
 import { useHomeEntryStore } from '@/store/home-entry.store';
 import { useUiStore } from '@/store/ui.store';
 import { useDuelStore } from '@/store/duel.store';
@@ -66,6 +67,7 @@ function EntryOption({ icon: Icon, eyebrow, title, description, action, featured
 export function HomeModeDialogs() {
   const router = useRouter();
   const gate = useAuthGate();
+  const createRoom = useCreateRoom();
   const activeMode = useHomeEntryStore((state) => state.activeMode);
   const closeMode = useHomeEntryStore((state) => state.closeMode);
   const startMatchmaking = useHomeEntryStore((state) => state.startMatchmaking);
@@ -90,6 +92,12 @@ export function HomeModeDialogs() {
     closeMode();
     router.push(`/duel/${duelId}`);
   };
+
+  // Create an invite-only room over the current live game, then route into it.
+  const createPrivateRoom = gate(() => {
+    closeMode();
+    createRoom.mutate({});
+  });
 
   return (
     <>
@@ -173,14 +181,16 @@ export function HomeModeDialogs() {
                   title="Private room"
                   description="Create a closed room and invite friends to watch, predict and chat."
                   action={
-                    <Link
-                      href="/?room=new"
-                      onClick={closeMode}
-                      className={buttonVariants({ variant: 'outline', size: 'lg', className: 'h-10 w-full gap-2 rounded-xl' })}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-10 w-full gap-2 rounded-xl"
+                      disabled={createRoom.isPending}
+                      onClick={createPrivateRoom}
                     >
                       <Users className="size-4" />
-                      Create private room
-                    </Link>
+                      {createRoom.isPending ? 'Creating…' : 'Create private room'}
+                    </Button>
                   }
                 />
               </>
