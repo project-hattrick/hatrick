@@ -1,17 +1,26 @@
+'use client';
+
 import { Scoreboard } from './scoreboard';
 import { PlayerFocusCard } from './player-focus-card';
 import { MyPredictionsPanel } from './my-predictions-panel';
 import { HeroCenterDock } from './hero-center-dock';
 import { HeroQuickActions } from './hero-quick-actions';
 import { MatchTimeline } from './match-timeline';
+import { HeroViewControls } from './hero-view-controls';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
 import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { HeroChrome } from './hero-chrome';
+import { useMatchStore } from '@/store/match.store';
+import { GameState } from '@/enums/game-state.enum';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 
 /** Wire 3a — glass widgets pinned near the screen edges over the live match stage. */
 export function ImmersiveDashboard() {
+  // Future match: no replay bar to scrub, so the transport surface is dropped and the
+  // view controls relocate to a top-left pill.
+  const upcoming = useMatchStore((s) => s.match !== null && !s.isReplay && s.match.gameState === GameState.PreMatch);
+
   return (
     <div className="relative mx-auto h-full min-h-0 w-full overflow-hidden">
       <HeroChrome>
@@ -56,10 +65,17 @@ export function ImmersiveDashboard() {
         <CrowdPanel fixtureId={MOCK_FIXTURE_ID} />
       </div>
 
-      {/* The single playback surface — transport + event timeline + view toggles. */}
-      <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3 md:px-6 md:pb-4">
-        <MatchTimeline />
-      </div>
+      {upcoming ? (
+        /* Pre-kickoff: view controls only, tucked in the top-left (below the TxLINE credit). */
+        <div className="absolute left-3 top-[calc(env(safe-area-inset-top)+4.5rem)] z-30 md:left-6 md:top-[8.5rem]">
+          <HeroViewControls standalone />
+        </div>
+      ) : (
+        /* The single playback surface — transport + event timeline + view toggles. */
+        <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3 md:px-6 md:pb-4">
+          <MatchTimeline />
+        </div>
+      )}
       </HeroChrome>
     </div>
   );

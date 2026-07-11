@@ -4,11 +4,12 @@ import { useEffect, useRef, type MutableRefObject } from 'react';
 
 import { getSocket } from './socket';
 import { driveMatchEvent } from './match-director-map';
+import { env } from '@/lib/env';
 import { EmissionState } from '@/enums/emission-state.enum';
 import type { MatchEventPayload } from '@/types/match';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { DrivenPhase, Team } from '@/game/realgk/enums';
-import { useMatchStore } from '@/store/match.store';
+import { IN_PLAY_STATES, useMatchStore } from '@/store/match.store';
 
 /** Authoritative end-of-match channel (same one use-match-feed listens on). */
 const CH_MATCH_END = 'match-end.after';
@@ -44,6 +45,26 @@ export function useRealgkFeedDriver(
     else handle?.setDriven(false);
     if (fixtureId == null) return;
 
+    // A live match must not wait for a wire event to leave the held entrance: if the STORE already says
+    // this fixture is in play (mid-game join via snapshot, or the kickoff rollover), release the pitch
+    // now and keep its scoreboard/clock synced. Wire events still drive the actual play when they flow.
+    // Mock mode keeps the autonomous attract match (its events go through the store, not the socket).
+    const syncFromStore = () => {
+      if (env.useMock) return;
+      const { match } = useMatchStore.getState();
+      if (!match || match.fixtureId !== fixtureId || !IN_PLAY_STATES.has(match.gameState)) return;
+      const h = handleRef.current;
+      if (!h) return;
+      if (!startedRef.current) {
+        startedRef.current = true;
+        h.setDriven(true); // releases the intro hold (whistle → kickoff → Live)
+      }
+      if (typeof h.setScore === 'function') h.setScore(match.score.home, match.score.away);
+      if (typeof h.setClock === 'function') h.setClock(match.minute);
+    };
+    syncFromStore();
+    const unsubscribeStore = useMatchStore.subscribe(syncFromStore);
+
     const socket = getSocket();
     const onMatch = (p: MatchEventPayload) => {
       if (p.fixtureId !== fixtureId) return;
@@ -66,6 +87,7 @@ export function useRealgkFeedDriver(
     socket.on(`match-event.${EmissionState.After}`, onMatch);
     socket.on(CH_MATCH_END, onEnd);
     return () => {
+      unsubscribeStore();
       socket.off(`match-event.${EmissionState.During}`, onMatch);
       socket.off(`match-event.${EmissionState.After}`, onMatch);
       socket.off(CH_MATCH_END, onEnd);

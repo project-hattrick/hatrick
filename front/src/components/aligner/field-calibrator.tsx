@@ -8,10 +8,11 @@ import {
   pointFor,
   ratioFor,
   saveCalibratorState,
-  DEFAULT_CENTER,
-  DEFAULT_CORNERS,
-  DEFAULT_GOALS,
-  DEFAULT_PLAY_LINES,
+  COMMENT_COLOR,
+  CORNER_HANDLES,
+  defaultCalibratorState,
+  GOAL_COLOR,
+  type CalibratorState,
   type CommentPin,
   type CornerKey,
   type GoalSide,
@@ -32,16 +33,6 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 type Mode = 'handles' | 'lines' | 'goal' | 'comment' | 'pen';
 type LineEdge = 'left' | 'right' | 'top' | 'bottom';
-
-const CORNER_HANDLES: { key: CornerKey; color: string }[] = [
-  { key: 'tl', color: '#38bdf8' },
-  { key: 'tr', color: '#38bdf8' },
-  { key: 'bl', color: '#22d3ee' },
-  { key: 'br', color: '#22d3ee' },
-];
-
-const GOAL_COLOR: Record<GoalSide, string> = { blue: '#60a5fa', red: '#fb7185' };
-const COMMENT_COLOR = '#f97316';
 
 type Drag =
   | { type: 'corner'; key: CornerKey }
@@ -69,16 +60,19 @@ interface View {
 const isEditable = (t: EventTarget | null): boolean =>
   t instanceof HTMLElement && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 
-/** Dev tool: trace the court trapezoid, out lines, center, goals; zoom/pan like a canvas app; pin notes. */
-export function FieldCalibrator() {
+/** Dev tool: trace the court trapezoid, out lines, center, goals; zoom/pan like a canvas app; pin notes.
+ *  `courtSrc`/`storageKey`/`initial` map another stadium (e.g. ?court=franca) without touching the
+ *  rain-court trace — `initial` seeds (and "Reset all" restores) that court's current in-game mapping. */
+export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: { courtSrc?: string; storageKey?: string; initial?: CalibratorState }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const fitRef = useRef<Fit>({ x: 0, y: 0, w: CANVAS_W, h: CANVAS_H });
 
-  const [corners, setCorners] = useState(DEFAULT_CORNERS);
-  const [goals, setGoals] = useState<Record<GoalSide, Pt[]>>(DEFAULT_GOALS);
-  const [playLines, setPlayLines] = useState(DEFAULT_PLAY_LINES);
-  const [center, setCenter] = useState(DEFAULT_CENTER);
+  const base = initial ?? defaultCalibratorState();
+  const [corners, setCorners] = useState(base.corners);
+  const [goals, setGoals] = useState<Record<GoalSide, Pt[]>>(base.goals);
+  const [playLines, setPlayLines] = useState(base.playLines);
+  const [center, setCenter] = useState(base.center);
   const [comments, setComments] = useState<CommentPin[]>([]);
   const [selectedComment, setSelectedComment] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>('handles');
@@ -97,7 +91,7 @@ export function FieldCalibrator() {
   // hydration — the one-shot post-mount setState is intentional here.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const saved = loadCalibratorState();
+    const saved = loadCalibratorState(storageKey);
     if (!saved) return;
     setCorners(saved.corners);
     setGoals(saved.goals);
@@ -110,8 +104,8 @@ export function FieldCalibrator() {
 
   // Persist every mapping change (survives refresh — this is a long mapping session tool).
   useEffect(() => {
-    saveCalibratorState({ corners, goals, playLines, center, comments });
-  }, [corners, goals, playLines, center, comments]);
+    saveCalibratorState({ corners, goals, playLines, center, comments }, storageKey);
+  }, [corners, goals, playLines, center, comments, storageKey]);
 
   // Space = hold to pan (ignored while typing a comment).
   useEffect(() => {
@@ -150,7 +144,7 @@ export function FieldCalibrator() {
   // Load the court once, computing the letterbox fit (contain).
   useEffect(() => {
     const img = new Image();
-    img.src = COURT_SRC;
+    img.src = courtSrc;
     img.onload = () => {
       imgRef.current = img;
       const scale = Math.min(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight);
@@ -159,7 +153,7 @@ export function FieldCalibrator() {
       fitRef.current = { x: (CANVAS_W - w) / 2, y: (CANVAS_H - h) / 2, w, h };
       setLoaded(true);
     };
-  }, []);
+  }, [courtSrc]);
 
   const toCanvas = useCallback((r: Pt): Pt => {
     const f = fitRef.current;
@@ -504,13 +498,13 @@ export function FieldCalibrator() {
     setSelectedComment((sel) => (sel === id ? null : sel));
   };
   const resetAll = () => {
-    setCorners(DEFAULT_CORNERS);
-    setGoals(DEFAULT_GOALS);
-    setPlayLines(DEFAULT_PLAY_LINES);
-    setCenter(DEFAULT_CENTER);
+    setCorners(base.corners);
+    setGoals(base.goals);
+    setPlayLines(base.playLines);
+    setCenter(base.center);
     setComments([]);
     setSelectedComment(null);
-    clearCalibratorState();
+    clearCalibratorState(storageKey);
   };
 
   const snippet = buildSnippet({ corners, goals, playLines, center, comments });

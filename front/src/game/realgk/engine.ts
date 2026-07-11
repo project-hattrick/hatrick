@@ -4,7 +4,7 @@ import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
 import { DrivenDirective, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
-import { pointOnField } from './field';
+import { pointOnField, setFieldSpec } from './field';
 import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
@@ -16,6 +16,7 @@ import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
+import { controlKeeperDive } from './sim/keeper';
 import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
 import { freshDrivenClock, setClockDriven } from './sim/driven-clock';
@@ -65,7 +66,15 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   ctx.imageSmoothingEnabled = false;
 
   const config = opts.config ?? REAL_GK_V2_CONFIG;
-  const assets = loadRealGkAssets(config.features !== undefined, config.features?.personaHeads === true, config.personaBodyRoot);
+  // Map the pitch onto this config's court art BEFORE the world spawns off metrics().
+  setFieldSpec(config.field);
+  const assets = loadRealGkAssets(
+    config.features !== undefined,
+    config.features?.personaHeads === true,
+    config.personaBodyRoot,
+    config.courtImage,
+    config.assetVersion,
+  );
   const world = createWorld({ width: canvas.clientWidth || 800, height: canvas.clientHeight || 600 }, config);
   const dropTestBall = (): void => {
     if (!config.features?.ballEffects) return;
@@ -117,6 +126,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       } else if (k === 'f') {
         const p = controlled();
         if (p && p.actionTimer <= 0 && p.slideCooldown <= 0) startSlideTackle(world, p); // f = slide tackle (carrinho)
+      } else if (k === 'q' || k === 'e') {
+        controlKeeperDive(world, k === 'q' ? -1 : 1); // q/e = keeper dive toward the top / bottom post
       } else {
         setKey(e, true);
         return;
@@ -334,6 +345,18 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     },
     cycleCamera: () => opts.onHud({ cameraLabel: cyclePreset(cam) }),
     cycleTarget: () => opts.onHud({ targetLabel: cycleTarget(cam, world) }),
+    keeperDive: (side) => controlKeeperDive(world, side),
+    cycleControlledPlayer: () => {
+      const choices = world.players.filter((p) => p.team === Team.Blue);
+      if (!choices.length) return 'Control: none';
+      const current = choices.findIndex((p) => p.id === world.controlId);
+      const next = choices[(current + 1 + choices.length) % choices.length];
+      world.controlId = next.id;
+      cam.targetIdx = world.players.findIndex((p) => p.id === next.id);
+      const label = next.role === Role.GK ? 'Goalkeeper' : 'Player';
+      opts.onHud({ targetLabel: `Follow: ${next.name}` });
+      return `Control: ${label}`;
+    },
     restart: () => {
       director?.reset();
       recorder?.clear();
@@ -376,6 +399,32 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.vz = 30;
       ball.spinRate = 0;
       ball.cooldown = 1.0;
+    },
+    debugIncomingShot: () => {
+      // GK-control helper: fires a midfield shot AT the blue keeper's goal so saves can be practiced.
+      if (!config.features) return;
+      if (world.match.phase !== MatchPhase.Live || world.match.celebration > 0) return;
+      const { ball } = world;
+      const gk = world.players.find((p) => p.role === Role.GK && p.team === Team.Blue);
+      const start = pointOnField(world.size, 0.3, 0.34 + Math.random() * 0.32);
+      const target = gk
+        ? { x: gk.x - 24, y: gk.y + (Math.random() - 0.5) * 150 }
+        : pointOnField(world.size, 0.01, 0.44);
+      ball.ownerId = null;
+      ball.lastKickerId = null;
+      ball.x = start.x;
+      ball.y = start.y;
+      ball.z = 6;
+      const dx = target.x - start.x;
+      const dy = target.y - start.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const speed = 520 + Math.random() * 160;
+      ball.vx = (dx / len) * speed;
+      ball.vy = (dy / len) * speed;
+      ball.vz = 16;
+      ball.spinRate = 0;
+      ball.lofted = false;
+      ball.cooldown = 0.6;
     },
     debugBallDrop: dropTestBall,
     cycleShotEffect: () => opts.onHud({ shotEffectLabel: cycleShotEffect(world) }),

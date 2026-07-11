@@ -82,7 +82,8 @@ export function HeroFigure({ team, side, placement, editable, selected, onSelect
       onPointerCancel={endDrag}
       className={cn(
         FIGURE_BASE,
-        side === 'home' ? 'left-0' : 'right-0',
+        // On phones the card is narrow, so nudge the figures outward to free room for the title.
+        side === 'home' ? 'left-0 max-sm:-left-8' : 'right-0 max-sm:-right-8',
         editable ? 'cursor-grab touch-none active:cursor-grabbing' : 'pointer-events-none',
         selected && 'outline outline-2 outline-neon',
       )}
@@ -165,8 +166,8 @@ export function HeroCardShell({
 
       {/* Title stays centred; the countdown is a compact chip anchored to the card's bottom edge,
           keeping the hero figures' faces clear. */}
-      <div className="pointer-events-none relative flex h-full flex-col items-center text-center">
-        <div className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-6">
+      <div className="pointer-events-none relative flex h-full flex-col items-center text-center sm:justify-center sm:gap-2.5">
+        <div className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-6 sm:flex-none sm:pb-0">
           <div className="flex items-center gap-2">
             <Flag code={h1.code} className="text-base" />
             <span className="text-[15px] font-bold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
@@ -177,7 +178,7 @@ export function HeroCardShell({
           <div className="text-xs text-white/55">{heading}</div>
         </div>
 
-        <div className="mb-3 flex items-start gap-2 rounded-lg bg-black/45 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur-md sm:gap-2.5">
+        <div className="mb-3 flex items-start gap-2 rounded-lg bg-black/45 px-3 py-1.5 ring-1 ring-white/10 backdrop-blur-md sm:mb-0 sm:gap-2.5">
           <CountUnit value={d} label="Days" />
           <span className="pt-px text-sm font-bold text-white/40">:</span>
           <CountUnit value={h} label="Hours" />

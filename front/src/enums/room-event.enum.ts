@@ -10,6 +10,7 @@ export enum RoomEvent {
   MemberLeft = 'room:member-left',
   ChatMessage = 'room:chat',
   Presence = 'room:presence',
+  Pick = 'room:pick',
 }
 
 /** Room lifecycle — mirror of the api RoomStatus. */

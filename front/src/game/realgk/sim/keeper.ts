@@ -115,6 +115,15 @@ export function updateKeeperDive(player: RealGkPlayer, dt: number): boolean {
   return true;
 }
 
+/** Manual dive for the keyboard-controlled keeper: side < 0 dives toward the top post, > 0 toward the
+ *  bottom one, always dashing forward into the pitch (never backward into his own goal). */
+export function controlKeeperDive(world: RealGkWorld, side: -1 | 1): boolean {
+  const player = world.players.find((p) => p.id === world.controlId);
+  if (!player || player.role !== Role.GK) return false;
+  const reach = 72 * (world.cfg.fieldScale / 1.5);
+  return startKeeperDive(player, player.dir, player.x, player.y + side * reach, diveAnimFor(world));
+}
+
 export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer): boolean {
   const { ball, size } = world;
   const isV2 = world.cfg.features?.keeperDiveV2 === true;

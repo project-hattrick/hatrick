@@ -10,6 +10,7 @@ export enum RoomEvent {
   MemberLeft = 'room:member-left', // server → room: a member left
   ChatMessage = 'room:chat', // server → room: persisted chat message echo
   Presence = 'room:presence', // server → room: live socket count snapshot
+  Pick = 'room:pick', // client → server → room: a member's bet pick (ephemeral social echo)
 }
 
 /** Socket.io room channel for a given room id. */

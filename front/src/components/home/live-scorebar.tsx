@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { MatchPicker } from './match-picker';
 import { useDisplayMatch, useIsMatchLive, useIsReplay } from '@/store/match.store';
+import { useKickoffCountdown } from '@/hooks/use-kickoff-countdown';
+import { useLiveMinute } from '@/hooks/use-live-minute';
 import { usePredictionPrompt } from '@/store/prediction.store';
 import { usePlacePrediction } from '@/services/queries';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
@@ -36,6 +38,8 @@ export function LiveScorebar() {
   const match = useDisplayMatch();
   const isLive = useIsMatchLive();
   const isReplay = useIsReplay();
+  const countdown = useKickoffCountdown();
+  const liveMinute = useLiveMinute();
   const prompt = usePredictionPrompt();
   const placePrediction = usePlacePrediction();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -81,7 +85,12 @@ export function LiveScorebar() {
         )}
       >
         <div className="mx-auto flex h-[52px] w-full max-w-7xl items-center gap-3 px-4 md:gap-4 md:px-6">
-          {isReplay ? (
+          {countdown ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 animate-pulse rounded-full bg-neon motion-reduce:animate-none" />
+              <span className="font-mono text-eyebrow text-neon">SOON</span>
+            </span>
+          ) : isReplay ? (
             <span className="inline-flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-neon" />
               <span className="font-mono text-eyebrow text-neon">REPLAY</span>
@@ -101,7 +110,11 @@ export function LiveScorebar() {
           <MatchPicker />
 
           <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
-            {isReplay || isLive ? `${formatMinute(match.minute)} · ${phase.label}` : phase.label}
+            {countdown
+              ? `Kickoff in ${countdown}`
+              : isReplay || isLive
+                ? `${formatMinute(liveMinute)} · ${phase.label}`
+                : phase.label}
           </span>
 
           {isLive ? (

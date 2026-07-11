@@ -99,7 +99,11 @@ export function drawTrimmedSprite(
   return { drawX, drawY, drawW, drawH, sourceW, sourceH };
 }
 
-/** Composites a head over a body rect per `frameCfg` (scale + offset ratios); mirrors side heads with facing. */
+/**
+ * Composites a head over a body rect per `frameCfg` (scale + offset ratios); mirrors side heads with facing.
+ * `maxHeadHeight` (game-only runtime guard, see RealGkConfig.headMaxFraction) caps the drawn head so
+ * per-frame headScale outliers can't balloon it — the editors omit it on purpose to show raw values.
+ */
 export function drawComposedHead(
   ctx: CanvasRenderingContext2D,
   image: HTMLImageElement,
@@ -107,9 +111,10 @@ export function drawComposedHead(
   bodyRect: SpriteRect,
   mirror: boolean,
   frameCfg: FrameCfg,
+  maxHeadHeight?: number,
 ): void {
   if (!image.complete || !image.naturalWidth) return;
-  const headHeight = bodyRect.drawH * frameCfg.headScale;
+  const headHeight = Math.min(bodyRect.drawH * frameCfg.headScale, maxHeadHeight ?? Infinity);
   const headWidth = image.naturalWidth * (headHeight / image.naturalHeight);
   const xShift = bodyRect.drawW * frameCfg.offsetXRatio * (mirror ? -1 : 1);
   const yOverlap = bodyRect.drawH * frameCfg.offsetYRatio;

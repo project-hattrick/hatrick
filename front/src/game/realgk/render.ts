@@ -126,13 +126,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
   const composedCfg = keeperCfg ?? outfieldCfg;
+  const maxHeadHeight = world.cfg.headMaxFraction !== undefined
+    ? lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * world.cfg.headMaxFraction
+    : undefined;
   const paintSprite = (): void => {
     if (composedCfg) {
       // Persona locomotion frames are freshly sliced/trimmed — draw the whole frame (their own bboxes in
       // items.ts describe the baked sprites, not these). Everything else keeps its per-frame trim box.
       const bbox = personaBody ? fullFrameBbox() : modeItem?.bboxes[frameIdx] ?? fullFrameBbox();
       const bodyRect = drawTrimmedSprite(ctx, frame, bbox, player.x, footY, spriteHeight, mirror);
-      if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg);
+      if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg, maxHeadHeight);
     } else {
       drawSprite(ctx, frame, player.x, footY, spriteHeight, mirror);
     }

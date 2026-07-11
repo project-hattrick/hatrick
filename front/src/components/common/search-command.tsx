@@ -62,7 +62,7 @@ export function SearchCommand() {
           </kbd>
         </div>
 
-        <div className="max-h-80 overflow-y-auto p-2">
+        <div data-lenis-prevent className="custom-scrollbar max-h-80 overflow-y-auto overscroll-contain p-2">
           {query.trim().length === 0 ? (
             <p className="text-micro px-3 py-6 text-center text-muted-foreground">
               {t('search.empty')}

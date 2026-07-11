@@ -347,6 +347,12 @@ export interface RealGkHandle {
   setFlat: (value: boolean) => void;
   cycleCamera: () => void;
   cycleTarget: () => void;
+  /** Playable sandbox helper: cycles keyboard control between available blue test actors. */
+  cycleControlledPlayer: () => string;
+  /** Manual keeper dive for the controlled keeper (side < 0 = top post, > 0 = bottom post). */
+  keeperDive: (side: -1 | 1) => boolean;
+  /** GK-control helper: fires a shot at the blue keeper's goal so saves can be practiced on demand. */
+  debugIncomingShot: () => void;
   restart: () => void;
   spawnReferee: () => void;
   /** Debug helper: fires the ball into the right goal so the goal/replay flow can be tested on demand. */

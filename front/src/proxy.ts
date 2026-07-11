@@ -1,7 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LOCALE_COOKIE, isLocale, locales, normalizeLocale, type Locale } from '@/i18n/locales';
+import { stripLocaleFromPathname } from '@/i18n/path';
+import {
+  GEO_BYPASS_COOKIE,
+  GEO_BYPASS_PARAM,
+  GEO_BYPASS_VALUE,
+  GEO_RESTRICTED_PATH,
+  isBettingSurface,
+  isRestrictedCountry,
+} from '@/config/geo-restrictions.config';
 
 const PUBLIC_FILE = /\.(.*)$/;
+
+/** Country from the edge geo headers (Vercel / Cloudflare). Absent in local dev → never blocks. */
+function countryOf(request: NextRequest): string | null {
+  return (
+    request.headers.get('x-vercel-ip-country') ??
+    request.headers.get('cf-ipcountry') ??
+    request.headers.get('x-country') ??
+    null
+  );
+}
+
+/** A judge who appended `?geo=demo` once (or already holds the cookie) skips the block while navigating. */
+function geoBypassed(request: NextRequest): boolean {
+  return (
+    request.cookies.get(GEO_BYPASS_COOKIE)?.value === '1' ||
+    request.nextUrl.searchParams.get(GEO_BYPASS_PARAM) === GEO_BYPASS_VALUE
+  );
+}
 
 function preferredLocale(request: NextRequest): Locale {
   const saved = request.cookies.get(LOCALE_COOKIE)?.value;
@@ -39,7 +66,17 @@ export function proxy(request: NextRequest) {
   const pathLocale = segments[0];
 
   if (isLocale(pathLocale)) {
-    const response = NextResponse.next();
+    // Geo-compliance: block betting surfaces for restricted jurisdictions (demo-bypassable for judges).
+    const stripped = stripLocaleFromPathname(pathname);
+    const blocked =
+      isBettingSurface(stripped) && isRestrictedCountry(countryOf(request)) && !geoBypassed(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${pathLocale}${GEO_RESTRICTED_PATH}`;
+    const response = blocked ? NextResponse.rewrite(url) : NextResponse.next();
+
+    if (request.nextUrl.searchParams.get(GEO_BYPASS_PARAM) === GEO_BYPASS_VALUE) {
+      response.cookies.set(GEO_BYPASS_COOKIE, '1', { path: '/', maxAge: 60 * 60 * 24, sameSite: 'lax' });
+    }
     response.cookies.set(LOCALE_COOKIE, pathLocale, {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,

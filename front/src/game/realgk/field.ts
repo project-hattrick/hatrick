@@ -21,18 +21,57 @@ export interface Bounds {
   bottomY: number;
 }
 
-/** Trapezoid pitch aligned to the v1 court image corners (calibrated via /sandbox/field-calibrator). */
+/** Pitch trapezoid as image fractions — the 6 numbers /sandbox/field-calibrator traces. */
+export interface FieldRatios {
+  topY: number;
+  bottomY: number;
+  topLeft: number;
+  topRight: number;
+  bottomLeft: number;
+  bottomRight: number;
+}
+
+/**
+ * Per-court field mapping a RealGkConfig can carry (`config.field`). Anything omitted keeps the
+ * calibrated v1 rain-court defaults below.
+ */
+export interface FieldSpec {
+  ratios?: Partial<FieldRatios>;
+  goals?: Partial<Record<Team, Partial<GoalGeom>>>;
+  center?: Partial<{ lat: number; depth: number }>;
+  playLines?: Partial<typeof DEFAULT_PLAY_LINES>;
+}
+
+/** v1 rain-court trapezoid (calibrated via /sandbox/field-calibrator) — the default mapping. */
+const DEFAULT_RATIOS: FieldRatios = { topY: 0.341, bottomY: 0.708, topLeft: 0.24, topRight: 0.759, bottomLeft: 0.132, bottomRight: 0.871 };
+
+let RATIOS: FieldRatios = { ...DEFAULT_RATIOS };
+
+/**
+ * Applies a court's field mapping — called by the engine with `config.field` on creation, so each
+ * arena maps its own art. Module-level (like the live FRAME_CONFIG maps): the last engine created
+ * on a page wins, which holds as long as pages run one court at a time.
+ */
+export function setFieldSpec(spec?: FieldSpec): void {
+  RATIOS = { ...DEFAULT_RATIOS, ...spec?.ratios };
+  Object.assign(GOALS[Team.Blue], DEFAULT_GOALS[Team.Blue], spec?.goals?.[Team.Blue]);
+  Object.assign(GOALS[Team.Red], DEFAULT_GOALS[Team.Red], spec?.goals?.[Team.Red]);
+  Object.assign(CENTER, DEFAULT_CENTER, spec?.center);
+  Object.assign(PLAY_LINES, DEFAULT_PLAY_LINES, spec?.playLines);
+}
+
+/** Trapezoid pitch aligned to the active court's corners (see `setFieldSpec`). */
 export function metrics(size: Size): Metrics {
   const { width, height } = size;
   return {
     width,
     height,
-    topY: height * 0.341,
-    bottomY: height * 0.708,
-    topLeft: width * 0.24,
-    topRight: width * 0.759,
-    bottomLeft: width * 0.132,
-    bottomRight: width * 0.871,
+    topY: height * RATIOS.topY,
+    bottomY: height * RATIOS.bottomY,
+    topLeft: width * RATIOS.topLeft,
+    topRight: width * RATIOS.topRight,
+    bottomLeft: width * RATIOS.bottomLeft,
+    bottomRight: width * RATIOS.bottomRight,
   };
 }
 
@@ -75,9 +114,15 @@ export interface GoalGeom {
 /** Crossbar height: a ball higher than this sails over instead of scoring. */
 export const GOAL_MAX_Z = 24;
 
-export const GOALS: Record<Team, GoalGeom> = {
+/** v1 rain-court goal bands — defaults `setFieldSpec` merges court overrides onto. */
+const DEFAULT_GOALS: Record<Team, GoalGeom> = {
   [Team.Blue]: { lat: 0.002, depthTop: 0.359, depthBottom: 0.527 },
   [Team.Red]: { lat: 0.996, depthTop: 0.359, depthBottom: 0.627 },
+};
+
+export const GOALS: Record<Team, GoalGeom> = {
+  [Team.Blue]: { ...DEFAULT_GOALS[Team.Blue] },
+  [Team.Red]: { ...DEFAULT_GOALS[Team.Red] },
 };
 
 export function goalCenterForTeam(size: Size, team: Team): Vec2 {
@@ -131,13 +176,14 @@ export function inPenaltyBox(size: Size, defendTeam: Team, x: number, y: number)
 }
 
 /** Painted center spot in field ratios (calibrated via /sandbox/field-calibrator). */
-export const CENTER = { lat: 0.501, depth: 0.434 };
+const DEFAULT_CENTER = { lat: 0.501, depth: 0.434 };
+export const CENTER = { ...DEFAULT_CENTER };
 
 /**
  * Playing lines where the ball is OUT, in field ratios of the trapezoid (calibrated via
  * /sandbox/field-calibrator). Defaults ≈ the old pixel fudge (goal lines ±6px, touchlines ±4px).
  */
-export const PLAY_LINES = {
+const DEFAULT_PLAY_LINES = {
   latLeft: 0.001,
   latRight: 0.995,
   depthTop: 0.01,
@@ -145,6 +191,7 @@ export const PLAY_LINES = {
   // ~0.75, depth 1.0) overlap the trapezoid base — play stops before the ball reads as "on the stands".
   depthBottom: 0.965,
 };
+export const PLAY_LINES = { ...DEFAULT_PLAY_LINES };
 
 /** Halfway spot — the kickoff / mapping "center" reference (the painted center circle). */
 export function centerSpot(size: Size): Vec2 {

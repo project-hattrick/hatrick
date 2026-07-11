@@ -100,6 +100,7 @@ export {
   Robot,
   ShareNetwork,
   ShieldWarning,
+  SignIn,
   SignOut,
   Star,
   UserCircle,

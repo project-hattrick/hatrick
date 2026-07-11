@@ -9,8 +9,12 @@ import { useDisplayMatch, useIsMatchLive, useIsReplay } from '@/store/match.stor
 import { deriveLiveGroups } from './derive-group-stage';
 import { cn } from '@/lib/utils';
 
+// Compact 5-column layout on phones (#, Team, P, GD, Pts); the full 9-column table folds back in at sm+.
 const GRID =
-  'grid grid-cols-[1.75rem_minmax(6rem,1fr)_2rem_2rem_2rem_2rem_2.25rem_4.5rem_2.5rem] items-center gap-2';
+  'grid grid-cols-[1.75rem_minmax(4rem,1fr)_2rem_2.25rem_2.5rem] items-center gap-1.5 sm:grid-cols-[1.75rem_minmax(6rem,1fr)_2rem_2rem_2rem_2rem_2.25rem_4.5rem_2.5rem] sm:gap-2';
+
+// Secondary standings columns (W/D/L/Form) hide on phones and return at sm+.
+const HIDE_SM = 'hidden sm:block';
 
 const formClass: Record<MatchResult, string> = {
   W: 'bg-neon text-primary-foreground',
@@ -20,7 +24,7 @@ const formClass: Record<MatchResult, string> = {
 
 function Form({ form }: { form: MatchResult[] }) {
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="hidden items-center justify-end gap-1 sm:flex">
       {form.map((r, i) => (
         <span key={i} className={cn('grid size-4 place-items-center rounded-full text-micro font-bold', formClass[r])}>
           {r}
@@ -88,16 +92,16 @@ export function GroupStageTable() {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[560px]">
+        <div className="min-w-0">
           <div className={cn(GRID, 'text-eyebrow px-3 pb-1 text-muted-foreground')}>
             <span className="text-center">#</span>
             <span>Team</span>
             <span className="text-center">P</span>
-            <span className="text-center">W</span>
-            <span className="text-center">D</span>
-            <span className="text-center">L</span>
+            <span className={cn('text-center', HIDE_SM)}>W</span>
+            <span className={cn('text-center', HIDE_SM)}>D</span>
+            <span className={cn('text-center', HIDE_SM)}>L</span>
             <span className="text-center">GD</span>
-            <span className="text-right">Form</span>
+            <span className={cn('text-right', HIDE_SM)}>Form</span>
             <span className="text-center">Pts</span>
           </div>
 
@@ -131,9 +135,9 @@ export function GroupStageTable() {
                       {isLiveRow ? <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-live" /> : null}
                     </span>
                     <span className="text-center tabular-nums text-muted-foreground">{team.p}</span>
-                    <span className="text-center tabular-nums">{team.w}</span>
-                    <span className="text-center tabular-nums">{team.d}</span>
-                    <span className="text-center tabular-nums">{team.l}</span>
+                    <span className={cn('text-center tabular-nums', HIDE_SM)}>{team.w}</span>
+                    <span className={cn('text-center tabular-nums', HIDE_SM)}>{team.d}</span>
+                    <span className={cn('text-center tabular-nums', HIDE_SM)}>{team.l}</span>
                     <span className="text-center tabular-nums text-muted-foreground">{gd > 0 ? `+${gd}` : gd}</span>
                     <Form form={team.form} />
                     <span className="grid place-items-center">

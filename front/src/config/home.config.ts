@@ -59,7 +59,7 @@ export const featuredLiveMatch: FeaturedLiveMatch = {
   minute: 67,
   halfLabel: '2nd half',
   viewers: 24800,
-  spotlight: 'Messi on the ball',
+  spotlight: 'ARG-10 on the ball',
   prediction: { question: 'Goal in the next 10 min?', yesPoints: 50, noPoints: 10 },
 };
 

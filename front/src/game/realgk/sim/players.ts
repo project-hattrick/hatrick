@@ -1,9 +1,8 @@
-import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
 import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { ITEM_MAP } from '../assets/items';
-import { PERSONA_COUNT } from '../assets/manifest';
 import { spawnFootDust } from '../effects';
 import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
@@ -16,90 +15,19 @@ import { commitShot, updatePowerShot } from './shot';
 import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
 import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
+import { createPlayer } from './player-factory';
 import { setStatus } from './rules';
 
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
-
-/**
- * Persistent persona casting: fixed shuffled permutations of the 11 head sets per team, keyed by squad
- * slot — every squad fields all 11 distinct faces in a scrambled order, the assignment never re-rolls
- * across kickoffs/matches, and a slot's direct opponent (mirrored formation) never wears the same face.
- */
-const BLUE_PERSONAS = [3, 7, 0, 9, 4, 1, 10, 5, 2, 8, 6];
-const RED_PERSONAS = [8, 2, 6, 1, 10, 7, 3, 0, 9, 5, 4];
-
-/** The persona head index for a team's squad slot (stable; shared with replay playback). */
-export function personaIdFor(team: Team, slot: number): number {
-  const order = team === Team.Red ? RED_PERSONAS : BLUE_PERSONAS;
-  return order[((slot % order.length) + order.length) % order.length] % Math.max(1, PERSONA_COUNT);
-}
-
-/** Builds one player object at (lat, depth) for the given team. */
-function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: number, depth: number, name: string, slotIndex?: number): RealGkPlayer {
-  const dir = team === Team.Blue ? 1 : -1;
-  const pt = pointOnField(world.size, lat, depth);
-  const idle = role === Role.GK ? BodyAnim.GkIdle : dir > 0 ? BodyAnim.IdleFront : BodyAnim.IdleBack;
-  const id = world.nextPlayerId++;
-  return {
-    id,
-    // Persistent shuffled casting per team slot — see personaIdFor. Inert unless `personaHeads` is on.
-    personaId: personaIdFor(team, slotIndex ?? id),
-    name,
-    team,
-    dir,
-    role,
-    homeLat: lat,
-    homeDepth: depth,
-    x: pt.x,
-    y: pt.y,
-    vx: 0,
-    vy: 0,
-    facing: dir,
-    lookX: dir,
-    lookY: 0,
-    desiredLookX: dir,
-    desiredLookY: 0,
-    facingLock: 0,
-    pendingFacing: dir,
-    pendingFacingTime: 0,
-    targetX: pt.x,
-    targetY: pt.y,
-    idleMode: idle,
-    modeLock: 0,
-    mode: idle,
-    think: Math.random() * 0.4,
-    action: PlayerAction.None,
-    actionTimer: 0,
-    actionElapsed: 0,
-    diveDir: dir,
-    diveStartX: pt.x,
-    diveStartY: pt.y,
-    saveCooldown: 0,
-    celebrationKind: CelebrationKind.None,
-    celebrationPhase: CelebrationPhase.None,
-    celebrationTimer: 0,
-    celebrationLift: 0,
-    brakeCooldown: 0,
-    prevSpeed: 0,
-    headerCooldown: 0,
-    headerHit: false,
-    receiveCooldown: 0,
-    receiveHit: false,
-    powerShotHit: false,
-    slideCooldown: 0,
-    slideHit: false,
-    introDelay: 0,
-    spawnX: pt.x,
-    spawnY: pt.y,
-  };
-}
 
 /** Playable sandbox roster: `playableRoster` Blue teammates near center (1 = solo court test). */
 function resetPlayablePlayers(world: RealGkWorld): void {
   const roster = Math.max(1, Math.min(2, Math.round(world.cfg.playableRoster ?? 2)));
   world.players = [createPlayer(world, Team.Blue, Role.ST, roster > 1 ? 0.42 : 0.5, 0.5, 'YOU-1')];
   if (roster > 1) world.players.push(createPlayer(world, Team.Blue, Role.MID, 0.58, 0.5, 'YOU-2'));
-  world.controlId = world.players[0].id;
+  const gk = world.cfg.playableGoalkeeper ? createPlayer(world, Team.Blue, Role.GK, 0.08, 0.5, 'GK') : null;
+  if (gk) world.players.push(gk);
+  world.controlId = world.cfg.keeperControl && gk ? gk.id : world.players[0].id;
 }
 
 /** (Re)spawns the squads: full 11-a-side, or the 2-player sandbox when `playable`. */
@@ -523,7 +451,8 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   const redChaser = nearestPlayerToBall(world, Team.Red);
 
   // Sandbox: control follows the Blue player who has the ball, so a pass hands control to the receiver.
-  if (world.cfg.features?.playable && owner && owner.team === Team.Blue) world.controlId = owner.id;
+  // keeperControl pins control to the keeper instead — a pass out must not drag control upfield.
+  if (world.cfg.features?.playable && !world.cfg.keeperControl && owner && owner.team === Team.Blue) world.controlId = owner.id;
 
   for (const player of players) {
     if (match.celebration > 0) {
@@ -557,7 +486,11 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       continue;
     }
 
-    if (player.role === Role.GK && maybeTriggerKeeperDive(world, player)) {
+    // The keyboard-controlled keeper never auto-dives — saves are the player's call (Q/E). An
+    // in-flight manual dive still owns the tick so header/receive triggers can't hijack it.
+    const keeperUnderControl = world.cfg.features?.playable === true && player.id === world.controlId && world.cfg.keeperControl === true;
+    if (player.role === Role.GK && keeperUnderControl && updateKeeperDive(player, dt)) continue;
+    if (player.role === Role.GK && !keeperUnderControl && maybeTriggerKeeperDive(world, player)) {
       updateKeeperDive(player, dt);
       continue;
     }
@@ -612,24 +545,36 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     moveToward(world, player, target.x, target.y, player.role === Role.GK ? 75 : 126, dt);
   }
 
-  for (const player of players) {
-    if (player.celebrationPhase !== CelebrationPhase.None) continue;
-    for (const other of players) {
-      if (player.id >= other.id) continue;
-      if (other.celebrationPhase !== CelebrationPhase.None) continue;
-      const dx = other.x - player.x;
-      const dy = other.y - player.y;
+  // Soft body separation. Pushes are ACCUMULATED into a per-player delta and applied once, capped, at the
+  // end — the old in-place version let a scrum on the ball compound many overlaps into one huge single-tick
+  // shove (players "teleporting" around the ball). The cap keeps normal 1–2 overlaps identical while killing
+  // that pathological pop; minDist scales with the pitch so spacing reads the same across courts.
+  const minDist = 18 * (world.cfg.fieldScale / 1.5);
+  const maxSeparation = 12 * (world.cfg.fieldScale / 1.5);
+  const sepX = new Array<number>(players.length).fill(0);
+  const sepY = new Array<number>(players.length).fill(0);
+  for (let i = 0; i < players.length; i++) {
+    if (players[i].celebrationPhase !== CelebrationPhase.None) continue;
+    for (let j = i + 1; j < players.length; j++) {
+      if (players[j].celebrationPhase !== CelebrationPhase.None) continue;
+      const dx = players[j].x - players[i].x;
+      const dy = players[j].y - players[i].y;
       const d = Math.hypot(dx, dy);
-      const minDist = 18;
       if (d > 0 && d < minDist) {
         const push = (minDist - d) * 0.5;
         const nx = dx / d;
         const ny = dy / d;
-        player.x -= nx * push;
-        player.y -= ny * push;
-        other.x += nx * push;
-        other.y += ny * push;
+        sepX[i] -= nx * push;
+        sepY[i] -= ny * push;
+        sepX[j] += nx * push;
+        sepY[j] += ny * push;
       }
     }
+  }
+  for (let i = 0; i < players.length; i++) {
+    const mag = Math.hypot(sepX[i], sepY[i]);
+    const scale = mag > maxSeparation ? maxSeparation / mag : 1;
+    players[i].x += sepX[i] * scale;
+    players[i].y += sepY[i] * scale;
   }
 }

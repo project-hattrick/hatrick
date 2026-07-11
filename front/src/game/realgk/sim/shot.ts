@@ -1,5 +1,5 @@
 import { BodyAnim, KickIntent, PlayerAction, Role, Team } from '../enums';
-import { pointOnField } from '../field';
+import { goalCenterForTeam } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { kickBall } from './ball';
@@ -14,7 +14,11 @@ function shotTiming(mode: BodyAnim): { dur: number; contact: number } {
 
 /** The goal the player is attacking — the exact point the strike is aimed at (shared by start + update). */
 function goalPointFor(world: RealGkWorld, player: RealGkPlayer): { x: number; y: number } {
-  const target = pointOnField(world.size, player.team === Team.Blue ? 0.99 : 0.01, 0.5);
+  // Aim at the opponent goal's actual mouth centre (per the court's calibrated GOALS geometry), NOT a
+  // hardcoded lat/depth — on narrower courts (France) the goal sits at depth ~0.42, so a fixed 0.5 sent
+  // shots downward past the mouth and flipped the strike pose (rear/front) the wrong way.
+  const opponent = player.team === Team.Blue ? Team.Red : Team.Blue;
+  const target = goalCenterForTeam(world.size, opponent);
   // Feed-driven: shots are ALWAYS saved — aim straight at the keeper (dive/claim wins it); the
   // goal-mouth parry backstops anything that slips past. Real goals arrive only via injectGoal.
   if (world.driven) {

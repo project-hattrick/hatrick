@@ -44,6 +44,22 @@ export interface FixtureAction {
   participant?: number;
 }
 
+/** One bookmaker market in a fixture's latest-odds snapshot (mirrors the api OddsSnapshotItemDto). */
+export interface OddsSnapshotItem {
+  FixtureId: number;
+  Ts: number;
+  Bookmaker: string;
+  /** Market family, e.g. 1X2 / OverUnder. */
+  SuperOddsType: string;
+  InRunning: boolean;
+  MarketPeriod?: string;
+  /** Line qualifier, e.g. `line=2.5` on OVERUNDER families. */
+  MarketParameters?: string;
+  PriceNames?: string[];
+  /** Raw integer prices (decimal odds ×1000). */
+  Prices?: number[];
+}
+
 /** Authoritative current/final score for a fixture (mirrors the api FixtureScoreDto). */
 export interface FixtureScore {
   fixtureId: number;
@@ -63,6 +79,7 @@ export const replayService = {
   getCatalog: (days = 6) => api.get<ReplayCatalogItem[]>(`/replay/catalog?days=${days}`),
   getUpcoming: () => api.get<FixtureDto[]>('/fixtures'),
   getScore: (fixtureId: number) => api.get<FixtureScore>(`/fixtures/${fixtureId}/score`),
+  getOdds: (fixtureId: number) => api.get<OddsSnapshotItem[]>(`/fixtures/${fixtureId}/odds`),
   getTimeline: (input: { fixtureId: number; epochDay: number; startHour: number }) =>
     api.get<FixtureTimeline>(
       `/replay/timeline?fixtureId=${input.fixtureId}&epochDay=${input.epochDay}&startHour=${input.startHour}`,

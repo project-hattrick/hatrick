@@ -1,6 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { useDisplayMatch, useDisplayEvents } from '@/store/match.store';
+import { useKickoffCountdown } from '@/hooks/use-kickoff-countdown';
 import { describeMatchEvent } from '@/config/match-action.config';
 import { MatchPicker } from '@/components/home/match-picker';
 import { Flag } from '@/components/common/flag';
@@ -22,9 +25,18 @@ function TeamColumn({ code }: { code: string }) {
 }
 
 /** Minimal, backgroundless scoreline (wire 3a): LIVE badge · flags + score · event chips. */
-export function Scoreboard() {
+export function Scoreboard({
+  homeBackers,
+  awayBackers,
+  canSwitchMatch = true,
+}: {
+  homeBackers?: ReactNode;
+  awayBackers?: ReactNode;
+  canSwitchMatch?: boolean;
+}) {
   const match = useDisplayMatch();
   const events = useDisplayEvents();
+  const countdown = useKickoffCountdown();
 
   const recent = [...events]
     .reverse()
@@ -37,16 +49,34 @@ export function Scoreboard() {
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
       {/* Phase badge doubles as the match switcher (LIVE / FULL-TIME · ENDED + caret). */}
-      <MatchPicker variant="hero" />
+      <MatchPicker variant="hero" disabled={!canSwitchMatch} />
 
-      <div className="flex items-center gap-4 sm:gap-6">
-        <TeamColumn code={match.home.code} />
-        <div className="flex items-center gap-2 text-[38px] font-bold leading-none [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:gap-2.5 sm:text-[52px]">
-          <span>{match.score.home}</span>
-          <span className="text-2xl text-muted-foreground sm:text-[34px]">–</span>
-          <span>{match.score.away}</span>
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {homeBackers}
+          <TeamColumn code={match.home.code} />
         </div>
-        <TeamColumn code={match.away.code} />
+        {countdown ? (
+          /* Pre-kickoff: the scoreline slot counts down to kickoff instead of showing 0–0. */
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-mono text-[34px] font-bold leading-none tabular-nums text-neon [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:text-[44px]">
+              {countdown}
+            </span>
+            <span className="text-micro font-semibold tracking-[0.2em] text-foreground/70 uppercase [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]">
+              Until kickoff
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-[38px] font-bold leading-none [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] sm:gap-2.5 sm:text-[52px]">
+            <span>{match.score.home}</span>
+            <span className="text-2xl text-muted-foreground sm:text-[34px]">–</span>
+            <span>{match.score.away}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <TeamColumn code={match.away.code} />
+          {awayBackers}
+        </div>
       </div>
 
       {recent.length > 0 ? (
@@ -60,7 +90,9 @@ export function Scoreboard() {
               >
                 <span className={cn('size-1.5 rounded-full', meta.dotClass)} />
                 {formatMinute(event.minute ?? match.minute)} {meta.label}
-                {event.label ? ` · ${event.label} (${teamCode})` : null}
+                {event.label
+                  ? ` · ${event.label}${event.label.startsWith(teamCode) ? '' : ` (${teamCode})`}`
+                  : null}
               </span>
             );
           })}

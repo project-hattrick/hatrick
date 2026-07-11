@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { CaretDown, CaretLeft, CaretRight } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
-import { focusAt, type FocusPlayer } from '@/config/live-roster.config';
+import { buildFocusRoster, focusAt, type FocusPlayer } from '@/config/live-roster.config';
+import { useDisplayMatch, useDisplayEvents } from '@/store/match.store';
 import { useUiStore } from '@/store/ui.store';
 
 const RADIUS = 44;
@@ -63,8 +64,15 @@ export function PlayerFocusCard() {
   const focusNext = useUiStore((s) => s.focusNext);
   const focusPrev = useUiStore((s) => s.focusPrev);
   const [expanded, setExpanded] = useState(false);
+  const match = useDisplayMatch();
+  const events = useDisplayEvents();
+  // Roster follows the on-screen fixture; the newest event decides who's on the ball.
+  const roster = useMemo(
+    () => buildFocusRoster(match, events[events.length - 1]),
+    [match.home.code, match.away.code, match.home.name, match.away.name, events],
+  );
   const { player, position, total }: { player: FocusPlayer; position: number; total: number } =
-    focusAt(focusedPlayerIndex);
+    focusAt(roster, focusedPlayerIndex);
 
   return (
     <GlassPanel tone="surface" className="p-3 text-left md:p-3.5">

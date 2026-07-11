@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Camera, Lightning, Pause, Play, SoccerBall, Target } from '@/components/common/icons';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,16 @@ import { createRealGkEngine } from '@/game/realgk/engine';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { useRealGkStore } from '@/store/real-gk.store';
 
-export function FranceArena() {
+interface FranceArenaProps {
+  /** Pin keyboard control to the keeper (full manual GK: move, Q/E dives, throws, punts). */
+  keeperControl?: boolean;
+}
+
+export function FranceArena({ keeperControl = false }: FranceArenaProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handleRef = useRef<RealGkHandle | null>(null);
+  const [controlLabel, setControlLabel] = useState(keeperControl ? 'Control: Goalkeeper' : 'Control: Player');
 
   const scoreBlue = useRealGkStore((s) => s.scoreBlue);
   const scoreRed = useRealGkStore((s) => s.scoreRed);
@@ -24,10 +30,15 @@ export function FranceArena() {
   const targetLabel = useRealGkStore((s) => s.targetLabel);
   const ballText = useRealGkStore((s) => s.ballText);
 
+  const config = useMemo(
+    () => (keeperControl ? { ...REAL_GK_FRANCE_PLAY_CONFIG, keeperControl: true } : REAL_GK_FRANCE_PLAY_CONFIG),
+    [keeperControl],
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = createRealGkEngine(canvas, { onHud: useRealGkStore.getState().apply, config: REAL_GK_FRANCE_PLAY_CONFIG });
+    const handle = createRealGkEngine(canvas, { onHud: useRealGkStore.getState().apply, config });
     handleRef.current = handle;
     const observer = new ResizeObserver(() => handle.resize());
     if (containerRef.current) observer.observe(containerRef.current);
@@ -36,7 +47,7 @@ export function FranceArena() {
       handle.destroy();
       handleRef.current = null;
     };
-  }, []);
+  }, [config]);
 
   return (
     <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
@@ -54,6 +65,11 @@ export function FranceArena() {
         <Badge variant="outline" className="pointer-events-auto border-white/15 bg-black/45 text-white/80">
           <SoccerBall className="mr-1 size-3.5" /> {ballText}
         </Badge>
+        {keeperControl ? (
+          <Badge variant="outline" className="pointer-events-auto border-[#5f8fff]/40 bg-black/45 text-[#9db9ff]">
+            GK CONTROL — WASD move · Q/E dive · Space throw · X punt · C header · V trap · B intercept · F slide
+          </Badge>
+        ) : null}
       </div>
 
       <div className="absolute right-3 top-3 flex flex-wrap items-center justify-end gap-2">
@@ -69,6 +85,17 @@ export function FranceArena() {
           <Target className="size-4" />
           {targetLabel.replace('Follow: ', '')}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const next = handleRef.current?.cycleControlledPlayer();
+            if (next) setControlLabel(next);
+          }}
+        >
+          <Target className="size-4" />
+          {controlLabel.replace('Control: ', '')}
+        </Button>
         <Button size="sm" variant="outline" onClick={() => handleRef.current?.cycleSpeed()}>
           <Lightning className="size-4" />
           {speed}x
@@ -76,9 +103,29 @@ export function FranceArena() {
       </div>
 
       <div className="absolute bottom-3 left-3 flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={() => handleRef.current?.restart()}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            handleRef.current?.restart();
+            setControlLabel(keeperControl ? 'Control: Goalkeeper' : 'Control: Player');
+          }}
+        >
           Restart
         </Button>
+        {keeperControl ? (
+          <>
+            <Button size="sm" variant="outline" onClick={() => handleRef.current?.keeperDive(-1)}>
+              Dive up
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleRef.current?.keeperDive(1)}>
+              Dive down
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleRef.current?.debugIncomingShot()}>
+              Shot at you
+            </Button>
+          </>
+        ) : null}
         <Button size="sm" variant="outline" onClick={() => handleRef.current?.debugAction('receive')}>
           Receive
         </Button>

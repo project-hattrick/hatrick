@@ -34,7 +34,9 @@ export function EventTicker() {
             <span className="flex items-center gap-1.5">
               <span className={cn('h-1.5 w-1.5 rounded-full', meta.dotClass)} />
               {formatMinute(event.minute ?? match.minute)} {meta.label}
-              {event.label ? ` · ${event.label} (${teamCode})` : null}
+              {event.label
+                ? ` · ${event.label}${event.label.startsWith(teamCode) ? '' : ` (${teamCode})`}`
+                : null}
             </span>
           </Fragment>
         );

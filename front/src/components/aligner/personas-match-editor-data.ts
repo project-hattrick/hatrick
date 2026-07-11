@@ -96,6 +96,11 @@ export function liveList(anim: EditorAnim): FrameCfg[] {
   return LIVE_MAPS[anim.map][anim.id] ?? [];
 }
 
+/** The checked-in source cfg list for an anim — what "original" previews compare against. */
+export function baselineList(anim: EditorAnim): FrameCfg[] {
+  return BASELINE[anim.map][anim.id] ?? [];
+}
+
 /** Config index a given frame resolves to (short lists clamp — e.g. loco anims keep ONE cfg for all frames). */
 export function cfgIndexFor(anim: EditorAnim, frame: number): number {
   return Math.max(0, Math.min(frame, liveList(anim).length - 1));

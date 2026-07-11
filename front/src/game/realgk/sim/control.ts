@@ -37,6 +37,19 @@ export function updateControlledPlayer(world: RealGkWorld, player: RealGkPlayer,
 
   // Body mode straight from velocity (inline to avoid importing the AI module).
   const spd = Math.hypot(player.vx, player.vy);
+  if (player.role === Role.GK) {
+    // The AI path decays this in moveToward; the controlled keeper must decay it here or a
+    // finished dive would lock him out of the next one forever.
+    player.saveCooldown = Math.max(0, player.saveCooldown - dt);
+    player.idleMode = BodyAnim.GkIdle;
+    player.modeLock = Math.max(0, player.modeLock - dt);
+    if (player.modeLock <= 0) {
+      if (spd < 24) player.mode = BodyAnim.GkIdle;
+      else if (Math.abs(player.vx) > Math.abs(player.vy) * 1.18 && Math.abs(player.vx) > 18) player.mode = BodyAnim.GkRunSide;
+      else player.mode = BodyAnim.GkShuffle;
+    }
+    return;
+  }
   if (Math.abs(player.vy) > 18) player.idleMode = player.vy < 0 ? BodyAnim.IdleBack : BodyAnim.IdleFront;
   player.modeLock = Math.max(0, player.modeLock - dt);
   if (player.modeLock <= 0) {
@@ -60,6 +73,12 @@ export function controlPass(world: RealGkWorld): void {
 export function controlShoot(world: RealGkWorld): void {
   const owner = ballOwner(world);
   if (!owner) return;
+  if (owner.role === Role.GK) {
+    // Keeper clear: a long lofted punt upfield — the outfield power-shot body doesn't fit the GK kit.
+    const target = pointOnField(world.size, owner.team === Team.Blue ? 0.72 : 0.28, 0.3 + Math.random() * 0.4);
+    kickBall(world, owner, target.x, target.y, 400, true);
+    return;
+  }
   if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
     startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
     return;

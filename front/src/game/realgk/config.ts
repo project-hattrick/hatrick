@@ -1,4 +1,6 @@
 import { CheckpointId } from '../checkpoints/types';
+import { BillboardKind, type Billboard } from './billboards';
+import type { FieldSpec } from './field';
 
 /** A follow-camera preset in the cycle ring. */
 export interface CamPreset {
@@ -93,6 +95,11 @@ export interface RealGkConfig {
   features?: RealGkFeatures;
   /** How many controllable players the playable sandbox spawns (1 = solo court test; default 2). */
   playableRoster?: number;
+  /** Adds a controllable blue goalkeeper to playable sandbox variants. */
+  playableGoalkeeper?: boolean;
+  /** Pins keyboard control to the blue keeper: control no longer follows the ball owner, the
+   *  controlled keeper never auto-dives (Q/E dive manually), and X punts instead of power-shooting. */
+  keeperControl?: boolean;
   /** Per-actor height multipliers; unset falls back to the legacy constants (referee 0.9, coach 1.06). */
   actorScale?: { referee?: number; coach?: number };
   /** Max cinematic zoom push near a goal (legacy default 1.32). */
@@ -106,8 +113,19 @@ export interface RealGkConfig {
   personaBodyRoot?: string;
   /** Optional multiplier for persona head composition. Defaults to 1. */
   personaHeadScale?: number;
+  /** Cap for a composited head's height as a fraction of the actor's depth base height. Guards against
+   *  per-frame headScale outliers (dive/shot poses) ballooning the head; unset = no cap. */
+  headMaxFraction?: number;
   /** Light retro-TV overlay on the stage (faint scanlines + RGB mask + vignette). */
   crtFilter?: boolean;
+  /** Optional court/stadium background image. Defaults to the shared COURT_BG. */
+  courtImage?: string;
+  /** Per-court field mapping (pitch trapezoid + goals/center/out-lines). Unset = v1 rain-court values. */
+  field?: FieldSpec;
+  /** Per-court advertiser panels (LED/image, tuned in /sandbox/billboard-editor). Unset = defaults. */
+  billboards?: Billboard[];
+  /** Optional cache-busting suffix for custom asset packs. */
+  assetVersion?: string;
 }
 
 /** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
@@ -325,15 +343,139 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
   },
 };
 
+/**
+ * Stadium-slide-v2 court (`public/game/franca/court.png`): grass trapezoid measured from the art
+ * (largest-green-component scan). Goals/center/out-lines hand-traced in
+ * /sandbox/field-calibrator?court=franca (10/07). The pitch is narrower than the v1 rain-court,
+ * so France sprite sizes scale down with it (~0.85×).
+ */
+export const FRANCE_STADIUM_FIELD: FieldSpec = {
+  ratios: { topY: 0.332, bottomY: 0.729, topLeft: 0.27, topRight: 0.727, bottomLeft: 0.195, bottomRight: 0.802 },
+  goals: {
+    blue: { lat: 0.004, depthTop: 0.353, depthBottom: 0.512 },
+    red: { lat: 0.979, depthTop: 0.34, depthBottom: 0.506 },
+  },
+  center: { lat: 0.502, depth: 0.42 },
+  playLines: { latLeft: 0.001, latRight: 0.995, depthTop: 0.01, depthBottom: 0.99 },
+};
+
+/**
+ * France-court advertiser panels — seeded from the defaults (they land close to this art's far
+ * touchline); retune in /sandbox/billboard-editor?court=franca and paste the export back here.
+ */
+export const FRANCE_BILLBOARDS: Billboard[] = [
+  {
+    kind: BillboardKind.Led,
+    corners: [[0.32, 0.295], [0.45, 0.295], [0.45, 0.327], [0.32, 0.327]],
+    text: 'TXODDS  ·  WORLD CUP 26',
+    theme: 'amber',
+    speed: 9,
+  },
+  {
+    kind: BillboardKind.Image,
+    corners: [[0.46, 0.295], [0.54, 0.295], [0.54, 0.327], [0.46, 0.327]],
+    src: '/game/ads/hat-trick.svg',
+  },
+  {
+    kind: BillboardKind.Led,
+    corners: [[0.55, 0.295], [0.68, 0.295], [0.68, 0.327], [0.55, 0.327]],
+    text: 'PLAY LIVE  ·  TXLINE',
+    theme: 'blue',
+    speed: 9,
+  },
+];
+
 /** France kit review sandbox - playable persona arena using the approved France body cuts. */
 export const REAL_GK_FRANCE_PLAY_CONFIG: RealGkConfig = {
   ...REAL_GK_PERSONA_PLAY_CONFIG,
   personaBodyRoot: '/game/franca',
   personaHeadScale: 0.82,
+  headMaxFraction: 0.44,
+  courtImage: '/game/franca/court.png',
+  assetVersion: 'france-stadium-slide-gkclean3-idleback2-20260710',
+  field: FRANCE_STADIUM_FIELD,
+  billboards: FRANCE_BILLBOARDS,
+  spriteMinH: 20,
+  spriteMaxH: 31,
   playableRoster: 1,
+  playableGoalkeeper: true,
   teams: {
     blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
     red: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
+  },
+};
+
+/** France complete match sandbox - autonomous 11-a-side sim using the full France player + keeper pack. */
+export const REAL_GK_FRANCE_COMPLETE_CONFIG: RealGkConfig = {
+  ...REAL_GK_PERSONAS_CONFIG,
+  personaBodyRoot: '/game/franca',
+  personaHeadScale: 0.82,
+  headMaxFraction: 0.44,
+  courtImage: '/game/franca/court.png',
+  assetVersion: 'france-stadium-slide-gkclean3-idleback2-20260710',
+  field: FRANCE_STADIUM_FIELD,
+  billboards: FRANCE_BILLBOARDS,
+  // Players bumped ~1.2x (keeps the 0.65 min:max ratio) so they read closer in size to the 1.3x referee.
+  spriteMinH: 24,
+  spriteMaxH: 37,
+  features: {
+    ...(REAL_GK_PERSONAS_CONFIG.features as RealGkFeatures),
+    celebrations: true,
+    keeperDiveV2: true,
+    matchIntro: true,
+    drivenFiller: false,
+    matchStructure: false,
+  },
+  teams: {
+    blue: { name: 'France Blue', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
+    red: { name: 'France Red', flagId: 'france', colors: ['#EF4135', '#FFFFFF', '#0055A4'] },
+  },
+};
+
+export type FranceSizeVariantId = 'base' | 'a' | 'b' | 'c';
+
+/**
+ * Size candidates for the france-complete sandbox (`?size=a|b|c`) — same match, only the read size of
+ * the actors changes. All keep the ~0.65 min:max depth ratio and leave `fieldScale` alone (it feeds sim
+ * distances, e.g. the dive trigger); variant `c` magnifies via camera zoom instead, which is purely
+ * visual. Referee/coach shrink as players grow (their 1.3x existed to match the smaller players).
+ * Once a winner is picked, fold its values into REAL_GK_FRANCE_COMPLETE_CONFIG and drop the switcher.
+ */
+export const FRANCE_COMPLETE_SIZE_VARIANTS: Record<FranceSizeVariantId, { label: string; config: RealGkConfig }> = {
+  base: { label: 'Base', config: REAL_GK_FRANCE_COMPLETE_CONFIG },
+  a: {
+    label: 'Bigger',
+    config: {
+      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+      spriteMinH: 28,
+      spriteMaxH: 43,
+      actorScale: { referee: 1.15, coach: 1.15 },
+    },
+  },
+  b: {
+    label: 'Biggest',
+    config: {
+      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+      spriteMinH: 31,
+      spriteMaxH: 48,
+      ballScale: 0.68,
+      actorScale: { referee: 1.05, coach: 1.05 },
+    },
+  },
+  c: {
+    label: 'Zoom',
+    config: {
+      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+      spriteMinH: 26,
+      spriteMaxH: 40,
+      actorScale: { referee: 1.2, coach: 1.2 },
+      presets: [
+        { label: 'Broadcast', zoom: 1.9, follow: true },
+        { label: 'Close', zoom: 2.4, follow: true },
+        { label: 'Wide', zoom: 1.3, follow: true },
+        { label: 'Full pitch', zoom: 0.7, follow: false },
+      ],
+    },
   },
 };
 

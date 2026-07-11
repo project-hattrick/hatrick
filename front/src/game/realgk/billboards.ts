@@ -124,13 +124,14 @@ export function drawImageQuad(ctx: CanvasRenderingContext2D, img: CanvasImageSou
 /**
  * Paints all advertiser panels pinned to the pitch (world space, so they pan with the follow camera).
  * Image boards warp their art into the quad; LED boards render a marquee to an offscreen canvas first.
- * No-op unless the variant opts in via `features.billboards`.
+ * No-op unless the variant opts in via `features.billboards`. A config can carry its own placements
+ * (`config.billboards`, tuned per court in /sandbox/billboard-editor) — unset keeps the defaults above.
  */
 export function drawBillboards(ctx: CanvasRenderingContext2D, world: RealGkWorld, now: number): void {
   if (!world.cfg.features?.billboards) return;
   const { width, height } = world.size;
 
-  for (const bb of BILLBOARDS) {
+  for (const bb of world.cfg.billboards ?? BILLBOARDS) {
     const pts = bb.corners.map(([x, y]) => [x * width, y * height]);
     ctx.save();
     ctx.globalAlpha = bb.opacity ?? 1;

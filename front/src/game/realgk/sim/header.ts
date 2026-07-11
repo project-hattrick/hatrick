@@ -1,5 +1,5 @@
 import { BodyAnim, CelebrationPhase, KickIntent, PlayerAction, Role, Team } from '../enums';
-import { pointOnField } from '../field';
+import { goalCenterForTeam } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { kickBall } from './ball';
@@ -35,7 +35,8 @@ export function startHeader(player: RealGkPlayer): boolean {
 
 /** Nods the ball toward the attacking goal at the contact frame (Blue attacks lat 0.98, Red 0.02). */
 function headerContact(world: RealGkWorld, player: RealGkPlayer): void {
-  const goalPoint = pointOnField(world.size, player.team === Team.Blue ? 0.98 : 0.02, 0.5);
+  const opponent = player.team === Team.Blue ? Team.Red : Team.Blue;
+  const goalPoint = goalCenterForTeam(world.size, opponent);
   kickBall(world, player, goalPoint.x, goalPoint.y, 360, false, { intent: KickIntent.Header });
   const note = Status.shot(player.name);
   setStatus(world, note.title, note.text);

@@ -2,15 +2,15 @@
 
 import { GlassPanel } from '@/components/common/glass-panel';
 import { IconButton } from '@/components/common/icon-button';
-import { Play, Pause, ArrowsOut, Rectangle, Lightning, ClockCounterClockwise } from '@/components/common/icons';
-import { DimensionToggle } from './dimension-toggle';
-import { useDisplayMatch, useIsReplay, useMatchEvents } from '@/store/match.store';
+import { Play, Pause, Lightning, ClockCounterClockwise } from '@/components/common/icons';
+import { HeroViewControls } from './hero-view-controls';
+import { useDisplayMatch, useIsEnded, useIsInPlay, useIsReplay, useMatch, useMatchEvents } from '@/store/match.store';
+import { useLiveMinute } from '@/hooks/use-live-minute';
 import { useReplaySessionStore } from '@/store/replay-session.store';
 import { useHeroControls } from '@/store/hero-engine.store';
 import { useRealGkStore } from '@/store/real-gk.store';
 import { useUiStore } from '@/store/ui.store';
 import { useLoadReplay } from '@/hooks/use-load-replay';
-import { HeroLayout } from '@/enums/hero-layout.enum';
 import { MatchAction } from '@/enums/match-action.enum';
 import { formatMinute } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -27,37 +27,37 @@ const MARKER_CLASS: Partial<Record<MatchAction, string>> = {
   [MatchAction.Corner]: 'bg-team-home',
 };
 
-function toggleFullscreen(): void {
-  if (document.fullscreenElement) void document.exitFullscreen();
-  else void document.documentElement.requestFullscreen();
-}
-
 /**
  * The single hero playback surface. The match streams from the backend (live SSE or `POST /replay`),
  * so there is no client-side playhead: the bar is a progress readout with markers at the streamed
  * event minutes. Restart re-runs the replay stream from kickoff; speed cycles the stream pace (also
  * a restart — a backend stream cannot seek). Play/pause freezes the pitch; without a replay the
  * restart/speed buttons fall back to the ambient engine.
+ *
+ * `playback={false}` (private rooms) drops the play/restart/speed cluster — a shared room watches
+ * one stream together, so nobody gets to rewind or re-pace it for everyone else.
  */
-export function MatchTimeline() {
+export function MatchTimeline({ playback = true }: { playback?: boolean }) {
   const match = useDisplayMatch();
+  const hasMatch = useMatch() !== null;
   const isReplay = useIsReplay();
+  const inPlay = useIsInPlay();
+  const ended = useIsEnded();
+  const liveMinute = useLiveMinute();
   const events = useMatchEvents();
   const replaySpeed = useReplaySessionStore((state) => state.speed);
   const hasSource = useReplaySessionStore((state) => state.source !== null);
-  const { restartReplay, cycleReplaySpeed } = useLoadReplay();
+  const { restartReplay, cycleReplaySpeed, forceLive } = useLoadReplay();
 
   const controls = useHeroControls();
   const engineSpeed = useRealGkStore((state) => state.speed);
   const playing = useUiStore((state) => state.playing);
   const togglePlaying = useUiStore((state) => state.togglePlaying);
-  const heroLayout = useUiStore((state) => state.heroLayout);
-  const toggleHeroLayout = useUiStore((state) => state.toggleHeroLayout);
 
   // Backend-driven replay controls only make sense when we know what to re-stream.
   const streaming = isReplay && hasSource;
   const total = FALLBACK_TOTAL;
-  const position = Math.min(match.minute, total);
+  const position = Math.min(liveMinute, total);
   const speed = streaming ? replaySpeed : engineSpeed;
   const markers = events.filter((event) => event.minute != null && MARKER_CLASS[event.action]);
 
@@ -76,27 +76,45 @@ export function MatchTimeline() {
 
   return (
     <GlassPanel tone="dark" radius="xl" className="pointer-events-auto flex items-center gap-3 px-3 py-2">
-      <IconButton size="icon-sm" label={playing ? 'Pause' : 'Play'} onClick={togglePlaying}>
-        {playing ? <Pause /> : <Play />}
-      </IconButton>
+      {playback && (
+        <>
+          <IconButton size="icon-sm" label={playing ? 'Pause' : 'Play'} onClick={togglePlaying}>
+            {playing ? <Pause /> : <Play />}
+          </IconButton>
 
-      <IconButton
-        size="icon-sm"
-        label={streaming ? 'Replay from kickoff' : 'Restart match'}
-        onClick={onRestart}
-      >
-        <ClockCounterClockwise />
-      </IconButton>
+          <IconButton
+            size="icon-sm"
+            label={streaming ? 'Replay from kickoff' : 'Restart match'}
+            onClick={onRestart}
+          >
+            <ClockCounterClockwise />
+          </IconButton>
 
-      <button
-        type="button"
-        onClick={onSpeed}
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 font-mono text-xs font-semibold text-muted-foreground transition hover:border-neon hover:text-foreground"
-        aria-label={streaming ? 'Cycle stream speed (restarts from kickoff)' : 'Cycle speed'}
-      >
-        <Lightning className="size-3.5" />
-        {speed ? `${speed}×` : '1×'}
-      </button>
+          <button
+            type="button"
+            onClick={onSpeed}
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 font-mono text-xs font-semibold text-muted-foreground transition hover:border-neon hover:text-foreground"
+            aria-label={streaming ? 'Cycle stream speed (restarts from kickoff)' : 'Cycle speed'}
+          >
+            <Lightning className="size-3.5" />
+            {speed ? `${speed}×` : '1×'}
+          </button>
+        </>
+      )}
+
+      {/* Manual override: the schedule/feed said "not live" but the match IS on — force live mode.
+          Hidden once the match genuinely ended (the winner screen owns that state). */}
+      {hasMatch && !inPlay && !ended && (
+        <button
+          type="button"
+          onClick={() => void forceLive()}
+          aria-label="Force live mode"
+          className="inline-flex items-center gap-1.5 rounded-md border border-live/50 bg-live/10 px-2 py-1 font-mono text-xs font-bold text-live transition hover:bg-live/20"
+        >
+          <span className="size-1.5 animate-pulse rounded-full bg-live motion-reduce:animate-none" />
+          GO LIVE
+        </button>
+      )}
 
       {/* Progress readout — the stream drives the playhead; markers at the streamed event minutes. */}
       <div className="relative flex min-w-0 flex-1 items-center">
@@ -137,20 +155,8 @@ export function MatchTimeline() {
 
       <span className="mx-0.5 hidden h-5 w-px bg-border sm:block" />
 
-      <div className="hidden items-center gap-2 sm:flex">
-        <DimensionToggle />
-        <button
-          type="button"
-          onClick={toggleHeroLayout}
-          aria-pressed={heroLayout === HeroLayout.Split}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-bold text-muted-foreground transition hover:text-foreground"
-        >
-          <Rectangle className="size-4" />
-          {heroLayout === HeroLayout.Split ? 'Immersive' : 'Split'}
-        </button>
-        <IconButton size="icon-sm" label="Fullscreen" onClick={toggleFullscreen}>
-          <ArrowsOut />
-        </IconButton>
+      <div className="hidden sm:block">
+        <HeroViewControls />
       </div>
     </GlassPanel>
   );

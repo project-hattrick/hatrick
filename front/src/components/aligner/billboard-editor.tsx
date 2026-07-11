@@ -101,12 +101,15 @@ function Slider({ label, value, min, max, step, on }: { label: string; value: nu
   );
 }
 
-/** Dev tool: draw/drag advertiser panels (image + LED) over the real pitch, then export the field-ratios. */
-export function BillboardEditor() {
+const cloneBoards = (list: Billboard[]): Board[] =>
+  (list as Board[]).map((b) => ({ ...b, corners: b.corners.map((c) => [...c]) as [number, number][] }));
+
+/** Dev tool: draw/drag advertiser panels (image + LED) over the real pitch, then export the field-ratios.
+ *  `courtSrc`/`initial`/`storageKey` retune another stadium's boards (auto-saved per court). */
+export function BillboardEditor({ courtSrc = COURT_SRC, storageKey, initial }: { courtSrc?: string; storageKey?: string; initial?: Billboard[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const [boards, setBoards] = useState<Board[]>(() =>
-    (BILLBOARDS as Board[]).map((b) => ({ ...b, corners: b.corners.map((c) => [...c]) as [number, number][] })),
-  );
+  const seed = initial ?? BILLBOARDS;
+  const [boards, setBoards] = useState<Board[]>(() => cloneBoards(seed));
   const [sel, setSel] = useState(0);
   const boardsRef = useRef(boards);
   const selRef = useRef(sel);
@@ -123,8 +126,24 @@ export function BillboardEditor() {
   }, [sel]);
 
   useEffect(() => {
-    court.current = Object.assign(new Image(), { src: COURT_SRC });
-  }, []);
+    court.current = Object.assign(new Image(), { src: courtSrc });
+  }, [courtSrc]);
+
+  // Per-court session: restore the auto-saved boards once, then persist every change.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) setBoards(JSON.parse(raw) as Board[]);
+    } catch {
+      // Corrupt/blocked storage — keep the seed.
+    }
+  }, [storageKey]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(boards));
+  }, [boards, storageKey]);
 
   // Single RAF loop (LED boards animate); reads the latest boards/sel from refs.
   useEffect(() => {
@@ -246,10 +265,18 @@ export function BillboardEditor() {
     if (b.kind === BillboardKind.Image) return `  { kind: BillboardKind.Image, corners: [${c}], src: '${b.src ?? ''}'${b.opacity != null && b.opacity !== 1 ? `, opacity: ${b.opacity}` : ''} },`;
     return `  { kind: BillboardKind.Led, corners: [${c}], text: '${(b.text ?? '').replace(/'/g, "\\'")}', theme: '${b.theme ?? 'amber'}', speed: ${b.speed ?? 9}${b.opacity != null && b.opacity !== 1 ? `, opacity: ${b.opacity}` : ''} },`;
   };
-  const source = `// billboards.ts → BILLBOARDS (field-ratios of world.size; corners = TL, TR, BR, BL)
-export const BILLBOARDS: Billboard[] = [
+  const source = `// field-ratios of world.size; corners = TL, TR, BR, BL
+// Default court → billboards.ts BILLBOARDS. Custom court → that config's \`billboards\` array
+// (e.g. FRANCE_BILLBOARDS in realgk/config.ts).
+[
 ${boards.map(fmt).join('\n')}
-];`;
+]`;
+
+  const resetAll = () => {
+    setBoards(cloneBoards(seed));
+    setSel(0);
+    if (storageKey) localStorage.removeItem(storageKey);
+  };
 
   return (
     <div className="flex h-screen text-slate-100">
@@ -283,6 +310,9 @@ ${boards.map(fmt).join('\n')}
       <aside className="w-[320px] shrink-0 space-y-4 overflow-auto border-l border-slate-700 bg-slate-900/60 p-4 text-xs">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-slate-200">Boards ({boards.length})</h3>
+          <button onClick={resetAll} className="rounded bg-slate-700 px-2 py-0.5" title="Back to this court's checked-in placements (clears the auto-saved session)">
+            reset
+          </button>
           <button
             onClick={() => {
               setBoards((a) => [...a, cloneOf(a[sel] ?? newBoard())]);

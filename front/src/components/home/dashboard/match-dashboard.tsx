@@ -5,6 +5,8 @@ import { TeamStatisticCard } from './team-statistic-card';
 import { TeamFormationCard } from './team-formation-card';
 import { TeamLineupCard } from './team-lineup-card';
 import { GroupStageTable } from './group-stage-table';
+import { UpcomingOddsCard } from './upcoming-odds-card';
+import { MyBetsCard } from './my-bets-card';
 
 /** Match-analytics dashboard shown above the fantasy section on the home. */
 export function MatchDashboard() {
@@ -18,6 +20,8 @@ export function MatchDashboard() {
         </div>
         <div className="flex flex-col gap-4">
           <LiveMatchCard />
+          <UpcomingOddsCard />
+          <MyBetsCard />
           <TeamStatisticCard />
           <TeamLineupCard />
         </div>

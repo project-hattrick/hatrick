@@ -1,5 +1,6 @@
 import { buildMetadata } from '@/lib/seo';
 import { PageShell } from '@/components/common/page-shell';
+import { DuelistsHero } from '@/components/duelists/duelists-hero';
 import { DuelistsDirectory } from '@/components/duelists/duelists-directory';
 
 export const metadata = buildMetadata({
@@ -12,6 +13,7 @@ export const metadata = buildMetadata({
 export default function DuelistsPage() {
   return (
     <PageShell>
+      <DuelistsHero />
       <DuelistsDirectory />
     </PageShell>
   );

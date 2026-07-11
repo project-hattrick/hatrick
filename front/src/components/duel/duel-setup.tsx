@@ -62,7 +62,7 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
   return (
     <div className={cn('mx-auto flex w-full max-w-3xl flex-col gap-5', embedded ? 'py-1' : 'px-4 py-6')}>
       <header className="flex flex-col gap-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+        <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <SideIdentity player={self} align="left" />
           <div className="flex min-w-28 flex-col items-center justify-center rounded-2xl border border-neon/25 bg-neon/[0.06] px-4 py-3 text-center shadow-[0_0_24px_rgba(185,255,0,0.08)]">
             {bet !== null ? (

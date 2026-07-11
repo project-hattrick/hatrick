@@ -58,7 +58,15 @@ function loadImage(src: string): HTMLImageElement {
  * Resolves sprites (images start loading immediately; draws guard on `complete`).
  * The v4 anim pack is only fetched when `includeV4` — legacy/hero boots stay at the original request set.
  */
-export function loadRealGkAssets(includeV4 = false, includePersonas = false, personaBodyRoot?: string): RealGkAssets {
+const versionedPath = (path: string, version?: string): string => (version ? `${path}?v=${encodeURIComponent(version)}` : path);
+
+export function loadRealGkAssets(
+  includeV4 = false,
+  includePersonas = false,
+  personaBodyRoot?: string,
+  courtImage?: string,
+  assetVersion?: string,
+): RealGkAssets {
   const body = Object.fromEntries(
     ITEMS.map((item) => [
       item.id,
@@ -77,20 +85,20 @@ export function loadRealGkAssets(includeV4 = false, includePersonas = false, per
   if (includePersonas) {
     for (const anim of PERSONA_BODY_ANIMS) {
       const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
-      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount).map((src) => loadImage(src));
+      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount, assetVersion).map((src) => loadImage(src));
     }
     // Team-specific keeper bodies only exist in custom family roots (e.g. /game/franca) — the default
     // personas pack has none, so skipping avoids a wall of 404s there.
     if (personaBodyRoot) {
       for (const anim of PERSONA_GK_BODY_ANIMS) {
         const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
-        personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount).map((src) => loadImage(src));
+        personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount, assetVersion).map((src) => loadImage(src));
       }
     }
   }
 
   return {
-    court: loadImage(COURT_BG),
+    court: loadImage(versionedPath(courtImage ?? COURT_BG, assetVersion)),
     body,
     ball: Array.from({ length: V1_BALL_FRAMES }, (_, i) => loadImage(v1BallFramePath(i))),
     heads: {

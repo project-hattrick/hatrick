@@ -41,6 +41,8 @@ export interface RawOddsEvent {
   SuperOddsType: string;
   InRunning: boolean;
   MarketPeriod?: string;
+  /** Market line qualifier, e.g. `line=2.5` on OVERUNDER families (observed live 10/07). */
+  MarketParameters?: string;
   PriceNames?: string[];
   Prices?: number[];
   Pct?: string[];

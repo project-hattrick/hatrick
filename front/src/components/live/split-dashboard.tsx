@@ -1,17 +1,25 @@
+'use client';
+
 import { Scoreboard } from './scoreboard';
 import { PlayerFocusCard } from './player-focus-card';
 import { HeroCenterDock } from './hero-center-dock';
 import { MatchTimeline } from './match-timeline';
+import { HeroViewControls } from './hero-view-controls';
 import { MatchBackground } from './match-background';
 import { MatchSelector } from './match-selector';
 import { CrowdPanel } from '@/components/crowd/crowd-panel';
 import { UserCardsStrip } from '@/components/fantasy/user-cards-strip';
 import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { HeroChrome } from './hero-chrome';
+import { useMatchStore } from '@/store/match.store';
+import { GameState } from '@/enums/game-state.enum';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 
 /** Wire 3b — framed live match on the left (prediction docked over the pitch), game switcher + cards + crowd on the right. */
 export function SplitDashboard() {
+  // Future match: drop the replay bar, relocate the view controls to the top-left.
+  const upcoming = useMatchStore((s) => s.match !== null && !s.isReplay && s.match.gameState === GameState.PreMatch);
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-4 bg-background px-4 pt-20 md:flex-row md:overflow-hidden md:pt-[72px]">
       <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-white/10 md:min-h-0">
@@ -31,9 +39,15 @@ export function SplitDashboard() {
           <div className="absolute inset-x-4 bottom-20 z-20 flex justify-center md:inset-x-auto md:left-1/2 md:-translate-x-1/2">
             <HeroCenterDock />
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3">
-            <MatchTimeline />
-          </div>
+          {upcoming ? (
+            <div className="absolute left-4 top-16 z-30">
+              <HeroViewControls standalone />
+            </div>
+          ) : (
+            <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3">
+              <MatchTimeline />
+            </div>
+          )}
         </HeroChrome>
       </div>
 

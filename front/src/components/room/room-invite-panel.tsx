@@ -13,8 +13,8 @@ import { duelists } from '@/config/duelists.config';
 import { useFriendsStore } from '@/store/friends.store';
 import { useRoomMembers, useRoomPresence } from '@/store/room.store';
 import { buildWhatsAppUrl, buildXIntentUrl, openShareUrl } from '@/lib/share';
-import { personaFor } from '@/lib/persona-fallback';
 import { cn } from '@/lib/utils';
+import { useMemberIdentity } from './use-member-identity';
 
 interface RoomInvitePanelProps {
   inviteToken: string | null;
@@ -25,6 +25,7 @@ interface RoomInvitePanelProps {
 }
 
 const SHARE_TEXT = 'Come watch the match with me in my private Hat-trick room →';
+const LIST_SCROLL_CLASS = 'custom-scrollbar max-h-36 overflow-y-auto overscroll-contain pr-1';
 
 /**
  * Invite rail: friends picker (mock friend graph) + a copyable/WhatsApp/X share
@@ -34,6 +35,7 @@ const SHARE_TEXT = 'Come watch the match with me in my private Hat-trick room �
 export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: RoomInvitePanelProps) {
   const members = useRoomMembers();
   const presence = useRoomPresence();
+  const memberIdentity = useMemberIdentity();
   const friendIds = useFriendsStore((s) => s.friendIds);
   const [invited, setInvited] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -42,6 +44,14 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
     () => duelists.filter((player) => friendIds.includes(player.id)),
     [friendIds],
   );
+  const visibleMembers = useMemo(() => {
+    const seen = new Set<string>();
+    return members.filter((member) => {
+      if (seen.has(member.userId)) return false;
+      seen.add(member.userId);
+      return true;
+    });
+  }, [members]);
 
   const copyLink = async () => {
     if (!inviteToken) return;
@@ -64,7 +74,7 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
   };
 
   const body = (
-    <div className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+    <div data-lenis-prevent className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Share link */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-surface-2/60 px-3 py-2">
@@ -91,53 +101,64 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
         {friends.length > 0 && (
           <div className="flex flex-col gap-1.5">
             <span className="text-micro font-semibold uppercase tracking-wide text-muted-foreground">Friends</span>
-            {friends.map((friend) => {
-              const isInvited = invited.includes(friend.id);
-              return (
-                <div
-                  key={friend.id}
-                  className="flex items-center gap-2 rounded-lg border border-border/40 bg-surface-2/40 px-2.5 py-1.5"
-                >
-                  <UserAvatar src={friend.portraitSrc} alt={friend.name} size={28} className="rounded-full" />
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{friend.name}</span>
-                  <Button
-                    variant={isInvited ? 'ghost' : 'outline'}
-                    size="xs"
-                    className="gap-1"
-                    disabled={isInvited}
-                    onClick={() => toggleInvite(friend.id, friend.name)}
+            <div data-lenis-prevent className={LIST_SCROLL_CLASS}>
+              {friends.map((friend) => {
+                const isInvited = invited.includes(friend.id);
+                return (
+                  <div
+                    key={friend.id}
+                    className="mb-1.5 flex items-center gap-2 rounded-lg border border-border/40 bg-surface-2/40 px-2.5 py-1.5 last:mb-0"
                   >
-                    {isInvited ? <Check className="size-3" /> : <UserPlus className="size-3" />}
-                    {isInvited ? 'Invited' : 'Invite'}
-                  </Button>
-                </div>
-              );
-            })}
+                    <UserAvatar src={friend.portraitSrc} alt="" size={28} className="rounded-full" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium" title={friend.name}>
+                      {friend.name}
+                    </span>
+                    <Button
+                      variant={isInvited ? 'ghost' : 'outline'}
+                      size="xs"
+                      className="gap-1"
+                      disabled={isInvited}
+                      onClick={() => toggleInvite(friend.id, friend.name)}
+                    >
+                      {isInvited ? <Check className="size-3" /> : <UserPlus className="size-3" />}
+                      {isInvited ? 'Invited' : 'Invite'}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {/* Members present */}
         <div className="flex flex-col gap-1.5">
           <span className="text-micro font-semibold uppercase tracking-wide text-muted-foreground">In the room</span>
-          {members.length === 0 ? (
+          {visibleMembers.length === 0 ? (
             <span className="text-xs text-muted-foreground">Just you so far — share the link above.</span>
           ) : (
-            members.map((member) => (
-              <div key={member.id} className="flex items-center gap-2 px-1 py-1">
-                <UserAvatar
-                  src={member.avatarUrl ?? personaFor(member.userId)}
-                  alt={member.displayName}
-                  size={28}
-                  className="rounded-full"
-                />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">{member.displayName}</span>
-                {member.role === RoomMemberRole.Host && (
-                  <span className={cn('flex items-center gap-1 text-micro font-semibold text-neon')}>
-                    <Crown className="size-3" /> Host
-                  </span>
-                )}
-              </div>
-            ))
+            <div data-lenis-prevent className={LIST_SCROLL_CLASS}>
+              {visibleMembers.map((member) => {
+                const identity = memberIdentity(member);
+                return (
+                  <div key={member.id} className="mb-1.5 flex items-center gap-2 rounded-lg px-1 py-1 last:mb-0">
+                    <UserAvatar
+                      src={identity.avatarSrc}
+                      alt=""
+                      size={28}
+                      className="rounded-full"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium" title={identity.name}>
+                      {identity.name}
+                    </span>
+                    {member.role === RoomMemberRole.Host && (
+                      <span className={cn('flex shrink-0 items-center gap-1 text-micro font-semibold text-neon')}>
+                        <Crown className="size-3" /> Host
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
     </div>

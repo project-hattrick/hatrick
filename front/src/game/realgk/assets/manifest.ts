@@ -92,8 +92,10 @@ export const PERSONA_GK_BODY_ANIMS = [
   'gk_dive_compact',
 ] as const;
 
-export const personaBodyFrames = (anim: string, root = PERSONAS_ROOT, count = 4): string[] =>
-  Array.from({ length: count }, (_, i) => `${root}/players/${anim}_frame_${String(i + 1).padStart(2, '0')}.png`);
+const versionSuffix = (version?: string): string => (version ? `?v=${encodeURIComponent(version)}` : '');
+
+export const personaBodyFrames = (anim: string, root = PERSONAS_ROOT, count = 4, version?: string): string[] =>
+  Array.from({ length: count }, (_, i) => `${root}/players/${anim}_frame_${String(i + 1).padStart(2, '0')}.png${versionSuffix(version)}`);
 
 /** Per-persona head bust paths (front / back / side_right), pNN = 1-based. */
 export const personaHeadPaths = (index: number): { front: string; back: string; side: string } => {

@@ -4,8 +4,8 @@ import { type ReactNode } from 'react';
 
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ChatCircle, Ticket, UserPlus, type Icon } from '@/components/common/icons';
-import { MarketsPanel } from '@/components/live/markets-panel';
 import { BetSlip } from '@/components/live/bet-slip';
+import { RoomBetPanel } from './room-bet-panel';
 import { RoomChatPanel } from './room-chat-panel';
 import { RoomInvitePanel } from './room-invite-panel';
 
@@ -44,8 +44,8 @@ export function RoomMobileActions({ roomId, inviteToken, inviteUrl }: RoomMobile
         </div>
       </Action>
       <Action icon={Ticket} label="Bet">
-        <div className="custom-scrollbar flex max-h-[70svh] flex-col gap-3 overflow-y-auto p-3">
-          <MarketsPanel />
+        <div className="flex max-h-[75svh] min-h-0 flex-col gap-3 p-3">
+          <RoomBetPanel className="min-h-0 flex-1" />
           <BetSlip />
         </div>
       </Action>

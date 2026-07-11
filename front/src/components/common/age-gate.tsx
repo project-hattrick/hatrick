@@ -76,15 +76,16 @@ export function AgeGate() {
               Hat-trick includes prediction and betting features intended for adults aged 18+. This
               is a <span className="text-foreground">play-money devnet demo</span> — tokens have no
               real-world value — but you still must meet the minimum age for your jurisdiction. By
-              entering you confirm you're 18 or older and agree to our{' '}
-              <Link href="/legal/responsible-gaming">Responsible Gaming</Link> policy.
+              continuing you confirm you're 18 or older and agree to our{' '}
+              <Link href="/legal/terms">Terms</Link>, <Link href="/legal/privacy">Privacy Policy</Link>,
+              and <Link href="/legal/responsible-gaming">Responsible Gaming</Link> policy.
             </DialogDescription>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button variant="ghost" shape="pill" onClick={() => setBlocked(true)}>
                 I'm under 18
               </Button>
               <Button shape="pill" onClick={confirm} data-icon="inline-end">
-                I'm 18 or older
+                I'm 18+ &amp; I agree
                 <ArrowRight />
               </Button>
             </div>

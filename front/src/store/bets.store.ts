@@ -10,6 +10,7 @@ import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { betService, type SettleStatus } from '@/services/bet.service';
 import { isBackendSession } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
+import { isMatchBettable, useMatchStore } from '@/store/match.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useNotificationsStore } from '@/store/notifications.store';
 import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
@@ -24,6 +25,8 @@ import {
 /** Random settlement delay so a placed bet resolves within a demo window. */
 const MIN_SETTLE_MS = 6_000;
 const MAX_SETTLE_MS = 12_000;
+/** Real fixtures settle at full-time — expect it ~2h after kickoff (settlement polls from there). */
+const REAL_MATCH_SETTLE_MS = 2 * 60 * 60 * 1000;
 
 interface BetsStore {
   /** Current bet-slip selection (odds board → slip). */
@@ -60,12 +63,19 @@ export const useBetsStore = create<BetsStore>()(
       stake: DEFAULT_STAKE,
       open: [],
       settled: [],
-      select: (slip) => set({ slip }),
+      select: (slip) => {
+        const match = useMatchStore.getState().match;
+        set({ slip: isMatchBettable(match) ? slip : null });
+      },
       clearSlip: () => set({ slip: null }),
       setStake: (stake) => set({ stake: Math.max(0, Math.round(stake)) }),
       place: () => {
         const { slip, stake } = get();
         if (!slip || stake <= 0) return null;
+        if (!isMatchBettable(useMatchStore.getState().match)) {
+          set({ slip: null, stake: DEFAULT_STAKE });
+          return null;
+        }
         // Responsible-gaming gate: a self-excluded user cannot stake, even if the UI is bypassed.
         if (useResponsibleGamingStore.getState().excludedUntil !== null) return null;
         // Account-tier gate (defensive): Collectors can't bet — packs and live view only.
@@ -80,15 +90,23 @@ export const useBetsStore = create<BetsStore>()(
         const weeklyCap = effectiveLimit(limits.weekly, now);
         if (dailyCap !== null && sumStakesSince(ledger, now - DAY_MS) + stake > dailyCap) return null;
         if (weeklyCap !== null && sumStakesSince(ledger, now - WEEK_MS) + stake > weeklyCap) return null;
+        // Bets ride the match actually on screen: real fixtures settle at full-time by the REAL
+        // outcome (see the settlement driver); only the mock fixture keeps the quick demo roll.
+        const match = useMatchStore.getState().match;
+        const fixtureId = match?.fixtureId ?? MOCK_FIXTURE_ID;
+        const isRealFixture = fixtureId !== MOCK_FIXTURE_ID;
+        const settleAt = isRealFixture
+          ? (match?.startTime ?? now) + REAL_MATCH_SETTLE_MS
+          : now + MIN_SETTLE_MS + Math.floor(Math.random() * (MAX_SETTLE_MS - MIN_SETTLE_MS));
         const bet: Bet = {
           ...slip,
           id: crypto.randomUUID(),
-          fixtureId: MOCK_FIXTURE_ID,
-          matchLabel: BETTING_MATCH_LABEL,
+          fixtureId,
+          matchLabel: match ? `${match.home.code} vs ${match.away.code}` : BETTING_MATCH_LABEL,
           stake,
           status: BetStatus.Open,
           placedAt: now,
-          settleAt: now + MIN_SETTLE_MS + Math.floor(Math.random() * (MAX_SETTLE_MS - MIN_SETTLE_MS)),
+          settleAt,
         };
         useWalletStore.getState().debit(stake);
         set((state) => ({ open: [bet, ...state.open], slip: null, stake: DEFAULT_STAKE }));

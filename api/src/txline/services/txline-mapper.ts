@@ -147,6 +147,7 @@ export function mapWireOdds(w: WireOddsEvent): RawOddsEvent | null {
     SuperOddsType: strOr('', w.SuperOddsType),
     InRunning: boolOf(w.InRunning),
     MarketPeriod: typeof w.MarketPeriod === 'string' ? w.MarketPeriod : undefined,
+    MarketParameters: typeof w.MarketParameters === 'string' ? w.MarketParameters : undefined,
     PriceNames: arrOf<string>(w.PriceNames),
     // Raw integer prices (decimal odds × 1000). Kept raw on purpose — dividing
     // here would silently break if the provider changes the scale factor.

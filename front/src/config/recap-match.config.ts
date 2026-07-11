@@ -37,8 +37,8 @@ function recapGoal(seq: number, minute: number, participant: number, label: stri
 
 /** Goals of the finished match — drive the recap event chips on the hero scoreboard. */
 export const recapEvents: MatchEventPayload[] = [
-  recapGoal(1, 23, 1, 'L. Messi'),
-  recapGoal(2, 54, 2, 'K. Mbappé'),
-  recapGoal(3, 67, 1, 'L. Messi'),
-  recapGoal(4, 85, 1, 'J. Álvarez'),
+  recapGoal(1, 23, 1, 'ARG-10'),
+  recapGoal(2, 54, 2, 'FRA-10'),
+  recapGoal(3, 67, 1, 'ARG-10'),
+  recapGoal(4, 85, 1, 'ARG-9'),
 ];

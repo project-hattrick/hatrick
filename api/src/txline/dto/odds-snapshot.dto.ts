@@ -10,6 +10,7 @@ export class OddsSnapshotItemDto {
   @ApiProperty({ description: 'Market family, e.g. 1X2 / OverUnder.' }) SuperOddsType!: string;
   @ApiProperty({ description: 'In-play (true) vs pre-match (false).' }) InRunning!: boolean;
   @ApiProperty({ required: false, description: 'H1 / HT / H2 / Total.' }) MarketPeriod?: string;
+  @ApiProperty({ required: false, description: 'Line qualifier, e.g. `line=2.5`.' }) MarketParameters?: string;
   @ApiProperty({ required: false, type: [String] }) PriceNames?: string[];
   @ApiProperty({ required: false, type: [Number] }) Prices?: number[];
   @ApiProperty({ required: false, type: [String] }) Pct?: string[];

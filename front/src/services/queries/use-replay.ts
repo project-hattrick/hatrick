@@ -31,6 +31,16 @@ export function useFixtureScore() {
   return useMutation({ mutationFn: (fixtureId: number) => replayService.getScore(fixtureId) });
 }
 
+/** Latest odds snapshot for one fixture (pre-match boards). Books reprice slowly pre-match. */
+export function useFixtureOdds(fixtureId: number) {
+  return useQuery({
+    queryKey: ['fixture-odds', fixtureId],
+    queryFn: () => replayService.getOdds(fixtureId),
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useStopReplay() {
   return useMutation({ mutationFn: () => replayService.stop() });
 }

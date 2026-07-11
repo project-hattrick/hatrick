@@ -27,8 +27,10 @@ export function DuelistsDirectory() {
   const { user } = useAuth();
   const friendIds = useFriendsStore((s) => s.friendIds);
 
-  const filtered = (profiles ?? []).filter((p: PlayerProfile) => {
-    if (user && p.id === user.id) return false; // never list yourself as an opponent
+  // Never list yourself as an opponent — shared by the podium and the grid.
+  const roster = (profiles ?? []).filter((p: PlayerProfile) => !user || p.id !== user.id);
+
+  const filtered = roster.filter((p: PlayerProfile) => {
     const tierMatch = tierFilter === 'all' || p.tier === tierFilter;
     const friendMatch = friendFilter === 'all' || friendIds.includes(p.id);
     return tierMatch && friendMatch;
@@ -36,10 +38,8 @@ export function DuelistsDirectory() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Duelists</h1>
-
       {/* Filter controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-20 z-20 -mx-2 flex flex-col gap-3 rounded-2xl bg-background/85 px-2 py-2 shadow-e2 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
         {/* Tier chips */}
         <div className="flex flex-wrap gap-2">
           {tierFilters.map((filter) => (

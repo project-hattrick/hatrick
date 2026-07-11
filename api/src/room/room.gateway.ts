@@ -48,6 +48,20 @@ export class RoomGateway {
     this.emitPresence(roomId);
   }
 
+  /**
+   * Relay a member's bet pick to the rest of the room. Ephemeral social echo only (nothing is
+   * settled from it — real money flows through the guarded bet endpoints), so WS relay is fine.
+   */
+  @SubscribeMessage(RoomEvent.Pick)
+  handlePick(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId?: string } & Record<string, unknown>,
+  ): void {
+    const roomId = body?.roomId;
+    if (!roomId || typeof roomId !== 'string') return;
+    client.to(roomChannel(roomId)).emit(RoomEvent.Pick, body);
+  }
+
   /** Relay a persisted chat message to everyone in the room. */
   broadcastChat(roomId: string, message: RoomMessageDto): void {
     this.server?.to(roomChannel(roomId)).emit(RoomEvent.ChatMessage, message);

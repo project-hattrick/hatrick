@@ -44,7 +44,7 @@ export function RoomChatPanel({ roomId, embedded = false }: { roomId: string; em
 
   const body = (
     <>
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse gap-3 overflow-y-auto overflow-x-hidden p-4">
+      <div data-lenis-prevent className="custom-scrollbar flex min-h-0 flex-1 flex-col-reverse gap-3 overflow-y-auto overflow-x-hidden p-4">
         {messages.length === 0 ? (
           <span className="m-auto text-xs text-muted-foreground">Be the first to say hi.</span>
         ) : (

@@ -14,6 +14,7 @@ import { useZodForm } from '@/hooks/use-zod-form';
 import { useAuth } from '@/services/queries/use-auth';
 import { useRequireAuth } from '@/services/queries/use-require-auth';
 import { useBetsStore } from '@/store/bets.store';
+import { useIsMatchLive } from '@/store/match.store';
 import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
 import {
   useStakeLimitsStore,
@@ -51,6 +52,7 @@ export function BetSlip() {
   const balance = useBalance();
   const requireAuth = useRequireAuth();
   const { isAuthenticated, isCompetitor } = useAuth();
+  const canBet = useIsMatchLive();
 
   // Mounted gate: store values rehydrate from localStorage on the client only, so we
   // treat the user as active/unlimited until mounted to avoid a hydration mismatch.
@@ -78,6 +80,11 @@ export function BetSlip() {
 
   function onSubmit(values: FormValues) {
     if (!slip) return;
+    if (!canBet) {
+      toast.error('Betting is closed for this match.');
+      clearSlip();
+      return;
+    }
     if (selfExcluded) {
       toast.error("You're self-excluded from betting. Manage this in Settings (account menu).");
       return;
@@ -110,7 +117,13 @@ export function BetSlip() {
   return (
     <GlassPanel radius="xl" tone="dark" className="overflow-hidden">
       <SectionHeader title="Bet slip" action={<Ticket className="size-3.5 text-neon" />} />
-      {selfExcluded ? (
+      {!canBet ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+          <Ticket className="size-6 text-muted-foreground/60" />
+          <span className="text-sm font-medium text-foreground">Betting closed</span>
+          <span className="text-micro text-muted-foreground">This match is already final.</span>
+        </div>
+      ) : selfExcluded ? (
         <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
           <ShieldWarning className="size-6 text-neon" weight="duotone" />
           <span className="text-sm font-medium text-foreground">You're self-excluded</span>

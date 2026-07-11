@@ -1,5 +1,8 @@
 /** Pure data, geometry and persistence helpers for the field calibrator (kept out of the component). */
 
+import type { FieldSpec } from '@/game/realgk/field';
+import { Team } from '@/game/realgk/enums';
+
 export interface Pt {
   x: number;
   y: number;
@@ -85,6 +88,34 @@ export const defaultCalibratorState = (): CalibratorState => ({
   comments: [],
 });
 
+/**
+ * Seeds the calibrator from a config's `field` spec, so an already-mapped court (e.g. franca) opens
+ * ALIGNED with what the game currently uses instead of the rain-court defaults. Groups the spec
+ * omits fall back to the engine defaults, drawn on the spec's own trapezoid.
+ */
+export function stateFromFieldSpec(spec: FieldSpec): CalibratorState {
+  const base = defaultCalibratorState();
+  const r = spec.ratios ?? {};
+  const corners: Corners = {
+    tl: { x: r.topLeft ?? base.corners.tl.x, y: r.topY ?? base.corners.tl.y },
+    tr: { x: r.topRight ?? base.corners.tr.x, y: r.topY ?? base.corners.tr.y },
+    bl: { x: r.bottomLeft ?? base.corners.bl.x, y: r.bottomY ?? base.corners.bl.y },
+    br: { x: r.bottomRight ?? base.corners.br.x, y: r.bottomY ?? base.corners.br.y },
+  };
+  const gb = { lat: 0.0, depthTop: 0.36, depthBottom: 0.535, ...spec.goals?.[Team.Blue] };
+  const gr = { lat: 1.0, depthTop: 0.36, depthBottom: 0.64, ...spec.goals?.[Team.Red] };
+  return {
+    corners,
+    goals: {
+      blue: [pointFor(corners, gb.lat, gb.depthTop), pointFor(corners, gb.lat, gb.depthBottom)],
+      red: [pointFor(corners, gr.lat, gr.depthTop), pointFor(corners, gr.lat, gr.depthBottom)],
+    },
+    playLines: { ...base.playLines, ...spec.playLines },
+    center: { ...base.center, ...spec.center },
+    comments: [],
+  };
+}
+
 export interface GoalBand {
   lat: number;
   depthTop: number;
@@ -103,9 +134,20 @@ export function goalBand(c: Corners, pts: Pt[], side: GoalSide): GoalBand {
 
 const STORAGE_KEY = 'hat-trick:field-calibrator:v1';
 
-export function loadCalibratorState(): CalibratorState | null {
+/** Handle colors/keys shared by the calibrator UI (kept here so the component stays under the size cap). */
+export const CORNER_HANDLES: { key: CornerKey; color: string }[] = [
+  { key: 'tl', color: '#38bdf8' },
+  { key: 'tr', color: '#38bdf8' },
+  { key: 'bl', color: '#22d3ee' },
+  { key: 'br', color: '#22d3ee' },
+];
+export const GOAL_COLOR: Record<GoalSide, string> = { blue: '#60a5fa', red: '#fb7185' };
+export const COMMENT_COLOR = '#f97316';
+
+/** Sessions are saved per court (key), so mapping a new stadium never clobbers the rain-court trace. */
+export function loadCalibratorState(key: string = STORAGE_KEY): CalibratorState | null {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<CalibratorState>;
     const base = defaultCalibratorState();
@@ -121,17 +163,17 @@ export function loadCalibratorState(): CalibratorState | null {
   }
 }
 
-export function saveCalibratorState(state: CalibratorState): void {
+export function saveCalibratorState(state: CalibratorState, key: string = STORAGE_KEY): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(key, JSON.stringify(state));
   } catch {
     // Storage full/blocked — the tool still works, it just won't persist.
   }
 }
 
-export function clearCalibratorState(): void {
+export function clearCalibratorState(key: string = STORAGE_KEY): void {
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(key);
   } catch {
     // Ignore — nothing to clear.
   }
@@ -152,7 +194,19 @@ export function buildSnippet(s: CalibratorState): string {
     })
     .join('\n');
 
-  return `// project/front/src/game/realgk/field.ts → metrics()
+  return `// RealGkConfig.field — per-court override, paste into the court's config
+// (e.g. FRANCE_STADIUM_FIELD in realgk/config.ts). Unset groups keep rain-court defaults.
+field: {
+  ratios: { topY: ${fmt(topY)}, bottomY: ${fmt(bottomY)}, topLeft: ${fmt(corners.tl.x)}, topRight: ${fmt(corners.tr.x)}, bottomLeft: ${fmt(corners.bl.x)}, bottomRight: ${fmt(corners.br.x)} },
+  goals: {
+    blue: { lat: ${fmt(blue.lat)}, depthTop: ${fmt(blue.depthTop)}, depthBottom: ${fmt(blue.depthBottom)} },
+    red: { lat: ${fmt(red.lat)}, depthTop: ${fmt(red.depthTop)}, depthBottom: ${fmt(red.depthBottom)} },
+  },
+  center: { lat: ${fmt(center.lat)}, depth: ${fmt(center.depth)} },
+  playLines: { latLeft: ${fmt(playLines.latLeft)}, latRight: ${fmt(playLines.latRight)}, depthTop: ${fmt(playLines.depthTop)}, depthBottom: ${fmt(playLines.depthBottom)} },
+},
+
+// project/front/src/game/realgk/field.ts → metrics() (GLOBAL default — only for the rain-court)
 topY: height * ${fmt(topY)},
 bottomY: height * ${fmt(bottomY)},
 topLeft: width * ${fmt(corners.tl.x)},

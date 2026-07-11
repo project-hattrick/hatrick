@@ -51,7 +51,7 @@ export default function StorePage() {
           {/* Packs */}
           <section className="flex flex-col gap-3">
             <SectionHeading icon={Package} label="Packs" />
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {storePacks.map((pack) => (
                 <StorePackTile key={pack.name} pack={pack} />
               ))}
@@ -61,7 +61,7 @@ export default function StorePage() {
           {/* Bundles */}
           <section className="flex flex-col gap-3">
             <SectionHeading icon={Stack} label="Bundles" />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {storeBundles.map((bundle) => (
                 <BundleCard key={bundle.name} bundle={bundle} />
               ))}

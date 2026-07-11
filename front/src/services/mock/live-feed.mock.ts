@@ -35,10 +35,10 @@ function pastEvent(
 }
 
 const seedEvents: MatchEventPayload[] = [
-  pastEvent(1, 23, MatchAction.Goal, 1, 'L. Messi'),
+  pastEvent(1, 23, MatchAction.Goal, 1, 'ARG-10'),
   pastEvent(2, 41, MatchAction.Corner, 2, 'France'),
-  pastEvent(3, 54, MatchAction.Goal, 2, 'K. Mbappé'),
-  pastEvent(4, 67, MatchAction.Goal, 1, 'L. Messi'),
+  pastEvent(3, 54, MatchAction.Goal, 2, 'FRA-10'),
+  pastEvent(4, 67, MatchAction.Goal, 1, 'ARG-10'),
 ];
 
 function pick<T>(items: T[]): T {
@@ -105,20 +105,20 @@ interface ScriptedEvent {
 /** One believable stretch of second-half drama, then a non-scoring loop (score stays sane). */
 const eventScript: ScriptedEvent[] = [
   { action: MatchAction.Corner, participant: 2, label: 'France' },
-  { action: MatchAction.YellowCard, participant: 1, label: 'R. De Paul' },
-  { action: MatchAction.Goal, participant: 2, label: 'K. Mbappé' },
+  { action: MatchAction.YellowCard, participant: 1, label: 'ARG-5' },
+  { action: MatchAction.Goal, participant: 2, label: 'FRA-10' },
   { action: MatchAction.Var, participant: 2, label: 'Goal check' },
   { action: MatchAction.Penalty, participant: 1, label: 'Argentina' },
-  { action: MatchAction.Goal, participant: 1, label: 'L. Messi' },
+  { action: MatchAction.Goal, participant: 1, label: 'ARG-10' },
 ];
 
 const eventLoop: ScriptedEvent[] = [
   { action: MatchAction.Corner, participant: 1, label: 'Argentina' },
-  { action: MatchAction.FreeKick, participant: 2, label: 'A. Griezmann' },
-  { action: MatchAction.Substitution, participant: 2, label: 'O. Giroud' },
-  { action: MatchAction.YellowCard, participant: 2, label: 'A. Tchouaméni' },
+  { action: MatchAction.FreeKick, participant: 2, label: 'FRA-8' },
+  { action: MatchAction.Substitution, participant: 2, label: 'FRA-9' },
+  { action: MatchAction.YellowCard, participant: 2, label: 'FRA-6' },
   { action: MatchAction.Corner, participant: 2, label: 'France' },
-  { action: MatchAction.FreeKick, participant: 1, label: 'L. Messi' },
+  { action: MatchAction.FreeKick, participant: 1, label: 'ARG-10' },
 ];
 
 const MOCK_EVENT_INTERVAL_MS = 20_000;

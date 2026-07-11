@@ -1,17 +1,67 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Flag } from '@/components/common/flag';
 import { UserPlus } from '@/components/common/icons';
 import { squad } from '@/config/squad.config';
+import { useFantasyStore } from '@/store/fantasy.store';
+import { numberForId, variantFor } from '@/lib/player-identity';
 import { AppMode } from '@/enums/app-mode.enum';
 
 /** Fixed collection size — the roster fills these slots, any leftover renders as an empty state. */
 const SQUAD_SLOTS = 12;
 
+/** Normalized strip entry — real card state, licensing-safe identity. */
+interface MiniSlot {
+  id: string;
+  number: number;
+  name: string;
+  position: string;
+  code: string;
+  portraitSrc: string;
+}
+
+/**
+ * The user's real fielded squad (falls back to their collection, then a generic demo roster). Names
+ * are resolved through the 11 player variants so a stored real name is never rendered.
+ */
+function useMiniSquad(): MiniSlot[] {
+  const squadIdx = useFantasyStore((s) => s.squad);
+  const collection = useFantasyStore((s) => s.collection);
+
+  const owned = squadIdx.map((i) => collection[i]).filter(Boolean);
+  const source = owned.length ? owned : collection.slice(0, 11);
+  if (source.length) {
+    return source.map((card, i) => {
+      const id = card.ownedCardId ?? `${card.name}-${i}`;
+      const variant = variantFor(id);
+      return {
+        id,
+        number: numberForId(id),
+        name: variant.name,
+        position: card.position ?? variant.position,
+        code: card.code ?? variant.code,
+        portraitSrc: card.portraitSrc ?? variant.portraitSrc,
+      };
+    });
+  }
+  // Guest / empty collection — the curated generic squad (already licensing-safe).
+  return squad.map((p) => ({
+    id: p.id,
+    number: p.number,
+    name: p.name,
+    position: p.position,
+    code: p.code,
+    portraitSrc: p.portraitSrc,
+  }));
+}
+
 /** Roster laid over the full row width as a fixed set of slots (filled cards + empty placeholders). */
 export function SquadMiniStrip() {
-  const slots = Array.from({ length: SQUAD_SLOTS }, (_, index) => squad[index] ?? null);
+  const players = useMiniSquad();
+  const slots = Array.from({ length: SQUAD_SLOTS }, (_, index) => players[index] ?? null);
 
   return (
     // Mobile: edge-to-edge swipe carousel (bleeds past the page padding); md+: the original even grid.

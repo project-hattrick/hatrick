@@ -23,11 +23,13 @@ Scripts: `dev` · `build` · `start` · `lint` (no test script — verify by run
 | `/bets` · `/fixtures` · `/store` | bet slip/history · fixtures · store |
 | `/profile` · `/profile/edit` | profile + XI · editor |
 | `/about` · `/contact` · `/faq` · `/blog` · `/blog/[slug]` | marketing + MDX blog |
-| `/legal/{privacy,terms,cookies,responsible-gaming}` | compliance pages |
+| `/legal/{privacy,terms,cookies,responsible-gaming,geo-restricted}` | compliance pages |
 | `/style-guide` | living design-system reference |
 | `/sandbox` (+ `?cp=`) | game-engine checkpoint runner + editor tools (see below) |
 
 Metadata routes: `manifest.ts`, `robots.ts`, `sitemap.ts`, `opengraph-image.tsx`.
+
+**Geo-compliance** — `src/proxy.ts` (Next 16 middleware) blocks betting surfaces (`/live`, `/bets`, `/fixtures`) for restricted jurisdictions (`config/geo-restrictions.config.ts`, e.g. `BR`), using edge geo headers (`x-vercel-ip-country` / `cf-ipcountry`). Blocked visitors are rewritten to `/legal/geo-restricted`. **Demo bypass for judges:** append `?geo=demo` once (sets the `ht_geo_bypass` cookie for 24h). Unknown country (local dev) never blocks.
 
 ## Layout (`src/`)
 | Folder | Role |

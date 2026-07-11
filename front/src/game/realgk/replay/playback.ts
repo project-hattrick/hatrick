@@ -1,6 +1,6 @@
 import { BodyAnim, CelebrationKind, RefPhase, ShotEffectStyle } from '../enums';
 import { PERSONA_COUNT } from '../assets/manifest';
-import { personaIdFor } from '../sim/players';
+import { personaIdFor } from '../sim/player-factory';
 import type { Ball, Coach, RealGkPlayer, RealGkWorld, Referee } from '../types';
 import { clamp, lerp } from '../util';
 import type { ReplayPlayerSnap, ReplaySnapshot } from './types';

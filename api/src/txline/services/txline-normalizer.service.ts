@@ -120,6 +120,8 @@ export class TxlineNormalizerService {
       bookmaker: raw.Bookmaker,
       superOddsType: raw.SuperOddsType,
       inRunning: raw.InRunning,
+      marketPeriod: raw.MarketPeriod,
+      marketParameters: raw.MarketParameters,
       priceNames: raw.PriceNames ?? [],
       prices: raw.Prices ?? [],
       ts: raw.Ts,

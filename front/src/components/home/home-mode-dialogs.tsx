@@ -28,6 +28,7 @@ import { AppMode } from '@/enums/app-mode.enum';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useCreateRoom } from '@/services/queries';
 import { useHomeEntryStore } from '@/store/home-entry.store';
+import { useMatchStore } from '@/store/match.store';
 import { useUiStore } from '@/store/ui.store';
 import { useDuelStore } from '@/store/duel.store';
 import { cn } from '@/lib/utils';
@@ -93,10 +94,12 @@ export function HomeModeDialogs() {
     router.push(`/duel/${duelId}`);
   };
 
-  // Create an invite-only room over the current live game, then route into it.
+  // Create an invite-only room over the current live game, then route into it. The room records
+  // the fixture so everyone who joins (invite links included) lands on the SAME match.
   const createPrivateRoom = gate(() => {
     closeMode();
-    createRoom.mutate({});
+    const fixtureId = useMatchStore.getState().match?.fixtureId;
+    createRoom.mutate(fixtureId != null ? { fixtureId } : {});
   });
 
   return (
