@@ -7,6 +7,7 @@ import { BodyAnim, DrivenDirective, MatchPhase, PlayerAction, RefPhase, RestartK
 import { fieldRatios, pointOnField, setFieldSpec } from './field';
 import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
+import { detectQualityTier, quality, setQualityTier } from './quality';
 import { createDirector, type ReplayDirector } from './replay/director';
 import { createRecorder, type ReplayRecorder } from './replay/recorder';
 import { resetCoach } from './sim/coach';
@@ -66,6 +67,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   ctx.imageSmoothingEnabled = false;
 
   const config = opts.config ?? REAL_GK_V2_CONFIG;
+  // Detect the device tier once — caps the retina buffer, particle count and ambient shadows on weak devices.
+  setQualityTier(detectQualityTier());
   // Map the pitch onto this config's court art BEFORE the world spawns off metrics().
   setFieldSpec(config.field);
   const assets = loadRealGkAssets(
@@ -159,6 +162,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   let speed = 1;
   let flat = false;
   let raf = 0;
+  // Activity gate: false stops the RAF loop entirely (tab hidden / hero scrolled off-screen). Distinct
+  // from `paused`, which only halts the sim — the loop kept rendering. Here nothing runs while inactive.
+  let running = true;
   let lastT = performance.now();
   // Edge-trigger for the foul beat: lock the camera on the referee when his run-in starts.
   let lastFoulStage: RestartStage | null = null;
@@ -248,7 +254,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   };
 
   const resize = (): void => {
-    const dpr = window.devicePixelRatio || 1;
+    // Cap the backing-store scale so a 2–3x display doesn't render a giant buffer every frame.
+    const dpr = Math.min(window.devicePixelRatio || 1, quality().dprCap);
     const w = canvas.clientWidth || world.view.width;
     const h = canvas.clientHeight || world.view.height;
     canvas.width = Math.round(w * dpr);
@@ -332,7 +339,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     } catch (err) {
       console.error('[realgk] frame error (recovered)', err);
     }
-    raf = requestAnimationFrame(frame);
+    // Only reschedule while active — the activity gate stops the loop dead when nothing's visible.
+    if (running) raf = requestAnimationFrame(frame);
   };
 
   // Feed directive gate: nothing restarts play after the final whistle, and any on-pitch directive
@@ -602,8 +610,22 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         ball: { lat: ballRatio.lat, depth: ballRatio.depth },
       };
     },
+    setActive: (active: boolean) => {
+      if (active === running) return;
+      running = active;
+      if (active) {
+        // Reset the clock so MAX_DT swallows the hidden/off-screen gap, and drop the stale replay ring.
+        lastT = performance.now();
+        recorder?.clear();
+        raf = requestAnimationFrame(frame);
+      } else {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    },
     resize,
     destroy: () => {
+      running = false;
       cancelAnimationFrame(raf);
       removeInput?.();
     },

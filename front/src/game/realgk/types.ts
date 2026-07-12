@@ -450,6 +450,8 @@ export interface RealGkHandle {
   setPhase: (phase: DrivenPhase) => void;
   /** Live field-ratio snapshot of all players + the ball, for the room's 2D radar (mini-pitch). */
   sampleRadar: () => RealGkRadar;
+  /** Activity gate: `false` stops the RAF loop entirely (tab hidden / backdrop off-screen), `true` resumes it. */
+  setActive: (active: boolean) => void;
   resize: () => void;
   destroy: () => void;
 }

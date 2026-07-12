@@ -8,8 +8,12 @@ import { loadRealGkAssets } from '@/game/realgk/assets/loader';
 
 /** Hard cap so a stalled sprite/CDN can never trap the intro overlay on screen (kept low for mobile). */
 const MAX_WAIT_MS = 6_000;
-/** `window.load` regularly stalls on mobile (a resource that never fires load) — cap our wait on it. */
-const PAGE_LOAD_SOFT_MS = 2_500;
+/**
+ * `window.load` regularly stalls (a below-the-fold image/resource that's slow to fire load) — and it's
+ * the weakest readiness signal here, since the hero's own sprites + fonts are awaited explicitly. Cap
+ * the wait low so a stray tail resource can't hold the reveal once the hero is actually paintable.
+ */
+const PAGE_LOAD_SOFT_MS = 1_500;
 
 function imageSettled(img: HTMLImageElement): Promise<void> {
   if (img.complete) return Promise.resolve();

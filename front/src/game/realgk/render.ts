@@ -15,6 +15,7 @@ import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets
 import { dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
 import { GHOST_WINDOW, applyLeanTransform, drawKeeperGhost, isGhostable } from './render-feel';
+import { quality } from './quality';
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
@@ -455,6 +456,8 @@ const COURT_SHADOWS = [
 /** Soft blurred court shadows pinned to the pitch (world space) — pan with the follow camera. */
 function drawShadowBeams(ctx: CanvasRenderingContext2D, world: RealGkWorld): void {
   if (!world.cfg.features?.duskShadow) return;
+  // Weak devices skip the blurred ambient shadows — the per-frame `ctx.filter` blur is the pricey part.
+  if (!quality().softShadows) return;
   const { width, height } = world.size;
   ctx.save();
   ctx.fillStyle = '#0a1030';

@@ -37,11 +37,11 @@ export interface HeroMatch {
 export const heroMatch: HeroMatch = {
   home: {
     name: 'Argentina', short: 'ARG', code: 'ar', portraitSrc: '/cards/hero-arg.png',
-    placement: { width: 190, x: -7, y: 6, scale: 1, flip: false, objectY: 5 },
+    placement: { width: 190, x: -7, y: 6, scale: 1, flip: false, objectY: 0 },
   },
   away: {
     name: 'Brazil', short: 'BRA', code: 'br', portraitSrc: '/cards/hero-bra.png',
-    placement: { width: 150, x: 2, y: 4, scale: 1, flip: false, objectY: 8 },
+    placement: { width: 150, x: 2, y: 4, scale: 1, flip: false, objectY: 0 },
   },
   label: 'Sunday, 21 January',
   // Countdown target as a fixed remaining offset (days/hours/mins/secs) — mock, not wall-clock.
@@ -50,8 +50,8 @@ export const heroMatch: HeroMatch = {
 
 /** Default figure placement per card side — used for portraits without a tuned override. */
 export const DEFAULT_FIGURE_PLACEMENT: Record<'home' | 'away', HeroFigurePlacement> = {
-  home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 5 },
-  away: { width: 170, x: -4, y: 6, scale: 1, flip: true, objectY: 5 },
+  home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 },
+  away: { width: 170, x: -4, y: 6, scale: 1, flip: true, objectY: 0 },
 };
 
 /** Pixel-art portrait + optional per-side hand-tuned placements (tune in /sandbox/hero-figures). */
@@ -63,19 +63,43 @@ export interface HeroPortrait {
 
 /** Hero portraits by FIFA code. Sides without a tuned placement use DEFAULT_FIGURE_PLACEMENT. */
 export const HERO_PORTRAITS: Record<string, HeroPortrait> = {
-  ARG: { src: '/cards/hero-arg.png', home: heroMatch.home.placement },
-  BRA: { src: '/cards/hero-bra.png', away: heroMatch.away.placement },
-  ENG: { src: '/cards/hero-eng.png', away: { width: 170, x: -143, y: 5, scale: 1, flip: true, objectY: 0 } },
-  NOR: { src: '/cards/hero-nor.png', away: { width: 170, x: -145, y: 5, scale: 1, flip: true, objectY: 0 } },
-  BEL: { src: '/cards/hero-bel.png', away: { width: 170, x: -157, y: 9, scale: 1, flip: true, objectY: 0 } },
-  ESP: { src: '/cards/hero-esp.png', home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 } },
-  FRA: {
-    src: '/cards/hero-fra.png',
-    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 5 },
-    away: { width: 170, x: -144, y: 6, scale: 1, flip: true, objectY: 5 },
+  ENG: {
+    src: '/cards/hero-eng.png',
+    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -154, y: 8, scale: 1, flip: true, objectY: 0 },
   },
-  MAR: { src: '/cards/hero-mar.png', away: { width: 170, x: -155, y: 6, scale: 1, flip: true, objectY: 0 } },
-  SUI: { src: '/cards/hero-sui.png', away: { width: 170, x: -155, y: 4, scale: 1, flip: true, objectY: 0 } },
+  BEL: {
+    src: '/cards/hero-bel.png',
+    home: { width: 170, x: -7, y: 10, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -155, y: 7, scale: 1, flip: true, objectY: 0 },
+  },
+  NOR: {
+    src: '/cards/hero-nor.png',
+    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -153, y: 7, scale: 1, flip: true, objectY: 0 },
+  },
+  MAR: {
+    src: '/cards/hero-mar.png',
+    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -152, y: 4, scale: 1, flip: true, objectY: 0 },
+  },
+  SUI: {
+    src: '/cards/hero-sui.png',
+    home: { width: 170, x: -4, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -160, y: 11, scale: 1, flip: true, objectY: 0 },
+  },
+  BRA: {
+    src: '/cards/hero-bra.png',
+    home: { width: 144, x: 6, y: 7, scale: 1.05, flip: false, objectY: 0 },
+    away: { width: 150, x: 4, y: 4, scale: 1, flip: false, objectY: 8 },
+  },
+  ARG: { src: '/cards/hero-arg.png', away: { width: 170, x: -164, y: 9, scale: 1.05, flip: true, objectY: 5 } },
+  ESP: {
+    src: '/cards/hero-esp.png',
+    home: { width: 170, x: -9, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -169, y: 8, scale: 1, flip: true, objectY: 0 },
+  },
+  FRA: { src: '/cards/hero-fra.png', away: { width: 170, x: -155, y: 8, scale: 1, flip: true, objectY: 0 } },
 };
 
 /** Hero figure (portrait + placement) for a fixture team — heroMatch default when no art exists. */

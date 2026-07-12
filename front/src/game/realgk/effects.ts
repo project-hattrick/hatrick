@@ -2,10 +2,10 @@ import { BallEffectKind, ShotEffectStyle } from './enums';
 import { fieldBounds } from './field';
 import type { BallEffectParticle, RealGkWorld, ShotEffectPulse } from './types';
 import { clamp } from './util';
+import { quality } from './quality';
 
 const DUST_COLORS = ['#c8ad78', '#a88c5e', '#dfc99a'];
 const TURF_COLORS = ['#486f37', '#31562c', '#71924a'];
-const MAX_PARTICLES = 96;
 const MAX_SHOT_PULSES = 8;
 const SHOT_SLOW_MO_SCALE = 0.32;
 const SHOT_SLOW_MO_DURATION = 1.1;
@@ -61,8 +61,9 @@ export function spawnBallGroundImpact(world: RealGkWorld, impactSpeed: number): 
   }
 
   world.ballEffects.particles.push(...particles);
-  if (world.ballEffects.particles.length > MAX_PARTICLES) {
-    world.ballEffects.particles.splice(0, world.ballEffects.particles.length - MAX_PARTICLES);
+  const maxParticles = quality().maxParticles;
+  if (world.ballEffects.particles.length > maxParticles) {
+    world.ballEffects.particles.splice(0, world.ballEffects.particles.length - maxParticles);
   }
 }
 
@@ -92,8 +93,9 @@ export function spawnFootDust(world: RealGkWorld, x: number, y: number, speed: n
     });
   }
   world.ballEffects.particles.push(...particles);
-  if (world.ballEffects.particles.length > MAX_PARTICLES) {
-    world.ballEffects.particles.splice(0, world.ballEffects.particles.length - MAX_PARTICLES);
+  const maxParticles = quality().maxParticles;
+  if (world.ballEffects.particles.length > maxParticles) {
+    world.ballEffects.particles.splice(0, world.ballEffects.particles.length - maxParticles);
   }
 }
 

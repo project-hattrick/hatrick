@@ -27,24 +27,40 @@ const FIGURE_OUTSET = 24;
  */
 export const ROOM_HERO_PLACEMENTS: Record<string, Partial<Record<Side, HeroFigurePlacement>>> = {
   ARG: {
-    home: { width: 190, x: -72, y: 0, scale: 0.94, flip: false, objectY: 5 },
-    away: { width: 170, x: -104, y: 8, scale: 0.97, flip: true, objectY: 0 },
+    home: { width: 153, x: -66, y: 14, scale: 1.22, flip: false, objectY: 0 },
+    away: { width: 170, x: -144, y: 5, scale: 1.17, flip: true, objectY: 0 },
   },
   SUI: {
-    home: { width: 170, x: -66, y: 0, scale: 0.94, flip: false, objectY: 5 },
-    away: { width: 170, x: -104, y: 8, scale: 0.97, flip: true, objectY: 0 },
+    home: { width: 170, x: -62, y: 6, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -110, y: 6, scale: 1.04, flip: true, objectY: 0 },
   },
   MAR: {
-    home: { width: 170, x: -66, y: 0, scale: 0.94, flip: false, objectY: 5 },
-    away: { width: 170, x: -104, y: 8, scale: 0.97, flip: true, objectY: 0 },
+    home: { width: 144, x: -42, y: 10, scale: 1.03, flip: false, objectY: 0 },
+    away: { width: 170, x: -118, y: 3, scale: 1.08, flip: true, objectY: 0 },
+  },
+  ESP: {
+    home: { width: 170, x: -43, y: 3, scale: 1, flip: false, objectY: 0 },
+    away: { width: 156, x: -102, y: 0, scale: 0.96, flip: true, objectY: 0 },
+  },
+  BRA: {
+    home: { width: 137, x: -44, y: 8, scale: 1.1, flip: false, objectY: 0 },
+    away: { width: 114, x: 40, y: 8, scale: 1.22, flip: false, objectY: 0 },
+  },
+  ENG: {
+    home: { width: 170, x: -46, y: 2, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -114, y: 4, scale: 1, flip: true, objectY: 0 },
+  },
+  NOR: {
+    home: { width: 170, x: -44, y: 8, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -117, y: 0, scale: 1, flip: true, objectY: 0 },
   },
   BEL: {
-    home: { width: 170, x: -66, y: 0, scale: 0.94, flip: false, objectY: 5 },
-    away: { width: 170, x: -104, y: 8, scale: 0.97, flip: true, objectY: 0 },
+    home: { width: 170, x: -46, y: 0, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -118, y: 0, scale: 0.97, flip: true, objectY: 0 },
   },
   FRA: {
-    home: { width: 170, x: -66, y: 0, scale: 0.94, flip: false, objectY: 5 },
-    away: { width: 170, x: -104, y: 8, scale: 0.97, flip: true, objectY: 0 },
+    home: { width: 170, x: -48, y: 2, scale: 1, flip: false, objectY: 0 },
+    away: { width: 170, x: -114, y: 4, scale: 1.07, flip: true, objectY: 0 },
   },
 };
 

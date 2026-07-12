@@ -8,6 +8,7 @@ import type { RealGkHandle } from '@/game/realgk/types';
 import { Dimension } from '@/enums/dimension.enum';
 import { useUiStore } from '@/store/ui.store';
 import { useRealGkStore } from '@/store/real-gk.store';
+import { useEngineActivity } from '@/hooks/use-engine-activity';
 import { cn } from '@/lib/utils';
 import { CardBroadcastOverlay } from './card-broadcast-overlay';
 import { CrtOverlay } from './crt-overlay';
@@ -78,6 +79,9 @@ export function RealGkBackground({
       handleRef.current = null;
     };
   }, [bridgeHud, config, onReady]);
+
+  // Stop the RAF loop entirely when the tab is hidden or this backdrop scrolls off-screen.
+  useEngineActivity(containerRef, handleRef);
 
   // Play/Pause button (ui.store) drives the sim loop.
   useEffect(() => {
