@@ -8,6 +8,7 @@ import type {
   MatchEndPayload,
   MatchEventPayload,
   MatchScore,
+  PlayerMatchStats,
   PlayerStatsBySide,
 } from '@/types/match';
 
@@ -211,6 +212,45 @@ export function mergeStatsMax(a: LiveMatchStats, b: LiveMatchStats): LiveMatchSt
   };
 }
 
+/** Sum one cumulative per-player counter across a side's players. */
+function sumPlayerCounter(side: Record<string, PlayerMatchStats>, key: keyof PlayerMatchStats): number {
+  let total = 0;
+  for (const player of Object.values(side)) total += player[key] ?? 0;
+  return total;
+}
+
+/** Latest authoritative team counters (Score.Total) carried by any event, walking newest-first. */
+function resolveTeamStats(events: MatchEventPayload[]): NonNullable<MatchEventPayload['teamStats']> | null {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const t = events[i].teamStats;
+    if (t) return t;
+  }
+  return null;
+}
+
+/**
+ * Authoritative team stats derivable straight from the live socket: corners + yellow/red cards from the
+ * wire `Score.Total` (cumulative, so a mid-match join is still complete — no window problem), and shots
+ * summed from the cumulative `PlayerStats`. SOT/fouls/offsides aren't totalled by TxLINE (the action
+ * tally provides those). Null until either source appears.
+ */
+function socketAuthStats(events: MatchEventPayload[], playerStats: PlayerStatsBySide): LiveMatchStats | null {
+  const t = resolveTeamStats(events);
+  const shots: StatTally = {
+    home: sumPlayerCounter(playerStats.home, 'shots'),
+    away: sumPlayerCounter(playerStats.away, 'shots'),
+  };
+  if (!t && shots.home === 0 && shots.away === 0) return null;
+  const pair = (c?: { home?: number; away?: number }): StatTally => ({ home: c?.home ?? 0, away: c?.away ?? 0 });
+  return {
+    ...emptyMatchStats(),
+    shots,
+    corners: pair(t?.corners),
+    yellowCards: pair(t?.yellowCards),
+    redCards: pair(t?.redCards),
+  };
+}
+
 /** Rebuild the totals from a full event list (front-driven replay frames replace the list wholesale). */
 function tallyAll(events: MatchEventPayload[]): LiveMatchStats {
   talliedSeqs.clear();
@@ -313,7 +353,11 @@ export const useMatchStore = create<MatchStore>((set) => ({
       state.match && state.match.fixtureId === fixtureId ? { match: { ...state.match, score } } : {},
     ),
   setAuthoritativeStats: (fixtureId, stats) =>
-    set((state) => (state.match && state.match.fixtureId === fixtureId ? { authoritativeStats: stats } : {})),
+    set((state) =>
+      state.match && state.match.fixtureId === fixtureId
+        ? { authoritativeStats: mergeStatsMax(state.authoritativeStats ?? emptyMatchStats(), stats) }
+        : {},
+    ),
   setEvents: (fixtureId, events) =>
     set((state) => (state.match && state.match.fixtureId === fixtureId ? { events } : {})),
   markLive: (fixtureId) =>
@@ -362,6 +406,13 @@ export const useMatchStore = create<MatchStore>((set) => ({
       // Real per-player counters + lineups ride along on the events that carry them.
       const playerStats = mergePlayerStats(state.playerStats, event) ?? state.playerStats;
       const lineups = event.lineups ?? state.lineups;
+      // Authoritative team counters ride on the Score object (cumulative) — fold corners/cards from the
+      // wire + shots from PlayerStats into authoritativeStats (monotonic) so the display is authoritative
+      // instantly, not only on the 15s /stats poll.
+      const socketAuth = socketAuthStats(events, playerStats);
+      const authoritativeStats = socketAuth
+        ? mergeStatsMax(state.authoritativeStats ?? emptyMatchStats(), socketAuth)
+        : state.authoritativeStats;
       // Minute is monotonic within a match (during/after or out-of-order frames never rewind the clock);
       // a freshly picked match resets it via startMatch/beginReplay.
       const minute = Math.max(state.match.minute, event.minute ?? state.match.minute);
@@ -376,6 +427,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
       return {
         events,
         stats,
+        authoritativeStats,
         playerStats,
         lineups,
         regulationScore: resolveRegulation(events, state.regulationScore),

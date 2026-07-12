@@ -4,7 +4,7 @@ import { TxlineAuthService } from './txline-auth.service';
 import { historicalIntervalTtl, TxlineCacheTtl } from './txline-cache-ttl';
 import { TxlineHttpService } from './txline-http.service';
 import { mapWireScore, WireScoreEvent } from './txline-mapper';
-import { tallyTeamStats, type TeamStats } from './txline-stats';
+import { deriveTeamStats, type TeamStats } from './txline-stats';
 import { RawFixture, RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
 
 export interface FixturesQuery {
@@ -153,10 +153,11 @@ export class TxlineSnapshotService {
   }
 
   /**
-   * Authoritative team stats (shots, SOT, fouls, corners, cards, offsides) tallied from the FULL
-   * scores snapshot — not a windowed client tally, so it never regresses. Reuses the same cached
-   * `/api/scores/snapshot` upstream as getFixtureScore (single-flight); the tally itself is cheap.
-   * Possession % and passes are omitted — TxLINE doesn't provide them.
+   * Authoritative team stats for a fixture. TxLINE only TOTALS Corners/YellowCards/RedCards (read from
+   * the highest-seq `Score.Total`) — the scores snapshot returns the last event per action, so counting
+   * actions undercounts badly. Shots come from summing sparse `PlayerStats.shots`; SOT/fouls/offsides
+   * aren't totalled by the provider (0 here — the live socket tally fills them). Reuses the same cached
+   * `/api/scores/snapshot` upstream as getFixtureScore (single-flight).
    */
   async getFixtureStats(fixtureId: number): Promise<FixtureStats> {
     const wire = await this.guard(() =>
@@ -178,7 +179,7 @@ export class TxlineSnapshotService {
       events.push(raw);
     }
 
-    return { fixtureId, minute, finished, ...tallyTeamStats(events) };
+    return { fixtureId, minute, finished, ...deriveTeamStats(events) };
   }
 
   /**

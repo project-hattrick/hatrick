@@ -23,6 +23,7 @@ import { OnboardingStep } from '@/enums/onboarding-step.enum';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/services/queries/use-auth';
 import { useOnboardingStore } from '@/store/onboarding.store';
+import { useT } from '@/i18n/i18n-provider';
 
 /** How the modal grows so the pack plays inside it instead of taking over the screen. */
 const PACK_EXPANDED = 'h-[92vh] w-[92vw] max-w-[92vw] overflow-hidden p-0 sm:max-w-[92vw] sm:p-0';
@@ -32,35 +33,18 @@ interface LoginDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Which screen the flow is on — wallet + auth state, plus the explicit email branch. */
+/** Which screen the flow is on: wallet + auth state, plus the explicit email branch. */
 enum LoginStep {
   Connect = 'connect',
   Sign = 'sign',
   Email = 'email',
 }
 
-const HEADINGS: Record<LoginStep, { title: string; description: string }> = {
-  [LoginStep.Connect]: {
-    title: 'How do you want to play?',
-    description: 'Connect a wallet to compete, or jump in casually to open packs and follow stats.',
-  },
-  [LoginStep.Sign]: {
-    title: 'Confirm it’s you',
-    description: 'Approve a one-time signature in your wallet to finish signing in.',
-  },
-  [LoginStep.Email]: {
-    title: 'Continue with email',
-    description: 'Sign in or create a casual Collector account — open packs and follow live matches.',
-  },
-};
-
 /**
- * "Sign in with Solana" modal — connect → sign, then on a FIRST registration it flows straight
- * into onboarding (open pack → set formation → done) in the same shell. Returning users never
- * see this dialog: the navbar avatar opens the account dropdown instead. The auto-connect/sign
- * driver lives in WalletAuthSync.
+ * "Sign in with Solana" modal: connect, sign, then first registrations continue into onboarding.
  */
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
+  const t = useT();
   const router = useRouter();
   const { connected } = useWallet();
   const { isAuthenticated, user } = useAuth();
@@ -70,17 +54,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const resolveDeck = usePackDeck(PackType.Welcome);
   const [emailMode, setEmailMode] = useState(false);
 
-  // Fresh chooser every time the dialog opens.
   useEffect(() => {
-    if (!open) setEmailMode(false);
+    if (open) return;
+    const id = window.setTimeout(() => setEmailMode(false), 0);
+    return () => window.clearTimeout(id);
   }, [open]);
 
   const wallet = user?.walletAddress ?? null;
-  // First registration: continue into onboarding right here.
   const onboarding = isAuthenticated && Boolean(wallet) && pending.includes(wallet as string);
 
-  // Safety net: if we end up authenticated with no onboarding to run, this dialog has nothing to
-  // show (the account view is now the avatar dropdown) — close it.
   useEffect(() => {
     if (open && isAuthenticated && !onboarding) onOpenChange(false);
   }, [open, isAuthenticated, onboarding, onOpenChange]);
@@ -92,7 +74,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   };
 
   const step = emailMode ? LoginStep.Email : connected ? LoginStep.Sign : LoginStep.Connect;
-  const heading = HEADINGS[step];
+  const heading = {
+    [LoginStep.Connect]: { title: t('common.login.connectTitle'), description: t('common.login.connectDescription') },
+    [LoginStep.Sign]: { title: t('common.login.signTitle'), description: t('common.login.signDescription') },
+    [LoginStep.Email]: { title: t('common.login.emailTitle'), description: t('common.login.emailDescription') },
+  }[step];
   const packing = onboarding && controller.packOpen;
 
   return (
@@ -107,14 +93,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         )}
       >
         {packing ? (
-          // Expand the login modal and play the pack inside it — no full-screen takeover.
           <>
-            <DialogTitle className="sr-only">Opening your Starter Pack</DialogTitle>
+            <DialogTitle className="sr-only">{t('common.login.openingPack')}</DialogTitle>
             <PackOpening
               embedded
               hideTrigger
               open
-              packName="Starter Pack"
+              packName={t('common.login.starterPack')}
               packSize={STARTER_PACK_SIZE}
               onClose={controller.closePack}
               onComplete={controller.completePack}

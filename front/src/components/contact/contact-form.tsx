@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ContactSubject } from '@/enums/contact-subject.enum';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n/i18n-provider';
 
 const SUBJECT_OPTIONS = Object.values(ContactSubject);
 
@@ -34,6 +35,7 @@ const selectClass = cn(
 );
 
 export function ContactForm() {
+  const t = useT();
   const {
     register,
     handleSubmit,
@@ -44,29 +46,26 @@ export function ContactForm() {
   });
 
   function onSubmit(_values: FormValues) {
-    // No real network — static demo.
-    toast.success("Thanks — we'll be in touch.");
+    toast.success(t('pages.contact.form.success'));
     reset();
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cf-name">Name</Label>
+        <Label htmlFor="cf-name">{t('pages.contact.form.name')}</Label>
         <Input
           id="cf-name"
-          placeholder="Your name"
+          placeholder={t('pages.contact.form.namePlaceholder')}
           autoComplete="name"
           aria-invalid={!!errors.name}
           {...register('name')}
         />
-        {errors.name && (
-          <span className="ml-1 text-xs text-destructive">{errors.name.message}</span>
-        )}
+        {errors.name && <span className="ml-1 text-xs text-destructive">{errors.name.message}</span>}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cf-email">Email</Label>
+        <Label htmlFor="cf-email">{t('pages.contact.form.email')}</Label>
         <Input
           id="cf-email"
           type="email"
@@ -75,53 +74,36 @@ export function ContactForm() {
           aria-invalid={!!errors.email}
           {...register('email')}
         />
-        {errors.email && (
-          <span className="ml-1 text-xs text-destructive">{errors.email.message}</span>
-        )}
+        {errors.email && <span className="ml-1 text-xs text-destructive">{errors.email.message}</span>}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cf-subject">Subject</Label>
-        <select
-          id="cf-subject"
-          className={selectClass}
-          aria-invalid={!!errors.subject}
-          {...register('subject')}
-        >
-          {SUBJECT_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
+        <Label htmlFor="cf-subject">{t('pages.contact.form.subject')}</Label>
+        <select id="cf-subject" className={selectClass} aria-invalid={!!errors.subject} {...register('subject')}>
+          {SUBJECT_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
             </option>
           ))}
         </select>
-        {errors.subject && (
-          <span className="ml-1 text-xs text-destructive">{errors.subject.message}</span>
-        )}
+        {errors.subject && <span className="ml-1 text-xs text-destructive">{errors.subject.message}</span>}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cf-message">Message</Label>
+        <Label htmlFor="cf-message">{t('pages.contact.form.message')}</Label>
         <textarea
           id="cf-message"
           rows={5}
-          placeholder="Tell us how we can help…"
+          placeholder={t('pages.contact.form.messagePlaceholder')}
           className={textareaClass}
           aria-invalid={!!errors.message}
           {...register('message')}
         />
-        {errors.message && (
-          <span className="ml-1 text-xs text-destructive">{errors.message.message}</span>
-        )}
+        {errors.message && <span className="ml-1 text-xs text-destructive">{errors.message.message}</span>}
       </div>
 
-      <Button
-        type="submit"
-        shape="pill"
-        size="lg"
-        disabled={isSubmitting}
-        className="self-start"
-      >
-        {isSubmitting ? 'Sending…' : 'Send message'}
+      <Button type="submit" shape="pill" size="lg" disabled={isSubmitting} className="self-start">
+        {isSubmitting ? t('pages.contact.form.sending') : t('pages.contact.form.send')}
       </Button>
     </form>
   );

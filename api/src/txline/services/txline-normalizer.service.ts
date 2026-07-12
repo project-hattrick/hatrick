@@ -63,6 +63,7 @@ export class TxlineNormalizerService {
       participant: raw.dataSoccer?.Participant,
       score: home !== undefined || away !== undefined ? { home, away } : undefined,
       regulationScore: regHome !== undefined || regAway !== undefined ? { home: regHome, away: regAway } : undefined,
+      teamStats: this.parseTeamStats(raw),
       playerStats: raw.playerStats,
       lineups: raw.lineups,
     };
@@ -108,6 +109,19 @@ export class TxlineNormalizerService {
     const home = raw.homeGoals ?? goalsFromScore(raw.scoreSoccer, 'Participant1');
     const away = raw.awayGoals ?? goalsFromScore(raw.scoreSoccer, 'Participant2');
     return [home, away];
+  }
+
+  /**
+   * Authoritative cumulative team counters (corners + yellow/red cards) from `Score.Total` — the only
+   * team stats TxLINE totals. Present only when the event carries a Score object (`homeGoals` set).
+   */
+  private parseTeamStats(raw: RawScoreEvent): MatchEventPayload['teamStats'] {
+    if (raw.homeGoals === undefined && raw.awayGoals === undefined) return undefined;
+    return {
+      corners: { home: raw.homeCorners, away: raw.awayCorners },
+      yellowCards: { home: raw.homeYellowCards, away: raw.awayYellowCards },
+      redCards: { home: raw.homeRedCards, away: raw.awayRedCards },
+    };
   }
 
   /** Regulation-time (H1+H2) goals — undefined when the wire has no period breakdown. */

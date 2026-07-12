@@ -29,6 +29,13 @@ export interface MatchEventPayload {
   score?: { home?: number; away?: number };
   /** Regulation-time (H1+H2) score — standard 1X2/OU settlement basis (Total includes ET). */
   regulationScore?: { home?: number; away?: number };
+  /** Authoritative cumulative team counters at this event (from `Score.Total`) — corners + yellow/red
+   *  cards, the ONLY team stats TxLINE totals. Present only on events carrying a Score object. */
+  teamStats?: {
+    corners?: { home?: number; away?: number };
+    yellowCards?: { home?: number; away?: number };
+    redCards?: { home?: number; away?: number };
+  };
   /** Per-player cumulative stats keyed by TxLINE player ID — drives Fantasy attribute recalculation. */
   playerStats?: PlayerStatsBySide;
   /** Present only on `action=lineups` events — playerId → shirt/position, no names. */

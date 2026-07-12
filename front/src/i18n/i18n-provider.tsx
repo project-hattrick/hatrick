@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { getDictionary, type Dictionary } from './get-dictionary';
 import { DEFAULT_LOCALE, type Locale } from './locales';
+import { translate, type DotPath, type TranslationValues } from './translate';
 
 interface I18nContextValue {
   locale: Locale;
@@ -31,27 +32,8 @@ export function useI18n() {
   return useContext(I18nContext);
 }
 
-type DotPath<T> = {
-  [K in keyof T & string]: T[K] extends string ? K : `${K}.${DotPath<T[K]>}`;
-}[keyof T & string];
-
 export function useT() {
   const { dictionary } = useI18n();
 
-  return (key: DotPath<Dictionary>, values?: Record<string, string | number>) => {
-    const value = key.split('.').reduce<unknown>((current, part) => {
-      if (current && typeof current === 'object' && part in current) {
-        return (current as Record<string, unknown>)[part];
-      }
-      return undefined;
-    }, dictionary);
-
-    if (typeof value !== 'string') return key;
-    if (!values) return value;
-
-    return Object.entries(values).reduce(
-      (text, [name, replacement]) => text.replaceAll(`{${name}}`, String(replacement)),
-      value,
-    );
-  };
+  return (key: DotPath<Dictionary>, values?: TranslationValues) => translate(dictionary, key, values);
 }

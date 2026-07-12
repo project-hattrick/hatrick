@@ -27,6 +27,9 @@ export enum EventName {
   /** Odds have no during/after split — they are continuous updates. */
   OddsUpdate = 'odds.update',
 
+  /** Normalized tradeable market derived from an odds update (see MarketProjectorService). */
+  MarketUpdate = 'market.update',
+
   /** Full tournament snapshot pushed to new realtime clients. */
   TournamentStateSync = 'tournament-state.sync',
 

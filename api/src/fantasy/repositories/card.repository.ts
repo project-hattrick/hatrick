@@ -25,6 +25,18 @@ export class CardRepository {
     return this.prisma.cardCatalog.findMany({ where: { realPlayerId } });
   }
 
+  /** Every card mapped to a real TxLINE player, grouped for the attribute engine (realPlayerId set). */
+  findRealPlayerCards(): Promise<CardCatalog[]> {
+    return this.prisma.cardCatalog.findMany({ where: { realPlayerId: { not: null } } });
+  }
+
+  /** The round snapshot for a card if it exists — the attribute engine's idempotency guard. */
+  findSnapshot(cardId: string, roundKey: string): Promise<CardAttributeSnapshot | null> {
+    return this.prisma.cardAttributeSnapshot.findUnique({
+      where: { cardId_roundKey: { cardId, roundKey } },
+    });
+  }
+
   findAll(): Promise<CardCatalog[]> {
     return this.prisma.cardCatalog.findMany({ orderBy: { rating: 'desc' } });
   }

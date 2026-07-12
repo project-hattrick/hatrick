@@ -81,6 +81,17 @@ export interface RawScoreEvent {
   homeGoals?: number;
   awayGoals?: number;
   /**
+   * Authoritative cumulative team counters from `Score.ParticipantN.Total` — the ONLY team stats
+   * TxLINE totals (Goals/YellowCards/RedCards/Corners). Sparse like goals (a 0 omits the key → 0
+   * when the Score object is present). Shots/SOT/fouls/offsides are NOT totalled by the provider.
+   */
+  homeYellowCards?: number;
+  awayYellowCards?: number;
+  homeRedCards?: number;
+  awayRedCards?: number;
+  homeCorners?: number;
+  awayCorners?: number;
+  /**
    * Regulation-time (H1+H2) goals — excludes extra time and shootout.
    * Standard 1X2 / Over-Under settlement must use these, not the Total.
    * Undefined until the wire Score carries a period breakdown.

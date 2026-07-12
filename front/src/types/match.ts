@@ -65,6 +65,13 @@ export interface MatchEventPayload {
   score?: { home?: number; away?: number };
   /** Regulation-time (H1+H2) score — settlement basis; `score` includes extra time. */
   regulationScore?: { home?: number; away?: number };
+  /** Authoritative cumulative team counters (from `Score.Total`) — corners + yellow/red cards, the
+   *  only team stats TxLINE totals. Present only on events carrying a Score object. */
+  teamStats?: {
+    corners?: { home?: number; away?: number };
+    yellowCards?: { home?: number; away?: number };
+    redCards?: { home?: number; away?: number };
+  };
   /** Per-player cumulative stats keyed by TxLINE player ID. */
   playerStats?: PlayerStatsBySide;
   /** Present only on `lineups` events. */

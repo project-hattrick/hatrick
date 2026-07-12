@@ -17,14 +17,19 @@ npm run start:dev
 Boots cleanly with `TXLINE_ENABLED=false` (no creds needed).
 
 ## Layout (`src/`)
-| Folder | Role |
-|---|---|
-| `txline/` | SSE ingest + auth + in-memory `TournamentState` + REST snapshots + **normalizer** (emits `*.during`/`*.after`) |
-| `events/` | `enums/` (event names, actions, markets, states) + `dto/` (typed payloads) |
-| `realtime/` | WebSocket gateway broadcasting both states |
-| `fantasy/` · `live/` · `crowd/` | listener seams (attribute engine, market projector, crowd pipeline) |
+| Folder | Role | State |
+|---|---|---|
+| `txline/` | SSE **live ingest** (subscribe window, backoff, `Last-Event-ID` resume) + auth + **normalizer** (`*.during`/`*.after`) + historical **replay** + Redis-cached snapshots | done |
+| `events/` | `enums/` (event names, actions, markets, states) + `dto/` (typed payloads) | done |
+| `realtime/` | WebSocket gateway re-broadcasting both states + per-user notification channel | done |
+| `auth/` · `users/` · `wallet/` | wallet + email/password sign-in (JWT cookie) · profiles/friends/notifications · ledger-backed wallet | done |
+| `live/` | play-money betting + **authoritative settlement** on `match-end.after` | done · *market-projector = stub* |
+| `fantasy/` | packs · squad/XI · staked 1v1 duels (MMR) | done · *attribute-engine = stub* |
+| `market/` · `store/` · `room/` · `crowd/` | card trades · limited-stock store · invite-only rooms · crowd balloons | done |
+| `chain/` | Solana faucet · unsigned bet-tx builder · settlement keeper (gated by `SOLANA_ENABLED`) | separate dev |
+| `prisma/` · `common/` | schema + client · cache/DTOs/guards | done |
 
 ## Conventions
 Event-driven only · enums not strings · ≤600 lines/file · no tests this sprint · English.
 
-> These are **base seams** with `TODO`s — generic and easy to swap. Don't deep-implement features until scoped.
+> Two known backend stubs: `fantasy/services/attribute-engine.service.ts` (cards don't yet evolve from TxLINE stats) and `live/services/market-projector.service.ts` (odds not projected into extra markets). See [`../../docs/gaps.md`](../../docs/gaps.md).

@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { localeLabels, type Locale } from '@/i18n/locales';
+import { localizePath } from '@/i18n/path';
 
 /** Canonical site origin — override per-deploy with NEXT_PUBLIC_SITE_URL. */
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hat-trick.app';
@@ -32,38 +35,46 @@ interface BuildMetadataInput {
   image?: string;
   /** Mark auxiliary pages (legal, etc.) noindex when true. */
   noindex?: boolean;
+  locale?: Locale;
 }
 
 /** Single builder for per-route metadata — keeps title/OG/twitter/canonical consistent. */
 export function buildMetadata({
   title,
-  description = SITE.description,
+  description,
   path = '/',
   image,
   noindex = false,
+  locale,
 }: BuildMetadataInput = {}): Metadata {
-  const url = new URL(path, SITE.url).toString();
-  const fullTitle = title ? `${title} · ${SITE.name}` : SITE.title;
+  const dictionary = locale ? getDictionary(locale) : null;
+  const siteTitle = dictionary?.home.site.title ?? SITE.title;
+  const siteDescription = dictionary?.home.site.description ?? SITE.description;
+  const resolvedDescription = description ?? siteDescription;
+  const resolvedPath = locale ? localizePath(path, locale) : path;
+  const url = new URL(resolvedPath, SITE.url).toString();
+  const fullTitle = title ? `${title} · ${SITE.name}` : siteTitle;
   const images = image ? [{ url: image }] : undefined;
 
   return {
     metadataBase: new URL(SITE.url),
     title,
-    description,
-    alternates: { canonical: url },
+    description: resolvedDescription,
+    alternates: { canonical: resolvedPath },
     robots: noindex ? { index: false, follow: false } : undefined,
     openGraph: {
       type: 'website',
       siteName: SITE.name,
       title: fullTitle,
-      description,
+      description: resolvedDescription,
       url,
+      locale: locale ? localeLabels[locale].ogLocale : SITE.locale,
       images,
     },
     twitter: {
       card: 'summary_large_image',
       title: fullTitle,
-      description,
+      description: resolvedDescription,
       site: SITE.twitter,
       images: image ? [image] : undefined,
     },

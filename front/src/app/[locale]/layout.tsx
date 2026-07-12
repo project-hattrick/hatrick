@@ -41,11 +41,12 @@ function assertLocale(locale: string): asserts locale is Locale {
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
   const { locale } = await params;
   assertLocale(locale);
+  const dictionary = getDictionary(locale);
 
   return {
     metadataBase: new URL(SITE.url),
-    title: { default: SITE.title, template: `%s · ${SITE.name}` },
-    description: SITE.description,
+    title: { default: dictionary.home.site.title, template: `%s · ${SITE.name}` },
+    description: dictionary.home.site.description,
     applicationName: SITE.name,
     keywords: [...SITE.keywords],
     authors: [{ name: SITE.name }],
@@ -59,16 +60,16 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     openGraph: {
       type: 'website',
       siteName: SITE.name,
-      title: SITE.title,
-      description: SITE.description,
+      title: dictionary.home.site.title,
+      description: dictionary.home.site.description,
       url: new URL(localizePath('/', locale), SITE.url).toString(),
       locale: localeLabels[locale].ogLocale,
       alternateLocale: locales.filter((value) => value !== locale).map((value) => localeLabels[value].ogLocale),
     },
     twitter: {
       card: 'summary_large_image',
-      title: SITE.title,
-      description: SITE.description,
+      title: dictionary.home.site.title,
+      description: dictionary.home.site.description,
       site: SITE.twitter,
     },
   };

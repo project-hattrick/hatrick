@@ -1,4 +1,4 @@
-import { RawScoreEvent } from '../txline.types';
+import { PlayerMatchStats, RawScoreEvent } from '../txline.types';
 
 /** One home/away counter pair. */
 export interface StatTally {
@@ -7,9 +7,10 @@ export interface StatTally {
 }
 
 /**
- * Authoritative team-stat totals derived from the FULL scores snapshot. Only stats TxLINE actually
- * carries as countable action events are here — possession % and passes are NOT provided by the feed
- * and are intentionally omitted (see the /fixtures/:id/stats endpoint).
+ * Team-stat totals for a fixture. TxLINE only TOTALS four of these authoritatively
+ * (Corners/YellowCards/RedCards via `Score.Total`; goals drive the score, not shown here). `shots`
+ * comes from summing sparse per-player `PlayerStats.shots`. `shotsOnTarget`/`fouls`/`offsides` are
+ * NOT provided as totals by the provider — they stay 0 here and are filled by the live socket tally.
  */
 export interface TeamStats {
   shots: StatTally;
@@ -32,55 +33,39 @@ export const emptyTeamStats = (): TeamStats => ({
   offsides: tally(),
 });
 
-/** Shot-family actions (exact, so `shootout`/`penalty_shootout` never read as a shot). */
-const SHOT_ACTIONS = new Set(['shot', 'shot_on_target', 'shot_off_target', 'shot_blocked']);
-
-/**
- * Fold one authoritative event into the totals. Mirrors the front tally
- * (front/src/store/match.store.ts → tallyEvent) so both sides agree, but leans on the structured
- * `dataSoccer` qualifiers (Goal / Outcome / Corner / FreeKickType) which are more reliable than the
- * action string alone. Keep the two in sync.
- */
-function tallyOne(stats: TeamStats, e: RawScoreEvent): void {
-  const p = e.dataSoccer?.Participant;
-  if (p !== 1 && p !== 2) return;
-  const side: keyof StatTally = p === 1 ? 'home' : 'away';
-  const a = (e.action ?? '').toLowerCase();
-  const d = e.dataSoccer ?? {};
-  const add = (key: keyof TeamStats) => {
-    stats[key][side] += 1;
-  };
-
-  // A goal is by definition a shot on target; the wire classifies the moment once.
-  if (a === 'goal' || d.Goal === true) {
-    add('shots');
-    add('shotsOnTarget');
-  } else if (SHOT_ACTIONS.has(a)) {
-    add('shots');
-    if (a === 'shot_on_target' || d.Outcome === 'OnTarget') add('shotsOnTarget');
-  }
-  if (a === 'yellow_card' || d.YellowCard === true) add('yellowCards');
-  if (a === 'red_card' || d.RedCard === true) add('redCards');
-  if (a === 'corner' || d.Corner === true) add('corners');
-  if (a.includes('foul')) add('fouls');
-  if (a.includes('offside') || d.FreeKickType === 'Offside') add('offsides');
+/** Sum one sparse per-player counter across a side's players. */
+function sumCounter(side: Record<string, PlayerMatchStats>, key: keyof PlayerMatchStats): number {
+  let total = 0;
+  for (const player of Object.values(side)) total += player[key] ?? 0;
+  return total;
 }
 
 /**
- * Authoritative team stats from a fixture's FULL scores snapshot. Dedups the during/after pair per
- * `seq` (a logical event shares one seq across its optimistic + confirmed frames), preferring the
- * confirmed frame, so nothing is double-counted and the totals only ever reflect settled events.
+ * Derive the authoritative team stats from a fixture's scores snapshot. The snapshot returns the LAST
+ * event per action, so COUNTING action events undercounts badly (e.g. 8 corners read as 1). Instead:
+ *  - Corners / YellowCards / RedCards ← the highest-seq `Score.ParticipantN.Total` counters (authoritative).
+ *  - Shots ← sum of the latest `PlayerStats.shots` per side (sparse; often absent → stays 0).
+ *  - ShotsOnTarget / Fouls / Offsides ← 0 (TxLINE doesn't total them; the live socket tally fills them).
  */
-export function tallyTeamStats(events: RawScoreEvent[]): TeamStats {
-  const bySeq = new Map<number, RawScoreEvent>();
+export function deriveTeamStats(events: RawScoreEvent[]): TeamStats {
+  const stats = emptyTeamStats();
+  let scoreSeq = -1;
+  let playerSeq = -1;
   for (const e of events) {
-    const prev = bySeq.get(e.seq);
-    // Prefer the authoritative (confirmed) frame; between same-confirmation frames, the later ts wins.
-    if (!prev || (e.confirmed && !prev.confirmed) || (e.confirmed === prev.confirmed && e.ts >= prev.ts)) {
-      bySeq.set(e.seq, e);
+    // `homeGoals` is set whenever the event carries a Score object (even at 0-0), so it marks one.
+    if (e.homeGoals !== undefined && e.seq >= scoreSeq) {
+      scoreSeq = e.seq;
+      stats.corners = { home: e.homeCorners ?? 0, away: e.awayCorners ?? 0 };
+      stats.yellowCards = { home: e.homeYellowCards ?? 0, away: e.awayYellowCards ?? 0 };
+      stats.redCards = { home: e.homeRedCards ?? 0, away: e.awayRedCards ?? 0 };
+    }
+    if (e.playerStats && e.seq >= playerSeq) {
+      playerSeq = e.seq;
+      stats.shots = {
+        home: sumCounter(e.playerStats.home, 'shots'),
+        away: sumCounter(e.playerStats.away, 'shots'),
+      };
     }
   }
-  const stats = emptyTeamStats();
-  for (const e of bySeq.values()) tallyOne(stats, e);
   return stats;
 }

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { BetsController } from './bets.controller';
+import { MarketsController } from './markets.controller';
 import { BetSettlementService, BettingService, MarketProjectorService } from './services';
 import { BetRepository, MarketListingRepository } from './repositories';
 
@@ -11,7 +12,7 @@ import { BetRepository, MarketListingRepository } from './repositories';
     UsersModule, // WalletRepository + UserRepository for the ledger; NotificationsService
     AuthModule, // JwtAuthGuard
   ],
-  controllers: [BetsController],
+  controllers: [BetsController, MarketsController],
   providers: [
     MarketProjectorService,
     BettingService,
@@ -19,6 +20,6 @@ import { BetRepository, MarketListingRepository } from './repositories';
     BetRepository,
     MarketListingRepository,
   ],
-  exports: [BetRepository, MarketListingRepository],
+  exports: [BetRepository, MarketListingRepository, MarketProjectorService],
 })
 export class LiveModule {}

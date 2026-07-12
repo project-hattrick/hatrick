@@ -1,3 +1,5 @@
+'use client';
+
 import { ParallaxStage } from './parallax-stage';
 import { SiteNavbar } from '@/components/common/site-navbar';
 import { LiveDashboard } from '@/components/live/live-dashboard';
@@ -5,18 +7,19 @@ import { LandingIntro } from './landing-intro';
 import { HomeDashboard } from './home-dashboard';
 import { LiveScorebar } from './live-scorebar';
 import { SiteFooter } from './site-footer';
+import { useT } from '@/i18n/i18n-provider';
 
-/** Hero scrolls away in normal flow; the live scoreboard pins at the hero↔dashboard seam and stays. */
+/** Hero scrolls away in normal flow; the live scoreboard pins at the hero/dashboard seam and stays. */
 export function HomeExperience() {
+  const t = useT();
+
   return (
     <div className="relative w-full">
-      {/* Sole page heading — the hero is all visual chrome, so the landing's h1 lives here for SEO/a11y. */}
-      <h1 className="sr-only">Hat-trick — Live &amp; Fantasy football for the World Cup</h1>
+      <h1 className="sr-only">{t('home.srTitle')}</h1>
 
       <LandingIntro />
       <SiteNavbar heroBackdrop />
 
-      {/* Hero — cinematic first screen; the stage sits behind it and scrolls away with it. */}
       <div className="relative overflow-hidden">
         <ParallaxStage />
         <div className="relative z-10">
@@ -24,7 +27,6 @@ export function HomeExperience() {
         </div>
       </div>
 
-      {/* Live scoreboard — pins under the navbar at the seam and persists down the dashboard. */}
       <LiveScorebar />
       <HomeDashboard />
       <SiteFooter />

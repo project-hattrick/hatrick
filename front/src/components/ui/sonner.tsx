@@ -30,10 +30,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          // Mirror the modal chrome: glassy surface-1 fill + a soft surface-2 frame.
+          "--normal-bg": "color-mix(in oklch, var(--color-surface-1) 88%, transparent)",
+          "--normal-text": "var(--foreground)",
+          "--normal-border": "color-mix(in oklch, var(--color-surface-2) 92%, transparent)",
+          "--border-radius": "20px",
         } as React.CSSProperties
       }
       toastOptions={{

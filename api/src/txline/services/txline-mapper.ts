@@ -99,6 +99,17 @@ export function goalsFromScore(score: unknown, participantKey: string): number |
 }
 
 /**
+ * Any cumulative `Score.ParticipantN.Total.<counter>` — the authoritative team totals TxLINE keeps
+ * (Goals/YellowCards/RedCards/Corners). Sparse: a 0 count omits the key, so an absent counter on a
+ * present Score object means 0 (the caller coalesces with `?? 0`).
+ */
+export function counterFromScore(score: unknown, participantKey: string, counter: string): number | undefined {
+  if (!isObj(score)) return undefined;
+  const p = score[participantKey];
+  return deepNum(p, 'Total', counter) ?? deepNum(p, 'total', counter);
+}
+
+/**
  * Regulation-time goals (H1+H2) for a participant. `Total` includes extra-time
  * goals, so standard 1X2 / Over-Under settlement needs this instead. Undefined
  * when the wire carries no period breakdown (then Total is the only truth).
@@ -236,6 +247,12 @@ export function mapWireScore(w: WireScoreEvent): RawScoreEvent | null {
     scoreSoccer: hasScore ? scoreSoccer : undefined,
     homeGoals: hasScore ? (goalsFromScore(scoreSoccer, 'Participant1') ?? 0) : undefined,
     awayGoals: hasScore ? (goalsFromScore(scoreSoccer, 'Participant2') ?? 0) : undefined,
+    homeYellowCards: hasScore ? (counterFromScore(scoreSoccer, 'Participant1', 'YellowCards') ?? 0) : undefined,
+    awayYellowCards: hasScore ? (counterFromScore(scoreSoccer, 'Participant2', 'YellowCards') ?? 0) : undefined,
+    homeRedCards: hasScore ? (counterFromScore(scoreSoccer, 'Participant1', 'RedCards') ?? 0) : undefined,
+    awayRedCards: hasScore ? (counterFromScore(scoreSoccer, 'Participant2', 'RedCards') ?? 0) : undefined,
+    homeCorners: hasScore ? (counterFromScore(scoreSoccer, 'Participant1', 'Corners') ?? 0) : undefined,
+    awayCorners: hasScore ? (counterFromScore(scoreSoccer, 'Participant2', 'Corners') ?? 0) : undefined,
     regulationHomeGoals: regulationGoalsFromScore(scoreSoccer, 'Participant1'),
     regulationAwayGoals: regulationGoalsFromScore(scoreSoccer, 'Participant2'),
     playerStats: mapPlayerStats(w.PlayerStats ?? w.playerStatsSoccer),

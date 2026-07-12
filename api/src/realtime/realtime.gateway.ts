@@ -8,7 +8,7 @@ import {
 import type { Server, Socket } from 'socket.io';
 
 import { EventName } from '../events/enums/event-name.enum';
-import type { MatchEndPayload, MatchEventPayload, OddsEventPayload } from '../events/dto';
+import type { MatchEndPayload, MatchEventPayload, MarketViewPayload, OddsEventPayload } from '../events/dto';
 import { TournamentStateService } from '../txline/services/tournament-state.service';
 
 /**
@@ -36,6 +36,11 @@ export class RealtimeGateway implements OnGatewayConnection {
   @OnEvent(EventName.OddsUpdate)
   onOdds(payload: OddsEventPayload): void {
     this.server?.emit(EventName.OddsUpdate, payload);
+  }
+
+  @OnEvent(EventName.MarketUpdate)
+  onMarket(payload: MarketViewPayload): void {
+    this.server?.emit(EventName.MarketUpdate, payload);
   }
 
   @OnEvent(EventName.MatchEndAfter)
