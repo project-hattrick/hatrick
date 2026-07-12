@@ -2,10 +2,10 @@
 
 import { useMemo } from 'react';
 
-import { useDisplayMatch, useHasFeedStats, useMatchStats } from '@/store/match.store';
+import { mergeStatsMax, useAuthoritativeStats, useDisplayMatch, useHasFeedStats, useMatchStats } from '@/store/match.store';
 import { fifaToIso } from '@/lib/country';
 import type { StatLine } from '@/config/match-dashboard.config';
-import type { LiveMatchStats } from '@/store/match.store';
+import type { LiveMatchStats, StatTally } from '@/store/match.store';
 import type { LiveMatch } from '@/types/match';
 
 // DS accents — home reads as the neon side, away as the gold side (matches DualStat bars).
@@ -54,64 +54,37 @@ function seededRng(key: string): () => number {
 }
 
 /**
- * Turn the selected LiveMatch into the dashboard view-model. Team identity (name/code/flag) is real,
- * and when the feed is streaming (`feedStats`) the countable lines (shots, cards, fouls, corners…)
- * are REAL event tallies from the match store. Only the numbers no feed carries (possession share,
- * passes, the performance series) stay derived deterministically from the two codes + score.
+ * Turn the selected LiveMatch into the dashboard view-model. Team identity (name/code/flag) is real.
+ * The stat lines show ONLY what the feed actually carries as events — real tallies (`stats`) or 0,
+ * never invented. Possession % and passes are dropped on purpose: TxLINE provides neither. The
+ * performance series stays a deterministic momentum sketch (cosmetic, not claimed stats).
  */
-export function deriveDashboard(match: LiveMatch, feedStats?: LiveMatchStats | null): DashboardMatch {
+export function deriveDashboard(match: LiveMatch, stats?: LiveMatchStats | null): DashboardMatch {
   const rng = seededRng(`${match.home.code}-${match.away.code}`);
   const rint = (min: number, max: number) => Math.floor(min + rng() * (max - min + 1));
   const lead = clamp(match.score.home - match.score.away, -3, 3);
 
-  const sotHome = feedStats ? feedStats.shotsOnTarget.home : match.score.home + rint(1, 5);
-  const sotAway = feedStats ? feedStats.shotsOnTarget.away : match.score.away + rint(1, 5);
-  const shotHome = feedStats ? feedStats.shots.home : sotHome + rint(2, 8);
-  const shotAway = feedStats ? feedStats.shots.away : sotAway + rint(2, 8);
-  const foulHome = feedStats ? feedStats.fouls.home : rint(4, 13);
-  const foulAway = feedStats ? feedStats.fouls.away : rint(4, 13);
-
-  // Possession share: proxy from possession-family event counts when the feed provides them.
-  const possTotal = feedStats ? feedStats.possessionEvents.home + feedStats.possessionEvents.away : 0;
-  const possHome =
-    possTotal > 0
-      ? clamp(Math.round((feedStats!.possessionEvents.home / possTotal) * 100), 20, 80)
-      : clamp(50 + lead * 3 + rint(-6, 6), 36, 64);
-  const possAway = 100 - possHome;
-  const passHome = Math.round(possHome * 9 + rint(-40, 40));
-  const passAway = Math.round(possAway * 9 + rint(-40, 40));
+  // Real tally or 0 — no fabricated numbers.
+  const line = (label: string, pick: (t: LiveMatchStats) => StatTally): StatLine => ({
+    label,
+    home: stats ? pick(stats).home : 0,
+    away: stats ? pick(stats).away : 0,
+  });
 
   const liveStats: StatLine[] = [
-    { label: 'Shots on Target', home: sotHome, away: sotAway },
-    { label: 'Shots', home: shotHome, away: shotAway },
-    { label: 'Fouls', home: foulHome, away: foulAway },
+    line('Shots on Target', (t) => t.shotsOnTarget),
+    line('Shots', (t) => t.shots),
+    line('Fouls', (t) => t.fouls),
   ];
 
   const statLines: StatLine[] = [
-    { label: 'Pass', home: passHome, away: passAway },
-    { label: 'Shots', home: shotHome, away: shotAway },
-    { label: 'Shots on Target', home: sotHome, away: sotAway },
-    { label: 'Ball Possession', home: possHome, away: possAway },
-    {
-      label: 'Red Card',
-      home: feedStats ? feedStats.redCards.home : rng() < 0.1 ? 1 : 0,
-      away: feedStats ? feedStats.redCards.away : rng() < 0.1 ? 1 : 0,
-    },
-    {
-      label: 'Yellow Card',
-      home: feedStats ? feedStats.yellowCards.home : rint(0, 4),
-      away: feedStats ? feedStats.yellowCards.away : rint(0, 5),
-    },
-    {
-      label: 'Offside',
-      home: feedStats ? feedStats.offsides.home : rint(0, 5),
-      away: feedStats ? feedStats.offsides.away : rint(0, 5),
-    },
-    {
-      label: 'Corner',
-      home: feedStats ? feedStats.corners.home : rint(2, 9),
-      away: feedStats ? feedStats.corners.away : rint(2, 9),
-    },
+    line('Shots', (t) => t.shots),
+    line('Shots on Target', (t) => t.shotsOnTarget),
+    line('Corner', (t) => t.corners),
+    line('Fouls', (t) => t.fouls),
+    line('Yellow Card', (t) => t.yellowCards),
+    line('Red Card', (t) => t.redCards),
+    line('Offside', (t) => t.offsides),
   ];
 
   const series = (bias: number): number[] => {
@@ -140,12 +113,19 @@ export function deriveDashboard(match: LiveMatch, feedStats?: LiveMatchStats | n
 /** Reactive dashboard view-model bound to the currently-selected match. */
 export function useDashboardMatch(): DashboardMatch {
   const match = useDisplayMatch();
-  const stats = useMatchStats();
+  const live = useMatchStats();
+  const auth = useAuthoritativeStats();
   const hasFeed = useHasFeedStats();
+  // Authoritative snapshot (full-match tally) is the truth for a live match; max() with the live tally
+  // keeps sub-poll increments instant AND monotonic. No feed at all → null (zeros, never invented).
+  const stats = useMemo(
+    () => (auth ? mergeStatsMax(auth, live) : hasFeed ? live : null),
+    [auth, live, hasFeed],
+  );
   return useMemo(
-    () => deriveDashboard(match, hasFeed ? stats : null),
-    // Re-derive when identity, score/minute or the feed tallies change.
+    () => deriveDashboard(match, stats),
+    // Re-derive when identity, score/minute or the (merged) stats change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [match.home.code, match.away.code, match.home.name, match.away.name, match.score.home, match.score.away, match.minute, stats, hasFeed],
+    [match.home.code, match.away.code, match.home.name, match.away.name, match.score.home, match.score.away, match.minute, stats],
   );
 }

@@ -74,7 +74,7 @@ export function buildRealGkFixtureConfig(home: FixtureTeam, away: FixtureTeam): 
       // Room liveliness: between real feed events, allow harmless autonomous action (saved shots, slide
       // tackles, intercepts) so a 90' watch reads like a real match instead of freezing between beats.
       // Goals/score stay strictly feed-authoritative (a driven ball can never self-score — see filler.ts).
-      features: { ...(REAL_GK_FRANCE_VS_NL_CONFIG.features as RealGkFeatures), drivenFiller: true, goalFrame: true },
+      features: { ...(REAL_GK_FRANCE_VS_NL_CONFIG.features as RealGkFeatures), drivenFiller: true },
       personaBodyRoot: homePack?.root ?? HOME_DEFAULT.root,
       personaBodyRootAway: awayPack?.root ?? AWAY_DEFAULT.root,
       teams: {

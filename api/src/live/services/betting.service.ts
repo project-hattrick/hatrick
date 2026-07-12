@@ -12,11 +12,16 @@ import {
   type User,
 } from '@prisma/client';
 
+import { CacheService } from '../../common/cache/cache.service';
 import { UserRepository, WalletRepository } from '../../users/repositories';
 import { BetRepository } from '../repositories';
 import { BetResponseDto, BetResultDto } from '../dto/bet-response.dto';
 import { CreateBetDto } from '../dto/create-bet.dto';
 import { SettleableStatus } from '../dto/settle-bet.dto';
+
+/** Per-user bet history — short TTL, busted on every stake/settlement so a fresh bet shows at once. */
+const BETS_TTL = 30;
+const betsKey = (userId: string) => `bets:user:${userId}`;
 
 /**
  * Play-money betting loop, server-side. Every money movement is mirrored into the
@@ -34,11 +39,17 @@ export class BettingService {
     private readonly bets: BetRepository,
     private readonly wallet: WalletRepository,
     private readonly users: UserRepository,
+    private readonly cache: CacheService,
   ) {}
 
   async list(userId: string): Promise<BetResponseDto[]> {
+    // Cache the DTO list (not entities) so Decimal/Date stay serialized; busted on place/settle.
+    const cached = await this.cache.get<BetResponseDto[]>(betsKey(userId));
+    if (cached) return cached;
     const rows = await this.bets.findByUser(userId);
-    return rows.map((row) => BetResponseDto.fromEntity(row));
+    const dtos = rows.map((row) => BetResponseDto.fromEntity(row));
+    await this.cache.set(betsKey(userId), dtos, BETS_TTL);
+    return dtos;
   }
 
   /** Stake a bet: debit the wallet, record the ledger entry, open the bet. */
@@ -71,6 +82,7 @@ export class BettingService {
       refType: 'bet',
       refId: bet.id,
     });
+    await this.cache.del(betsKey(userId));
     return this.result(bet, debited);
   }
 
@@ -98,6 +110,7 @@ export class BettingService {
     }
 
     const user = await this.credit(settled, status);
+    await this.cache.del(betsKey(userId));
     return this.result(settled, user);
   }
 
@@ -109,6 +122,7 @@ export class BettingService {
     const settled = await this.bets.settleIfPending(bet.id, status);
     if (!settled) return null;
     await this.credit(settled, status);
+    await this.cache.del(betsKey(settled.userId));
     return settled;
   }
 

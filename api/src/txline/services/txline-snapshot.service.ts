@@ -4,6 +4,7 @@ import { TxlineAuthService } from './txline-auth.service';
 import { historicalIntervalTtl, TxlineCacheTtl } from './txline-cache-ttl';
 import { TxlineHttpService } from './txline-http.service';
 import { mapWireScore, WireScoreEvent } from './txline-mapper';
+import { tallyTeamStats, type TeamStats } from './txline-stats';
 import { RawFixture, RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
 
 export interface FixturesQuery {
@@ -16,6 +17,13 @@ export interface FixtureAction {
   action: string;
   minute?: number;
   participant?: number;
+}
+
+/** Authoritative team stats for a fixture (tallied from the FULL scores snapshot). */
+export interface FixtureStats extends TeamStats {
+  fixtureId: number;
+  minute?: number;
+  finished: boolean;
 }
 
 /** Authoritative score for a fixture (reduced from the scores snapshot). */
@@ -142,6 +150,35 @@ export class TxlineSnapshotService {
       fixtureId, home, away, regulationHome, regulationAway,
       minute, finished, hasScore, actions: actions.slice(0, 12),
     };
+  }
+
+  /**
+   * Authoritative team stats (shots, SOT, fouls, corners, cards, offsides) tallied from the FULL
+   * scores snapshot — not a windowed client tally, so it never regresses. Reuses the same cached
+   * `/api/scores/snapshot` upstream as getFixtureScore (single-flight); the tally itself is cheap.
+   * Possession % and passes are omitted — TxLINE doesn't provide them.
+   */
+  async getFixtureStats(fixtureId: number): Promise<FixtureStats> {
+    const wire = await this.guard(() =>
+      this.http.getCached<Record<string, unknown>[]>(
+        `/api/scores/snapshot/${fixtureId}`,
+        TxlineCacheTtl.ScoresSnapshot,
+      ),
+    );
+
+    const events: RawScoreEvent[] = [];
+    let minute: number | undefined;
+    let finished = false;
+    for (const item of wire) {
+      const raw = mapWireScore(item as WireScoreEvent);
+      if (!raw) continue;
+      if (raw.gameState && FULL_TIME.test(raw.gameState)) finished = true;
+      const min = raw.dataSoccer?.Minutes;
+      if (typeof min === 'number' && min >= 0) minute = Math.max(minute ?? 0, min);
+      events.push(raw);
+    }
+
+    return { fixtureId, minute, finished, ...tallyTeamStats(events) };
   }
 
   /**

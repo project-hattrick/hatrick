@@ -16,6 +16,12 @@ export const TxlineCacheTtl = {
   OddsSnapshotAsOf: 300,
   /** A finished historical 5-min interval never changes. */
   HistoricalInterval: 24 * 3600,
+  /** Assembled timeline/frames of a FINISHED fixture — immutable, so cache it as long as an interval. */
+  FinishedMatch: 24 * 3600,
+  /** Discovered replay catalog (finished fixtures list) — moves slowly, refresh every few minutes. */
+  ReplayCatalog: 5 * 60,
+  /** Id→name maps from the 30-day fixtures snapshot — names are effectively static within a session. */
+  ReplayNames: 30 * 60,
   /** Bypass the cache entirely. */
   None: 0,
 } as const;

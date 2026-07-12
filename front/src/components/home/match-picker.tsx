@@ -5,12 +5,14 @@ import { toast } from 'sonner';
 import { Popover } from '@base-ui/react/popover';
 
 import { Flag } from '@/components/common/flag';
-import { CaretDown, CircleNotch, Clock, ClockCounterClockwise, Lock, MagnifyingGlass, Play } from '@/components/common/icons';
+import { CaretDown, CaretRight, CircleNotch, Clock, ClockCounterClockwise, Lock, MagnifyingGlass, Play, ShieldCheck } from '@/components/common/icons';
 import { useReplayCatalog, useUpcomingFixtures } from '@/services/queries/use-replay';
+import { useCreateRoom } from '@/services/queries';
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
-import { useDisplayMatch, useIsMatchLive, useIsSwitching, useMatchStore } from '@/store/match.store';
+import { useDisplayMatch, useIsMatchLive, useIsReplay, useIsSwitching, useMatchStore } from '@/store/match.store';
 import { useLoadReplay } from '@/hooks/use-load-replay';
+import { useAuthGate } from '@/hooks/use-auth-gate';
 import { useKickoffCountdown } from '@/hooks/use-kickoff-countdown';
 import { useLiveMinute } from '@/hooks/use-live-minute';
 import { fixtureToReplayItem } from '@/lib/fixture-replay';
@@ -132,19 +134,22 @@ function MatchRow({ onClick, children }: { onClick: () => void; children: React.
 function PickerTrigger({ variant, disabled = false }: { variant: PickerVariant; disabled?: boolean }) {
   const match = useDisplayMatch();
   const isLive = useIsMatchLive();
+  const isReplay = useIsReplay();
   const switching = useIsSwitching();
   const countdown = useKickoffCountdown();
   const liveMinute = useLiveMinute();
 
   if (variant === 'hero') {
     const phase = lookup(gameStateConfig, match.gameState, gameStateFallback);
-    // A feed-driven replay IS the live-match experience here, so it reads as Live — never "Replay".
-    const state = switching ? 'Loading' : countdown ? 'Kickoff' : isLive ? 'Live' : 'Full-time';
+    // A picked past match streams through the live pipeline but is NOT live — it reads honestly as "Replay".
+    const replay = isReplay;
+    const live = isLive && !replay;
+    const state = switching ? 'Loading' : countdown ? 'Kickoff' : replay ? 'Replay' : isLive ? 'Live' : 'Full-time';
     // Pre-kickoff shows only the "Kickoff" state here — the big scoreboard number owns the countdown.
-    const detail = switching ? null : countdown ? null : isLive ? formatMinute(liveMinute) : null;
-    const sub = switching || countdown !== null || !isLive ? null : phase.label;
-    const accent = countdown ? 'text-neon' : isLive ? 'text-live' : 'text-muted-foreground';
-    const dot = countdown ? 'animate-pulse bg-neon' : isLive ? 'animate-pulse bg-live' : 'bg-muted-foreground';
+    const detail = switching ? null : countdown ? null : replay || live ? formatMinute(liveMinute) : null;
+    const sub = switching || countdown !== null || (!live && !replay) ? null : phase.label;
+    const accent = countdown ? 'text-neon' : replay ? 'text-neon' : live ? 'text-live' : 'text-muted-foreground';
+    const dot = countdown ? 'animate-pulse bg-neon' : live ? 'animate-pulse bg-live' : 'bg-muted-foreground';
     return (
       <Popover.Trigger
         disabled={disabled}
@@ -152,6 +157,8 @@ function PickerTrigger({ variant, disabled = false }: { variant: PickerVariant; 
       >
         {switching ? (
           <CircleNotch className="size-3 animate-spin text-neon" />
+        ) : replay ? (
+          <ClockCounterClockwise className="size-3 text-neon" />
         ) : (
           <span className={cn('size-1.5 rounded-full', dot)} />
         )}
@@ -201,6 +208,8 @@ export function MatchPicker({ variant = 'bar', disabled = false }: { variant?: P
   const upcoming = useUpcomingFixtures();
   const catalog = useReplayCatalog(6);
   const { loadReplay, isLoadingScore } = useLoadReplay();
+  const createRoom = useCreateRoom();
+  const gate = useAuthGate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [now, setNow] = useState(() => Date.now());
@@ -231,6 +240,13 @@ export function MatchPicker({ variant = 'bar', disabled = false }: { variant?: P
     setOpen(false);
   };
 
+  // Spin up an invite-only room over whatever match is on screen, then route the host into it — the
+  // "watch this privately" shortcut that lives right where you pick what to watch (auth-gated).
+  const onCreatePrivateRoom = gate(() => {
+    setOpen(false);
+    createRoom.mutate(currentFixtureId != null ? { fixtureId: currentFixtureId } : {});
+  });
+
   const q = query.trim().toLowerCase();
   const hit = (a: string, b: string) => !q || `${a} ${b}`.toLowerCase().includes(q);
   const sortedFixtures = useMemo(
@@ -253,6 +269,31 @@ export function MatchPicker({ variant = 'bar', disabled = false }: { variant?: P
       <Popover.Portal>
         <Popover.Positioner sideOffset={10} align={variant === 'hero' ? 'center' : 'start'} className="z-50">
           <Popover.Popup className="flex max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-[20px] border border-white/10 bg-surface-1/95 p-2 text-sm text-foreground shadow-2xl backdrop-blur-2xl outline-none origin-[var(--transform-origin)] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+            {/* Primary action: take whatever match is on into an invite-only room to watch with friends. */}
+            <button
+              type="button"
+              onClick={onCreatePrivateRoom}
+              disabled={createRoom.isPending}
+              className="group mb-2 flex w-full shrink-0 items-center gap-2.5 rounded-xl border border-neon/35 bg-neon/10 px-2.5 py-2 text-left transition hover:border-neon/55 hover:bg-neon/[0.16] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-neon/15 text-neon">
+                {createRoom.isPending ? (
+                  <CircleNotch className="size-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="size-4" weight="fill" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-semibold text-foreground">
+                  {createRoom.isPending ? 'Creating room…' : 'Watch in a private room'}
+                </span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  Invite-only · watch, predict &amp; chat with friends
+                </span>
+              </span>
+              <CaretRight className="size-4 shrink-0 text-neon transition group-hover:translate-x-0.5" />
+            </button>
+
             <div className="flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2">
               <MagnifyingGlass className="size-4 shrink-0 text-muted-foreground" />
               <input
@@ -273,7 +314,12 @@ export function MatchPicker({ variant = 'bar', disabled = false }: { variant?: P
               />
             ) : null}
 
-            <div className="mt-2 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+            {/* data-lenis-prevent: the ReactLenis root owns the page wheel — without it the list never scrolls,
+                the page does. overscroll-contain stops the scroll from chaining to the page at the edges. */}
+            <div
+              data-lenis-prevent
+              className="custom-scrollbar mt-2 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+            >
               <SectionLabel icon={Clock}>Upcoming</SectionLabel>
               {upcoming.isLoading ? (
                 <StateRow>Loading fixtures…</StateRow>

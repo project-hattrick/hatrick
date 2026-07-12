@@ -5,6 +5,7 @@ import { TxlineSnapshotService } from './services/txline-snapshot.service';
 import { TxlineReplayService } from './services/txline-replay.service';
 import { FixtureDto } from './dto/fixture.dto';
 import { FixtureScoreDto } from './dto/fixture-score.dto';
+import { FixtureStatsDto } from './dto/fixture-stats.dto';
 import { OddsSnapshotItemDto } from './dto/odds-snapshot.dto';
 import { ScoreSnapshotItemDto } from './dto/score-snapshot.dto';
 import { ReplayRequestDto } from './dto/replay-request.dto';
@@ -39,6 +40,14 @@ export class TxlineController {
   @ApiOkResponse({ type: FixtureScoreDto })
   getFixtureScore(@Param('fixtureId', ParseIntPipe) fixtureId: number): Promise<FixtureScoreDto> {
     return this.snapshots.getFixtureScore(fixtureId);
+  }
+
+  @Get('fixtures/:fixtureId/stats')
+  @ApiOperation({ summary: 'Authoritative team stats (shots, cards, corners…) tallied from the full scores snapshot.' })
+  @ApiParam({ name: 'fixtureId', type: Number })
+  @ApiOkResponse({ type: FixtureStatsDto })
+  getFixtureStats(@Param('fixtureId', ParseIntPipe) fixtureId: number): Promise<FixtureStatsDto> {
+    return this.snapshots.getFixtureStats(fixtureId);
   }
 
   @Get('fixtures/:fixtureId/odds')

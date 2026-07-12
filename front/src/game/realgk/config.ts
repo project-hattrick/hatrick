@@ -251,7 +251,7 @@ export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, goalFrame: true, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, goalFrame: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   playableRoster: 1,
 };
@@ -276,7 +276,7 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, goalFrame: true, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, goalFrame: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
   crtFilter: true,

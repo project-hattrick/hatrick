@@ -7,6 +7,7 @@ import { getSocket } from './socket';
 import { useMatchStore } from '@/store/match.store';
 import { useKickoffRollover } from '@/hooks/use-kickoff-rollover';
 import { useOddsFeed } from './use-odds-feed';
+import { useStatsFeed } from './use-stats-feed';
 import { EmissionState } from '@/enums/emission-state.enum';
 import type { MatchEndPayload, MatchEventPayload } from '@/types/match';
 
@@ -18,6 +19,8 @@ export function useLiveFeed(): void {
   useKickoffRollover();
   // Live odds book (snapshot baseline + odds.update stream) follows the current fixture.
   useOddsFeed();
+  // Authoritative team-stats snapshot (polled) — the monotonic source of truth for the stat panels.
+  useStatsFeed();
   useEffect(() => {
     if (env.useMock) {
       hydrateFromMock();

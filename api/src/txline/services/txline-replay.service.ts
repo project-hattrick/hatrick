@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { historicalIntervalTtl } from './txline-cache-ttl';
+import { CacheService } from '../../common/cache/cache.service';
+import { TxlineCacheTtl, historicalIntervalTtl } from './txline-cache-ttl';
 import { TxlineHttpService } from './txline-http.service';
 import { TxlineNormalizerService } from './txline-normalizer.service';
 import { mapWireOdds, mapWireScore, WireOddsEvent, WireScoreEvent } from './txline-mapper';
@@ -11,7 +12,6 @@ const INTERVALS_PER_HOUR = 12; // 5-min buckets
 const DEFAULT_HOURS = 3; // a match window + extra time
 const DEFAULT_SPEED = 8; // playback multiplier (real gaps ÷ speed)
 const MAX_GAP_MS = 4_000; // cap idle gaps so replay never stalls
-const CATALOG_TTL_MS = 5 * 60 * 1000;
 const CATALOG_HOURS = [13, 16, 19, 20]; // where the sim tournament's kickoffs land
 const COMPETITION_NAMES: Record<number, string> = { 72: 'World Cup', 430: 'Friendlies' };
 
@@ -67,12 +67,12 @@ export class TxlineReplayService implements OnModuleInit {
   private readonly logger = new Logger(TxlineReplayService.name);
   private runId = 0; // bump invalidates any in-flight playback (single-flight)
   private running = false;
-  private catalogCache?: { at: number; items: ReplayCatalogItem[] };
 
   constructor(
     private readonly config: ConfigService,
     private readonly http: TxlineHttpService,
     private readonly normalizer: TxlineNormalizerService,
+    private readonly cache: CacheService,
   ) {}
 
   onModuleInit(): void {
@@ -102,10 +102,14 @@ export class TxlineReplayService implements OnModuleInit {
     this.running = false;
   }
 
-  /** Discover finished fixtures the user can replay (cached ~5 min). */
+  /** Discover finished fixtures the user can replay (Redis-cached ~5 min, single-flight, shared across instances). */
   async catalog(daysBack = 5): Promise<ReplayCatalogItem[]> {
-    if (this.catalogCache && Date.now() - this.catalogCache.at < CATALOG_TTL_MS) return this.catalogCache.items;
+    return this.cache.getOrSet(`replay:catalog:v1:${daysBack}`, TxlineCacheTtl.ReplayCatalog, () =>
+      this.buildCatalog(daysBack),
+    );
+  }
 
+  private async buildCatalog(daysBack: number): Promise<ReplayCatalogItem[]> {
     const today = Math.floor(Date.now() / 86_400_000);
     const found = new Map<number, { startTime: number; competitionId: number; p1: number; p2: number }>();
     for (let d = today - Math.max(1, daysBack); d <= today; d++) {
@@ -138,7 +142,6 @@ export class TxlineReplayService implements OnModuleInit {
         startHour: new Date(f.startTime).getUTCHours(),
       }));
 
-    this.catalogCache = { at: Date.now(), items };
     this.logger.log(`replay catalog: ${items.length} past fixtures (scanned ${daysBack + 1} days)`);
     return items;
   }
@@ -149,7 +152,12 @@ export class TxlineReplayService implements OnModuleInit {
     const comp = new Map<number, string>();
     try {
       const today = Math.floor(Date.now() / 86_400_000);
-      const fx = await this.http.get<Record<string, unknown>[]>(`/api/fixtures/snapshot?startEpochDay=${today - 30}`);
+      // Cached read: this 30-day snapshot was refetched on every catalog build — a wasted upstream call
+      // to the free tier, since the id→name maps barely change within a session.
+      const fx = await this.http.getCached<Record<string, unknown>[]>(
+        `/api/fixtures/snapshot?startEpochDay=${today - 30}`,
+        TxlineCacheTtl.ReplayNames,
+      );
       for (const f of Array.isArray(fx) ? fx : []) {
         const p1 = Number(f.Participant1Id);
         const p2 = Number(f.Participant2Id);
@@ -169,7 +177,22 @@ export class TxlineReplayService implements OnModuleInit {
    * cumulative score at each), for a FRONT-driven, seekable replay — no live stream needed.
    */
   async timeline(opts: ReplayOptions): Promise<FixtureTimeline> {
-    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, opts.hours ?? DEFAULT_HOURS);
+    const hours = opts.hours ?? DEFAULT_HOURS;
+    // A finished fixture's timeline never changes — cache the assembled DTO (24h) so we don't re-load +
+    // re-dedupe 36 intervals per request. While the window is still in-play the TTL resolves to 0 (bypass).
+    const lastAbs = opts.startHour + hours - 1;
+    const lastDay = opts.epochDay + Math.floor(lastAbs / 24);
+    const lastHour = ((lastAbs % 24) + 24) % 24;
+    const ttl = historicalIntervalTtl(lastDay, lastHour, INTERVALS_PER_HOUR - 1) > 0 ? TxlineCacheTtl.FinishedMatch : TxlineCacheTtl.None;
+    return this.cache.getOrSet(
+      `replay:timeline:v1:${opts.fixtureId}:${opts.epochDay}:${opts.startHour}:${hours}`,
+      ttl,
+      () => this.buildTimeline(opts, hours),
+    );
+  }
+
+  private async buildTimeline(opts: ReplayOptions, hours: number): Promise<FixtureTimeline> {
+    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, hours);
     let home = 0;
     let away = 0;
     let lastMinute = 0;

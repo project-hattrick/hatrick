@@ -23,9 +23,19 @@ import {
   RoomMessageDto,
 } from '../dto/room.dto';
 import { RoomGateway } from '../room.gateway';
+import { CacheService } from '../../common/cache/cache.service';
 
 const DEFAULT_ROOM_NAME = 'Private room';
 const CHAT_HISTORY_LIMIT = 50;
+
+// Room reads are HTTP-authoritative and low-churn; the gateway relays live changes, so short TTLs plus
+// a bust on the mutating write keep initial loads cheap without fighting the socket.
+const ROOM_TTL = 60;
+const MEMBERS_TTL = 60;
+const MESSAGES_TTL = 30;
+const roomKey = (id: string) => `room:${id}`;
+const membersKey = (id: string) => `room:members:${id}`;
+const messagesKey = (id: string) => `room:messages:${id}`;
 
 /**
  * Invite-only "watch together" rooms over the current live match. HTTP is the
@@ -38,6 +48,7 @@ export class RoomService {
     private readonly members: RoomMemberRepository,
     private readonly messages: RoomMessageRepository,
     private readonly gateway: RoomGateway,
+    private readonly cache: CacheService,
   ) {}
 
   async create(userId: string, dto: CreateRoomDto): Promise<CreateRoomResultDto> {
@@ -57,7 +68,11 @@ export class RoomService {
   }
 
   async getById(roomId: string): Promise<RoomDto> {
-    return this.buildRoomDto(roomId);
+    const cached = await this.cache.get<RoomDto>(roomKey(roomId));
+    if (cached) return cached;
+    const dto = await this.buildRoomDto(roomId);
+    await this.cache.set(roomKey(roomId), dto, ROOM_TTL);
+    return dto;
   }
 
   async join(userId: string, dto: JoinRoomDto): Promise<RoomDto> {
@@ -74,18 +89,28 @@ export class RoomService {
       });
       const withUser = (await this.members.findByRoom(room.id)).find((m) => m.id === member.id);
       if (withUser) this.gateway.broadcastMemberJoined(room.id, RoomMemberDto.fromEntity(withUser));
+      // New member changes both the roster and the room DTO — drop the stale reads.
+      await Promise.all([this.cache.del(membersKey(room.id)), this.cache.del(roomKey(room.id))]);
     }
     return this.buildRoomDto(room.id);
   }
 
   async listMembers(roomId: string): Promise<RoomMemberDto[]> {
+    const cached = await this.cache.get<RoomMemberDto[]>(membersKey(roomId));
+    if (cached) return cached;
     const rows = await this.members.findByRoom(roomId);
-    return rows.map((row) => RoomMemberDto.fromEntity(row));
+    const dtos = rows.map((row) => RoomMemberDto.fromEntity(row));
+    await this.cache.set(membersKey(roomId), dtos, MEMBERS_TTL);
+    return dtos;
   }
 
   async listMessages(roomId: string): Promise<RoomMessageDto[]> {
+    const cached = await this.cache.get<RoomMessageDto[]>(messagesKey(roomId));
+    if (cached) return cached;
     const rows = await this.messages.listByRoom(roomId, CHAT_HISTORY_LIMIT);
-    return rows.map((row) => RoomMessageDto.fromEntity(row));
+    const dtos = rows.map((row) => RoomMessageDto.fromEntity(row));
+    await this.cache.set(messagesKey(roomId), dtos, MESSAGES_TTL);
+    return dtos;
   }
 
   async postMessage(userId: string, roomId: string, dto: PostMessageDto): Promise<RoomMessageDto> {
@@ -99,6 +124,7 @@ export class RoomService {
     });
     const dtoOut = RoomMessageDto.fromEntity(row);
     this.gateway.broadcastChat(roomId, dtoOut);
+    await this.cache.del(messagesKey(roomId));
     return dtoOut;
   }
 

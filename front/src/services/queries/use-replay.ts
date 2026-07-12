@@ -53,6 +53,21 @@ export function useFixtureScoreQuery(fixtureId: number | null) {
   });
 }
 
+/**
+ * Authoritative team-stats snapshot for a fixture (shots, cards, corners…), tallied from the FULL
+ * scores snapshot on the backend so it never regresses. Polls every 15s to self-heal the live tally.
+ */
+export function useFixtureStatsQuery(fixtureId: number | null) {
+  return useQuery({
+    queryKey: ['fixture-stats', fixtureId],
+    queryFn: () => replayService.getStats(fixtureId as number),
+    enabled: fixtureId != null,
+    staleTime: 15 * 1000,
+    refetchInterval: 15 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 /** Latest odds snapshot for one fixture (pre-match boards). Books reprice slowly pre-match. */
 export function useFixtureOdds(fixtureId: number) {
   return useQuery({

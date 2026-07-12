@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MatchPicker } from './match-picker';
-import { useDisplayMatch, useIsMatchLive } from '@/store/match.store';
+import { useDisplayMatch, useIsMatchLive, useIsReplay } from '@/store/match.store';
 import { useKickoffCountdown } from '@/hooks/use-kickoff-countdown';
 import { useLiveMinute } from '@/hooks/use-live-minute';
 import { usePredictionPrompt } from '@/store/prediction.store';
@@ -37,6 +37,7 @@ function OddPill({ label, odds, onClick }: { label: string; odds: number; onClic
 export function LiveScorebar() {
   const match = useDisplayMatch();
   const isLive = useIsMatchLive();
+  const isReplay = useIsReplay();
   const countdown = useKickoffCountdown();
   const liveMinute = useLiveMinute();
   const prompt = usePredictionPrompt();
@@ -88,6 +89,11 @@ export function LiveScorebar() {
             <span className="inline-flex items-center gap-1.5">
               <span className="size-1.5 animate-pulse rounded-full bg-neon motion-reduce:animate-none" />
               <span className="font-mono text-eyebrow text-neon">SOON</span>
+            </span>
+          ) : isReplay ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-neon" />
+              <span className="font-mono text-eyebrow text-neon">REPLAY</span>
             </span>
           ) : isLive ? (
             <span className="inline-flex items-center gap-1.5">

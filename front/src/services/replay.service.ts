@@ -60,6 +60,29 @@ export interface OddsSnapshotItem {
   Prices?: number[];
 }
 
+/** One home/away counter pair. */
+export interface StatTally {
+  home: number;
+  away: number;
+}
+
+/**
+ * Authoritative team stats for a fixture, tallied from the FULL scores snapshot (mirrors the api
+ * FixtureStatsDto). Only stats TxLINE actually carries as events — no possession % / passes.
+ */
+export interface FixtureStats {
+  fixtureId: number;
+  shots: StatTally;
+  shotsOnTarget: StatTally;
+  fouls: StatTally;
+  corners: StatTally;
+  yellowCards: StatTally;
+  redCards: StatTally;
+  offsides: StatTally;
+  minute?: number;
+  finished: boolean;
+}
+
 /** Authoritative current/final score for a fixture (mirrors the api FixtureScoreDto). */
 export interface FixtureScore {
   fixtureId: number;
@@ -83,6 +106,7 @@ export const replayService = {
   getCatalog: (days = 6) => api.get<ReplayCatalogItem[]>(`/replay/catalog?days=${days}`),
   getUpcoming: () => api.get<FixtureDto[]>('/fixtures'),
   getScore: (fixtureId: number) => api.get<FixtureScore>(`/fixtures/${fixtureId}/score`),
+  getStats: (fixtureId: number) => api.get<FixtureStats>(`/fixtures/${fixtureId}/stats`),
   getOdds: (fixtureId: number) => api.get<OddsSnapshotItem[]>(`/fixtures/${fixtureId}/odds`),
   getTimeline: (input: { fixtureId: number; epochDay: number; startHour: number }) =>
     api.get<FixtureTimeline>(

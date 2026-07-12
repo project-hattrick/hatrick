@@ -89,6 +89,18 @@ export class CacheService implements OnModuleDestroy {
     this.memory.set(key, { value: raw, expiresAt: Date.now() + ttlSeconds * 1_000 });
   }
 
+  /** Invalidate a key in both tiers (write paths call this so a cached read never goes stale). */
+  async del(key: string): Promise<void> {
+    this.memory.delete(key);
+    if (this.redisHealthy && this.redis) {
+      try {
+        await this.redis.del(key);
+      } catch {
+        /* degraded — the memory copy is already gone */
+      }
+    }
+  }
+
   /** Read-through with single-flight: concurrent misses on a key share one factory call. */
   async getOrSet<T>(key: string, ttlSeconds: number, factory: () => Promise<T>): Promise<T> {
     if (ttlSeconds <= 0) return factory();

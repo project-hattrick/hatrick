@@ -57,6 +57,9 @@ interface MatchStore {
   recap: RecapSnapshot | null;
   /** Feed-derived stat totals for the current match (reset whenever the match switches). */
   stats: LiveMatchStats;
+  /** Authoritative team-stat totals from the backend's full-snapshot tally — the monotonic source of
+   *  truth for a LIVE match (null until fetched, and for mock + front-driven replays). */
+  authoritativeStats: LiveMatchStats | null;
   /** Cumulative real per-player stats keyed by TxLINE player ID (empty until the feed sends them). */
   playerStats: PlayerStatsBySide;
   /** Real lineups from the feed (`action=lineups`, ~40min pre-kickoff) — playerId → shirt, no names. */
@@ -79,6 +82,8 @@ interface MatchStore {
   setReplayFrame: (fixtureId: number, score: MatchScore, minute: number, events: MatchEventPayload[]) => void;
   /** Set the authoritative score for a fixture (snapshot baseline) — ignored if a different match is on. */
   setScore: (fixtureId: number, score: MatchScore) => void;
+  /** Fold the backend's authoritative team-stats snapshot in — ignored if a different match is on. */
+  setAuthoritativeStats: (fixtureId: number, stats: LiveMatchStats) => void;
   /** Replace the event list for a fixture (snapshot recap) — ignored if a different match is on. */
   setEvents: (fixtureId: number, events: MatchEventPayload[]) => void;
   finishMatch: (payload: MatchEndPayload) => void;
@@ -188,6 +193,24 @@ function tallyEvent(stats: LiveMatchStats, event: MatchEventPayload): LiveMatchS
   return counted ? next : null;
 }
 
+/** Per-counter max of two stat sets — keeps totals monotonic (they can never legitimately drop). */
+export function mergeStatsMax(a: LiveMatchStats, b: LiveMatchStats): LiveMatchStats {
+  const m = (k: keyof LiveMatchStats): StatTally => ({
+    home: Math.max(a[k].home, b[k].home),
+    away: Math.max(a[k].away, b[k].away),
+  });
+  return {
+    shots: m('shots'),
+    shotsOnTarget: m('shotsOnTarget'),
+    fouls: m('fouls'),
+    corners: m('corners'),
+    yellowCards: m('yellowCards'),
+    redCards: m('redCards'),
+    offsides: m('offsides'),
+    possessionEvents: m('possessionEvents'),
+  };
+}
+
 /** Rebuild the totals from a full event list (front-driven replay frames replace the list wholesale). */
 function tallyAll(events: MatchEventPayload[]): LiveMatchStats {
   talliedSeqs.clear();
@@ -213,6 +236,7 @@ function resetStats(): LiveMatchStats {
 /** State slice that resets whenever the match switches. */
 const freshMatchSlice = () => ({
   stats: resetStats(),
+  authoritativeStats: null,
   playerStats: emptyPlayerStats(),
   lineups: null,
   regulationScore: null,
@@ -249,6 +273,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
   events: [],
   recap: null,
   stats: emptyMatchStats(),
+  authoritativeStats: null,
   playerStats: emptyPlayerStats(),
   lineups: null,
   regulationScore: null,
@@ -275,12 +300,20 @@ export const useMatchStore = create<MatchStore>((set) => ({
       // Time (the FT overlay stays off during replays — useIsEnded guards on !isReplay — so no freeze).
       const lastRaw = events.length ? (events[events.length - 1].rawAction ?? '').toLowerCase() : '';
       const gameState = deriveGameState(state.match.gameState, lastRaw, minute, score.home === score.away);
-      return { match: { ...state.match, score, minute, gameState }, events, stats: tallyAll(events) };
+      // Monotonic: the 100-event display window can slide early events off, so tallyAll(events) alone
+      // would DROP totals backward. Keep the running peak — cumulative stats never legitimately fall.
+      return {
+        match: { ...state.match, score, minute, gameState },
+        events,
+        stats: mergeStatsMax(state.stats, tallyAll(events)),
+      };
     }),
   setScore: (fixtureId, score) =>
     set((state) =>
       state.match && state.match.fixtureId === fixtureId ? { match: { ...state.match, score } } : {},
     ),
+  setAuthoritativeStats: (fixtureId, stats) =>
+    set((state) => (state.match && state.match.fixtureId === fixtureId ? { authoritativeStats: stats } : {})),
   setEvents: (fixtureId, events) =>
     set((state) => (state.match && state.match.fixtureId === fixtureId ? { events } : {})),
   markLive: (fixtureId) =>
@@ -357,6 +390,9 @@ export const useMatchEvents = () => useMatchStore((state) => state.events);
 
 /** Feed-derived stat totals for the current match (zeros until events land). */
 export const useMatchStats = () => useMatchStore((state) => state.stats);
+
+/** Backend authoritative team-stats for the current LIVE match, or null (mock / replay / not yet fetched). */
+export const useAuthoritativeStats = () => useMatchStore((state) => state.authoritativeStats);
 
 /** Cumulative real per-player stats (TxLINE player ID → counters); empty maps until the feed sends them. */
 export const usePlayerMatchStats = () => useMatchStore((state) => state.playerStats);
