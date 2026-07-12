@@ -2,6 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
+import { useGlobalFeed } from '@/services/realtime/use-global-feed';
 import { useAutoReplay } from '@/hooks/use-auto-replay';
 import { useCrowdDirector } from '@/hooks/use-crowd-director';
 import { useRecapFallback } from '@/hooks/use-recap-fallback';
@@ -24,6 +25,7 @@ const LAYOUTS: Record<HeroLayout, ReactNode> = {
  */
 export function LiveDashboard() {
   useLiveFeed();
+  useGlobalFeed();
   useAutoReplay();
   useCrowdDirector();
   useRecapFallback();

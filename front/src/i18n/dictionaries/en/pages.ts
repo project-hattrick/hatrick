@@ -83,4 +83,27 @@ export const pages = {
     emptyPrefix: 'No players to sell -',
     openPack: 'open a pack',
   },
+  duelists: {
+    metadata: {
+      title: 'Duelists',
+      description: 'Browse players, add friends and challenge anyone to a 1v1 duel.',
+    },
+    eyebrow: 'Ranked ladder',
+    title: 'Duelists',
+    intro: 'Scout the ladder. Add friends. Challenge anyone to a 1v1.',
+    allPlayers: 'All players',
+    friends: 'Friends',
+    loading: 'Loading...',
+    loadError: 'Failed to load duelists. Please try again.',
+    empty: 'No duelists match the current filters.',
+    tiers: {
+      all: 'All tiers',
+      master: 'Master',
+      diamond: 'Diamond',
+      platinum: 'Platinum',
+      gold: 'Gold',
+      silver: 'Silver',
+      bronze: 'Bronze',
+    },
+  },
 } as const;

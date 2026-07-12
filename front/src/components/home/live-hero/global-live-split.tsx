@@ -13,19 +13,19 @@ import { RoomPickToast } from '@/components/room/room-pick-toast';
 import { RoomMiniPitch } from '@/components/room/room-mini-pitch';
 import { ImpactSlide } from '@/components/room/impact-slide';
 import { formatCompact } from '@/lib/format';
+import { useViewerCount } from '@/store/viewers.store';
 import { HeroCardsBadge } from './hero-cards-badge';
 import { GlobalSocialPanel } from './global-social-panel';
 
-const VIEWERS = 12_400;
-
 /** Compact header for the split rail — the public "everyone's watching" strip (no invites). */
 function GlobalRailHeader() {
+  const viewers = useViewerCount();
   return (
     <GlassPanel tone="dark" radius="lg" className="flex shrink-0 items-center gap-2 px-3 py-2">
       <Globe className="size-4 shrink-0 text-neon" weight="duotone" />
       <span className="min-w-0 flex-1 truncate text-sm font-semibold">Global live · everyone&apos;s in</span>
       <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-        <Users className="size-3.5" /> {formatCompact(VIEWERS)}
+        <Users className="size-3.5" /> {formatCompact(viewers)}
       </span>
     </GlassPanel>
   );

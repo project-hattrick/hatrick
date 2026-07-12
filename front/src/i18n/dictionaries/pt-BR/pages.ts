@@ -83,4 +83,27 @@ export const pages = {
     emptyPrefix: 'Nenhum jogador para vender -',
     openPack: 'abra um pacote',
   },
+  duelists: {
+    metadata: {
+      title: 'Duelistas',
+      description: 'Explore jogadores, adicione amigos e desafie qualquer pessoa para um duelo 1v1.',
+    },
+    eyebrow: 'Ranking competitivo',
+    title: 'Duelistas',
+    intro: 'Analise o ranking. Adicione amigos. Desafie qualquer pessoa para um 1v1.',
+    allPlayers: 'Todos os jogadores',
+    friends: 'Amigos',
+    loading: 'Carregando...',
+    loadError: 'Falha ao carregar duelistas. Tente novamente.',
+    empty: 'Nenhum duelista corresponde aos filtros atuais.',
+    tiers: {
+      all: 'Todos os tiers',
+      master: 'Mestre',
+      diamond: 'Diamante',
+      platinum: 'Platina',
+      gold: 'Ouro',
+      silver: 'Prata',
+      bronze: 'Bronze',
+    },
+  },
 } as const;

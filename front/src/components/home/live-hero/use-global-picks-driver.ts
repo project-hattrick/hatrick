@@ -3,10 +3,13 @@
 import { useEffect, useRef } from 'react';
 
 import { MarketType } from '@/enums/market-type.enum';
+import { GlobalEvent } from '@/enums/global-event.enum';
 import { BETTING_MARKETS } from '@/config/betting-markets.config';
 import { duelists } from '@/config/duelists.config';
 import { recapMatch } from '@/config/recap-match.config';
 import { useSelfIdentity } from '@/hooks/use-self-identity';
+import { getSocket } from '@/services/realtime/socket';
+import { backendEnabled } from '@/services/session-mode';
 import { useAuthStore } from '@/store/auth.store';
 import { useBetsStore } from '@/store/bets.store';
 import { useMatchStore } from '@/store/match.store';
@@ -15,11 +18,11 @@ import type { BetSelection } from '@/types/bet';
 
 /**
  * The home hero's PUBLIC picks driver — the landing-page counterpart of
- * `useRoomPicksDriver`. A private room relays each member's REAL bet over the
- * socket; the global live view has no room, so the ambient stream of bettors is
- * always simulated from the duelist roster (a lively public book), while the
- * signed-in user's own real bets still surface as "You". Writes to the shared
- * `useRoomPicksStore`, so RoomSideBackers / RoomPickToast light up unchanged.
+ * `useRoomPicksDriver`. The signed-in user's own real bets surface as "You" and are
+ * relayed to every other socket over `global:pick` (received by useGlobalFeed), so
+ * with the backend on the public book is REAL cross-user activity. Only when the
+ * backend is off (USE_MOCK) is the ambient stream simulated from the duelist roster.
+ * Writes to the shared `useRoomPicksStore`, so RoomSideBackers / RoomPickToast light up unchanged.
  */
 
 /** Simulated pick cadence — lively but not spammy. */
@@ -108,7 +111,7 @@ export function useGlobalPicksDriver(): void {
         if (seenBetIds.has(bet.id)) continue;
         seenBetIds.add(bet.id);
         const identity = selfRef.current;
-        addPick({
+        const pick: RoomPick = {
           id: crypto.randomUUID(),
           userId: useAuthStore.getState().user?.id ?? 'self',
           name: identity.displayName,
@@ -119,46 +122,55 @@ export function useGlobalPicksDriver(): void {
           label: pickLabel(bet, teamNameFor(bet.selectionId)),
           odds: bet.odds,
           createdAt: Date.now(),
-        });
+        };
+        addPick(pick);
+        // Relay the real bet to every other socket as a public global pick (received by useGlobalFeed).
+        if (backendEnabled) {
+          const { createdAt: _createdAt, isSelf: _isSelf, ...wire } = pick;
+          getSocket().emit(GlobalEvent.Pick, wire);
+        }
       }
     });
 
-    // (b) Simulated public book — always on (no room socket to relay real picks globally).
+    // (b) Simulated public book — mock mode ONLY. With the backend on, the public stream is real:
+    // every bettor's placed bet is relayed over `global:pick` (this hook emits, useGlobalFeed receives).
     const timers: number[] = [];
-    const recent: string[] = [];
+    if (!backendEnabled) {
+      const recent: string[] = [];
 
-    const fakePick = () => {
-      const pool = pickerPool().filter((p) => !recent.includes(p.userId));
-      if (pool.length === 0) return;
-      const picker = pool[Math.floor(Math.random() * pool.length)];
-      recent.push(picker.userId);
-      if (recent.length > RECENT_PICKERS) recent.shift();
+      const fakePick = () => {
+        const pool = pickerPool().filter((p) => !recent.includes(p.userId));
+        if (pool.length === 0) return;
+        const picker = pool[Math.floor(Math.random() * pool.length)];
+        recent.push(picker.userId);
+        if (recent.length > RECENT_PICKERS) recent.shift();
 
-      const selection = randomSelection();
-      addPick({
-        id: crypto.randomUUID(),
-        userId: picker.userId,
-        name: picker.name,
-        avatarSrc: picker.avatarSrc,
-        isSelf: false,
-        market: selection.market,
-        selectionId: selection.selectionId,
-        label: pickLabel(selection, teamNameFor(selection.selectionId)),
-        odds: selection.odds,
-        createdAt: Date.now(),
-      });
-    };
+        const selection = randomSelection();
+        addPick({
+          id: crypto.randomUUID(),
+          userId: picker.userId,
+          name: picker.name,
+          avatarSrc: picker.avatarSrc,
+          isSelf: false,
+          market: selection.market,
+          selectionId: selection.selectionId,
+          label: pickLabel(selection, teamNameFor(selection.selectionId)),
+          odds: selection.odds,
+          createdAt: Date.now(),
+        });
+      };
 
-    const schedule = () => {
-      const id = window.setTimeout(() => {
-        fakePick();
-        schedule();
-      }, randomBetween(MIN_GAP_MS, MAX_GAP_MS));
-      timers.push(id);
-    };
+      const schedule = () => {
+        const id = window.setTimeout(() => {
+          fakePick();
+          schedule();
+        }, randomBetween(MIN_GAP_MS, MAX_GAP_MS));
+        timers.push(id);
+      };
 
-    SEED_DELAYS_MS.forEach((delay) => timers.push(window.setTimeout(fakePick, delay)));
-    schedule();
+      SEED_DELAYS_MS.forEach((delay) => timers.push(window.setTimeout(fakePick, delay)));
+      schedule();
+    }
 
     return () => {
       unsubscribe();

@@ -10,6 +10,7 @@ import { PerformanceChart } from '@/components/home/dashboard/performance-chart'
 import { CrowdMessage } from '@/components/crowd/crowd-message';
 import { CrowdComposer } from '@/components/crowd/crowd-composer';
 import { useCrowdMessages } from '@/store/crowd.store';
+import { useViewerCount } from '@/store/viewers.store';
 import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { formatCompact } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -22,8 +23,6 @@ const TABS: { id: SocialTab; label: string; icon: Icon }[] = [
   { id: 'stats', label: 'Stats', icon: ChartBar },
   { id: 'crowd', label: 'Crowd', icon: ChatCircle },
 ];
-
-const VIEWERS = 12_400;
 
 /** Embedded public crowd feed — reuses the crowd-panel body without its own glass shell/header. */
 function GlobalCrowdFeed() {
@@ -54,6 +53,7 @@ function GlobalCrowdFeed() {
 export function GlobalSocialPanel({ className }: { className?: string }) {
   const [tab, setTab] = useState<SocialTab>('stats');
   const [open, setOpen] = useState(true);
+  const viewers = useViewerCount();
 
   return (
     <GlassPanel tone="surface" className={cn('flex min-h-0 flex-col overflow-hidden', open ? className : 'mt-auto')}>
@@ -76,7 +76,7 @@ export function GlobalSocialPanel({ className }: { className?: string }) {
           </button>
         ))}
         <span className="ml-auto flex items-center gap-1.5 pr-2 text-xs font-semibold text-muted-foreground">
-          <Users className="size-3.5" /> {formatCompact(VIEWERS)}
+          <Users className="size-3.5" /> {formatCompact(viewers)}
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}

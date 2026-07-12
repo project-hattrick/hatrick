@@ -8,10 +8,9 @@ import { SectionHeader } from '@/components/common/section-header';
 import { CrowdMessage } from './crowd-message';
 import { CrowdComposer } from './crowd-composer';
 import { useCrowdMessages } from '@/store/crowd.store';
+import { useViewerCount } from '@/store/viewers.store';
 import { formatCompact } from '@/lib/format';
 import { cn } from '@/lib/utils';
-
-const VIEWERS = 12_400;
 
 /**
  * Right-rail live crowd chat. By default it fills the FULL HEIGHT of its rail (flex-1); the caret just
@@ -19,6 +18,7 @@ const VIEWERS = 12_400;
  */
 export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
   const messages = useCrowdMessages();
+  const viewers = useViewerCount();
   const [open, setOpen] = useState(true);
 
   return (
@@ -29,7 +29,7 @@ export function CrowdPanel({ fixtureId }: { fixtureId: number }) {
         action={
           <span className="flex items-center gap-2.5 text-xs font-semibold text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Users className="size-3.5" /> {formatCompact(VIEWERS)}
+              <Users className="size-3.5" /> {formatCompact(viewers)}
             </span>
             <button
               type="button"
