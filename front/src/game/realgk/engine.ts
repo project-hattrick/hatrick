@@ -2,9 +2,9 @@ import { MAX_DT } from './constants';
 import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
-import { cameraLabel, createCamera, cyclePreset, cycleTarget, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
-import { DrivenDirective, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
-import { pointOnField, setFieldSpec } from './field';
+import { cameraLabel, createCamera, cyclePreset, cycleTarget, requestShake, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
+import { BodyAnim, DrivenDirective, MatchPhase, PlayerAction, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import { fieldRatios, pointOnField, setFieldSpec } from './field';
 import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
 import { createDirector, type ReplayDirector } from './replay/director';
@@ -16,7 +16,7 @@ import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
 import { startPowerShot } from './sim/shot';
-import { controlKeeperDive } from './sim/keeper';
+import { controlKeeperDive, startKeeperDive } from './sim/keeper';
 import { startSlideTackle } from './sim/slide';
 import { spawnReferee } from './sim/referee';
 import { freshDrivenClock, setClockDriven } from './sim/driven-clock';
@@ -74,6 +74,8 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     config.personaBodyRoot,
     config.courtImage,
     config.assetVersion,
+    config.personaBodyRootAway,
+    config.assetVersionAway,
   );
   const world = createWorld({ width: canvas.clientWidth || 800, height: canvas.clientHeight || 600 }, config);
   const dropTestBall = (): void => {
@@ -94,6 +96,16 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   const cam = createCamera(world);
   const recorder: ReplayRecorder | null = config.features?.replay ? createRecorder() : null;
   const director: ReplayDirector | null = recorder ? createDirector(world, recorder, cam) : null;
+
+  // GK control: follow YOUR keeper by default — following the ball keeps the controlled player
+  // off-screen most of the match, which reads as "the game plays itself".
+  if (config.keeperControl) {
+    const gkIdx = world.players.findIndex((p) => p.role === Role.GK && p.team === Team.Blue);
+    if (gkIdx >= 0) {
+      cam.targetIdx = gkIdx;
+      opts.onHud({ targetLabel: `Follow: ${world.players[gkIdx].name}` });
+    }
+  }
 
   // Playable sandbox: hold keys drive the controlled player; Space passes, X shoots.
   let removeInput: (() => void) | null = null;
@@ -178,6 +190,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     halfTimeActive: true,
     fullTimeActive: true,
     winnerTeam: 'x',
+    cardFlashSeq: -1,
   };
 
   const syncHud = (): void => {
@@ -224,6 +237,13 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ? world.players.find((p) => p.id === match.restart?.foul?.offenderId)?.name ?? ''
       : '';
     if (redCardName !== last.redCardName) patch.redCardName = last.redCardName = redCardName;
+    // Feed-driven card broadcast: push the whole flash (colour + team) whenever the counter advances.
+    if (match.cardFlashSeq !== last.cardFlashSeq) {
+      last.cardFlashSeq = match.cardFlashSeq;
+      patch.cardFlashSeq = match.cardFlashSeq;
+      patch.cardFlashColor = match.cardFlashColor;
+      patch.cardFlashTeam = match.cardFlashTeam;
+    }
     if (Object.keys(patch).length) opts.onHud(patch);
   };
 
@@ -264,15 +284,23 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
         phase === MatchPhase.HalfTime ||
         phase === MatchPhase.FullTime;
       const timeScale = shotSlowMoScale(world);
+      // feel.saveImpact hitstop: freeze the sim (and sprite clock) for a few frames on a diving catch.
+      const hitstopActive = world.feelFx.hitstop > 0;
+      if (hitstopActive) world.feelFx.hitstop = Math.max(0, world.feelFx.hitstop - rawDt);
       // Red card / any state that halts the sim also halts the sprite animation clock.
       const cardFrozen = world.referee.active && world.referee.phase === RefPhase.Card;
-      if (!paused && simRunning && !cardFrozen) animClock += rawDt * 1000;
+      if (!paused && simRunning && !cardFrozen && !hitstopActive) animClock += rawDt * 1000;
       if (!paused) {
-        if (simRunning) step(world, rawDt * speed * timeScale);
+        if (simRunning && !hitstopActive) step(world, rawDt * speed * timeScale);
         if (director && recorder) {
           director.tick(rawDt, now);
           if (phase === MatchPhase.Live && world.match.celebration === 0) recorder.capture(world, now);
         }
+      }
+      // Hand any queued camera-shake request (feel.saveImpact / punt) to the camera before it updates.
+      if (world.feelFx.shake > 0) {
+        requestShake(cam, world.feelFx.shake);
+        world.feelFx.shake = 0;
       }
       // Foul sanction beat: hand the camera to the referee focus the moment his run-in begins.
       const foulStage = world.match.restart?.foul ? world.match.restart.stage : null;
@@ -309,10 +337,10 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
 
   // Feed directive gate: nothing restarts play after the final whistle, and any on-pitch directive
   // during the break implies the second half is underway (feeds don't always re-send kickoff).
-  const direct = (kind: DrivenDirective, team: Team, threat = 0): void => {
+  const direct = (kind: DrivenDirective, team: Team, threat = 0, red = false, outcome?: string): void => {
     if (world.match.phase === MatchPhase.FullTime) return;
     if (world.match.phase === MatchPhase.HalfTime) resumeFromBreak(world);
-    directDriven(world, kind, team, threat);
+    directDriven(world, kind, team, threat, red, outcome);
   };
 
   resize();
@@ -426,6 +454,30 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       ball.lofted = false;
       ball.cooldown = 0.6;
     },
+    setKeeperDivePack: (variant) => {
+      // Sandbox knob: which dive pack Q/E (and the AI keepers) play. 'auto' = config feature flags.
+      world.divePackOverride =
+        variant === 'v2' ? BodyAnim.GkDiveV2 : variant === 'save' ? BodyAnim.GkDive : variant === 'compact' ? BodyAnim.GkDiveCompact : undefined;
+    },
+    setFeel: (patch) => {
+      // Feel lab: flip smoothing experiments live (no reboot). Merged over the current flags.
+      Object.assign(world.feel, patch);
+    },
+    debugKeeperDive: (variant) => {
+      // GK debug: plays a SPECIFIC dive pack through the real dive machinery (dash, timeline, smear),
+      // regardless of which one the config's feature flags would pick — for reviewing each pack in-game.
+      if (!config.features) return;
+      const gk = world.players.find((p) => p.role === Role.GK && p.team === Team.Blue);
+      if (!gk) return;
+      const anim = variant === 'v2' ? BodyAnim.GkDiveV2 : variant === 'save' ? BodyAnim.GkDive : BodyAnim.GkDiveCompact;
+      // A preview must always fire: clear the action/cooldown gates startKeeperDive respects.
+      gk.action = PlayerAction.None;
+      gk.actionTimer = 0;
+      gk.saveCooldown = 0;
+      const reach = 72 * (config.fieldScale / 1.5);
+      const side = Math.random() < 0.5 ? -1 : 1;
+      startKeeperDive(gk, gk.dir, gk.x, gk.y + side * reach, anim);
+    },
     debugBallDrop: dropTestBall,
     cycleShotEffect: () => opts.onHud({ shotEffectLabel: cycleShotEffect(world) }),
     playIntro: () => {
@@ -531,13 +583,25 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       }
     },
     setPossession: (team, threat) => direct(DrivenDirective.Possession, team, threat),
-    injectShot: (team) => direct(DrivenDirective.Shot, team),
+    injectShot: (team, outcome) => direct(DrivenDirective.Shot, team, 0, false, outcome),
     injectGoal: (team) => direct(DrivenDirective.Goal, team),
     injectCorner: (team) => direct(DrivenDirective.Corner, team),
-    injectCard: (team) => direct(DrivenDirective.Card, team),
+    injectCard: (team, red = false) => direct(DrivenDirective.Card, team, 0, red),
+    injectPenalty: (team) => direct(DrivenDirective.Penalty, team),
+    injectFreeKick: (team, danger = 0) => direct(DrivenDirective.FreeKick, team, danger),
     setScore: (blue, red) => setScoreDriven(world, blue, red),
     setClock: (minute) => setClockDriven(world, minute, performance.now()),
     setPhase: (phase) => setPhaseDriven(world, phase),
+    sampleRadar: () => {
+      const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
+      return {
+        actors: world.players.map((p) => {
+          const r = fieldRatios(world.size, p.x, p.y);
+          return { lat: r.lat, depth: r.depth, home: p.team === Team.Blue };
+        }),
+        ball: { lat: ballRatio.lat, depth: ballRatio.depth },
+      };
+    },
     resize,
     destroy: () => {
       cancelAnimationFrame(raf);

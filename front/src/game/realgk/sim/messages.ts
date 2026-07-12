@@ -29,7 +29,10 @@ export const Status = {
   freeKick: (team: Team): Note => ({ title: 'Free kick', text: `${team === Team.Blue ? 'Blue' : 'Red'} lines it up while the wall gets set.` }),
   penalty: (team: Team): Note => ({ title: 'Penalty!', text: `${team === Team.Blue ? 'Blue' : 'Red'} steps up from the spot.` }),
   sentOff: (name: string): Note => ({ title: 'Sent off', text: `Straight red — ${name} walks off the pitch.` }),
-  card: (team: Team): Note => ({ title: 'Card', text: `The referee books ${team === Team.Blue ? 'Blue' : 'Red'}.` }),
+  card: (team: Team, red = false): Note =>
+    red
+      ? { title: 'Red card', text: `The referee sends ${team === Team.Blue ? 'Blue' : 'Red'} off — down to ten.` }
+      : { title: 'Yellow card', text: `${team === Team.Blue ? 'Blue' : 'Red'} go into the referee's book.` },
   throwIn: (team: Team): Note => ({ title: 'Throw-in', text: `${team === Team.Blue ? 'Blue' : 'Red'} restarts from the touchline.` }),
   corner: (team: Team): Note => ({ title: 'Corner', text: `${team === Team.Blue ? 'Blue' : 'Red'} wins a corner kick.` }),
   goalKick: (team: Team): Note => ({ title: 'Goal kick', text: `${team === Team.Blue ? 'Blue' : 'Red'} restarts with a goal kick.` }),

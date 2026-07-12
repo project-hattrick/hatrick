@@ -32,24 +32,65 @@ export interface CommentPin {
   text: string;
 }
 
+/**
+ * Goal frame in image ratios — the four corners of the goal in perspective. `base` points sit on the
+ * goal line (post feet); `top` points are the post tops the crossbar spans. Replaces the old collapse-
+ * to-band polyline so the full frame (two posts + crossbar) is drawn and kept, not flattened.
+ */
+export interface GoalFrame {
+  /** Near post foot (closer to camera — bottom of the mouth). */
+  nearBase: Pt;
+  /** Far post foot (further away — top of the mouth). */
+  farBase: Pt;
+  /** Near post top (crossbar end above nearBase). */
+  nearTop: Pt;
+  /** Far post top (crossbar end above farBase). */
+  farTop: Pt;
+}
+
+export type GoalHandle = keyof GoalFrame;
+export const GOAL_HANDLES: GoalHandle[] = ['nearBase', 'farBase', 'nearTop', 'farTop'];
+
 /** Everything the calibrator persists between sessions. */
 export interface CalibratorState {
   corners: Corners;
-  goals: Record<GoalSide, Pt[]>;
+  goals: Record<GoalSide, GoalFrame>;
   playLines: PlayLines;
   center: CenterPt;
   comments: CommentPin[];
 }
 
+/** Internal canvas resolution; the image is letterboxed inside preserving aspect. */
+export const CANVAS_W = 1180;
+export const CANVAS_H = 760;
+
+/** Letterbox fit of the court image inside the canvas (contain). */
+export interface Fit {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Canva-style viewport: scale + offset applied on top of the base canvas space. */
+export interface View {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
+export type Mode = 'handles' | 'lines' | 'goal' | 'comment' | 'pen';
+export type LineEdge = 'left' | 'right' | 'top' | 'bottom';
+
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const fmt = (v: number) => v.toFixed(3);
 
-/** Current engine values (realgk/field.ts metrics) as image-ratio corners. */
+/** Current engine values (realgk/field.ts metrics) as image-ratio corners — rain court, re-traced 11/07. */
 export const DEFAULT_CORNERS: Corners = {
-  tl: { x: 0.239, y: 0.346 },
-  tr: { x: 0.759, y: 0.346 },
-  bl: { x: 0.137, y: 0.697 },
-  br: { x: 0.864, y: 0.697 },
+  tl: { x: 0.278, y: 0.337 },
+  tr: { x: 0.717, y: 0.337 },
+  bl: { x: 0.209, y: 0.709 },
+  br: { x: 0.792, y: 0.709 },
 };
 
 /** Turn a lat/depth (engine coords) into an image-ratio point on the given trapezoid. */
@@ -70,15 +111,36 @@ export function ratioFor(c: Corners, pt: Pt): { lat: number; depth: number } {
   return { lat: clamp01((pt.x - left) / Math.max(1e-4, right - left)), depth };
 }
 
-/** Each goal starts as its two posts (seeded from the engine's current GOALS bands). */
-export const DEFAULT_GOALS: Record<GoalSide, Pt[]> = {
-  blue: [pointFor(DEFAULT_CORNERS, 0.0, 0.36), pointFor(DEFAULT_CORNERS, 0.0, 0.535)],
-  red: [pointFor(DEFAULT_CORNERS, 1.0, 0.36), pointFor(DEFAULT_CORNERS, 1.0, 0.64)],
+/** Default post height (image-ratio Y) the crossbar sits above the base; far post a touch shorter. */
+export const DEFAULT_CROSSBAR = 0.11;
+
+/** Build a goal frame from a scoring band (lat + top/bottom post depth) + a crossbar height. */
+export function frameFromBand(
+  c: Corners,
+  lat: number,
+  depthTop: number,
+  depthBottom: number,
+  crossbar = DEFAULT_CROSSBAR,
+): GoalFrame {
+  const near = pointFor(c, lat, depthBottom); // bottom of the mouth = nearer the camera
+  const far = pointFor(c, lat, depthTop);
+  return {
+    nearBase: near,
+    farBase: far,
+    nearTop: { x: near.x, y: near.y - crossbar },
+    farTop: { x: far.x, y: far.y - crossbar * 0.78 }, // shorter in perspective; drag to taste
+  };
+}
+
+/** Each goal starts as a frame around the engine's current GOALS band (rain court, re-traced 11/07). */
+export const DEFAULT_GOALS: Record<GoalSide, GoalFrame> = {
+  blue: frameFromBand(DEFAULT_CORNERS, 0.0, 0.363, 0.532),
+  red: frameFromBand(DEFAULT_CORNERS, 0.996, 0.349, 0.526),
 };
 
 /** Current engine values (realgk/field.ts PLAY_LINES / CENTER) in lat/depth space. */
 export const DEFAULT_PLAY_LINES: PlayLines = { latLeft: 0.001, latRight: 0.995, depthTop: 0.01, depthBottom: 0.99 };
-export const DEFAULT_CENTER: CenterPt = { lat: 0.501, depth: 0.434 };
+export const DEFAULT_CENTER: CenterPt = { lat: 0.502, depth: 0.42 };
 
 export const defaultCalibratorState = (): CalibratorState => ({
   corners: DEFAULT_CORNERS,
@@ -87,6 +149,23 @@ export const defaultCalibratorState = (): CalibratorState => ({
   center: DEFAULT_CENTER,
   comments: [],
 });
+
+/** Drag handles for the out-of-play lines (edge midpoints) + the center spot, in image ratios. */
+export function lineHandles(
+  corners: Corners,
+  playLines: PlayLines,
+  center: CenterPt,
+): { edge: LineEdge | 'center'; pt: Pt }[] {
+  const midDepth = (playLines.depthTop + playLines.depthBottom) / 2;
+  const midLat = (playLines.latLeft + playLines.latRight) / 2;
+  return [
+    { edge: 'left', pt: pointFor(corners, playLines.latLeft, midDepth) },
+    { edge: 'right', pt: pointFor(corners, playLines.latRight, midDepth) },
+    { edge: 'top', pt: pointFor(corners, midLat, playLines.depthTop) },
+    { edge: 'bottom', pt: pointFor(corners, midLat, playLines.depthBottom) },
+    { edge: 'center', pt: pointFor(corners, center.lat, center.depth) },
+  ];
+}
 
 /**
  * Seeds the calibrator from a config's `field` spec, so an already-mapped court (e.g. franca) opens
@@ -107,8 +186,8 @@ export function stateFromFieldSpec(spec: FieldSpec): CalibratorState {
   return {
     corners,
     goals: {
-      blue: [pointFor(corners, gb.lat, gb.depthTop), pointFor(corners, gb.lat, gb.depthBottom)],
-      red: [pointFor(corners, gr.lat, gr.depthTop), pointFor(corners, gr.lat, gr.depthBottom)],
+      blue: frameFromBand(corners, gb.lat, gb.depthTop, gb.depthBottom),
+      red: frameFromBand(corners, gr.lat, gr.depthTop, gr.depthBottom),
     },
     playLines: { ...base.playLines, ...spec.playLines },
     center: { ...base.center, ...spec.center },
@@ -120,19 +199,30 @@ export interface GoalBand {
   lat: number;
   depthTop: number;
   depthBottom: number;
-  points: { lat: number; depth: number }[];
+  /** Crossbar height as an image-ratio Y (average of the two post heights). */
+  crossbar: number;
+  /** The four frame corners in lat/depth, for reference in the export. */
+  corners: { key: GoalHandle; lat: number; depth: number }[];
 }
 
-/** Reduces the traced goal points to the engine's goal-mouth band. */
-export function goalBand(c: Corners, pts: Pt[], side: GoalSide): GoalBand {
-  const rs = pts.map((p) => ratioFor(c, p));
-  if (!rs.length) return { lat: side === 'blue' ? 0 : 1, depthTop: 0.36, depthBottom: 0.64, points: rs };
-  const depths = rs.map((r) => r.depth);
-  const lat = rs.reduce((s, r) => s + r.lat, 0) / rs.length;
-  return { lat, depthTop: Math.min(...depths), depthBottom: Math.max(...depths), points: rs };
+/** Reduces a goal frame to the engine's goal-mouth band (+ crossbar height) and lists its corners. */
+export function goalBand(c: Corners, frame: GoalFrame): GoalBand {
+  const nb = ratioFor(c, frame.nearBase);
+  const fb = ratioFor(c, frame.farBase);
+  const lat = (nb.lat + fb.lat) / 2;
+  const nearH = frame.nearBase.y - frame.nearTop.y;
+  const farH = frame.farBase.y - frame.farTop.y;
+  const crossbar = Math.max(0, (nearH + farH) / 2);
+  return {
+    lat,
+    depthTop: Math.min(nb.depth, fb.depth),
+    depthBottom: Math.max(nb.depth, fb.depth),
+    crossbar,
+    corners: GOAL_HANDLES.map((key) => ({ key, ...ratioFor(c, frame[key]) })),
+  };
 }
 
-const STORAGE_KEY = 'hat-trick:field-calibrator:v1';
+const STORAGE_KEY = 'hat-trick:field-calibrator:v2';
 
 /** Handle colors/keys shared by the calibrator UI (kept here so the component stays under the size cap). */
 export const CORNER_HANDLES: { key: CornerKey; color: string }[] = [
@@ -144,6 +234,11 @@ export const CORNER_HANDLES: { key: CornerKey; color: string }[] = [
 export const GOAL_COLOR: Record<GoalSide, string> = { blue: '#60a5fa', red: '#fb7185' };
 export const COMMENT_COLOR = '#f97316';
 
+/** True when a persisted goals blob is the new frame shape (guards against old array traces). */
+function isFrame(v: unknown): v is GoalFrame {
+  return !!v && typeof v === 'object' && 'nearBase' in (v as object);
+}
+
 /** Sessions are saved per court (key), so mapping a new stadium never clobbers the rain-court trace. */
 export function loadCalibratorState(key: string = STORAGE_KEY): CalibratorState | null {
   try {
@@ -151,9 +246,11 @@ export function loadCalibratorState(key: string = STORAGE_KEY): CalibratorState 
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<CalibratorState>;
     const base = defaultCalibratorState();
+    const goals =
+      parsed.goals && isFrame(parsed.goals.blue) && isFrame(parsed.goals.red) ? parsed.goals : base.goals;
     return {
       corners: parsed.corners ?? base.corners,
-      goals: parsed.goals ?? base.goals,
+      goals,
       playLines: parsed.playLines ?? base.playLines,
       center: parsed.center ?? base.center,
       comments: parsed.comments ?? base.comments,
@@ -179,14 +276,15 @@ export function clearCalibratorState(key: string = STORAGE_KEY): void {
   }
 }
 
-/** Paste-ready field.ts values (+ the pinned notes as comment lines). */
+/** Paste-ready field.ts values (+ the goal frames and pinned notes as comment lines). */
 export function buildSnippet(s: CalibratorState): string {
   const { corners, playLines, center } = s;
   const topY = (corners.tl.y + corners.tr.y) / 2;
   const bottomY = (corners.bl.y + corners.br.y) / 2;
-  const blue = goalBand(corners, s.goals.blue, 'blue');
-  const red = goalBand(corners, s.goals.red, 'red');
-  const ptsLine = (band: GoalBand) => `[${band.points.map((p) => `[${fmt(p.lat)}, ${fmt(p.depth)}]`).join(', ')}]`;
+  const blue = goalBand(corners, s.goals.blue);
+  const red = goalBand(corners, s.goals.red);
+  const frameLine = (band: GoalBand) =>
+    band.corners.map((p) => `${p.key} [${fmt(p.lat)}, ${fmt(p.depth)}]`).join(', ');
   const noteLines = s.comments
     .map((cm, i) => {
       const r = ratioFor(corners, cm);
@@ -199,8 +297,8 @@ export function buildSnippet(s: CalibratorState): string {
 field: {
   ratios: { topY: ${fmt(topY)}, bottomY: ${fmt(bottomY)}, topLeft: ${fmt(corners.tl.x)}, topRight: ${fmt(corners.tr.x)}, bottomLeft: ${fmt(corners.bl.x)}, bottomRight: ${fmt(corners.br.x)} },
   goals: {
-    blue: { lat: ${fmt(blue.lat)}, depthTop: ${fmt(blue.depthTop)}, depthBottom: ${fmt(blue.depthBottom)} },
-    red: { lat: ${fmt(red.lat)}, depthTop: ${fmt(red.depthTop)}, depthBottom: ${fmt(red.depthBottom)} },
+    blue: { lat: ${fmt(blue.lat)}, depthTop: ${fmt(blue.depthTop)}, depthBottom: ${fmt(blue.depthBottom)}, crossbar: ${fmt(blue.crossbar)} },
+    red: { lat: ${fmt(red.lat)}, depthTop: ${fmt(red.depthTop)}, depthBottom: ${fmt(red.depthBottom)}, crossbar: ${fmt(red.crossbar)} },
   },
   center: { lat: ${fmt(center.lat)}, depth: ${fmt(center.depth)} },
   playLines: { latLeft: ${fmt(playLines.latLeft)}, latRight: ${fmt(playLines.latRight)}, depthTop: ${fmt(playLines.depthTop)}, depthBottom: ${fmt(playLines.depthBottom)} },
@@ -214,9 +312,11 @@ topRight: width * ${fmt(corners.tr.x)},
 bottomLeft: width * ${fmt(corners.bl.x)},
 bottomRight: width * ${fmt(corners.br.x)},
 
-// project/front/src/game/realgk/field.ts → GOALS (band derived from traced points)
+// project/front/src/game/realgk/field.ts → GOALS (scoring band derived from the frame's post feet)
 [Team.Blue]: { lat: ${fmt(blue.lat)}, depthTop: ${fmt(blue.depthTop)}, depthBottom: ${fmt(blue.depthBottom)} },
 [Team.Red]:  { lat: ${fmt(red.lat)}, depthTop: ${fmt(red.depthTop)}, depthBottom: ${fmt(red.depthBottom)} },
+
+// crossbar height as image-ratio Y (feed into GOAL_MAX_Z / a goalNet renderer): blue ${fmt(blue.crossbar)}, red ${fmt(red.crossbar)}
 
 // project/front/src/game/realgk/field.ts → CENTER (kickoff / painted center circle)
 export const CENTER = { lat: ${fmt(center.lat)}, depth: ${fmt(center.depth)} };
@@ -229,7 +329,7 @@ export const PLAY_LINES = {
   depthBottom: ${fmt(playLines.depthBottom)},
 };
 
-// traced goal points [lat, depth] (${blue.points.length} blue, ${red.points.length} red)
-// blue: ${ptsLine(blue)}
-// red:  ${ptsLine(red)}${noteLines ? `\n\n// pinned notes\n${noteLines}` : ''}`;
+// goal frames (lat, depth per corner)
+// blue: ${frameLine(blue)}
+// red:  ${frameLine(red)}${noteLines ? `\n\n// pinned notes\n${noteLines}` : ''}`;
 }

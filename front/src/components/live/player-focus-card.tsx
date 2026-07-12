@@ -6,7 +6,12 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { CaretDown, CaretLeft, CaretRight } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
 import { buildFocusRoster, focusAt, type FocusPlayer } from '@/config/live-roster.config';
-import { useDisplayMatch, useDisplayEvents } from '@/store/match.store';
+import {
+  useDisplayMatch,
+  useDisplayEvents,
+  useMatchLineups,
+  usePlayerMatchStats,
+} from '@/store/match.store';
 import { useUiStore } from '@/store/ui.store';
 
 const RADIUS = 44;
@@ -66,10 +71,13 @@ export function PlayerFocusCard() {
   const [expanded, setExpanded] = useState(false);
   const match = useDisplayMatch();
   const events = useDisplayEvents();
-  // Roster follows the on-screen fixture; the newest event decides who's on the ball.
+  const lineups = useMatchLineups();
+  const playerStats = usePlayerMatchStats();
+  // Roster follows the on-screen fixture; the newest event decides who's on the ball —
+  // by its real TxLINE playerId when the feed provides one, by participant+seq otherwise.
   const roster = useMemo(
-    () => buildFocusRoster(match, events[events.length - 1]),
-    [match.home.code, match.away.code, match.home.name, match.away.name, events],
+    () => buildFocusRoster(match, events[events.length - 1], { lineups, playerStats }),
+    [match.home.code, match.away.code, match.home.name, match.away.name, events, lineups, playerStats],
   );
   const { player, position, total }: { player: FocusPlayer; position: number; total: number } =
     focusAt(roster, focusedPlayerIndex);
@@ -79,9 +87,21 @@ export function PlayerFocusCard() {
       {/* Always-visible minimalist header. */}
       <div className="flex items-center gap-2">
         <span className={cn('size-1.5 rounded-full', player.onBall ? 'bg-neon' : 'bg-muted-foreground')} />
-        <span className="mr-auto font-mono text-micro font-bold tracking-wider text-muted-foreground">
+        <span className="font-mono text-micro font-bold tracking-wider text-muted-foreground">
           {player.onBall ? 'ON THE BALL' : 'FOCUS'}
         </span>
+        {/* Live form from REAL feed stats — only renders once the player has stats this match. */}
+        {player.formBoost !== 0 ? (
+          <span
+            className={cn(
+              'rounded px-1 py-0.5 font-mono text-micro font-bold',
+              player.formBoost > 0 ? 'bg-neon/15 text-neon' : 'bg-foreground/5 text-muted-foreground',
+            )}
+          >
+            {player.formBoost > 0 ? `▲ +${player.formBoost}` : `▼ ${player.formBoost}`}
+          </span>
+        ) : null}
+        <span className="mr-auto" />
         <span className="font-mono text-micro font-bold text-muted-foreground/70">{player.code}</span>
         <button
           type="button"
@@ -134,7 +154,12 @@ export function PlayerFocusCard() {
 
           <div className="mt-3 flex gap-1.5">
             <StatCell value={player.pass} label="PASS" />
-            <StatCell value={player.touches} label="TCH" />
+            {/* Real shots from the feed take the middle cell over the seeded touches. */}
+            {player.shots !== undefined ? (
+              <StatCell value={player.shots} label="SHOTS" />
+            ) : (
+              <StatCell value={player.touches} label="TCH" />
+            )}
             <StatCell value={player.goals} label="GOALS" highlight />
           </div>
 

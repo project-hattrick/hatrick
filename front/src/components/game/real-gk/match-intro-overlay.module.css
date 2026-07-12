@@ -43,6 +43,13 @@
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
+/* flag-icons' unlayered `.fi { background-size: contain }` out-cascades Tailwind's layered bg-cover,
+   letterboxing the 4:3 asset inside this 3:2 box so the ring/shadow outline empty space. The extra
+   specificity (0,2,0) forces full-bleed regardless of stylesheet order. */
+.card .flag {
+  background-size: cover;
+}
+
 .name {
   font-size: clamp(20px, 3.4vw, 40px);
   font-weight: 900;

@@ -9,7 +9,7 @@ import { CaretDown, CircleNotch, Clock, ClockCounterClockwise, Lock, MagnifyingG
 import { useReplayCatalog, useUpcomingFixtures } from '@/services/queries/use-replay';
 import type { ReplayCatalogItem } from '@/services/replay.service';
 import type { FixtureDto } from '@/services/txline.service';
-import { useDisplayMatch, useIsMatchLive, useIsReplay, useIsSwitching, useMatchStore } from '@/store/match.store';
+import { useDisplayMatch, useIsMatchLive, useIsSwitching, useMatchStore } from '@/store/match.store';
 import { useLoadReplay } from '@/hooks/use-load-replay';
 import { useKickoffCountdown } from '@/hooks/use-kickoff-countdown';
 import { useLiveMinute } from '@/hooks/use-live-minute';
@@ -132,19 +132,19 @@ function MatchRow({ onClick, children }: { onClick: () => void; children: React.
 function PickerTrigger({ variant, disabled = false }: { variant: PickerVariant; disabled?: boolean }) {
   const match = useDisplayMatch();
   const isLive = useIsMatchLive();
-  const isReplay = useIsReplay();
   const switching = useIsSwitching();
   const countdown = useKickoffCountdown();
   const liveMinute = useLiveMinute();
 
   if (variant === 'hero') {
     const phase = lookup(gameStateConfig, match.gameState, gameStateFallback);
-    const state = switching ? 'Loading' : countdown ? 'Kickoff' : isReplay ? 'Replay' : isLive ? 'Live' : 'Full-time';
+    // A feed-driven replay IS the live-match experience here, so it reads as Live — never "Replay".
+    const state = switching ? 'Loading' : countdown ? 'Kickoff' : isLive ? 'Live' : 'Full-time';
     // Pre-kickoff shows only the "Kickoff" state here — the big scoreboard number owns the countdown.
-    const detail = switching ? null : countdown ? null : isReplay || isLive ? formatMinute(liveMinute) : null;
+    const detail = switching ? null : countdown ? null : isLive ? formatMinute(liveMinute) : null;
     const sub = switching || countdown !== null || !isLive ? null : phase.label;
-    const accent = countdown || isReplay ? 'text-neon' : isLive ? 'text-live' : 'text-muted-foreground';
-    const dot = countdown ? 'animate-pulse bg-neon' : isReplay ? 'bg-neon' : isLive ? 'animate-pulse bg-live' : 'bg-muted-foreground';
+    const accent = countdown ? 'text-neon' : isLive ? 'text-live' : 'text-muted-foreground';
+    const dot = countdown ? 'animate-pulse bg-neon' : isLive ? 'animate-pulse bg-live' : 'bg-muted-foreground';
     return (
       <Popover.Trigger
         disabled={disabled}

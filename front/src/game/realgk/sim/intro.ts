@@ -4,7 +4,7 @@ import type { RealGkWorld } from '../types';
 import { updateCoach } from './coach';
 import { flushDirectives } from './directives';
 import { Status } from './messages';
-import { moveToward } from './players';
+import { applyLivelyIdle, livelyIdlePlayer, moveToward } from './players';
 import { spawnRefereeKickoff, updateReferee } from './referee';
 import { setStatus } from './rules';
 
@@ -50,11 +50,17 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
         const home = pointOnField(world.size, p.homeLat, p.homeDepth);
         const dist = Math.hypot(home.x - p.x, home.y - p.y);
         if (dist <= ARRIVE_EPS) {
-          p.x = home.x;
-          p.y = home.y;
-          p.vx = 0;
-          p.vy = 0;
-          p.mode = p.idleMode;
+          // Arrived: lifelike idle (varied facing + gentle sway) for `livelyMatch` variants (room/persona);
+          // legacy checkpoints keep the frozen home pose byte-for-byte.
+          if (world.cfg.features?.livelyMatch) {
+            livelyIdlePlayer(world, p, match.introTimer);
+          } else {
+            p.x = home.x;
+            p.y = home.y;
+            p.vx = 0;
+            p.vy = 0;
+            p.mode = p.idleMode;
+          }
           continue;
         }
         allHome = false;
@@ -76,11 +82,16 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
     }
 
     case IntroStage.HoldLoop:
-      // Squads idle at their homes; the camera side loops its beats off introTimer.
-      for (const p of world.players) {
-        p.vx *= 0.8;
-        p.vy *= 0.8;
-        p.mode = p.idleMode;
+      // Squads idle at their homes; `livelyMatch` variants get varied facings + sway, legacy stays frozen.
+      // The camera loops its beats off introTimer.
+      if (world.cfg.features?.livelyMatch) {
+        applyLivelyIdle(world);
+      } else {
+        for (const p of world.players) {
+          p.vx *= 0.8;
+          p.vy *= 0.8;
+          p.mode = p.idleMode;
+        }
       }
       if (!match.introHold) {
         spawnRefereeKickoff(world);
@@ -90,10 +101,14 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
 
     case IntroStage.RefWhistle:
       // Hold players at home; the referee run-to-center + whistle is driven by updateReferee above.
-      for (const p of world.players) {
-        p.vx *= 0.8;
-        p.vy *= 0.8;
-        p.mode = p.idleMode;
+      if (world.cfg.features?.livelyMatch) {
+        applyLivelyIdle(world);
+      } else {
+        for (const p of world.players) {
+          p.vx *= 0.8;
+          p.vy *= 0.8;
+          p.mode = p.idleMode;
+        }
       }
       if (world.referee.phase === RefPhase.Whistle) advance(world, IntroStage.Kickoff);
       return;

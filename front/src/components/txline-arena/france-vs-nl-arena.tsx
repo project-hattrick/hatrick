@@ -1,0 +1,107 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef } from 'react';
+
+import { Camera, Lightning, Pause, Play, SoccerBall } from '@/components/common/icons';
+import { GoalBurst } from '@/components/game/goal-burst';
+import { RestartBanner } from '@/components/game/real-gk/restart-banner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { AWAY_TEAM_PACKS, REAL_GK_FRANCE_VS_NL_CONFIG } from '@/game/realgk/config';
+import { createRealGkEngine } from '@/game/realgk/engine';
+import type { RealGkHandle } from '@/game/realgk/types';
+import { useRealGkStore } from '@/store/real-gk.store';
+
+const BLUE = 'France';
+
+/** 11v11 home/away kit split: France source bodies (blue) vs a recolored away pack (red), swap with ?away=. */
+export function FranceVsNlArena() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const handleRef = useRef<RealGkHandle | null>(null);
+  const awayParam = useSearchParams().get('away') ?? 'netherlands';
+  const away = AWAY_TEAM_PACKS[awayParam] ?? AWAY_TEAM_PACKS.netherlands;
+  const RED = away.brand.name;
+  const config = useMemo(
+    () => ({ ...REAL_GK_FRANCE_VS_NL_CONFIG, personaBodyRootAway: away.root, teams: { blue: REAL_GK_FRANCE_VS_NL_CONFIG.teams!.blue, red: away.brand } }),
+    [away],
+  );
+
+  const scoreBlue = useRealGkStore((s) => s.scoreBlue);
+  const scoreRed = useRealGkStore((s) => s.scoreRed);
+  const clock = useRealGkStore((s) => s.clock);
+  const paused = useRealGkStore((s) => s.paused);
+  const speed = useRealGkStore((s) => s.speed);
+  const cameraLabel = useRealGkStore((s) => s.cameraLabel);
+  const ballText = useRealGkStore((s) => s.ballText);
+  const goalActive = useRealGkStore((s) => s.goalActive);
+  const goalTeam = useRealGkStore((s) => s.goalTeam);
+  const restartActive = useRealGkStore((s) => s.restartActive);
+  const restartLabel = useRealGkStore((s) => s.restartLabel);
+  const restartTeam = useRealGkStore((s) => s.restartTeam);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const handle = createRealGkEngine(canvas, { onHud: useRealGkStore.getState().apply, config });
+    handleRef.current = handle;
+    const observer = new ResizeObserver(() => handle.resize());
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => {
+      observer.disconnect();
+      handle.destroy();
+      handleRef.current = null;
+    };
+  }, [config]);
+
+  return (
+    <div ref={containerRef} className="fixed inset-0 select-none overflow-hidden bg-[#06222f]">
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
+
+      <GoalBurst
+        active={goalActive}
+        team={goalTeam}
+        blueName={BLUE}
+        redName={RED}
+        scoreBlue={scoreBlue}
+        scoreRed={scoreRed}
+        clock={clock}
+        accent={goalTeam === 'red' ? away.accent : '#0055A4'}
+      />
+      <RestartBanner active={restartActive} label={restartLabel} team={restartTeam} teamName={restartTeam === 'red' ? RED : BLUE} />
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center gap-2 p-3">
+        <div className="pointer-events-auto flex items-center gap-4 rounded-full border border-white/10 bg-black/55 px-5 py-2 backdrop-blur">
+          <span className="max-w-[28vw] truncate text-right text-sm font-semibold text-[#7aa2ff]">{BLUE}</span>
+          <span className="font-mono text-2xl font-bold tabular-nums text-white">
+            {scoreBlue}<span className="mx-1 text-white/40">-</span>{scoreRed}
+          </span>
+          <span className="max-w-[28vw] truncate text-left text-sm font-semibold text-[#ff9d4d]">{RED}</span>
+          <span className="ml-2 border-l border-white/15 pl-3 font-mono text-xs text-white/70">{clock}</span>
+        </div>
+        <Badge variant="outline" className="pointer-events-auto border-white/15 bg-black/45 text-white/80">
+          <SoccerBall className="mr-1 size-3.5" /> {ballText}
+        </Badge>
+      </div>
+
+      <div className="absolute right-3 top-3 flex flex-wrap items-center justify-end gap-2">
+        <Button size="sm" variant="outline" onClick={() => handleRef.current?.togglePause()}>
+          {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
+          {paused ? 'Play' : 'Pause'}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => handleRef.current?.cycleCamera()}>
+          <Camera className="size-4" />
+          {cameraLabel.replace('Cam: ', '')}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => handleRef.current?.cycleSpeed()}>
+          <Lightning className="size-4" />
+          {speed}x
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => handleRef.current?.restart()}>
+          Restart
+        </Button>
+      </div>
+    </div>
+  );
+}

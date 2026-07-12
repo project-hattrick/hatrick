@@ -63,8 +63,12 @@ export interface OddsSnapshotItem {
 /** Authoritative current/final score for a fixture (mirrors the api FixtureScoreDto). */
 export interface FixtureScore {
   fixtureId: number;
+  /** Total goals — includes extra time on knockout fixtures. */
   home: number;
   away: number;
+  /** Regulation-time (H1+H2) goals — standard 1X2/OU settlement basis, when the wire broke periods down. */
+  regulationHome?: number;
+  regulationAway?: number;
   minute?: number;
   finished: boolean;
   hasScore: boolean;

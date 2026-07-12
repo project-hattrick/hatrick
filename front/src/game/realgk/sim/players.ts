@@ -8,12 +8,12 @@ import { ballOwner, kickBall, teamPlayers } from './ball';
 import { updatePlayerCelebration } from './celebration';
 import { fillerShotAllowed } from './filler';
 import { FORMATION } from './formation';
-import { isControlled, updateControlledPlayer } from './control';
+import { isControlled, updateControlledPlayer, updateKeeperAutopilot } from './control';
 import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { commitShot, updatePowerShot } from './shot';
 import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
-import { dive2FrameAt, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
+import { dive2FrameAt, keeperCrossTarget, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { createPlayer } from './player-factory';
 import { setStatus } from './rules';
@@ -120,7 +120,7 @@ export function chooseMode(player: RealGkPlayer): BodyAnim {
 /** Static open-arms frame held during the Pose/Loop celebration phases (playground frame 2). */
 const ARMSUP_HOLD_FRAME = 2;
 
-export function frameIndexFor(player: RealGkPlayer, now: number): number {
+export function frameIndexFor(player: RealGkPlayer, now: number, phaseSeconds: number | null = null): number {
   const item = ITEM_MAP[player.mode];
   if (player.mode.startsWith('idle') || player.mode === BodyAnim.GkIdle) return 0;
   if (!item) return 0;
@@ -133,6 +133,9 @@ export function frameIndexFor(player: RealGkPlayer, now: number): number {
   if (player.mode === BodyAnim.GkDiveV2) return dive2FrameAt(player.actionElapsed);
   // Non-looping actions (dive, turn, brake) play once off their own clock.
   if (!item.loop) return Math.min(item.frames.length - 1, Math.floor(player.actionElapsed * item.fps));
+  // feel.animPhase: a per-player clock that resets to 0 on a mode switch, so a switch always starts at
+  // frame 0 instead of landing on an arbitrary frame of the global clock's cycle (the visible "jump").
+  if (phaseSeconds !== null) return Math.floor(phaseSeconds * item.fps) % item.frames.length;
   return Math.floor((now / 1000) * item.fps) % item.frames.length;
 }
 
@@ -442,6 +445,47 @@ export function faceBall(world: RealGkWorld): void {
   }
 }
 
+/**
+ * Idles ONE player with life: a stable, varied resting orientation (so the squad doesn't all stare the
+ * same way — the "everyone idle facing back" look) plus a gentle weight-shift sway around their formation
+ * home. Position is set ABSOLUTELY from home each tick (offset never accumulates → no drift). Used by the
+ * pre-kickoff intro hold, where the autonomous `faceBall`/AI aren't running yet.
+ */
+export function livelyIdlePlayer(world: RealGkWorld, p: RealGkPlayer, t: number): void {
+  if (p.role === Role.GK) {
+    p.vx = 0;
+    p.vy = 0;
+    p.idleMode = BodyAnim.GkIdle;
+    p.mode = BodyAnim.GkIdle;
+    return;
+  }
+  const home = pointOnField(world.size, p.homeLat, p.homeDepth);
+  const scale = world.cfg.fieldScale / 1.5;
+  const phase = idNoise(p.id, 6) * Math.PI * 2;
+  // Subtle, out-of-phase sway per player — reads as shifting weight / shuffling, not marching in lockstep.
+  p.x = home.x + Math.sin(t * 1.2 + phase) * 2.6 * scale;
+  p.y = home.y + Math.sin(t * 0.85 + phase * 1.4) * 1.3 * scale;
+  p.vx = 0;
+  p.vy = 0;
+  // Stable per-player rest orientation: some watch the ball area, some glance off — a mix of front/back
+  // idle bodies plus left/right mirror, instead of a uniform wall of backs.
+  const restX = clamp(p.dir * 0.35 + (idNoise(p.id, 4) - 0.5) * 1.3, -1, 1);
+  const restY = (idNoise(p.id, 5) - 0.5) * 1.5;
+  const len = Math.hypot(restX, restY) || 1;
+  p.lookX = restX / len;
+  p.lookY = restY / len;
+  p.desiredLookX = p.lookX;
+  p.desiredLookY = p.lookY;
+  p.facing = p.lookX < 0 ? -1 : 1;
+  p.idleMode = p.lookY < 0 ? BodyAnim.IdleBack : BodyAnim.IdleFront;
+  p.mode = p.idleMode;
+}
+
+/** Applies `livelyIdlePlayer` to the whole squad off the intro clock (pre-kickoff hold). */
+export function applyLivelyIdle(world: RealGkWorld): void {
+  for (const p of world.players) livelyIdlePlayer(world, p, world.match.introTimer);
+}
+
 /** Per-player AI + soft body separation for one tick. */
 export function updatePlayers(world: RealGkWorld, dt: number): void {
   const { players, ball, match, size } = world;
@@ -453,6 +497,9 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   // Sandbox: control follows the Blue player who has the ball, so a pass hands control to the receiver.
   // keeperControl pins control to the keeper instead — a pass out must not drag control upfield.
   if (world.cfg.features?.playable && !world.cfg.keeperControl && owner && owner.team === Team.Blue) world.controlId = owner.id;
+
+  // Feel-comparison grid: drive the pinned keeper's control input + punt automatically.
+  if (world.cfg.keeperAutopilot) updateKeeperAutopilot(world);
 
   for (const player of players) {
     if (match.celebration > 0) {
@@ -489,7 +536,20 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     // The keyboard-controlled keeper never auto-dives — saves are the player's call (Q/E). An
     // in-flight manual dive still owns the tick so header/receive triggers can't hijack it.
     const keeperUnderControl = world.cfg.features?.playable === true && player.id === world.controlId && world.cfg.keeperControl === true;
-    if (player.role === Role.GK && keeperUnderControl && updateKeeperDive(player, dt)) continue;
+    if (player.role === Role.GK && keeperUnderControl) {
+      // Autopilot (feel grid): let the pinned keeper auto-dive at incoming shots like an AI keeper.
+      if (world.cfg.keeperAutopilot && player.action !== PlayerAction.Dive) maybeTriggerKeeperDive(world, player);
+      if (updateKeeperDive(player, dt)) continue;
+    }
+    // Keeper comes off his line to claim a central cross/corner (livelyMatch keepers): rush to the drop,
+    // then maybeClaimBall catches it on landing. Wide/deep balls are left to the defenders.
+    if (player.role === Role.GK && !keeperUnderControl && world.cfg.features?.livelyMatch) {
+      const claim = keeperCrossTarget(world, player);
+      if (claim) {
+        moveToward(world, player, claim.x, claim.y, 165, dt);
+        continue;
+      }
+    }
     if (player.role === Role.GK && !keeperUnderControl && maybeTriggerKeeperDive(world, player)) {
       updateKeeperDive(player, dt);
       continue;

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { TxlineAuthService } from './txline-auth.service';
+import { historicalIntervalTtl, TxlineCacheTtl } from './txline-cache-ttl';
 import { TxlineHttpService } from './txline-http.service';
 import { mapWireScore, WireScoreEvent } from './txline-mapper';
 import { RawFixture, RawOddsEvent, RawScoreEvent, StreamKind } from '../txline.types';
@@ -22,6 +23,12 @@ export interface FixtureScore {
   fixtureId: number;
   home: number;
   away: number;
+  /**
+   * Regulation-time (H1+H2) goals — `home/away` include extra time, so standard
+   * 1X2 / Over-Under settlement uses these when present.
+   */
+  regulationHome?: number;
+  regulationAway?: number;
   minute?: number;
   finished: boolean;
   hasScore: boolean;
@@ -46,16 +53,35 @@ export class TxlineSnapshotService {
 
   getFixtures(query: FixturesQuery = {}): Promise<RawFixture[]> {
     return this.guard(() =>
-      this.http.get<RawFixture[]>('/api/fixtures/snapshot', { params: this.params(query) }),
+      this.http.getCached<RawFixture[]>('/api/fixtures/snapshot', TxlineCacheTtl.FixturesSnapshot, {
+        params: this.params(query),
+      }),
     );
   }
 
-  getOddsSnapshot(fixtureId: number): Promise<RawOddsEvent[]> {
-    return this.guard(() => this.http.get<RawOddsEvent[]>(`/api/odds/snapshot/${fixtureId}`));
+  /**
+   * Latest odds per market line. Without `asOf` the provider only answers from
+   * the current 5-minute interval, which can be empty on quiet pre-match
+   * fixtures — retry once against historical data in that case. The fallback's
+   * `asOf` is bucketed to the 5-min interval so its cache key stays stable.
+   */
+  async getOddsSnapshot(fixtureId: number): Promise<RawOddsEvent[]> {
+    const live = await this.guard(() =>
+      this.http.getCached<RawOddsEvent[]>(`/api/odds/snapshot/${fixtureId}`, TxlineCacheTtl.OddsSnapshot),
+    );
+    if (live.length) return live;
+    const asOf = Math.floor(Date.now() / 300_000) * 300_000;
+    return this.guard(() =>
+      this.http.getCached<RawOddsEvent[]>(`/api/odds/snapshot/${fixtureId}`, TxlineCacheTtl.OddsSnapshotAsOf, {
+        params: { asOf },
+      }),
+    );
   }
 
   getScoresSnapshot(fixtureId: number): Promise<RawScoreEvent[]> {
-    return this.guard(() => this.http.get<RawScoreEvent[]>(`/api/scores/snapshot/${fixtureId}`));
+    return this.guard(() =>
+      this.http.getCached<RawScoreEvent[]>(`/api/scores/snapshot/${fixtureId}`, TxlineCacheTtl.ScoresSnapshot),
+    );
   }
 
   /**
@@ -64,12 +90,18 @@ export class TxlineSnapshotService {
    * Reduces the snapshot to the highest-seq event that carries a Score object.
    */
   async getFixtureScore(fixtureId: number): Promise<FixtureScore> {
+    // Same key as getScoresSnapshot — one upstream call feeds both surfaces.
     const wire = await this.guard(() =>
-      this.http.get<Record<string, unknown>[]>(`/api/scores/snapshot/${fixtureId}`),
+      this.http.getCached<Record<string, unknown>[]>(
+        `/api/scores/snapshot/${fixtureId}`,
+        TxlineCacheTtl.ScoresSnapshot,
+      ),
     );
 
     let home = 0;
     let away = 0;
+    let regulationHome: number | undefined;
+    let regulationAway: number | undefined;
     let minute: number | undefined;
     let bestSeq = -1;
     let finished = false;
@@ -99,18 +131,29 @@ export class TxlineSnapshotService {
       bestSeq = raw.seq;
       home = raw.homeGoals ?? 0;
       away = raw.awayGoals ?? 0;
+      regulationHome = raw.regulationHomeGoals ?? regulationHome;
+      regulationAway = raw.regulationAwayGoals ?? regulationAway;
       minute = raw.dataSoccer?.Minutes ?? minute;
       hasScore = true;
     }
 
     actions.sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0));
-    return { fixtureId, home, away, minute, finished, hasScore, actions: actions.slice(0, 12) };
+    return {
+      fixtureId, home, away, regulationHome, regulationAway,
+      minute, finished, hasScore, actions: actions.slice(0, 12),
+    };
   }
 
-  /** Historical 5-min interval updates — backfill / deterministic demo replay. */
+  /**
+   * Historical 5-min interval updates — backfill / deterministic demo replay.
+   * A fully-passed interval is immutable, so it caches long; the current one bypasses.
+   */
   getUpdates(kind: StreamKind, epochDay: number, hour: number, interval: number): Promise<unknown[]> {
     return this.guard(() =>
-      this.http.get<unknown[]>(`/api/${kind}/updates/${epochDay}/${hour}/${interval}`),
+      this.http.getCached<unknown[]>(
+        `/api/${kind}/updates/${epochDay}/${hour}/${interval}`,
+        historicalIntervalTtl(epochDay, hour, interval),
+      ),
     );
   }
 

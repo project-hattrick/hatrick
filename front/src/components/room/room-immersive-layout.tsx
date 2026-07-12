@@ -2,7 +2,7 @@
 
 import { Scoreboard } from '@/components/live/scoreboard';
 import { MatchTimeline } from '@/components/live/match-timeline';
-import { BetSlip } from '@/components/live/bet-slip';
+import { RoomBetSlip } from './room-bet-slip';
 import { RoomResultDock } from './room-result-dock';
 import { RoomBetPanel } from './room-bet-panel';
 import { RoomInvitePanel } from './room-invite-panel';
@@ -48,7 +48,7 @@ export function RoomImmersiveLayout({ roomId, inviteToken, inviteUrl }: RoomLayo
         className="hidden md:absolute md:top-20 md:bottom-24 md:left-6 md:flex md:min-h-0 md:w-[330px] md:flex-col md:gap-3"
       >
         <RoomBetPanel className="min-h-0 flex-1" />
-        <BetSlip />
+        <RoomBetSlip />
       </ImpactSlide>
 
       {/* Invite + social — desktop right rail (stays visible on beats). */}

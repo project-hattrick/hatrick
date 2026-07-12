@@ -41,6 +41,8 @@ export interface RealGkAssets {
   personaHeads: HeadSet[];
   /** Headless outfield locomotion bodies per anim (casting). Empty unless persona bodies are loaded. */
   personaBodies: Partial<Record<BodyAnim, HTMLImageElement[]>>;
+  /** Optional second body pack for the away team (Team.Red). Empty unless a home/away split root is set. */
+  personaBodiesAway: Partial<Record<BodyAnim, HTMLImageElement[]>>;
 }
 
 const cache = new Map<string, HTMLImageElement>();
@@ -66,6 +68,8 @@ export function loadRealGkAssets(
   personaBodyRoot?: string,
   courtImage?: string,
   assetVersion?: string,
+  awayBodyRoot?: string,
+  awayAssetVersion?: string,
 ): RealGkAssets {
   const body = Object.fromEntries(
     ITEMS.map((item) => [
@@ -81,21 +85,20 @@ export function loadRealGkAssets(
         return { front, frontClosed: front, back: loadImage(p.back), side: loadImage(p.side) };
       })
     : [];
-  const personaBodies: Partial<Record<BodyAnim, HTMLImageElement[]>> = {};
-  if (includePersonas) {
-    for (const anim of PERSONA_BODY_ANIMS) {
+  // Team-specific keeper bodies only exist in custom family roots (e.g. /game/franca) — the default
+  // personas pack has none, so skipping GK anims there avoids a wall of 404s.
+  const loadBodyPack = (root: string | undefined, version: string | undefined, includeGk: boolean): Partial<Record<BodyAnim, HTMLImageElement[]>> => {
+    const pack: Partial<Record<BodyAnim, HTMLImageElement[]>> = {};
+    const anims = includeGk ? [...PERSONA_BODY_ANIMS, ...PERSONA_GK_BODY_ANIMS] : PERSONA_BODY_ANIMS;
+    for (const anim of anims) {
       const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
-      personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount, assetVersion).map((src) => loadImage(src));
+      pack[anim as BodyAnim] = personaBodyFrames(anim, root, frameCount, version).map((src) => loadImage(src));
     }
-    // Team-specific keeper bodies only exist in custom family roots (e.g. /game/franca) — the default
-    // personas pack has none, so skipping avoids a wall of 404s there.
-    if (personaBodyRoot) {
-      for (const anim of PERSONA_GK_BODY_ANIMS) {
-        const frameCount = ITEMS.find((item) => item.id === anim)?.frameCount ?? 4;
-        personaBodies[anim as BodyAnim] = personaBodyFrames(anim, personaBodyRoot, frameCount, assetVersion).map((src) => loadImage(src));
-      }
-    }
-  }
+    return pack;
+  };
+  const personaBodies = includePersonas ? loadBodyPack(personaBodyRoot, assetVersion, !!personaBodyRoot) : {};
+  // Away pack (Team.Red) — a recolored family root like /game/teams/netherlands ships GK cuts too.
+  const personaBodiesAway = includePersonas && awayBodyRoot ? loadBodyPack(awayBodyRoot, awayAssetVersion, true) : {};
 
   return {
     court: loadImage(versionedPath(courtImage ?? COURT_BG, assetVersion)),
@@ -126,5 +129,6 @@ export function loadRealGkAssets(
     },
     personaHeads,
     personaBodies,
+    personaBodiesAway,
   };
 }

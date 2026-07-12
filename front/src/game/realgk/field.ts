@@ -43,7 +43,7 @@ export interface FieldSpec {
 }
 
 /** v1 rain-court trapezoid (calibrated via /sandbox/field-calibrator) — the default mapping. */
-const DEFAULT_RATIOS: FieldRatios = { topY: 0.341, bottomY: 0.708, topLeft: 0.24, topRight: 0.759, bottomLeft: 0.132, bottomRight: 0.871 };
+const DEFAULT_RATIOS: FieldRatios = { topY: 0.337, bottomY: 0.709, topLeft: 0.278, topRight: 0.717, bottomLeft: 0.209, bottomRight: 0.792 };
 
 let RATIOS: FieldRatios = { ...DEFAULT_RATIOS };
 
@@ -109,6 +109,9 @@ export interface GoalGeom {
   /** Top-post and bottom-post depth — the vertical band the ball must be within to score. */
   depthTop: number;
   depthBottom: number;
+  /** Post/crossbar height as an image-ratio Y (fraction of court height), traced in the calibrator.
+   *  Drives the `goalFrame` renderer's posts; omit to keep the default. */
+  crossbar?: number;
 }
 
 /** Crossbar height: a ball higher than this sails over instead of scoring. */
@@ -116,8 +119,8 @@ export const GOAL_MAX_Z = 24;
 
 /** v1 rain-court goal bands — defaults `setFieldSpec` merges court overrides onto. */
 const DEFAULT_GOALS: Record<Team, GoalGeom> = {
-  [Team.Blue]: { lat: 0.002, depthTop: 0.359, depthBottom: 0.527 },
-  [Team.Red]: { lat: 0.996, depthTop: 0.359, depthBottom: 0.627 },
+  [Team.Blue]: { lat: 0.0, depthTop: 0.363, depthBottom: 0.532, crossbar: 0.098 },
+  [Team.Red]: { lat: 0.996, depthTop: 0.349, depthBottom: 0.526, crossbar: 0.098 },
 };
 
 export const GOALS: Record<Team, GoalGeom> = {
@@ -176,7 +179,7 @@ export function inPenaltyBox(size: Size, defendTeam: Team, x: number, y: number)
 }
 
 /** Painted center spot in field ratios (calibrated via /sandbox/field-calibrator). */
-const DEFAULT_CENTER = { lat: 0.501, depth: 0.434 };
+const DEFAULT_CENTER = { lat: 0.502, depth: 0.42 };
 export const CENTER = { ...DEFAULT_CENTER };
 
 /**
@@ -187,9 +190,9 @@ const DEFAULT_PLAY_LINES = {
   latLeft: 0.001,
   latRight: 0.995,
   depthTop: 0.01,
-  // Pulled in from the traced 0.99: the court art's bottom rows (covered seats, pinned at lat ~0.25 /
-  // ~0.75, depth 1.0) overlap the trapezoid base — play stops before the ball reads as "on the stands".
-  depthBottom: 0.965,
+  // Re-traced 11/07 to the room court's grass base. If the ball ever reads in-play over the
+  // covered-seat rows that overlap the trapezoid base near depth 1.0, pull this back in (was 0.965).
+  depthBottom: 0.99,
 };
 export const PLAY_LINES = { ...DEFAULT_PLAY_LINES };
 

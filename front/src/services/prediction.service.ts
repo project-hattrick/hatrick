@@ -1,4 +1,3 @@
-import { env } from '@/lib/env';
 import { MarketType } from '@/enums';
 
 export interface PlacePredictionInput {
@@ -8,15 +7,13 @@ export interface PlacePredictionInput {
   points: number;
 }
 
-/** Free-to-play prediction seam (distinct from off-chain betting). */
+/**
+ * Free-to-play prediction seam (distinct from off-chain betting). Local-only this
+ * pass — no /predictions backend exists yet; the seam stays so a future controller
+ * can slot in without touching callers.
+ */
 export const predictionService = {
-  place: async (input: PlacePredictionInput): Promise<{ ok: boolean }> => {
-    if (env.useMock) return { ok: true };
-    const res = await fetch(`${env.apiUrl}/predictions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    return { ok: res.ok };
+  place: async (_input: PlacePredictionInput): Promise<{ ok: boolean }> => {
+    return { ok: true };
   },
 };

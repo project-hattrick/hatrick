@@ -24,7 +24,14 @@ function botMessage(text: string, action?: CrowdMessageAction): CrowdMessage {
     ageLabel: 'now',
     source: CrowdSource.HatBot,
     action,
+    ts: Date.now(),
   };
+}
+
+/** A one-line HatBot intro so a bot-only feed (private rooms) opens with a voice, not silence. */
+export function buildBotWelcome(match: LiveMatch | null): CrowdMessage {
+  const label = match ? `${match.home.code} vs ${match.away.code}` : 'this match';
+  return botMessage(`🎩 HatBot here — I'll call the big moments and best bets in ${label} as they happen.`);
 }
 
 /** Event headline — goals also carry a share action (the moment worth posting). */

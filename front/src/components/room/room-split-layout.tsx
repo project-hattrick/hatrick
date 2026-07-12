@@ -5,8 +5,8 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Scoreboard } from '@/components/live/scoreboard';
 import { MatchTimeline } from '@/components/live/match-timeline';
-import { MatchBackground } from '@/components/live/match-background';
-import { BetSlip } from '@/components/live/bet-slip';
+import { RoomMatchBackdrop } from './room-match-backdrop';
+import { RoomBetSlip } from './room-bet-slip';
 import { RoomResultDock } from './room-result-dock';
 import { useRoomMembers, useRoomPresence } from '@/store/room.store';
 import { ImpactSlide } from './impact-slide';
@@ -59,7 +59,7 @@ export function RoomSplitLayout({ roomId, roomName, inviteToken, inviteUrl }: Ro
     <div className="flex h-full min-h-0 w-full flex-col gap-4 bg-background px-4 pt-20 md:flex-row md:overflow-hidden md:pt-[72px] md:pb-4">
       {/* Framed engine + overlays — on beats only the bet CTA slides away. */}
       <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-white/10 md:min-h-0">
-        <MatchBackground scrim={false} />
+        <RoomMatchBackdrop scrim={false} />
         <div className="absolute top-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2">
           <Scoreboard
             canSwitchMatch={isHost}
@@ -89,7 +89,7 @@ export function RoomSplitLayout({ roomId, roomName, inviteToken, inviteUrl }: Ro
         <RoomRailHeader roomName={roomName} inviteToken={inviteToken} inviteUrl={inviteUrl} />
         <ImpactSlide direction="right" className="flex min-h-0 flex-[1.3] flex-col gap-3">
           <RoomBetPanel className="min-h-0 flex-1" />
-          <BetSlip />
+          <RoomBetSlip />
         </ImpactSlide>
         <RoomSocialPanel roomId={roomId} className="min-h-0 flex-1" />
       </div>

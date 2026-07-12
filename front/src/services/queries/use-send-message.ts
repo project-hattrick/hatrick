@@ -22,7 +22,7 @@ export function useSendMessage(fixtureId: number) {
   const add = useCrowdStore((state) => state.add);
 
   return useMutation({
-    mutationFn: (text: string) => crowdService.sendMessage(text),
+    mutationFn: (text: string) => crowdService.sendMessage(text, fixtureId),
     onSuccess: (_result, text) => {
       const message: CrowdMessage = {
         id: crypto.randomUUID(),

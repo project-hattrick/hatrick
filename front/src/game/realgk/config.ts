@@ -1,6 +1,7 @@
 import { CheckpointId } from '../checkpoints/types';
 import { BillboardKind, type Billboard } from './billboards';
 import type { FieldSpec } from './field';
+import type { RealGkFeel } from './sim/feel';
 
 /** A follow-camera preset in the cycle ring. */
 export interface CamPreset {
@@ -25,6 +26,9 @@ export interface RealGkFeatures {
   playable: boolean;
   /** Render the goal net (traves + rede) in layers at both goal lines. */
   goalNet: boolean;
+  /** Render the calibrated vector goal frame (posts + crossbar + net mesh) traced in the field
+   *  calibrator, following the pitch perspective. Uses GOALS[team].crossbar for the post height. */
+  goalFrame?: boolean;
   /** Perimeter advertiser panels (image + LED boards) pinned to the pitch (see billboards.ts). */
   billboards: boolean;
   /** v5 matchday entrance: team+flag showcase → players walk on → referee whistles → kickoff. */
@@ -65,7 +69,7 @@ export interface RealGkFeatures {
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
-export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina';
+export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland';
 
 export interface TeamBrand {
   name: string;
@@ -100,6 +104,9 @@ export interface RealGkConfig {
   /** Pins keyboard control to the blue keeper: control no longer follows the ball owner, the
    *  controlled keeper never auto-dives (Q/E dive manually), and X punts instead of power-shooting. */
   keeperControl?: boolean;
+  /** Drives the pinned keeper on its own (feel-comparison grid): it tracks the ball on its line,
+   *  auto-dives at incoming shots and punts a caught ball — so the feel flags animate without a player. */
+  keeperAutopilot?: boolean;
   /** Per-actor height multipliers; unset falls back to the legacy constants (referee 0.9, coach 1.06). */
   actorScale?: { referee?: number; coach?: number };
   /** Max cinematic zoom push near a goal (legacy default 1.32). */
@@ -111,11 +118,18 @@ export interface RealGkConfig {
   teams?: { blue: TeamBrand; red: TeamBrand };
   /** Optional root for custom persona body frames. Defaults to /game/personas. */
   personaBodyRoot?: string;
+  /** Optional second body-pack root for the away team (Team.Red) — enables a home/away kit split. */
+  personaBodyRootAway?: string;
+  /** Optional cache-busting suffix for the away body pack. */
+  assetVersionAway?: string;
   /** Optional multiplier for persona head composition. Defaults to 1. */
   personaHeadScale?: number;
   /** Cap for a composited head's height as a fraction of the actor's depth base height. Guards against
    *  per-frame headScale outliers (dive/shot poses) ballooning the head; unset = no cap. */
   headMaxFraction?: number;
+  /** Floor for a composited head's height as a fraction of the actor's depth base height. Keeps heads
+   *  from shrinking with short-drawn bodies (slide tackle sizeScale ~0.68); unset = no floor. */
+  headMinFraction?: number;
   /** Light retro-TV overlay on the stage (faint scanlines + RGB mask + vignette). */
   crtFilter?: boolean;
   /** Optional court/stadium background image. Defaults to the shared COURT_BG. */
@@ -126,6 +140,13 @@ export interface RealGkConfig {
   billboards?: Billboard[];
   /** Optional cache-busting suffix for custom asset packs. */
   assetVersion?: string;
+  /** Keeper-feel experiment seed (France GK sandbox). Merged over the all-off defaults; toggled live
+   *  by `handle.setFeel`. Unset = every smoothing technique off (legacy behavior). */
+  feel?: Partial<RealGkFeel>;
+  /** Goal-replay timing overrides (per variant). `lookback` = seconds of footage before the goal,
+   *  `speed` = slow-mo playback rate (higher = faster/shorter), `wipe` = TV-wipe seconds. Any unset
+   *  field falls back to the cinematic defaults in replay/director.ts. Used to shorten the room replay. */
+  replayTiming?: { lookback?: number; speed?: number; wipe?: number };
 }
 
 /** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
@@ -230,7 +251,7 @@ export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
+  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, goalFrame: true, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   playableRoster: 1,
 };
@@ -255,7 +276,7 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
     { label: 'Full pitch', zoom: 0.7, follow: false },
   ],
   cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
+  features: { extraAnims: false, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, goalFrame: true, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
   crtFilter: true,
@@ -352,8 +373,10 @@ export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
 export const FRANCE_STADIUM_FIELD: FieldSpec = {
   ratios: { topY: 0.332, bottomY: 0.729, topLeft: 0.27, topRight: 0.727, bottomLeft: 0.195, bottomRight: 0.802 },
   goals: {
-    blue: { lat: 0.004, depthTop: 0.353, depthBottom: 0.512 },
-    red: { lat: 0.979, depthTop: 0.34, depthBottom: 0.506 },
+    // `crossbar` (post height, image-ratio Y) drives the goalFrame render — seeded from the rain-court
+    // value; retrace on the France court at /sandbox/field-calibrator?court=franca (Goal frame mode).
+    blue: { lat: 0.004, depthTop: 0.353, depthBottom: 0.512, crossbar: 0.098 },
+    red: { lat: 0.979, depthTop: 0.34, depthBottom: 0.506, crossbar: 0.098 },
   },
   center: { lat: 0.502, depth: 0.42 },
   playLines: { latLeft: 0.001, latRight: 0.995, depthTop: 0.01, depthBottom: 0.99 },
@@ -391,6 +414,7 @@ export const REAL_GK_FRANCE_PLAY_CONFIG: RealGkConfig = {
   personaBodyRoot: '/game/franca',
   personaHeadScale: 0.82,
   headMaxFraction: 0.44,
+  headMinFraction: 0.32,
   courtImage: '/game/franca/court.png',
   assetVersion: 'france-stadium-slide-gkclean3-idleback2-20260710',
   field: FRANCE_STADIUM_FIELD,
@@ -411,6 +435,7 @@ export const REAL_GK_FRANCE_COMPLETE_CONFIG: RealGkConfig = {
   personaBodyRoot: '/game/franca',
   personaHeadScale: 0.82,
   headMaxFraction: 0.44,
+  headMinFraction: 0.32,
   courtImage: '/game/franca/court.png',
   assetVersion: 'france-stadium-slide-gkclean3-idleback2-20260710',
   field: FRANCE_STADIUM_FIELD,
@@ -430,6 +455,34 @@ export const REAL_GK_FRANCE_COMPLETE_CONFIG: RealGkConfig = {
     blue: { name: 'France Blue', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
     red: { name: 'France Red', flagId: 'france', colors: ['#EF4135', '#FFFFFF', '#0055A4'] },
   },
+};
+
+/**
+ * Home/away kit-split demo: France (blue) body pack vs the recolored Netherlands (red) pack generated by
+ * `scripts/recolor-team.mjs`. Uses the size-variant 'a' geometry (the approved Bigger read). This is the
+ * first config to exercise `personaBodyRootAway` — the away team draws its own recolored bodies.
+ */
+export const REAL_GK_FRANCE_VS_NL_CONFIG: RealGkConfig = {
+  ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+  spriteMinH: 28,
+  spriteMaxH: 43,
+  headMaxFraction: 0.44,
+  personaBodyRootAway: '/game/teams/netherlands',
+  teams: {
+    blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
+    red: { name: 'Netherlands', flagId: 'netherlands', colors: ['#F36C21', '#FFFFFF', '#F36C21'] },
+  },
+};
+
+/** Recolored away packs (scripts/recolor-team.mjs) selectable in /sandbox/france-vs-netherlands via ?away=. */
+export const AWAY_TEAM_PACKS: Record<string, { root: string; brand: TeamBrand; accent: string }> = {
+  netherlands: { root: '/game/teams/netherlands', brand: { name: 'Netherlands', flagId: 'netherlands', colors: ['#F36C21', '#FFFFFF', '#F36C21'] }, accent: '#F36C21' },
+  brazil: { root: '/game/teams/brazil', brand: { name: 'Brazil', flagId: 'brazil', colors: ['#F4D000', '#1B3FAE', '#EEF2F7'] }, accent: '#F4D000' },
+  argentina: { root: '/game/teams/argentina', brand: { name: 'Argentina', flagId: 'argentina', colors: ['#84B9E3', '#0B1230', '#EEF2F7'] }, accent: '#84B9E3' },
+  spain: { root: '/game/teams/spain', brand: { name: 'Spain', flagId: 'spain', colors: ['#C60B1E', '#1A2456', '#C60B1E'] }, accent: '#C60B1E' },
+  norway: { root: '/game/teams/norway', brand: { name: 'Norway', flagId: 'norway', colors: ['#BA0C2F', '#FFFFFF', '#001E50'] }, accent: '#BA0C2F' },
+  england: { root: '/game/teams/england', brand: { name: 'England', flagId: 'england', colors: ['#F2F4F8', '#002366', '#EEF2F7'] }, accent: '#C8102E' },
+  switzerland: { root: '/game/teams/switzerland', brand: { name: 'Switzerland', flagId: 'switzerland', colors: ['#D52B1E', '#FFFFFF', '#D52B1E'] }, accent: '#D52B1E' },
 };
 
 export type FranceSizeVariantId = 'base' | 'a' | 'b' | 'c';
@@ -466,6 +519,60 @@ export const FRANCE_COMPLETE_SIZE_VARIANTS: Record<FranceSizeVariantId, { label:
     label: 'Zoom',
     config: {
       ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+      spriteMinH: 26,
+      spriteMaxH: 40,
+      actorScale: { referee: 1.2, coach: 1.2 },
+      presets: [
+        { label: 'Broadcast', zoom: 1.9, follow: true },
+        { label: 'Close', zoom: 2.4, follow: true },
+        { label: 'Wide', zoom: 1.3, follow: true },
+        { label: 'Full pitch', zoom: 0.7, follow: false },
+      ],
+    },
+  },
+};
+
+/**
+ * England complete match sandbox — the France-complete match feel driving the England body pack
+ * (`public/game/england/players/`, keyed + trimmed from the AI review frames). Plays on the shared
+ * France stadium court/field/billboards; both sides wear the England kit, split only by name + foot ring.
+ */
+export const REAL_GK_ENGLAND_COMPLETE_CONFIG: RealGkConfig = {
+  ...REAL_GK_FRANCE_COMPLETE_CONFIG,
+  personaBodyRoot: '/game/england',
+  assetVersion: 'england-v1',
+  teams: {
+    blue: { name: 'England Blue', flagId: 'england', colors: ['#FFFFFF', '#CE1124', '#001489'] },
+    red: { name: 'England Red', flagId: 'england', colors: ['#CE1124', '#FFFFFF', '#001489'] },
+  },
+};
+
+/** Size candidates for the england-complete sandbox (`?size=a|b|c`) — mirrors the France variants. */
+export const ENGLAND_COMPLETE_SIZE_VARIANTS: Record<FranceSizeVariantId, { label: string; config: RealGkConfig }> = {
+  base: { label: 'Base', config: REAL_GK_ENGLAND_COMPLETE_CONFIG },
+  a: {
+    label: 'Bigger',
+    config: {
+      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
+      spriteMinH: 28,
+      spriteMaxH: 43,
+      actorScale: { referee: 1.15, coach: 1.15 },
+    },
+  },
+  b: {
+    label: 'Biggest',
+    config: {
+      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
+      spriteMinH: 31,
+      spriteMaxH: 48,
+      ballScale: 0.68,
+      actorScale: { referee: 1.05, coach: 1.05 },
+    },
+  },
+  c: {
+    label: 'Zoom',
+    config: {
+      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
       spriteMinH: 26,
       spriteMaxH: 40,
       actorScale: { referee: 1.2, coach: 1.2 },

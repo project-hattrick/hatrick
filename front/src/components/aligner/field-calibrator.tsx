@@ -5,62 +5,49 @@ import {
   buildSnippet,
   clearCalibratorState,
   loadCalibratorState,
-  pointFor,
+  lineHandles,
   ratioFor,
   saveCalibratorState,
-  COMMENT_COLOR,
+  CANVAS_H,
+  CANVAS_W,
   CORNER_HANDLES,
+  DEFAULT_GOALS,
+  GOAL_HANDLES,
   defaultCalibratorState,
-  GOAL_COLOR,
   type CalibratorState,
   type CommentPin,
   type CornerKey,
+  type Fit,
+  type GoalFrame,
+  type GoalHandle,
   type GoalSide,
+  type LineEdge,
+  type Mode,
   type Pt,
+  type View,
 } from './field-calibrator-data';
+import { drawScene } from './field-calibrator-draw';
 
-/** Court image the engine paints each frame (see realgk/render.ts COURT_BG). */
+/** Court image the engine paints each frame — the rain court the home/live/ROOM hero shows. */
 const COURT_SRC = '/game/stadiums/rain-court/court.png';
-/** Internal canvas resolution; the image is letterboxed inside preserving aspect. */
-const CANVAS_W = 1180;
-const CANVAS_H = 760;
 /** Hit radius in SCREEN px (divided by zoom for base-space tests, so grabbing feels constant). */
 const HIT_R = 14;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 8;
 
-const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-
-type Mode = 'handles' | 'lines' | 'goal' | 'comment' | 'pen';
-type LineEdge = 'left' | 'right' | 'top' | 'bottom';
-
 type Drag =
   | { type: 'corner'; key: CornerKey }
-  | { type: 'goal'; side: GoalSide; index: number }
+  | { type: 'goal'; side: GoalSide; handle: GoalHandle }
   | { type: 'line'; edge: LineEdge }
   | { type: 'center' }
   | { type: 'comment'; id: number }
   | { type: 'pan'; startX: number; startY: number; viewX: number; viewY: number }
   | null;
 
-interface Fit {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/** Canva-style viewport: scale + offset applied on top of the base canvas space. */
-interface View {
-  zoom: number;
-  x: number;
-  y: number;
-}
-
 const isEditable = (t: EventTarget | null): boolean =>
   t instanceof HTMLElement && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 
-/** Dev tool: trace the court trapezoid, out lines, center, goals; zoom/pan like a canvas app; pin notes.
+/** Dev tool: trace the court trapezoid, out lines, center, goal frames; zoom/pan like a canvas app; pin notes.
  *  `courtSrc`/`storageKey`/`initial` map another stadium (e.g. ?court=franca) without touching the
  *  rain-court trace — `initial` seeds (and "Reset all" restores) that court's current in-game mapping. */
 export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: { courtSrc?: string; storageKey?: string; initial?: CalibratorState }) {
@@ -70,7 +57,7 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
 
   const base = initial ?? defaultCalibratorState();
   const [corners, setCorners] = useState(base.corners);
-  const [goals, setGoals] = useState<Record<GoalSide, Pt[]>>(base.goals);
+  const [goals, setGoals] = useState<Record<GoalSide, GoalFrame>>(base.goals);
   const [playLines, setPlayLines] = useState(base.playLines);
   const [center, setCenter] = useState(base.center);
   const [comments, setComments] = useState<CommentPin[]>([]);
@@ -162,189 +149,28 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
 
   const toRatio = useCallback((cx: number, cy: number): Pt => {
     const f = fitRef.current;
-    return { x: clamp01((cx - f.x) / f.w), y: clamp01((cy - f.y) / f.h) };
+    return { x: Math.max(0, Math.min(1, (cx - f.x) / f.w)), y: Math.max(0, Math.min(1, (cy - f.y) / f.h)) };
   }, []);
 
-  /** Drag handles for the out-of-play lines (edge midpoints) + the center spot, in image ratios. */
-  const lineHandles = (): { edge: LineEdge | 'center'; pt: Pt }[] => {
-    const midDepth = (playLines.depthTop + playLines.depthBottom) / 2;
-    const midLat = (playLines.latLeft + playLines.latRight) / 2;
-    return [
-      { edge: 'left', pt: pointFor(corners, playLines.latLeft, midDepth) },
-      { edge: 'right', pt: pointFor(corners, playLines.latRight, midDepth) },
-      { edge: 'top', pt: pointFor(corners, midLat, playLines.depthTop) },
-      { edge: 'bottom', pt: pointFor(corners, midLat, playLines.depthBottom) },
-      { edge: 'center', pt: pointFor(corners, center.lat, center.depth) },
-    ];
-  };
-
-  // Redraw everything on any state change.
+  // Redraw everything on any state change (pure pass lives in field-calibrator-draw).
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx || !imgRef.current) return;
-    const f = fitRef.current;
-    const z = view.zoom;
-    const sw = (v: number) => v / z; // constant SCREEN size for handles/lines regardless of zoom
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.fillStyle = '#0b1020';
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.setTransform(z, 0, 0, z, view.x, view.y);
-    ctx.drawImage(imgRef.current, f.x, f.y, f.w, f.h);
-
-    // Trapezoid fill + outline.
-    const cp = (k: CornerKey) => toCanvas(corners[k]);
-    const tl = cp('tl');
-    const tr = cp('tr');
-    const br = cp('br');
-    const bl = cp('bl');
-    ctx.beginPath();
-    ctx.moveTo(tl.x, tl.y);
-    ctx.lineTo(tr.x, tr.y);
-    ctx.lineTo(br.x, br.y);
-    ctx.lineTo(bl.x, bl.y);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(56,189,248,0.12)';
-    ctx.fill();
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = sw(2);
-    ctx.stroke();
-
-    // Goal polylines + points.
-    (['blue', 'red'] as GoalSide[]).forEach((side) => {
-      const pts = goals[side];
-      const isActive = mode === 'goal' && side === activeGoal;
-      if (pts.length >= 2) {
-        ctx.strokeStyle = GOAL_COLOR[side];
-        ctx.lineWidth = sw(isActive ? 5 : 4);
-        ctx.beginPath();
-        pts.forEach((r, i) => {
-          const c = toCanvas(r);
-          if (i === 0) ctx.moveTo(c.x, c.y);
-          else ctx.lineTo(c.x, c.y);
-        });
-        ctx.stroke();
-      }
-      pts.forEach((r) => {
-        const c = toCanvas(r);
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, sw(isActive ? 7 : 5), 0, Math.PI * 2);
-        ctx.fillStyle = GOAL_COLOR[side];
-        ctx.fill();
-        ctx.strokeStyle = '#0b1020';
-        ctx.lineWidth = sw(2);
-        ctx.stroke();
-      });
+    drawScene(ctx, {
+      img: imgRef.current,
+      fit: fitRef.current,
+      view,
+      corners,
+      goals,
+      strokes,
+      mode,
+      activeGoal,
+      playLines,
+      center,
+      comments,
+      selectedComment,
     });
-
-    // Freehand pen strokes.
-    ctx.strokeStyle = '#fde047';
-    ctx.lineWidth = sw(2.5);
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    for (const s of strokes) {
-      if (s.length < 2) continue;
-      ctx.beginPath();
-      s.forEach((pt, i) => {
-        const c = toCanvas(pt);
-        if (i === 0) ctx.moveTo(c.x, c.y);
-        else ctx.lineTo(c.x, c.y);
-      });
-      ctx.stroke();
-    }
-
-    // Out-of-play lines quad (yellow) + center spot — always visible, handles lit in Lines mode.
-    const quad = [
-      pointFor(corners, playLines.latLeft, playLines.depthTop),
-      pointFor(corners, playLines.latRight, playLines.depthTop),
-      pointFor(corners, playLines.latRight, playLines.depthBottom),
-      pointFor(corners, playLines.latLeft, playLines.depthBottom),
-    ].map(toCanvas);
-    ctx.strokeStyle = '#fde047';
-    ctx.lineWidth = sw(mode === 'lines' ? 3 : 2);
-    ctx.beginPath();
-    quad.forEach((q, i) => (i === 0 ? ctx.moveTo(q.x, q.y) : ctx.lineTo(q.x, q.y)));
-    ctx.closePath();
-    ctx.stroke();
-    const cc = toCanvas(pointFor(corners, center.lat, center.depth));
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = sw(2);
-    ctx.beginPath();
-    ctx.arc(cc.x, cc.y, sw(9), 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cc.x - sw(14), cc.y);
-    ctx.lineTo(cc.x + sw(14), cc.y);
-    ctx.moveTo(cc.x, cc.y - sw(14));
-    ctx.lineTo(cc.x, cc.y + sw(14));
-    ctx.stroke();
-    ctx.globalAlpha = mode === 'lines' ? 1 : 0.35;
-    for (const h of lineHandles()) {
-      const c = toCanvas(h.pt);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, sw(7), 0, Math.PI * 2);
-      ctx.fillStyle = h.edge === 'center' ? '#ffffff' : '#fde047';
-      ctx.fill();
-      ctx.strokeStyle = '#0b1020';
-      ctx.lineWidth = sw(2);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    // Comment pins: numbered markers; the selected one shows its note in a bubble.
-    comments.forEach((cm, i) => {
-      const c = toCanvas(cm);
-      const selected = cm.id === selectedComment;
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, sw(selected ? 11 : 9), 0, Math.PI * 2);
-      ctx.fillStyle = COMMENT_COLOR;
-      ctx.fill();
-      ctx.strokeStyle = selected ? '#ffffff' : '#0b1020';
-      ctx.lineWidth = sw(2);
-      ctx.stroke();
-      ctx.fillStyle = '#0b1020';
-      ctx.font = `700 ${sw(11)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(i + 1), c.x, c.y + sw(0.5));
-      if (selected && cm.text) {
-        const label = cm.text.length > 46 ? `${cm.text.slice(0, 45)}…` : cm.text;
-        ctx.font = `500 ${sw(12)}px system-ui, sans-serif`;
-        const w = ctx.measureText(label).width + sw(16);
-        const h = sw(24);
-        const bx = c.x + sw(14);
-        const by = c.y - h / 2;
-        ctx.fillStyle = 'rgba(15,23,42,0.92)';
-        ctx.strokeStyle = COMMENT_COLOR;
-        ctx.lineWidth = sw(1.5);
-        ctx.beginPath();
-        ctx.roundRect(bx, by, w, h, sw(6));
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#f8fafc';
-        ctx.textAlign = 'left';
-        ctx.fillText(label, bx + sw(8), c.y + sw(0.5));
-      }
-      ctx.textAlign = 'start';
-      ctx.textBaseline = 'alphabetic';
-    });
-
-    // Corner handles (only meaningful in handles mode; dimmed otherwise).
-    ctx.globalAlpha = mode === 'handles' ? 1 : 0.4;
-    for (const h of CORNER_HANDLES) {
-      const c = toCanvas(corners[h.key]);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, sw(7), 0, Math.PI * 2);
-      ctx.fillStyle = h.color;
-      ctx.fill();
-      ctx.strokeStyle = '#0b1020';
-      ctx.lineWidth = sw(2);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- lineHandles derives from corners/playLines/center below
-  }, [corners, goals, strokes, loaded, mode, activeGoal, playLines, center, comments, selectedComment, view, toCanvas]);
+  }, [corners, goals, strokes, loaded, mode, activeGoal, playLines, center, comments, selectedComment, view]);
 
   /** Pointer position in screen-canvas px (sx/sy), base px (bx/by, view-inverted) and image ratio. */
   const eventPoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -393,7 +219,7 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
     if (mode === 'lines') {
       let best: LineEdge | 'center' | null = null;
       let bestD = hitR2();
-      for (const h of lineHandles()) {
+      for (const h of lineHandles(corners, playLines, center)) {
         const c = toCanvas(h.pt);
         const d = (c.x - bx) ** 2 + (c.y - by) ** 2;
         if (d < bestD) {
@@ -426,25 +252,18 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
       return;
     }
 
-    // Goal mode: grab the nearest point of the active goal, else append a new one.
-    const pts = goals[activeGoal];
-    let hit = -1;
+    // Goal mode: grab the nearest corner of the active goal frame (post feet / post tops).
+    let bestHandle: GoalHandle | null = null;
     let bestD = hitR2();
-    pts.forEach((r, i) => {
-      const c = toCanvas(r);
+    for (const key of GOAL_HANDLES) {
+      const c = toCanvas(goals[activeGoal][key]);
       const d = (c.x - bx) ** 2 + (c.y - by) ** 2;
       if (d < bestD) {
         bestD = d;
-        hit = i;
+        bestHandle = key;
       }
-    });
-    if (hit >= 0) {
-      drag.current = { type: 'goal', side: activeGoal, index: hit };
-    } else {
-      const index = pts.length;
-      setGoals((g) => ({ ...g, [activeGoal]: [...g[activeGoal], ratio] }));
-      drag.current = { type: 'goal', side: activeGoal, index };
     }
+    drag.current = bestHandle ? { type: 'goal', side: activeGoal, handle: bestHandle } : null;
   };
 
   const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -477,11 +296,7 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
     } else if (d.type === 'comment') {
       setComments((cs) => cs.map((cm) => (cm.id === d.id ? { ...cm, x: ratio.x, y: ratio.y } : cm)));
     } else {
-      setGoals((g) => {
-        const list = g[d.side].slice();
-        list[d.index] = ratio;
-        return { ...g, [d.side]: list };
-      });
+      setGoals((g) => ({ ...g, [d.side]: { ...g[d.side], [d.handle]: ratio } }));
     }
   };
 
@@ -490,8 +305,7 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
     drag.current = null;
   };
 
-  const undoPoint = () => setGoals((g) => ({ ...g, [activeGoal]: g[activeGoal].slice(0, -1) }));
-  const clearGoal = () => setGoals((g) => ({ ...g, [activeGoal]: [] }));
+  const resetGoal = () => setGoals((g) => ({ ...g, [activeGoal]: DEFAULT_GOALS[activeGoal] }));
   const setCommentText = (id: number, text: string) => setComments((cs) => cs.map((cm) => (cm.id === id ? { ...cm, text } : cm)));
   const deleteComment = (id: number) => {
     setComments((cs) => cs.filter((cm) => cm.id !== id));
@@ -524,16 +338,17 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
       <p className="mt-1 text-sm text-slate-400">
         <b>Scroll</b> zooms at the cursor; <b>Space+drag</b> (or middle button) pans. <b>Handles</b>: trapezoid
         corners. <b>Out lines + center</b>: yellow edges = where the ball is out, white crosshair = kickoff
-        center. <b>Goal</b>: trace the mouth. <b>Comment</b>: click anywhere to pin a numbered note (drag to
-        move, edit on the right). <b>Pen</b>: freehand. Everything persists locally; Copy exports
-        <code> metrics()</code>, <code>GOALS</code>, <code>CENTER</code>, <code>PLAY_LINES</code> + notes.
-        Verify in-game at <code>/sandbox?cp=real-gk-solo</code>.
+        center. <b>Goal frame</b>: drag the 4 corners — post feet (coloured) on the goal line, post tops (white)
+        set the crossbar. <b>Comment</b>: click to pin a numbered note (drag to move, edit on the right).
+        <b> Pen</b>: freehand. Everything persists locally; Copy exports the <code>field:{'{}'}</code> block,
+        <code> GOALS</code>, <code>CENTER</code>, <code>PLAY_LINES</code> + goal frames. Verify in-game at{' '}
+        <code>/sandbox?cp=real-gk-solo</code>.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {modeBtn('handles', '◇ Handles')}
         {modeBtn('lines', '▢ Out lines + center')}
-        {modeBtn('goal', '⚽ Goal points')}
+        {modeBtn('goal', '🥅 Goal frame')}
         {modeBtn('comment', '📍 Comment')}
         {modeBtn('pen', '✏️ Pen')}
 
@@ -552,11 +367,8 @@ export function FieldCalibrator({ courtSrc = COURT_SRC, storageKey, initial }: {
             >
               Red (right)
             </button>
-            <button onClick={undoPoint} className="rounded-md bg-slate-700 px-3 py-1.5 text-sm">
-              Undo point
-            </button>
-            <button onClick={clearGoal} className="rounded-md bg-slate-700 px-3 py-1.5 text-sm">
-              Clear goal
+            <button onClick={resetGoal} className="rounded-md bg-slate-700 px-3 py-1.5 text-sm">
+              Reset goal
             </button>
           </>
         )}

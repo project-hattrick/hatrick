@@ -1,6 +1,7 @@
 import type { RealGkConfig } from './config';
 import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, DrivenPhase, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
 import type { DrivenClock } from './sim/driven-clock';
+import type { FeelFxState, PlayerFeelState, RealGkFeel } from './sim/feel';
 
 export interface Vec2 {
   x: number;
@@ -71,6 +72,11 @@ export interface RealGkPlayer {
   spawnY: number;
   /** Which persona head set this player wears (`features.personaHeads`); ignored otherwise. */
   personaId: number;
+  /** Driven shot: overrides the strike aim so the shot matches the feed outcome (wide / woodwork).
+   *  Null/undefined = aim on target (at the keeper). Cleared when the shot resolves. */
+  drivenShotAim?: Vec2 | null;
+  /** Feel-experiment scratch state (France GK sandbox); inert while every `world.feel` flag is off. */
+  feel: PlayerFeelState;
 }
 
 export interface Ball {
@@ -194,6 +200,9 @@ export interface RestartState {
   targets?: Record<number, Vec2>;
   /** Present when the restart came from a foul (free kick / penalty). */
   foul?: FoulInfo;
+  /** Pre-computed strike, set at the Taking transition so the taker's wind-up pose and the actual
+   *  kick agree (recomputing would re-roll the random target between pose and contact). */
+  strike?: { target: Vec2; power: number; lob: boolean };
 }
 
 export interface MatchState {
@@ -221,6 +230,12 @@ export interface MatchState {
   restart: RestartState | null;
   /** Real seconds until the next foul may be called (v5 fouls; inert otherwise). */
   foulCooldown: number;
+  /** Feed-driven card broadcast: bumped once per carded event so the HUD can pulse a card graphic. */
+  cardFlashSeq: number;
+  /** Colour of the most recent card ('' until the first one). */
+  cardFlashColor: '' | 'yellow' | 'red';
+  /** Team the most recent card was shown to ('' until the first one). */
+  cardFlashTeam: '' | Team;
 }
 
 /** All mutable v2 state. Mutated by the loop; lives outside React. */
@@ -242,6 +257,8 @@ export interface RealGkWorld {
   control?: ControlInput;
   /** Id of the player currently under keyboard control (follows possession). */
   controlId: number;
+  /** Sandbox override for which dive pack keepers play (Q/E and AI). Unset = config feature flags. */
+  divePackOverride?: BodyAnim;
   /** Names of players sent off this match — kept off the pitch across kickoff resets (v5 fouls). */
   sentOffNames: string[];
   /**
@@ -263,6 +280,13 @@ export interface RealGkWorld {
   fillerShotCooldown: number;
   /** Feed directives that arrived during the intro — flushed onto the pitch at kickoff. */
   pendingDirectives: PendingDirective[];
+  /** Set when a driven shot is OffTarget: the next ball to cross a byline is a GOAL KICK to this team
+   *  (the defender), overriding the engine's attacker-touch → corner rule so a wide shot reads as a miss. */
+  drivenShotWide?: Team | null;
+  /** Keeper-feel experiment flags (seeded via cfg.feel; toggled live by handle.setFeel). */
+  feel: RealGkFeel;
+  /** One-shot feel effects consumed by the loop: sim hitstop + camera-shake request. */
+  feelFx: FeelFxState;
 }
 
 /** A queued feed directive (see `sim/directives.ts`). */
@@ -270,6 +294,10 @@ export interface PendingDirective {
   kind: DrivenDirective;
   team: Team;
   threat: number;
+  /** Card directives only: true = red card, false/undefined = yellow. */
+  red?: boolean;
+  /** Shot directives only: the feed shot outcome string (OnTarget / OffTarget / Woodwork / Blocked). */
+  outcome?: string;
 }
 
 /** See RealGkWorld.possessionGrant. */
@@ -323,6 +351,10 @@ export interface RealGkHud {
   restartTeam: string;
   /** Name of the player shown the red card ('' when none / not a foul card). */
   redCardName: string;
+  /** Feed-driven card broadcast: monotonic counter (pulse trigger) + colour + team for the card overlay. */
+  cardFlashSeq: number;
+  cardFlashColor: string;
+  cardFlashTeam: string;
   /** Match-structure beats (`features.matchStructure`): interval break + final-whistle result overlay. */
   halfTimeActive: boolean;
   fullTimeActive: boolean;
@@ -340,6 +372,21 @@ export interface RealGkHud {
 
 export type RealGkHudPatch = Partial<RealGkHud>;
 
+/** One dot for the room's 2D radar: field-ratio position (0..1) + which side it belongs to. */
+export interface RealGkRadarActor {
+  /** Along the pitch length: 0 = Blue/home goal end, 1 = Red/away goal end. */
+  lat: number;
+  /** Across the pitch: 0 = far touchline, 1 = near touchline. */
+  depth: number;
+  home: boolean;
+}
+
+/** Live snapshot of every player + the ball, in field ratios — feeds the room mini-pitch radar. */
+export interface RealGkRadar {
+  actors: RealGkRadarActor[];
+  ball: { lat: number; depth: number };
+}
+
 export interface RealGkHandle {
   togglePause: () => void;
   cycleSpeed: () => void;
@@ -353,6 +400,12 @@ export interface RealGkHandle {
   keeperDive: (side: -1 | 1) => boolean;
   /** GK-control helper: fires a shot at the blue keeper's goal so saves can be practiced on demand. */
   debugIncomingShot: () => void;
+  /** GK debug: plays a specific dive pack on the blue keeper through the real dive machinery. */
+  debugKeeperDive: (variant: 'compact' | 'save' | 'v2') => void;
+  /** Sandbox knob: pins which dive pack Q/E (and AI keepers) play. 'auto' = config feature flags. */
+  setKeeperDivePack: (variant: 'auto' | 'compact' | 'save' | 'v2') => void;
+  /** Feel lab: flips keeper-feel experiment flags live (no engine reboot). */
+  setFeel: (patch: Partial<RealGkFeel>) => void;
   restart: () => void;
   spawnReferee: () => void;
   /** Debug helper: fires the ball into the right goal so the goal/replay flow can be tested on demand. */
@@ -376,14 +429,18 @@ export interface RealGkHandle {
   setDriven: (on: boolean) => void;
   /** The team currently on the ball + how threatening (0..1). Steers the whole shape. */
   setPossession: (team: Team, threat: number) => void;
-  /** Commit a shot on goal from the attacking team. */
-  injectShot: (team: Team) => void;
+  /** Commit a shot on goal from the attacking team. `outcome` (feed) picks wide / woodwork / on-target. */
+  injectShot: (team: Team, outcome?: string) => void;
   /** Celebrate a goal (score comes from setScore — the feed is authoritative). */
   injectGoal: (team: Team) => void;
   /** Stage a corner for the attacking team. */
   injectCorner: (team: Team) => void;
-  /** Card toast for a team. */
-  injectCard: (team: Team) => void;
+  /** Card for a team — `red` picks the red-card broadcast (default yellow) and sends a player off. */
+  injectCard: (team: Team, red?: boolean) => void;
+  /** Stage a feed-awarded penalty (spot kick + box staging). */
+  injectPenalty: (team: Team) => void;
+  /** Stage a feed-awarded free kick with a wall (`danger` 0..1 biases how close to goal it's placed). */
+  injectFreeKick: (team: Team, danger?: number) => void;
   /** Authoritative scoreboard (Blue = home / participant 1, Red = away / participant 2). */
   setScore: (blue: number, red: number) => void;
   /** Authoritative match minute from the feed — the driven clock sweeps toward it. */
@@ -391,6 +448,8 @@ export interface RealGkHandle {
   /** Match structure from the feed: half-time break, final whistle, (second-half) kickoff resume.
    *  No-op unless the variant sets `features.matchStructure`. */
   setPhase: (phase: DrivenPhase) => void;
+  /** Live field-ratio snapshot of all players + the ball, for the room's 2D radar (mini-pitch). */
+  sampleRadar: () => RealGkRadar;
   resize: () => void;
   destroy: () => void;
 }

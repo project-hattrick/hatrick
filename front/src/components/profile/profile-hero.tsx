@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ProfileCover } from '@/components/duelists/profile-cover';
 import { ProfileStatGrid } from '@/components/duelists/profile-stat-grid';
 import { ProfileAchievements } from '@/components/duelists/profile-achievements';
-import { selfProfile } from '@/config/duelists.config';
+import { useSelfProfile } from '@/hooks/use-self-identity';
+import { useFantasyStore } from '@/store/fantasy.store';
 import { ProfileIdentity } from './profile-identity';
 
 /**
@@ -16,11 +17,13 @@ import { ProfileIdentity } from './profile-identity';
  */
 export function ProfileHero({ initialEdit = false }: { initialEdit?: boolean }) {
   const [editing, setEditing] = useState(initialEdit);
+  const profile = useSelfProfile();
+  const cardCount = useFantasyStore((s) => s.collection.length);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface-1/40">
       <ProfileCover
-        profile={selfProfile}
+        profile={profile}
         actions={
           <>
             <Button size="sm" variant={editing ? 'secondary' : 'outline'} onClick={() => setEditing(!editing)}>
@@ -35,7 +38,7 @@ export function ProfileHero({ initialEdit = false }: { initialEdit?: boolean }) 
       <div className="grid gap-6 px-5 pb-6 sm:px-7 lg:grid-cols-[280px_1fr]">
         <ProfileIdentity editing={editing} onEditingChange={setEditing} />
         <div className="mt-4 flex min-w-0 flex-col gap-4">
-          <ProfileStatGrid profile={selfProfile} className="flex-1" />
+          <ProfileStatGrid profile={profile} cardCount={cardCount} className="flex-1" />
           <ProfileAchievements />
         </div>
       </div>

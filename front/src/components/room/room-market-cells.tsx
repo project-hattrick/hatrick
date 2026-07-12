@@ -51,6 +51,52 @@ export function FeaturedResultCell({
   );
 }
 
+/**
+ * Read-only Match Result cell for a match that already happened (replay): shows the authoritative
+ * final goals + winner tag (or implied win probability only while the final score is loading).
+ */
+export function PastResultCell({
+  selection,
+  value,
+  won,
+  tag,
+  accentColor,
+}: {
+  selection: BetSelection;
+  value: string;
+  won: boolean;
+  tag: string | null;
+  accentColor: string | null;
+}) {
+  return (
+    <div
+      className={cn(
+        'relative flex min-w-0 flex-col items-center gap-1 overflow-hidden rounded-xl border px-2 py-3',
+        won ? 'border-neon bg-neon/15' : 'border-border/60 bg-surface-2/60',
+      )}
+    >
+      {accentColor && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-14 opacity-40"
+          style={{ background: `linear-gradient(180deg, ${accentColor}55 0%, transparent 100%)` }}
+        />
+      )}
+      <span className="relative max-w-full truncate text-micro font-semibold tracking-wide text-foreground/85 uppercase">
+        {selection.label}
+      </span>
+      <span className={cn('relative font-mono text-xl font-bold tabular-nums', won ? 'text-neon' : 'text-foreground')}>
+        {value}
+      </span>
+      {tag && (
+        <span className={cn('relative text-micro font-bold uppercase tracking-wide', won ? 'text-neon' : 'text-muted-foreground/60')}>
+          {tag}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** Livelier secondary odds cell — gradient surface, hover lift, neon active state. */
 export function LivelyOddsCell({ selection, active, disabled = false, onPick }: CellProps) {
   return (

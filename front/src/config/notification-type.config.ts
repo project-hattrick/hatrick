@@ -1,4 +1,4 @@
-import { Ticket, UserPlus, Broadcast, Package, Bell, type Icon } from '@/components/common/icons';
+import { Ticket, UserPlus, Broadcast, Package, Bell, Sword, type Icon } from '@/components/common/icons';
 import { NotificationType } from '@/enums/notification-type.enum';
 import { Tone } from '@/enums/tone.enum';
 
@@ -14,6 +14,7 @@ export const notificationTypeConfig: Record<NotificationType, NotificationTypeMe
   [NotificationType.Match]: { icon: Broadcast, tone: Tone.Danger },
   [NotificationType.Pack]: { icon: Package, tone: Tone.Warning },
   [NotificationType.System]: { icon: Bell, tone: Tone.Neutral },
+  [NotificationType.Duel]: { icon: Sword, tone: Tone.Warning },
 };
 
 export const notificationTypeFallback: NotificationTypeMeta = { icon: Bell, tone: Tone.Neutral };

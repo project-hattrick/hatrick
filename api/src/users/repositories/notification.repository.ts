@@ -20,6 +20,10 @@ export class NotificationRepository {
     });
   }
 
+  findById(id: string): Promise<Notification | null> {
+    return this.prisma.notification.findUnique({ where: { id } });
+  }
+
   markRead(id: string): Promise<Notification> {
     return this.prisma.notification.update({ where: { id }, data: { read: true } });
   }

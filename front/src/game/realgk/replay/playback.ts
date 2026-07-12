@@ -1,5 +1,6 @@
 import { BodyAnim, CelebrationKind, RefPhase, ShotEffectStyle } from '../enums';
 import { PERSONA_COUNT } from '../assets/manifest';
+import { freshPlayerFeel } from '../sim/feel';
 import { personaIdFor } from '../sim/player-factory';
 import type { Ball, Coach, RealGkPlayer, RealGkWorld, Referee } from '../types';
 import { clamp, lerp } from '../util';
@@ -116,6 +117,7 @@ function playerFromSnap(snap: ReplayPlayerSnap): RealGkPlayer {
     spawnY: snap.y,
     // Reproduce the live persona casting (slot = per-team creation order) so replays keep faces.
     personaId: personaIdFor(snap.team, (snap.id - 1) % Math.max(1, PERSONA_COUNT)),
+    feel: freshPlayerFeel(snap.mode),
   };
 }
 
@@ -163,5 +165,7 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     fillerShotCooldown: live.fillerShotCooldown,
     pendingDirectives: live.pendingDirectives,
     intent: live.intent,
+    feel: live.feel,
+    feelFx: live.feelFx,
   };
 }

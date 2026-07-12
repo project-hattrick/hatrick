@@ -1,5 +1,12 @@
-import type { LiveMatch, MatchEventPayload, TeamInfo } from '@/types/match';
-import { teamPlayerLabel } from '@/lib/player-identity';
+import type {
+  LineupsBySide,
+  LiveMatch,
+  MatchEventPayload,
+  PlayerStatsBySide,
+  TeamInfo,
+} from '@/types/match';
+import { numberForId, teamPlayerLabel } from '@/lib/player-identity';
+import { liveFormBoost, playerForShirt, shirtForPlayer, statsForPlayer } from '@/lib/player-form';
 
 /** A player that can hold the ball in the live hero focus card — derived from the current fixture. */
 export interface FocusPlayer {
@@ -11,13 +18,24 @@ export interface FocusPlayer {
   position: string;
   /** Short mono tag shown in the header, e.g. "#9". */
   code: string;
+  shirt: number;
   rating: number;
   pass: string;
   touches: number;
   goals: number;
+  /** Live form delta already applied to `rating` (0 = no real stats yet) — drives the FORM chip. */
+  formBoost: number;
+  /** REAL shots from the feed, when the player has stats this match. */
+  shots?: number;
   onBall: boolean;
   /** Pixel-art portrait in /public/cards. */
   portraitSrc: string;
+}
+
+/** Real-feed context: lineups map player IDs to shirts; stats overlay the seeded numbers. */
+export interface FocusContext {
+  lineups?: LineupsBySide | null;
+  playerStats?: PlayerStatsBySide;
 }
 
 /** The front-line the focus carousel walks through, per side — shirt number + position + portrait. */
@@ -45,36 +63,80 @@ function statsFor(id: string): { rating: number; pass: string; touches: number; 
   return { rating: rint(78, 95), pass: `${rint(74, 93)}%`, touches: rint(28, 72), goals: rint(0, 3) };
 }
 
+function makeFocusPlayer(team: TeamInfo, shirt: number, position: string, portraitSrc: string): FocusPlayer {
+  const id = `${team.code}-${shirt}`;
+  return {
+    id,
+    name: teamPlayerLabel(team.code, shirt),
+    team: team.name,
+    position,
+    code: `#${shirt}`,
+    shirt,
+    formBoost: 0,
+    onBall: false,
+    portraitSrc,
+    ...statsFor(id),
+  };
+}
+
 function playersForSide(team: TeamInfo): FocusPlayer[] {
-  return FOCUS_SLOTS.map((slot) => {
-    const id = `${team.code}-${slot.shirt}`;
-    return {
-      id,
-      name: teamPlayerLabel(team.code, slot.shirt),
-      team: team.name,
-      position: slot.position,
-      code: `#${slot.shirt}`,
-      onBall: false,
-      portraitSrc: slot.portraitSrc,
-      ...statsFor(id),
-    };
-  });
+  return FOCUS_SLOTS.map((slot) => makeFocusPlayer(team, slot.shirt, slot.position, slot.portraitSrc));
+}
+
+/** Overlay REAL feed stats onto a side's seeded players: actual goals/shots + a form swing on the rating. */
+function applyRealStats(players: FocusPlayer[], side: 'home' | 'away', context?: FocusContext): void {
+  if (!context?.playerStats) return;
+  for (const player of players) {
+    const playerId = playerForShirt(context.lineups, side, player.shirt);
+    if (!playerId) continue;
+    const stats = statsForPlayer(context.playerStats, side, playerId);
+    if (!stats) continue;
+    if (stats.goals !== undefined) player.goals = stats.goals;
+    if (stats.shots !== undefined) player.shots = stats.shots;
+    player.formBoost = liveFormBoost(stats);
+    player.rating = Math.min(99, player.rating + player.formBoost);
+  }
 }
 
 /**
  * Build the hero focus roster from the current fixture (home then away front-lines). The latest live
- * event decides who's on the ball: its `participant` picks the side, its seq picks the man — so the
- * card reflects the real match instead of a hardcoded name. The on-ball player is moved to the front
- * so the card opens on "ON THE BALL".
+ * event decides who's on the ball. With real-feed context, the event's TxLINE `playerId` picks the
+ * actual man (lineups map him to his shirt; without lineups a deterministic shirt stands in) and the
+ * REAL per-player stats overlay the seeded ones. Without context it falls back to participant + seq.
+ * The on-ball player is moved to the front so the card opens on "ON THE BALL".
  */
-export function buildFocusRoster(match: LiveMatch, latest?: MatchEventPayload): FocusPlayer[] {
+export function buildFocusRoster(
+  match: LiveMatch,
+  latest?: MatchEventPayload,
+  context?: FocusContext,
+): FocusPlayer[] {
   const home = playersForSide(match.home);
   const away = playersForSide(match.away);
+  applyRealStats(home, 'home', context);
+  applyRealStats(away, 'away', context);
   const roster = [...home, ...away];
 
-  const side = latest?.participant === 2 ? away : home;
-  const slot = latest ? latest.seq % FOCUS_SLOTS.length : 1;
-  const onBall = side[slot] ?? side[0];
+  const sideKey: 'home' | 'away' = latest?.participant === 2 ? 'away' : 'home';
+  const side = sideKey === 'away' ? away : home;
+  let onBall: FocusPlayer | undefined;
+
+  // Real attribution first: the event names the player, the lineups name his shirt.
+  if (latest?.playerId) {
+    const shirt = shirtForPlayer(context?.lineups, sideKey, latest.playerId) ?? numberForId(latest.playerId);
+    onBall = side.find((p) => p.shirt === shirt);
+    if (!onBall) {
+      const slot = FOCUS_SLOTS[shirt % FOCUS_SLOTS.length];
+      onBall = makeFocusPlayer(sideKey === 'away' ? match.away : match.home, shirt, slot.position, slot.portraitSrc);
+      const stats = statsForPlayer(context?.playerStats, sideKey, latest.playerId);
+      if (stats?.goals !== undefined) onBall.goals = stats.goals;
+      if (stats?.shots !== undefined) onBall.shots = stats.shots;
+      onBall.formBoost = liveFormBoost(stats);
+      onBall.rating = Math.min(99, onBall.rating + onBall.formBoost);
+      side.push(onBall);
+      roster.push(onBall);
+    }
+  }
+  onBall ??= side[latest ? latest.seq % FOCUS_SLOTS.length : 1] ?? side[0];
   onBall.onBall = true;
 
   return [onBall, ...roster.filter((p) => p !== onBall)];

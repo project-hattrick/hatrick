@@ -17,7 +17,20 @@ export const hatbotHeadlines: Partial<Record<MatchAction, CrowdTemplate[]>> = {
     (c) => `⚽ GOAL! ${c.scoreline} — ${c.playerLabel ?? c.teamName} strikes at ${c.minute}'!`,
   ],
   [MatchAction.Penalty]: [
-    (c) => `🎯 PENALTY to ${c.teamName} at ${c.minute}'! Huge moment — ${c.scoreline}.`,
+    (c) =>
+      c.outcome === 'Missed'
+        ? `🥅 PENALTY MISSED by ${c.teamName} at ${c.minute}'! Off the hook — ${c.scoreline}.`
+        : c.outcome === 'Saved'
+          ? `🧤 PENALTY SAVED! The keeper denies ${c.teamName} at ${c.minute}' — ${c.scoreline}.`
+          : c.outcome === 'Retake'
+            ? `🔁 Penalty RETAKE ordered at ${c.minute}'! Ice-cold nerves needed.`
+            : `🎯 PENALTY to ${c.teamName} at ${c.minute}'! Huge moment — ${c.scoreline}.`,
+  ],
+  [MatchAction.Shot]: [
+    (c) =>
+      c.outcome === 'Woodwork'
+        ? `🪵 OFF THE WOODWORK! ${c.teamName} rattle the frame at ${c.minute}'.`
+        : `🧤 Big chance! ${c.teamName} force a save at ${c.minute}'.`,
   ],
   [MatchAction.RedCard]: [
     (c) => `🟥 RED CARD! ${c.teamName} down to 10 men at ${c.minute}'.`,
@@ -29,7 +42,12 @@ export const hatbotHeadlines: Partial<Record<MatchAction, CrowdTemplate[]>> = {
     (c) => `🚩 Corner for ${c.teamName} — pressure building at ${c.minute}'.`,
   ],
   [MatchAction.Var]: [
-    (c) => `📺 VAR review in progress at ${c.minute}'... decision incoming.`,
+    (c) =>
+      c.outcome === 'Overturned'
+        ? `📺 VAR OVERTURNS the ${c.varType ?? 'decision'} at ${c.minute}'! Game-changer.`
+        : c.outcome === 'Stands'
+          ? `📺 VAR checked the ${c.varType ?? 'decision'} — it STANDS. Play on at ${c.minute}'.`
+          : `📺 VAR review in progress at ${c.minute}'... decision incoming.`,
   ],
   [MatchAction.Substitution]: [
     (c) => `🔁 Substitution for ${c.teamName} at ${c.minute}'.`,

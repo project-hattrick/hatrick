@@ -6,6 +6,8 @@ import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
 import { useBetsStore } from '@/store/bets.store';
+import { useFriendsStore } from '@/store/friends.store';
+import { useNotificationsStore } from '@/store/notifications.store';
 import type { AuthUser } from '@/services/auth.service';
 
 /**
@@ -66,4 +68,10 @@ export const signOutLocal = (): void => {
   useWalletStore.getState().reset();
   useFantasyStore.getState().reset();
   useBetsStore.getState().reset();
+  // Server-owned state — drop it so the next account doesn't see a stale graph/bell.
+  // Mock mode keeps its local seeds across sign-outs, as before.
+  if (backendEnabled) {
+    useFriendsStore.getState().reset();
+    useNotificationsStore.getState().hydrate([]);
+  }
 };

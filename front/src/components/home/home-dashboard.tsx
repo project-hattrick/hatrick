@@ -8,7 +8,7 @@ export function HomeDashboard() {
   return (
     <div className="relative z-10">
       <div className="bg-background">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pt-4 pb-6 md:pt-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pt-4 pb-6 sm:px-6 md:pt-6">
           <MatchDashboard />
 
           <SquadSection />

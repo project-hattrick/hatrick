@@ -11,6 +11,8 @@ import { useRoomMembers, useRoomPresence } from '@/store/room.store';
 import { cn } from '@/lib/utils';
 import { RoomChatPanel } from './room-chat-panel';
 
+// HatBot no longer has its own tab — its commentary + betting nudges are fused into the Chat feed
+// (see RoomChatPanel), so the friends' messages and the bot's calls share one timeline.
 type SocialTab = 'chat' | 'stats';
 
 const TABS: { id: SocialTab; label: string; icon: Icon }[] = [

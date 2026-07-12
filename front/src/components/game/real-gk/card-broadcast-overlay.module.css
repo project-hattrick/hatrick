@@ -1,0 +1,117 @@
+/* Feed-driven card broadcast — a yellow/red card slams in when the referee books a team, then fades.
+   Play keeps rolling underneath (unlike the red-card foul freeze), so this auto-dismisses after a beat. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+  animation: fadeIn 0.16s ease-out both;
+}
+
+.overlay[data-leaving='true'] {
+  animation: fadeOut 0.4s ease-in both;
+}
+
+.card {
+  width: clamp(104px, 12vw, 168px);
+  height: clamp(156px, 18vw, 248px);
+  border-radius: 12px;
+  transform: perspective(900px) rotateZ(-8deg) rotateX(6deg);
+  animation: cardSlam 0.42s cubic-bezier(0.2, 1.5, 0.35, 1) both;
+}
+
+.card[data-color='yellow'] {
+  background: linear-gradient(150deg, #fde047 0%, #f5c518 55%, #d9a400 100%);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.16),
+    0 22px 60px rgba(245, 197, 24, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.card[data-color='red'] {
+  background: linear-gradient(150deg, #ef4444 0%, #b91c1c 60%, #7f1010 100%);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.14),
+    0 22px 60px rgba(220, 38, 38, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.label {
+  font-size: clamp(22px, 4vw, 44px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: labelIn 0.5s ease-out 0.12s both;
+}
+
+.team {
+  font-size: clamp(13px, 2vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  animation: labelIn 0.5s ease-out 0.22s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cardSlam {
+  0% {
+    opacity: 0;
+    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(2.4) translateY(-40px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(1) translateY(0);
+  }
+}
+
+@keyframes labelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card,
+  .label,
+  .team {
+    animation: none;
+  }
+}

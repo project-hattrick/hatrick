@@ -12,6 +12,10 @@ export interface ReactionContext {
   /** "ARG 2-1 FRA" */
   scoreline: string;
   playerLabel?: string;
+  /** Shot/penalty/VAR result qualifier when present (`Woodwork`, `Missed`, `Overturned`…). */
+  outcome?: string;
+  /** VAR review subject when the event is a VAR call (`Goal`, `Penalty`, `RedCard`…). */
+  varType?: string;
 }
 
 export type CrowdTemplate = (ctx: ReactionContext) => string;
@@ -50,7 +54,26 @@ export const crowdReactions: Partial<Record<MatchAction, ReactionSet>> = {
       () => `NEVER a penalty 😡 referee is blind`,
       (c) => `${c.otherCode} got robbed there 🤬`,
     ],
-    neutral: [() => `Penalty drama incoming... hold your breath ⏳`],
+    neutral: [
+      (c) =>
+        c.outcome === 'Missed'
+          ? `PENALTY MISSED!! 😱 you cannot write this`
+          : c.outcome === 'Saved'
+            ? `SAVED!! 🧤🔥 the keeper is a WALL`
+            : c.outcome === 'Retake'
+              ? `RETAKE ordered 😵 nerves of absolute steel now`
+              : `Penalty drama incoming... hold your breath ⏳`,
+    ],
+  },
+  [MatchAction.Shot]: {
+    celebrate: [
+      (c) => (c.outcome === 'Woodwork' ? `OFF THE WOODWORK!! ${c.teamCode} inches away 😩🪵` : `OOOH ${c.teamCode} force a big save 🧤`),
+      (c) => `${c.playerLabel ?? c.teamName} testing the keeper 🔥`,
+    ],
+    lament: [(c) => (c.outcome === 'Woodwork' ? `Heart in my mouth 😰 saved by the frame` : `Get that cleared 🙏`)],
+    neutral: [
+      (c) => (c.outcome === 'Woodwork' ? `THE POST!! whole stadium gasps 😱` : `Chance at ${c.minute}' — end to end stuff 🍿`),
+    ],
   },
   [MatchAction.RedCard]: {
     celebrate: [
@@ -85,7 +108,12 @@ export const crowdReactions: Partial<Record<MatchAction, ReactionSet>> = {
     celebrate: [],
     lament: [],
     neutral: [
-      () => `VAR check... here we go ⏳`,
+      (c) =>
+        c.outcome === 'Overturned'
+          ? `VAR OVERTURNS IT 🤯 ${c.varType ?? 'the call'} reversed!`
+          : c.outcome === 'Stands'
+            ? `VAR says it STANDS ✅ decision confirmed`
+            : `VAR check... here we go ⏳`,
       () => `Stadium holding its breath 😶`,
       () => `VAR again?? Just play football 🙃`,
     ],

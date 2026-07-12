@@ -1,9 +1,19 @@
+'use client';
+
 import { headToHead } from '@/config/profile-mock';
+import { realHeadToHead } from '@/lib/head-to-head';
+import { useDuels } from '@/services/queries/use-duels';
+import { isBackendSession } from '@/services/session-mode';
 import type { PlayerProfile } from '@/config/duelists.config';
 
 /** Mini head-to-head panel: your record vs this player, with a share bar. */
 export function HeadToHeadCard({ profile }: { profile: PlayerProfile }) {
-  const { mine, theirs } = headToHead(profile);
+  const { data: duels } = useDuels();
+  // Backend session → the REAL duel record vs this opponent (0×0 when none);
+  // mock mode keeps the deterministic demo record.
+  const { mine, theirs } = isBackendSession()
+    ? realHeadToHead(duels ?? [], profile)
+    : headToHead(profile);
   const pct = Math.round((mine / (mine + theirs || 1)) * 100);
   const them = profile.name.split(' ')[0];
 

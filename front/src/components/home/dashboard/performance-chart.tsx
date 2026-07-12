@@ -53,13 +53,13 @@ function Series({ points, color, id }: { points: number[]; color: string; id: st
 }
 
 /** "Graphic Performance" — two smooth series over the selected match's timeline. */
-export function PerformanceChart() {
+export function PerformanceChart({ title = 'Graphic Performance' }: { title?: string } = {}) {
   const match = useDashboardMatch();
 
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold">Graphic Performance</span>
+        <span className="text-sm font-bold">{title}</span>
         <span className="rounded-md border border-border px-2 py-0.5 text-micro font-semibold text-muted-foreground">
           Full time
         </span>

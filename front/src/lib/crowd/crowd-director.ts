@@ -49,6 +49,13 @@ class CrowdDirector {
   private intervals: ReturnType<typeof setInterval>[] = [];
   private unsubscribers: Array<() => void> = [];
 
+  /**
+   * `hatBotOnly` mutes the simulated stands entirely (no ambient chatter, no fan bursts) and
+   * keeps only the single HatBot voice — used by private rooms, where a fake public crowd
+   * makes no sense but the commentary + betting nudges are still wanted.
+   */
+  constructor(private readonly hatBotOnly = false) {}
+
   start(): void {
     const matchState = useMatchStore.getState();
     this.fixtureId = matchState.match?.fixtureId ?? null;
@@ -67,11 +74,16 @@ class CrowdDirector {
 
     this.intervals.push(
       setInterval(() => this.drain(), HATBOT_CADENCE.drainTickMs),
-      setInterval(() => useCrowdStore.getState().add(ambientFanMessage(useMatchStore.getState().match)), HATBOT_CADENCE.ambientMs),
       setInterval(() => this.enqueue('cta', HatBotPriority.Cta, () => buildBetCta(useMatchStore.getState().match)), HATBOT_CADENCE.ctaCooldownMs),
       setInterval(() => this.enqueueInsight(), HATBOT_CADENCE.insightCooldownMs),
       setInterval(() => this.enqueueLogin(), HATBOT_CADENCE.loginCooldownMs),
     );
+    // Ambient fan chatter is crowd, not bot — skip it entirely in HatBot-only rooms.
+    if (!this.hatBotOnly) {
+      this.intervals.push(
+        setInterval(() => useCrowdStore.getState().add(ambientFanMessage(useMatchStore.getState().match)), HATBOT_CADENCE.ambientMs),
+      );
+    }
     // Early staggered nudges so a fresh demo session shows the bot's range quickly.
     this.later(15_000, () => this.enqueueLogin());
     this.later(22_000, () => this.enqueue('cta', HatBotPriority.Cta, () => buildBetCta(useMatchStore.getState().match)));
@@ -134,8 +146,11 @@ class CrowdDirector {
   private reactTo(event: MatchEventPayload): void {
     const match = useMatchStore.getState().match;
     if (!match) return;
-    for (const { delayMs, message } of buildFanBurst(match, event)) {
-      this.later(delayMs, () => useCrowdStore.getState().add(message));
+    // Fan bursts are the simulated stands — the HatBot still calls the moment below.
+    if (!this.hatBotOnly) {
+      for (const { delayMs, message } of buildFanBurst(match, event)) {
+        this.later(delayMs, () => useCrowdStore.getState().add(message));
+      }
     }
     this.enqueue('event', HatBotPriority.Event, () => {
       const current = useMatchStore.getState().match;
@@ -181,10 +196,10 @@ let director: CrowdDirector | null = null;
 let refCount = 0;
 
 /** Ref-counted singleton — the live and duel dashboards can mount/unmount independently. */
-export function startCrowdDirector(): () => void {
+export function startCrowdDirector(options?: { hatBotOnly?: boolean }): () => void {
   refCount += 1;
   if (!director) {
-    director = new CrowdDirector();
+    director = new CrowdDirector(options?.hatBotOnly ?? false);
     director.start();
   }
   let released = false;

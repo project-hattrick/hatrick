@@ -100,6 +100,10 @@ interface ScriptedEvent {
   action: MatchAction;
   participant: number;
   label: string;
+  /** Optional result qualifier — drives the outcome-aware crowd/HatBot lines. */
+  outcome?: string;
+  /** VAR review subject when the event is a VAR call. */
+  varType?: string;
 }
 
 /** One believable stretch of second-half drama, then a non-scoring loop (score stays sane). */
@@ -107,13 +111,14 @@ const eventScript: ScriptedEvent[] = [
   { action: MatchAction.Corner, participant: 2, label: 'France' },
   { action: MatchAction.YellowCard, participant: 1, label: 'ARG-5' },
   { action: MatchAction.Goal, participant: 2, label: 'FRA-10' },
-  { action: MatchAction.Var, participant: 2, label: 'Goal check' },
+  { action: MatchAction.Var, participant: 2, label: 'Goal check', varType: 'Goal', outcome: 'Stands' },
   { action: MatchAction.Penalty, participant: 1, label: 'Argentina' },
   { action: MatchAction.Goal, participant: 1, label: 'ARG-10' },
 ];
 
 const eventLoop: ScriptedEvent[] = [
   { action: MatchAction.Corner, participant: 1, label: 'Argentina' },
+  { action: MatchAction.Shot, participant: 1, label: 'ARG-9', outcome: 'Woodwork' },
   { action: MatchAction.FreeKick, participant: 2, label: 'FRA-8' },
   { action: MatchAction.Substitution, participant: 2, label: 'FRA-9' },
   { action: MatchAction.YellowCard, participant: 2, label: 'FRA-6' },
@@ -147,6 +152,8 @@ export function startMockMatchEvents(): () => void {
       minute,
       participant: scripted.participant,
       label: scripted.label,
+      outcome: scripted.outcome,
+      varType: scripted.varType,
     });
   }, MOCK_EVENT_INTERVAL_MS);
   return () => clearInterval(timer);

@@ -12,11 +12,17 @@ import type { Bet } from '@/types/bet';
 
 const MAX_ROWS = 6;
 
-const STATUS_META: Record<BetStatus, { label: string; className: string }> = {
-  [BetStatus.Open]: { label: 'Open', className: 'text-neon border-neon/50 bg-neon/10' },
-  [BetStatus.Won]: { label: 'Won', className: 'text-neon border-neon/50 bg-neon/10' },
-  [BetStatus.Lost]: { label: 'Lost', className: 'text-muted-foreground border-border bg-surface-2/60' },
-  [BetStatus.Void]: { label: 'Void', className: 'text-chart-4 border-chart-4/50 bg-chart-4/10' },
+// Each status reads distinctly: Open = pending neon outline (with live dot), Won = solid
+// celebratory fill, Lost = danger-red tint, Void = muted neutral. (Open/Won were identical before.)
+const STATUS_META: Record<BetStatus, { label: string; className: string; dotClassName?: string }> = {
+  [BetStatus.Open]: {
+    label: 'Open',
+    className: 'text-neon border-neon/40 bg-neon/10',
+    dotClassName: 'animate-pulse bg-neon',
+  },
+  [BetStatus.Won]: { label: 'Won', className: 'border-transparent bg-neon text-primary-foreground' },
+  [BetStatus.Lost]: { label: 'Lost', className: 'text-danger border-danger/40 bg-danger/10' },
+  [BetStatus.Void]: { label: 'Void', className: 'text-muted-foreground border-border bg-surface-2/60' },
 };
 
 function BetRow({ bet }: { bet: Bet }) {
@@ -31,11 +37,11 @@ function BetRow({ bet }: { bet: Bet }) {
       </div>
       <span
         className={cn(
-          'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-micro font-bold uppercase',
+          'inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0 font-mono text-[10px] leading-none font-bold uppercase',
           meta.className,
         )}
       >
-        {bet.status === BetStatus.Open && <span className="size-1.5 animate-pulse rounded-full bg-neon" />}
+        {meta.dotClassName && <span className={cn('size-1 rounded-full', meta.dotClassName)} />}
         {meta.label}
       </span>
     </div>
@@ -55,7 +61,7 @@ export function MyBetsCard() {
   const rows = mounted ? [...open, ...settled].slice(0, MAX_ROWS) : [];
 
   return (
-    <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
+    <GlassPanel tone="surface" radius="xl" className="flex flex-1 flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold">My Bets</span>
         <span className="inline-flex items-center gap-1.5 font-mono text-micro font-bold text-muted-foreground uppercase">
@@ -64,13 +70,15 @@ export function MyBetsCard() {
         </span>
       </div>
       {rows.length ? (
-        <div className="flex flex-col gap-1.5">
+        // Trailing card of the right column — spreads its rows to fill any slack so the two dashboard
+        // columns always end flush (no void before the Group Stage row). See MatchDashboard.
+        <div className="flex flex-1 flex-col justify-between gap-1.5">
           {rows.map((bet) => (
             <BetRow key={bet.id} bet={bet} />
           ))}
         </div>
       ) : (
-        <span className="text-xs text-muted-foreground">
+        <span className="flex flex-1 items-center text-xs text-muted-foreground">
           No bets yet — pick a market on the board (or an upcoming price) to get started.
         </span>
       )}

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
+import { CacheService } from '../../common/cache/cache.service';
 import { TxlineAuthService } from './txline-auth.service';
 
 const MAX_ATTEMPTS = 3;
@@ -12,12 +13,19 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * refreshes the guest JWT and retries; on transient failures (network, 5xx, 429,
  * timeout) it retries with backoff. All REST traffic funnels through here so
  * provider concerns stay isolated (docs/conventions.md).
+ *
+ * `getCached` adds a read-through cache (Redis, in-memory fallback) — only real
+ * provider responses land in it, and failures propagate uncached. TTL policy
+ * lives at the call sites (services/txline-cache-ttl.ts).
  */
 @Injectable()
 export class TxlineHttpService {
   private readonly logger = new Logger(TxlineHttpService.name);
 
-  constructor(private readonly auth: TxlineAuthService) {}
+  constructor(
+    private readonly auth: TxlineAuthService,
+    private readonly cache: CacheService,
+  ) {}
 
   private async client(): Promise<AxiosInstance> {
     return axios.create({
@@ -56,5 +64,21 @@ export class TxlineHttpService {
       }
     }
     throw lastErr;
+  }
+
+  /** Read-through cached GET — single-flight per key, so concurrent misses hit TxLINE once. */
+  async getCached<T>(path: string, ttlSeconds: number, config?: AxiosRequestConfig): Promise<T> {
+    if (ttlSeconds <= 0) return this.get<T>(path, config);
+    return this.cache.getOrSet<T>(this.cacheKey(path, config?.params), ttlSeconds, () =>
+      this.get<T>(path, config),
+    );
+  }
+
+  /** Host-scoped key (devnet/mainnet answers must never mix) + sorted params for stability. */
+  private cacheKey(path: string, params?: Record<string, unknown>): string {
+    const qs = params
+      ? JSON.stringify(Object.fromEntries(Object.entries(params).sort(([a], [b]) => a.localeCompare(b))))
+      : '';
+    return `txline:${new URL(this.auth.baseUrl).host}:${path}:${qs}`;
   }
 }

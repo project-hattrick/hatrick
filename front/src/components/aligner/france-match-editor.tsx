@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DIVE_LENGTH } from '@/game/realgk/constants';
-import { drawComposedHead, drawTrimmedSprite, gkHead, spriteHeightForBase } from '@/game/realgk/composite';
-import { DIVE2_HEIGHT_RATIO } from '@/game/realgk/sim/keeper';
+import { dive2HeightRatio, drawComposedHead, drawTrimmedSprite, gkHead, spriteHeightForBase } from '@/game/realgk/composite';
 import { BodyAnim, HeadView } from '@/game/realgk/enums';
 import type { FrameCfg } from '@/game/realgk/assets/configs';
 import {
@@ -30,6 +29,7 @@ import {
   saveFranceOverrides,
   snapshotLive,
 } from './france-match-editor-data';
+import { SliderRow } from './slider-row';
 
 /** Base drawn height (world units) — compositing is scale-invariant, so placement matches the pitch 1:1. */
 const PREVIEW_BASE = 190;
@@ -60,35 +60,6 @@ const cellY = (i: number): number => Math.floor(i / COLS) * STRIDE_Y;
 function headFor(cfg: FrameCfg, heads: HeadImgs): HTMLImageElement {
   const key = gkHead(cfg.headView);
   return key === 'back' ? heads.back : key === 'side' ? heads.side : heads.front;
-}
-
-/** Slider + typeable number (commit on Enter/blur, free of the slider's bounds) + "all" propagation. */
-function SliderRow({ label, value, changed, min, max, step, onCommit, onAll }: { label: string; value: number; changed: boolean; min: number; max: number; step: number; onCommit: (v: number) => void; onAll: () => void }) {
-  const commitText = (el: HTMLInputElement) => {
-    const n = Number(el.value);
-    if (Number.isFinite(n) && Math.abs(n - value) > 1e-6) onCommit(n);
-  };
-  return (
-    <label className="flex items-center gap-2 text-[11px]">
-      <span className={`w-20 ${changed ? 'font-bold text-amber-300' : 'text-white/60'}`} title={changed ? 'differs from the checked-in source' : undefined}>
-        {label}
-        {changed ? ' •' : ''}
-      </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onCommit(Number(e.target.value))} className="flex-1 accent-emerald-400" />
-      <input
-        key={value}
-        type="number"
-        step={step}
-        defaultValue={Number(value.toFixed(3))}
-        onKeyDown={(e) => e.key === 'Enter' && commitText(e.target as HTMLInputElement)}
-        onBlur={(e) => commitText(e.target)}
-        className="w-16 rounded bg-slate-800 px-1 py-0.5 text-right font-mono text-white/80"
-      />
-      <button onClick={onAll} title="Apply this value to every frame of EVERY anim of this character" className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] hover:bg-sky-500 hover:text-black">
-        all
-      </button>
-    </label>
-  );
 }
 
 export function FranceMatchEditor() {
@@ -274,7 +245,7 @@ export function FranceMatchEditor() {
       const spriteH = a.dive
         ? (PREVIEW_BASE * DIVE_LENGTH) / Math.max(1, body.naturalWidth / Math.max(1, body.naturalHeight))
         : a.id === BodyAnim.GkDiveV2
-          ? spriteHeightForBase(PREVIEW_BASE, sizeCfg, true) * DIVE2_HEIGHT_RATIO[fr]
+          ? spriteHeightForBase(PREVIEW_BASE, sizeCfg, true) * dive2HeightRatio(fr, body, bodies.current.get(a.framePaths[0]))
           : spriteHeightForBase(PREVIEW_BASE, sizeCfg, true);
       const rect = drawTrimmedSprite(ctx, body, fullFrame, footX, footY, spriteH, mirror);
       if (!rect) return;

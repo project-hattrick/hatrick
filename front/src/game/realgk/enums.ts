@@ -116,6 +116,14 @@ export enum KickIntent {
   Header = 'header',
 }
 
+/** Feed shot outcome (TxLINE `outcome` on a shot event) — drives how a driven shot resolves on the pitch. */
+export enum ShotOutcome {
+  OnTarget = 'OnTarget',
+  OffTarget = 'OffTarget',
+  Woodwork = 'Woodwork',
+  Blocked = 'Blocked',
+}
+
 /** Top-level match flow. v2/v3 never leave Live; v4's goal flow walks the replay ring; v5 opens on Intro. */
 export enum MatchPhase {
   /** Pre-match entrance: team+flag showcase, players walking on, referee whistle (v5 matchIntro only). */
@@ -194,6 +202,8 @@ export enum DrivenDirective {
   Goal = 'goal',
   Corner = 'corner',
   Card = 'card',
+  Penalty = 'penalty',
+  FreeKick = 'free_kick',
 }
 
 export enum CelebrationKind {

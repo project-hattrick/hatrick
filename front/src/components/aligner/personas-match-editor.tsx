@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRealGkEngine } from '@/game/realgk/engine';
 import { REAL_GK_PERSONAS_CONFIG } from '@/game/realgk/config';
+import type { RealGkConfig } from '@/game/realgk/config';
 import { DIVE_LENGTH } from '@/game/realgk/constants';
 import { drawComposedHead, drawTrimmedSprite, gkHead, spriteHeightForBase } from '@/game/realgk/composite';
 import { ITEM_MAP } from '@/game/realgk/assets/items';
@@ -25,6 +26,7 @@ import {
   resetAllLive,
   resetLive,
   saveOverrides,
+  type EditorAnim,
   type NumericCfgKey,
 } from './personas-match-editor-data';
 
@@ -78,14 +80,38 @@ interface HudLite {
   targetLabel: string;
 }
 
-export function PersonasMatchEditor() {
+/**
+ * Live boneco editor over the real match. The FRAME_CONFIGs it mutates are shared across every team
+ * (head/body geometry is kit-independent), so a swapped `config` (e.g. Argentina vs Norway) still edits
+ * the same bonecos. Defaults reproduce the original personas-match-editor.
+ */
+interface PersonasMatchEditorProps {
+  config?: RealGkConfig;
+  title?: string;
+  hudTag?: string;
+  initialCrt?: boolean;
+  /** Anim set driving the preview + rail. Default = the /game/personas set. Pass a franca-family set
+   *  (franceAnimsForRoot) so a franca-based match (France/Argentina/…) previews the ACTUAL game bodies. */
+  anims?: EditorAnim[];
+  /** Head-composition multiplier the match uses (config.personaHeadScale) so the preview head matches 1:1. */
+  previewHeadScale?: number;
+}
+
+export function PersonasMatchEditor({
+  config = REAL_GK_PERSONAS_CONFIG,
+  title = 'Personas match editor',
+  hudTag = 'real-gk-personas',
+  initialCrt = true,
+  anims = EDITOR_ANIMS,
+  previewHeadScale = 1,
+}: PersonasMatchEditorProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const matchCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<RealGkHandle | null>(null);
 
   const [hud, setHud] = useState<HudLite>({ scoreBlue: 0, scoreRed: 0, clock: '00:00', paused: false, speed: 1, cameraLabel: '', targetLabel: '' });
-  const [crt, setCrt] = useState(true);
+  const [crt, setCrt] = useState(initialCrt);
   const [restored, setRestored] = useState(false);
 
   const [animIdx, setAnimIdx] = useState(0);
@@ -97,7 +123,7 @@ export function PersonasMatchEditor() {
   // Bumped after every live patch so slider values re-read the mutated configs.
   const [rev, setRev] = useState(0);
 
-  const anim = EDITOR_ANIMS[animIdx];
+  const anim = anims[animIdx];
   const frameCount = anim.framePaths.length;
   const cfgIdx = cfgIndexFor(anim, frame);
   const cfg = liveList(anim)[cfgIdx];
@@ -119,7 +145,7 @@ export function PersonasMatchEditor() {
     setRestored(loadOverrides());
     const handle = createRealGkEngine(canvas, {
       onHud: (patch: RealGkHudPatch) => setHud((prev) => ({ ...prev, ...patch }) as HudLite),
-      config: REAL_GK_PERSONAS_CONFIG,
+      config,
     });
     handleRef.current = handle;
     const observer = new ResizeObserver(() => handle.resize());
@@ -134,7 +160,7 @@ export function PersonasMatchEditor() {
   // ---- preview assets ----
   useEffect(() => {
     const map = bodies.current;
-    for (const p of new Set(EDITOR_ANIMS.flatMap((a) => a.framePaths))) {
+    for (const p of new Set(anims.flatMap((a) => a.framePaths))) {
       const img = new Image();
       img.src = p;
       map.set(p, img);
@@ -178,7 +204,7 @@ export function PersonasMatchEditor() {
 
     const loop = () => {
       const s = state.current;
-      const a = EDITOR_ANIMS[s.animIdx];
+      const a = anims[s.animIdx];
       const item = ITEM_MAP[a.id];
       const list = liveList(a);
       const fr = Math.min(s.frame, a.framePaths.length - 1);
@@ -217,17 +243,22 @@ export function PersonasMatchEditor() {
         const bbox = a.map === 'locomotion' ? fullFrame : item.bboxes[fr] ?? fullFrame;
         // render.ts:74-80 — dives normalize their LONGEST side to the standing height × DIVE_LENGTH.
         const diveBox = a.dive ? item.bboxes[fr] : null;
+        // Match composites heads at config.personaHeadScale (render.ts scalePersonaHead) — mirror it so the
+        // preview head reads 1:1 with the pitch for franca-family packs (personaHeadScale 0.82).
+        const hs = previewHeadScale;
+        const sizeCfgS = hs !== 1 ? { ...sizeCfg, headScale: sizeCfg.headScale * hs } : sizeCfg;
+        const headCfgS = hs !== 1 ? { ...headCfg, headScale: headCfg.headScale * hs } : headCfg;
         const spriteH = diveBox
           ? (PREVIEW_BASE * DIVE_LENGTH) / Math.max(1, (diveBox[2] - diveBox[0]) / Math.max(1, diveBox[3] - diveBox[1]))
-          : spriteHeightForBase(PREVIEW_BASE, sizeCfg, true);
+          : spriteHeightForBase(PREVIEW_BASE, sizeCfgS, true);
         const rect = drawTrimmedSprite(ctx, body, bbox, footX, footY, spriteH, mirror);
         if (rect) {
-          drawComposedHead(ctx, headFor(headCfg, headSet), footX, rect, mirror, headCfg);
-          const hImg = headFor(headCfg, headSet);
-          const hh = rect.drawH * headCfg.headScale;
+          drawComposedHead(ctx, headFor(headCfgS, headSet), footX, rect, mirror, headCfgS);
+          const hImg = headFor(headCfgS, headSet);
+          const hh = rect.drawH * headCfgS.headScale;
           const hw = hImg.naturalWidth * (hh / Math.max(1, hImg.naturalHeight));
-          const hx = footX - hw * 0.5 + rect.drawW * headCfg.offsetXRatio * (mirror ? -1 : 1);
-          const hy = rect.drawY - hh + rect.drawH * headCfg.offsetYRatio;
+          const hx = footX - hw * 0.5 + rect.drawW * headCfgS.offsetXRatio * (mirror ? -1 : 1);
+          const hy = rect.drawY - hh + rect.drawH * headCfgS.offsetYRatio;
           hitRef.current = { x: hx, y: hy, w: hw, h: hh, bw: rect.drawW, bh: rect.drawH };
         }
       }
@@ -309,7 +340,7 @@ export function PersonasMatchEditor() {
         <canvas ref={matchCanvasRef} className="absolute inset-0 h-full w-full" style={{ imageRendering: 'pixelated' }} />
         {crt && <CrtOverlay />}
         <div className="pointer-events-none absolute left-3 top-3 rounded border border-white/15 bg-black/60 px-3 py-2 font-mono text-[11px] text-white/70">
-          real-gk-personas · {hud.scoreBlue}–{hud.scoreRed} · {hud.clock} {hud.paused ? '· PAUSED' : ''} {hud.speed !== 1 ? `· ${hud.speed}x` : ''}
+          {hudTag} · {hud.scoreBlue}–{hud.scoreRed} · {hud.clock} {hud.paused ? '· PAUSED' : ''} {hud.speed !== 1 ? `· ${hud.speed}x` : ''}
           <div className="text-emerald-300/80">this IS the match — edits on the right land here live</div>
         </div>
         <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
@@ -329,7 +360,7 @@ export function PersonasMatchEditor() {
 
       {/* Editor rail — mutates the SAME config objects the renderer reads. */}
       <aside className="w-[340px] shrink-0 space-y-3 overflow-y-auto border-l border-white/10 bg-black/40 p-3 text-[12px]">
-        <div className="font-bold uppercase tracking-wide text-emerald-300">Personas match editor</div>
+        <div className="font-bold uppercase tracking-wide text-emerald-300">{title}</div>
         {restored && (
           <div className="rounded border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[11px] text-amber-200">
             Session overrides restored (editor-only). “Reset all” discards them.
@@ -346,7 +377,7 @@ export function PersonasMatchEditor() {
             }}
             className="w-full rounded bg-slate-800 px-2 py-1"
           >
-            {EDITOR_ANIMS.map((a, i) => (
+            {anims.map((a, i) => (
               <option key={a.id} value={i}>
                 {a.map === 'keeper' ? '🧤 ' : ''}{a.label}
               </option>

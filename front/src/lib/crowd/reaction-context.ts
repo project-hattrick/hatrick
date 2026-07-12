@@ -22,5 +22,7 @@ export function buildReactionContext(match: LiveMatch, event?: MatchEventPayload
     minute: event?.minute ?? match.minute,
     scoreline: `${match.home.code} ${match.score.home}-${match.score.away} ${match.away.code}`,
     playerLabel: event?.label,
+    outcome: event?.outcome,
+    varType: event?.varType,
   };
 }

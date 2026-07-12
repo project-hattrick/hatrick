@@ -64,19 +64,25 @@ const ANIM_SET: [BodyAnim, string, ConfigMapKey][] = [
 /** Dives that size by aspect (constant DIVE_LENGTH). Dive v2 sizes by DIVE2_HEIGHT_RATIO instead. */
 const DIVE_ANIMS = new Set<BodyAnim>([BodyAnim.GkDive, BodyAnim.GkDiveCompact]);
 
-export const FRANCE_ANIMS: EditorAnim[] = ANIM_SET.map(([id, label, map]) => {
-  const item = ITEM_MAP[id];
-  return {
-    id,
-    label: `${map === 'keeper' ? '🧤 ' : ''}${label}`,
-    map,
-    sideMode: SIDE_MODES.has(id),
-    dive: DIVE_ANIMS.has(id),
-    fps: item.fps,
-    loop: item.loop,
-    framePaths: personaBodyFrames(id, FRANCE_ROOT, item.frameCount, FRANCE_VERSION),
-  };
-});
+/** The France anim set (all bodies + keeper) built against ANY franca-family body root — pass a recolored
+ *  team pack (e.g. /game/teams/argentina) so a live-match editor previews the ACTUAL game sprites. */
+export function franceAnimsForRoot(root: string, version?: string): EditorAnim[] {
+  return ANIM_SET.map(([id, label, map]) => {
+    const item = ITEM_MAP[id];
+    return {
+      id,
+      label: `${map === 'keeper' ? '🧤 ' : ''}${label}`,
+      map,
+      sideMode: SIDE_MODES.has(id),
+      dive: DIVE_ANIMS.has(id),
+      fps: item.fps,
+      loop: item.loop,
+      framePaths: personaBodyFrames(id, root, item.frameCount, version),
+    };
+  });
+}
+
+export const FRANCE_ANIMS: EditorAnim[] = franceAnimsForRoot(FRANCE_ROOT, FRANCE_VERSION);
 
 // ---- body-size lock ----------------------------------------------------------------------------
 // Under normalizedSizes the drawn height is base / max(0.75, 1 + headScale·HS − offsetY) · sizeScale,

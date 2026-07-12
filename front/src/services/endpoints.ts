@@ -48,4 +48,18 @@ export const endpoints = {
     members: (id: string) => `/rooms/${id}/members`,
     messages: (id: string) => `/rooms/${id}/messages`,
   },
+  notifications: {
+    base: '/notifications',
+    readAll: '/notifications/read-all',
+    read: (id: string) => `/notifications/${id}/read`,
+  },
+  friends: {
+    base: '/friends',
+    requests: '/friends/requests',
+    respond: '/friends/respond',
+    byUser: (id: string) => `/friends/${id}`,
+  },
+  crowd: {
+    message: '/crowd/message',
+  },
 } as const;

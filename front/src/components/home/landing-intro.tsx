@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLenis } from 'lenis/react';
 
 import { HolofoteLoader } from '@/components/common/holofote-loader';
 import { useLandingReady } from '@/hooks/use-landing-ready';
@@ -27,6 +28,22 @@ export function LandingIntro() {
   const [phase, setPhase] = useState(IntroPhase.Hold);
   const [held, setHeld] = useState(false);
   const ready = useLandingReady();
+  const lenis = useLenis();
+
+  // Lock scrolling while the overlay is up: the landing (and its hero engine) must not be scrollable
+  // behind the loader. Stops Lenis (which adds `.lenis-stopped { overflow: hidden }`) and pins the
+  // root overflow as a fallback for the frames before Lenis is ready or on touch devices.
+  useEffect(() => {
+    if (phase === IntroPhase.Done) return;
+    lenis?.stop();
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      lenis?.start();
+      root.style.overflow = previous;
+    };
+  }, [lenis, phase]);
 
   useEffect(() => {
     // Reduced motion skips the minimum brand beat — the overlay is then purely a readiness gate.

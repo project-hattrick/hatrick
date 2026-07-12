@@ -4,6 +4,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CacheModule } from './common/cache/cache.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TxlineModule } from './txline/txline.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -23,6 +24,8 @@ import { RoomModule } from './room/room.module';
     ConfigModule.forRoot({ isGlobal: true }),
     // Wildcard event bus: enables `goal.*`, `*.after`, etc. (see docs/architecture.md)
     EventEmitterModule.forRoot({ wildcard: true, delimiter: '.' }),
+    // Global read-through cache (Redis + memory fallback) — shields the TxLINE free tier.
+    CacheModule,
     PrismaModule,
     TxlineModule,
     RealtimeModule,

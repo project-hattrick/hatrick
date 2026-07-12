@@ -86,10 +86,16 @@ export function maybeClaimBall(world: RealGkWorld): void {
   ball.vz = 0;
   world.match.ballText = BallText.wins(best.name);
   if (best.role === Role.GK) {
+    const wasDiving = best.action === PlayerAction.Dive;
     best.action = PlayerAction.None;
     best.actionTimer = 0;
     best.mode = BodyAnim.GkIdle;
     best.saveCooldown = 0.65;
+    // feel.saveImpact: a diving catch punctuates with a few frozen frames + a camera rattle.
+    if (world.feel.saveImpact && wasDiving) {
+      world.feelFx.hitstop = Math.max(world.feelFx.hitstop, 0.09);
+      world.feelFx.shake = Math.max(world.feelFx.shake, 0.26);
+    }
     const note = Status.save(best.name);
     setStatus(world, note.title, note.text);
   }
@@ -208,9 +214,17 @@ export function updateBall(world: RealGkWorld, dt: number): void {
   if (owner) {
     ball.lofted = false;
     const forward = forwardVector(owner);
+    // Trap/intercept gesture: the persona bodies plant the trapping foot LEFT of the torso, low at the
+    // ground line (receive_foot/intercept never mirror), so pin the ball there — the generic forward
+    // foot floats it off the visible leg.
+    const receiving = owner.action === PlayerAction.Receive;
     const footOffset = owner.role === Role.GK ? 10 : 16;
-    const footX = owner.x + forward.x * footOffset;
-    const footY = owner.role === Role.GK ? owner.y - 6 : owner.y + forward.y * 8 - (owner.mode.includes('back') ? 14 : 9);
+    const footX = receiving ? owner.x - 7 : owner.x + forward.x * footOffset;
+    const footY = receiving
+      ? owner.y - 1
+      : owner.role === Role.GK
+        ? owner.y - 6
+        : owner.y + forward.y * 8 - (owner.mode.includes('back') ? 14 : 9);
     ball.x += (footX - ball.x) * 0.32;
     ball.y += (footY - ball.y) * 0.32;
     ball.z += (0 - ball.z) * 0.35;
@@ -281,6 +295,13 @@ export function updateBall(world: RealGkWorld, dt: number): void {
       goal(world, Team.Red);
       return;
     }
+    // OffTarget driven shot: a wide shot is a MISS → goal kick, overriding the engine's attacker-touch →
+    // corner rule (clearing lastKicker makes bylineRestart award the goal kick to the defending side).
+    if (world.drivenShotWide) {
+      world.drivenShotWide = null;
+      bylineRestart(world, Team.Blue, null);
+      return;
+    }
     bylineRestart(world, Team.Blue, lastTeam);
     return;
   }
@@ -291,6 +312,12 @@ export function updateBall(world: RealGkWorld, dt: number): void {
         return;
       }
       goal(world, Team.Blue);
+      return;
+    }
+    // OffTarget driven shot (see the left-goal case): a wide shot is a goal kick, not a corner.
+    if (world.drivenShotWide) {
+      world.drivenShotWide = null;
+      bylineRestart(world, Team.Red, null);
       return;
     }
     bylineRestart(world, Team.Red, lastTeam);

@@ -6,8 +6,10 @@ import { resolveAssets } from '@/game/assets/loader';
 import { HERO_CHECKPOINT, RuntimeKind, getCheckpointMeta, getSharedCheckpoint } from '@/game/checkpoints/registry';
 import { loadRealGkAssets } from '@/game/realgk/assets/loader';
 
-/** Hard cap so a stalled sprite/CDN can never trap the intro overlay on screen. */
-const MAX_WAIT_MS = 10_000;
+/** Hard cap so a stalled sprite/CDN can never trap the intro overlay on screen (kept low for mobile). */
+const MAX_WAIT_MS = 6_000;
+/** `window.load` regularly stalls on mobile (a resource that never fires load) — cap our wait on it. */
+const PAGE_LOAD_SOFT_MS = 2_500;
 
 function imageSettled(img: HTMLImageElement): Promise<void> {
   if (img.complete) return Promise.resolve();
@@ -40,6 +42,10 @@ const pageLoaded = (): Promise<void> =>
     ? Promise.resolve()
     : new Promise((resolve) => window.addEventListener('load', () => resolve(), { once: true }));
 
+/** `window.load` but best-effort: it contributes to readiness yet can't stall it (common on mobile). */
+const softPageLoaded = (): Promise<void> =>
+  Promise.race([pageLoaded(), new Promise<void>((resolve) => window.setTimeout(resolve, PAGE_LOAD_SOFT_MS))]);
+
 /** Two rAFs = the frame after next, i.e. the landing has actually painted underneath the overlay. */
 const nextPaint = (): Promise<void> =>
   new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
@@ -53,17 +59,29 @@ export function useLandingReady(): boolean {
 
   useEffect(() => {
     let cancelled = false;
-    const everything = Promise.all([
-      pageLoaded(),
-      document.fonts.ready,
-      Promise.all(heroAssetImages().map(imageSettled)),
-    ]).then(nextPaint);
-    const cap = new Promise((resolve) => setTimeout(resolve, MAX_WAIT_MS));
-    Promise.race([everything, cap]).then(() => {
-      if (!cancelled) setReady(true);
-    });
+    let capId = 0;
+    const finish = () => {
+      if (cancelled) return;
+      window.clearTimeout(capId);
+      setReady(true);
+    };
+
+    // Hard cap armed FIRST so a hang (page `load`/fonts that never resolve) still lifts the overlay.
+    capId = window.setTimeout(finish, MAX_WAIT_MS);
+
+    // Collecting the hero sprites runs synchronously and could throw if an engine module blows up on
+    // a given device — wrap it in the promise chain so a throw becomes a rejection we recover from
+    // (…finish, finish) instead of stranding the effect and trapping the intro overlay forever.
+    Promise.resolve()
+      .then(() =>
+        Promise.all([softPageLoaded(), document.fonts.ready, Promise.all(heroAssetImages().map(imageSettled))]),
+      )
+      .then(nextPaint)
+      .then(finish, finish);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(capId);
     };
   }, []);
 

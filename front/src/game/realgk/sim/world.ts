@@ -6,6 +6,7 @@ import { centerSpot } from '../field';
 import type { Ball, MatchState, RealGkWorld, Referee, Size } from '../types';
 import { updateBall } from './ball';
 import { clearCelebrations } from './celebration';
+import { defaultFeel, updateFeel } from './feel';
 import { freshDrivenClock, tickDrivenClock } from './driven-clock';
 import { armFiller, tickFiller } from './filler';
 import { freshCoach, resetCoach, updateCoach } from './coach';
@@ -63,6 +64,9 @@ const freshMatch = (): MatchState => ({
   introHold: false,
   restart: null,
   foulCooldown: 12,
+  cardFlashSeq: 0,
+  cardFlashColor: '',
+  cardFlashTeam: '',
 });
 
 /** Drops the ball at center and gives it to the kickoff team's most central outfielder. */
@@ -174,6 +178,8 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     possessionGrant: null,
     fillerShotCooldown: 0,
     pendingDirectives: [],
+    feel: { ...defaultFeel(), ...(cfg.feel ?? {}) },
+    feelFx: { hitstop: 0, shake: 0 },
   };
   restartMatch(world);
   return world;
@@ -250,6 +256,7 @@ export function resumeFromBreak(world: RealGkWorld): void {
 export function step(world: RealGkWorld, dt: number): void {
   const { match } = world;
   updateBallEffects(world, dt);
+  updateFeel(world, dt); // per-player anim clock + keeper recover/punt timers (inert while feel is off)
   // v5 pre-match entrance owns the tick until it kicks off.
   if (match.phase === MatchPhase.Intro) {
     updateIntro(world, dt);

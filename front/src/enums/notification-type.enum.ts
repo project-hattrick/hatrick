@@ -5,4 +5,5 @@ export enum NotificationType {
   Match = 'Match',
   Pack = 'Pack',
   System = 'System',
+  Duel = 'Duel',
 }

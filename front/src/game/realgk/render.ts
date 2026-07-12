@@ -1,5 +1,5 @@
 import { DIVE_LENGTH, FLAT_DEPTH, FLAT_SQUASH, REFEREE_SCALE } from './constants';
-import { BodyAnim, CoachMode, HeadView, PlayerAction, RefMode, Role, Team } from './enums';
+import { BodyAnim, CoachMode, PlayerAction, RefMode, Role, Team } from './enums';
 import { centerSpot, cornerSpot, fieldBounds, goalKickSpot, metrics, penaltySpot, GOALS, PLAY_LINES } from './field';
 import { drawBallEffects } from './effects';
 import { drawBillboards } from './billboards';
@@ -7,13 +7,14 @@ import type { RealGkPlayer, RealGkWorld } from './types';
 import { clamp, lerp } from './util';
 import type { RealGkCamera } from './camera';
 import { locomotionConfigFor, outfieldConfigFor, type FrameCfg } from './assets/configs';
-import { SIDE_MODES, gkHead, spriteHeightForBase, drawSprite, drawTrimmedSprite, drawComposedHead } from './composite';
+import { SIDE_MODES, dive2HeightRatio, gkHead, spriteHeightForBase, drawSprite, drawTrimmedSprite, drawComposedHead } from './composite';
 import { ITEM_MAP } from './assets/items';
 import { PERSONA_GK_BODY_ANIMS } from './assets/manifest';
-import type { HeadKey, HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
+import type { HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
 import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
-import { DIVE2_HEIGHT_RATIO, dive2SmearAt, keeperConfigFor } from './sim/keeper';
+import { dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
+import { GHOST_WINDOW, applyLeanTransform, drawKeeperGhost, isGhostable } from './render-feel';
 
 /** Team-colored foot ring (matches v1). */
 const TEAM_RING: Record<Team, string> = { [Team.Blue]: '#3b82f6', [Team.Red]: '#ef4444' };
@@ -59,9 +60,12 @@ function drawReferee(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: 
 
 function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: RealGkWorld, assets: RealGkAssets, now: number, flat: boolean): void {
   const { size } = world;
+  const feel = world.feel;
+  const fs = player.feel;
   const bounds = fieldBounds(size, player.y);
   const depth = flat ? FLAT_DEPTH : bounds.depth;
-  const frameIdx = frameIndexFor(player, now);
+  // feel.animPhase samples looped anims off a per-player clock (resets to frame 0 on a mode switch).
+  const frameIdx = frameIndexFor(player, now, feel.animPhase ? fs.animClock : null);
   const modeItem = ITEM_MAP[player.mode];
   const sideMode = SIDE_MODES.has(player.mode);
   const isGk = player.role === Role.GK;
@@ -75,12 +79,16 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // cuts). Shared anims a keeper can enter (celebrations) must keep the legacy path — their persona
   // geometry lives in outfieldConfigFor, which the keeper draw (keeperConfigFor) has no frames for.
   const gkPersonaMode = isGk && PERSONA_GK_MODES.has(player.mode);
-  const personaBody = personaOn && !!assets.personaBodies[player.mode]?.length && (isGk ? gkPersonaMode : rawPersonaCfg !== null);
+  // Home/away kit split: the away team (Team.Red) draws from a second body pack when one is loaded,
+  // falling back to the shared/home pack for any anim it lacks.
+  const teamBodies =
+    player.team === Team.Red && assets.personaBodiesAway[player.mode]?.length ? assets.personaBodiesAway : assets.personaBodies;
+  const personaBody = personaOn && !!teamBodies[player.mode]?.length && (isGk ? gkPersonaMode : rawPersonaCfg !== null);
   const headSet: HeadSet = personaOn ? assets.personaHeads[player.personaId % assets.personaHeads.length] : assets.heads;
   // Resilient frame lookup: a not-yet-loaded or missing mode/frame must never crash the draw (it used to
   // flood "recovered draw errors" and leave the pitch as bare shadows). Fall back to the mode's frame 0,
   // then a neutral idle, and skip cleanly if even that is unavailable.
-  const bodyFrames = personaBody ? assets.personaBodies[player.mode] : assets.body[player.mode];
+  const bodyFrames = personaBody ? teamBodies[player.mode] : assets.body[player.mode];
   const frame =
     bodyFrames?.[frameIdx] ??
     bodyFrames?.[0] ??
@@ -107,12 +115,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // constant-dive-length normalization.
   const diveBox = diving && !diveV2 ? (personaBody ? fullFrameBbox() : modeItem?.bboxes[frameIdx]) : null;
   const spriteHeight = diveV2
-    ? spriteHeightFor(world, depth, sizeCfg) * DIVE2_HEIGHT_RATIO[frameIdx]
+    ? spriteHeightFor(world, depth, sizeCfg) * dive2HeightRatio(frameIdx, personaBody ? bodyFrames?.[frameIdx] : null, personaBody ? bodyFrames?.[0] : null)
     : diveBox
       ? (lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * DIVE_LENGTH) /
         Math.max(1, (diveBox[2] - diveBox[0]) / Math.max(1, diveBox[3] - diveBox[1]))
       : spriteHeightFor(world, depth, sizeCfg);
-  const footY = player.y - player.celebrationLift;
+  // feel.idleLife: a subtle breathing bob so a standing keeper reads alive, not frozen (sprite only —
+  // the shadow stays grounded).
+  const keeperBob = feel.idleLife && isGk && player.mode === BodyAnim.GkIdle ? Math.sin(now * 0.0042) * 1.1 : 0;
+  const footY = player.y - player.celebrationLift - keeperBob;
 
   const liftShrink = 1 - Math.min(0.38, player.celebrationLift / 60);
   const spd = Math.hypot(player.vx, player.vy);
@@ -126,8 +137,12 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
   // Sprite painter reused for the cast-shadow silhouette and the real draw.
   const mirror = sideMode ? player.facing < 0 : false;
   const composedCfg = keeperCfg ?? outfieldCfg;
-  const maxHeadHeight = world.cfg.headMaxFraction !== undefined
-    ? lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth) * world.cfg.headMaxFraction
+  const headBoundsBase = lerp(world.cfg.spriteMinH, world.cfg.spriteMaxH, depth);
+  const headBounds = world.cfg.headMaxFraction !== undefined || world.cfg.headMinFraction !== undefined
+    ? {
+        min: world.cfg.headMinFraction !== undefined ? headBoundsBase * world.cfg.headMinFraction : undefined,
+        max: world.cfg.headMaxFraction !== undefined ? headBoundsBase * world.cfg.headMaxFraction : undefined,
+      }
     : undefined;
   const paintSprite = (): void => {
     if (composedCfg) {
@@ -135,7 +150,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
       // items.ts describe the baked sprites, not these). Everything else keeps its per-frame trim box.
       const bbox = personaBody ? fullFrameBbox() : modeItem?.bboxes[frameIdx] ?? fullFrameBbox();
       const bodyRect = drawTrimmedSprite(ctx, frame, bbox, player.x, footY, spriteHeight, mirror);
-      if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg, maxHeadHeight);
+      if (bodyRect) drawComposedHead(ctx, headSet[gkHead(composedCfg.headView)], player.x, bodyRect, mirror, composedCfg, headBounds);
     } else {
       drawSprite(ctx, frame, player.x, footY, spriteHeight, mirror);
     }
@@ -214,7 +229,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     if (smear) {
       const baseH = spriteHeightFor(world, depth, sizeCfg);
       const paintGhost = (idx: number, k: number, alpha: number): void => {
-        const ghostFrame = (personaBody ? assets.personaBodies[player.mode] : assets.body[player.mode])?.[idx];
+        const ghostFrame = (personaBody ? teamBodies[player.mode] : assets.body[player.mode])?.[idx];
         const ghostBox = personaBody
           ? ghostFrame?.complete && ghostFrame.naturalWidth
             ? [0, 0, ghostFrame.naturalWidth, ghostFrame.naturalHeight]
@@ -226,8 +241,9 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
         const cfg = scalePersonaHead(keeperConfigFor(player.mode, idx), personaHeadScale) ?? keeperConfigFor(player.mode, idx);
         ctx.save();
         ctx.globalAlpha = alpha;
-        const rect = drawTrimmedSprite(ctx, ghostFrame, ghostBox, gx, gy, baseH * DIVE2_HEIGHT_RATIO[idx], mirror);
-        if (rect) drawComposedHead(ctx, headSet[gkHead(cfg.headView)], gx, rect, mirror, cfg);
+        const ratio = dive2HeightRatio(idx, personaBody ? bodyFrames?.[idx] : null, personaBody ? bodyFrames?.[0] : null);
+        const rect = drawTrimmedSprite(ctx, ghostFrame, ghostBox, gx, gy, baseH * ratio, mirror);
+        if (rect) drawComposedHead(ctx, headSet[gkHead(cfg.headView)], gx, rect, mirror, cfg, headBounds);
         ctx.restore();
       };
       paintGhost(smear.from, 0, 0.28 * (1 - smear.t * 0.5));
@@ -236,7 +252,33 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: RealGkPlayer, world: 
     }
   }
 
-  paintSprite();
+  // feel.crossfade: dissolve the previous keeper frame under the live one so a mode switch never snaps.
+  // The switch is detected against the last drawn frame; animClock (reset at the switch) drives the fade.
+  if (feel.crossfade && isGk && !diving && composedCfg) {
+    if (fs.lastDrawnMode !== null && fs.lastDrawnMode !== player.mode && isGhostable(fs.lastDrawnMode)) {
+      fs.ghostMode = fs.lastDrawnMode;
+      fs.ghostFrame = fs.lastDrawnFrame;
+    }
+    if (fs.ghostMode !== null && fs.animClock < GHOST_WINDOW) {
+      const alpha = (1 - fs.animClock / GHOST_WINDOW) * 0.55;
+      drawKeeperGhost(ctx, world, assets, player, fs.ghostMode, fs.ghostFrame, footY, depth, alpha, personaHeadScale, headBounds);
+    }
+  }
+
+  // feel.leanTilt: skew the keeper sprite into its horizontal velocity (only the live draw, not the shadow).
+  const leanActive = feel.leanTilt && isGk && !diving && Math.abs(player.vx) > 12;
+  if (leanActive) {
+    ctx.save();
+    applyLeanTransform(ctx, player, footY);
+    paintSprite();
+    ctx.restore();
+  } else {
+    paintSprite();
+  }
+
+  // Crossfade bookkeeping: remember this frame so the next switch can ghost it out.
+  fs.lastDrawnMode = player.mode;
+  fs.lastDrawnFrame = frameIdx;
 
   // Overhead pixel arrow (built from stacked rects) bobbing above the controlled player.
   // spriteHeight is the BODY only — composited heads extend above it, so lift the arrow clear of the head.
@@ -335,6 +377,73 @@ function drawGoalNet(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets: 
     }
     ctx.restore();
   }
+}
+
+type FramePt = { x: number; y: number };
+const mixPt = (a: FramePt, b: FramePt, t: number): FramePt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+/** Depth-sort key for a goal frame: its near (largest-Y) post foot, so it slots into the player sort. */
+function goalFrameSortY(world: RealGkWorld, team: Team): number {
+  return fieldPoint(world, GOALS[team].lat, GOALS[team].depthBottom).y;
+}
+
+/**
+ * Draws the calibrated vector goal frame for ONE team — two posts + crossbar + a net mesh — following
+ * the pitch perspective from its two post feet (the goal traced in /sandbox/field-calibrator).
+ * `GOALS[team].crossbar` (image-ratio Y) sets the post height. Depth-sorted into the scene by its near
+ * foot, so players in front of the mouth pass over the net while a keeper inside it sits behind.
+ */
+function drawGoalFrame(ctx: CanvasRenderingContext2D, world: RealGkWorld, team: Team): void {
+  const H = world.size.height;
+  const g = GOALS[team];
+  const postH = (g.crossbar ?? 0.09) * H;
+  const nearFoot = fieldPoint(world, g.lat, g.depthBottom);
+  const farFoot = fieldPoint(world, g.lat, g.depthTop);
+  const nearTop = { x: nearFoot.x, y: nearFoot.y - postH };
+  const farTop = { x: farFoot.x, y: farFoot.y - postH };
+
+  ctx.save();
+  // Net: a faint fill over the mouth plane + a light grid of strings.
+  ctx.beginPath();
+  ctx.moveTo(nearFoot.x, nearFoot.y);
+  ctx.lineTo(nearTop.x, nearTop.y);
+  ctx.lineTo(farTop.x, farTop.y);
+  ctx.lineTo(farFoot.x, farFoot.y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 1; i < 6; i++) {
+    const t = i / 6;
+    const b = mixPt(nearFoot, farFoot, t);
+    const tp = mixPt(nearTop, farTop, t);
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(tp.x, tp.y);
+  }
+  for (let i = 1; i < 4; i++) {
+    const s = i / 4;
+    const l = mixPt(nearFoot, nearTop, s);
+    const r = mixPt(farFoot, farTop, s);
+    ctx.moveTo(l.x, l.y);
+    ctx.lineTo(r.x, r.y);
+  }
+  ctx.stroke();
+
+  // Solid white frame: the two posts + crossbar (goal line stays implicit at the feet).
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(nearFoot.x, nearFoot.y);
+  ctx.lineTo(nearTop.x, nearTop.y);
+  ctx.lineTo(farTop.x, farTop.y);
+  ctx.lineTo(farFoot.x, farFoot.y);
+  ctx.stroke();
+  ctx.restore();
 }
 
 /** Placed court shadows (field ratios of world.size), authored in /sandbox/shadow-editor. */
@@ -530,6 +639,14 @@ export function render(ctx: CanvasRenderingContext2D, world: RealGkWorld, assets
   const facingAway = ballOwner ? ballOwner.lookY < -0.25 || ballOwner.mode.includes('back') : false;
   const ballSortY = ballOwner ? ballOwner.y + (facingAway ? -10 : 6) : world.ball.y + (world.ball.z > 0 ? -18 : 0);
   renderables.push({ sortY: ballSortY, draw: () => drawBall(ctx, world, assets, flat) });
+
+  // Calibrated goal frames depth-sort with the players so the mouth occludes correctly: a striker in
+  // front of goal passes over the net, a keeper inside the mouth sits behind it.
+  if (world.cfg.features?.goalFrame) {
+    for (const team of [Team.Blue, Team.Red]) {
+      renderables.push({ sortY: goalFrameSortY(world, team), draw: () => drawGoalFrame(ctx, world, team) });
+    }
+  }
 
   renderables.sort((a, b) => a.sortY - b.sortY).forEach((r) => r.draw());
   drawGoalNet(ctx, world, assets, 'front'); // near posts/net over the players

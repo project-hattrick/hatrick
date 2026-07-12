@@ -8,7 +8,7 @@ import type { RealGkWorld } from '../types';
 import { createPlayback, materializeWorld, type ReplayPlayback, type ReplaySample } from './playback';
 import type { ReplayRecorder } from './recorder';
 
-const WIPE_SECONDS = 1.1; // slower, more dramatic TV transition
+const WIPE_SECONDS = 1.1; // slower, more dramatic TV transition (cinematic default)
 const LOOKBACK_SECONDS = 3.0;
 const REPLAY_SPEED = 0.4;
 const MIN_FOOTAGE_SECONDS = 0.5; // play whatever footage exists rather than bailing to a plain kickoff
@@ -40,6 +40,10 @@ const REPLAY_PHASES = new Set<MatchPhase>([MatchPhase.ReplayIn, MatchPhase.Repla
 
 /** Owns the broadcast goal flow: celebration hand-off → wipe in → slow-mo playback → wipe out → kickoff. */
 export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam: RealGkCamera): ReplayDirector {
+  // Per-variant timing overrides (the room shortens the replay); unset fields keep the cinematic defaults.
+  const wipeSeconds = world.cfg.replayTiming?.wipe ?? WIPE_SECONDS;
+  const lookbackSeconds = world.cfg.replayTiming?.lookback ?? LOOKBACK_SECONDS;
+  const replaySpeed = world.cfg.replayTiming?.speed ?? REPLAY_SPEED;
   let prevPhase = world.match.phase;
   let playback: ReplayPlayback | null = null;
   let progress = 0;
@@ -69,7 +73,7 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
   };
 
   const enterReplay = (): boolean => {
-    playback = createPlayback(recorder.slice(goalT - LOOKBACK_SECONDS * 1000, goalT + 1));
+    playback = createPlayback(recorder.slice(goalT - lookbackSeconds * 1000, goalT + 1));
     if (!playback || playback.durationSeconds < MIN_FOOTAGE_SECONDS) {
       playback = null;
       return false;
@@ -95,22 +99,22 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
       if (prevPhase !== MatchPhase.ReplayIn) match.phaseTimer = 0;
       match.phaseTimer += rawDt;
       // Build the playback at the covered midpoint; bail to a covered kickoff when footage is too short.
-      if (match.phaseTimer >= WIPE_SECONDS / 2 && !playback && !didKickoffReset) {
+      if (match.phaseTimer >= wipeSeconds / 2 && !playback && !didKickoffReset) {
         if (!enterReplay()) {
           // No footage: reset under cover and let the wipe finish over the kickoff scene (no replay).
           performKickoffReset();
           match.phase = MatchPhase.ReplayOut;
-          match.phaseTimer = WIPE_SECONDS / 2;
+          match.phaseTimer = wipeSeconds / 2;
           prevPhase = world.match.phase;
           return;
         }
       }
-      if (match.phaseTimer >= WIPE_SECONDS) {
+      if (match.phaseTimer >= wipeSeconds) {
         match.phase = MatchPhase.Replay;
         match.phaseTimer = 0;
       }
     } else if (match.phase === MatchPhase.Replay) {
-      progress += rawDt * REPLAY_SPEED;
+      progress += rawDt * replaySpeed;
       const sample = currentSample();
       if (sample && playback) {
         updateReplayCamera(cam, world, sample.ball.x, sample.ball.y, Math.min(1, progress / playback.durationSeconds));
@@ -122,10 +126,10 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
       }
     } else if (match.phase === MatchPhase.ReplayOut) {
       match.phaseTimer += rawDt;
-      if (match.phaseTimer >= WIPE_SECONDS / 2 && !didKickoffReset) {
+      if (match.phaseTimer >= wipeSeconds / 2 && !didKickoffReset) {
         performKickoffReset();
       }
-      if (match.phaseTimer >= WIPE_SECONDS) {
+      if (match.phaseTimer >= wipeSeconds) {
         match.phase = MatchPhase.Live;
         match.phaseTimer = 0;
         // Must clear here: otherwise the NEXT goal's ReplayIn sees didKickoffReset=true and skips the
@@ -143,7 +147,7 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
     if (!playback) return false;
     return (
       match.phase === MatchPhase.Replay ||
-      (match.phase === MatchPhase.ReplayIn && match.phaseTimer >= WIPE_SECONDS / 2) ||
+      (match.phase === MatchPhase.ReplayIn && match.phaseTimer >= wipeSeconds / 2) ||
       (match.phase === MatchPhase.ReplayOut && !didKickoffReset)
     );
   };
@@ -159,7 +163,7 @@ export function createDirector(world: RealGkWorld, recorder: ReplayRecorder, cam
     const { match } = world;
     const wiping = match.phase === MatchPhase.ReplayIn || match.phase === MatchPhase.ReplayOut;
     return {
-      wipeProgress: wiping ? Math.min(1, match.phaseTimer / WIPE_SECONDS) : null,
+      wipeProgress: wiping ? Math.min(1, match.phaseTimer / wipeSeconds) : null,
       dressing: showingReplayFrame(),
     };
   };

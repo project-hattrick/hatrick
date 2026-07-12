@@ -1,10 +1,12 @@
 /**
- * Starting XI per team for the "Team Line Up" card. We can't render real player names and the TxLINE
- * feed carries no lineups, so each row is a licensing-safe `${CODE}-${number}` label (ARG-1 … ARG-11)
- * tied to the SELECTED match's real team code — always correct for any team, no curated-list drift.
+ * Starting XI per team for the "Team Line Up" card. We can't render real player names, so each row is
+ * a licensing-safe `${CODE}-${number}` label (ARG-1 … ARG-11) tied to the SELECTED match's real team
+ * code. When the feed delivers the real lineups (`action=lineups`), the rows carry the REAL shirt
+ * numbers; otherwise the deterministic 1–11 template stands in — no curated-list drift either way.
  */
 
-import { teamPlayerLabel } from '@/lib/player-identity';
+import { numberForId, teamPlayerLabel } from '@/lib/player-identity';
+import type { LineupSlot } from '@/types/match';
 
 /** Position tags down the card, one per lineup row — a 4-3-3. */
 export const LINEUP_POSITIONS = ['GK', 'DF', 'DF', 'DF', 'DF', 'MF', 'MF', 'MF', 'FW', 'FW', 'FW'] as const;
@@ -26,6 +28,24 @@ function hash(str: string): number {
 /** The starting XI (11 rows, 4-3-3) for a team code — CODE-1 (GK) … CODE-11, shirt numbers by row. */
 export function lineupFor(code: string): LineupPlayer[] {
   return LINEUP_POSITIONS.map((pos, i) => ({ pos, name: teamPlayerLabel(code, i + 1) }));
+}
+
+/** Best-effort position tag from the feed's positionId (1=GK…4=FW convention — unverified, so fallback). */
+const POSITION_TAGS: Record<number, string> = { 1: 'GK', 2: 'DF', 3: 'MF', 4: 'FW' };
+
+/**
+ * The REAL starting XI from feed lineups: starters first, then shirt order, labels carry the real
+ * shirt numbers (still `${CODE}-${shirt}` — never names). Rows without a shirt get a stable stand-in.
+ */
+export function realLineupFor(code: string, slots: LineupSlot[]): LineupPlayer[] {
+  const shirt = (slot: LineupSlot) => slot.shirt ?? numberForId(slot.playerId);
+  const ordered = [...slots]
+    .sort((a, b) => Number(b.starter ?? true) - Number(a.starter ?? true) || shirt(a) - shirt(b))
+    .slice(0, LINEUP_POSITIONS.length);
+  return ordered.map((slot, i) => ({
+    pos: POSITION_TAGS[slot.positionId ?? 0] ?? LINEUP_POSITIONS[i],
+    name: teamPlayerLabel(code, shirt(slot)),
+  }));
 }
 
 /** A dot on the formation pitch (x/y in %, shirt number). */

@@ -10,10 +10,11 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { CircleNotch, Lock, SignIn } from '@/components/common/icons';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ParallaxStage } from '@/components/home/parallax-stage';
+import { RoomMatchBackdrop } from './room-match-backdrop';
 import { HeroLayout } from '@/enums/hero-layout.enum';
 import { useLiveFeed } from '@/services/realtime/use-live-feed';
 import { useAutoReplay } from '@/hooks/use-auto-replay';
+import { useCrowdDirector } from '@/hooks/use-crowd-director';
 import { useRoomFixture } from '@/hooks/use-room-fixture';
 import { useRoomPicksDriver } from '@/hooks/use-room-picks-driver';
 import { useJoinRoom, useRoom, useRoomMembersQuery, useRoomMessagesQuery } from '@/services/queries';
@@ -40,8 +41,8 @@ function RoomStateCard({ children }: { children: ReactNode }) {
  * Private-room watch experience: the live pitch fills the screen behind the
  * normal navbar, with room widgets pinned like the home hero. Honours the
  * Split/Immersive toggle (MatchTimeline) exactly like the home dashboard —
- * ParallaxStage stays OUTSIDE the toggled subtree so the ambient engine never
- * remounts; split covers it with its opaque framed layout.
+ * the ambient RoomMatchBackdrop stays OUTSIDE the toggled subtree so the engine
+ * never remounts; split covers it with its opaque framed layout.
  *
  * Session-start order: validate session (unknown → checking card) → sign-in gate
  * for guests → load the room (spinner / not-found) → point the stage at the
@@ -56,8 +57,11 @@ export function RoomView({ roomId }: { roomId: string }) {
   const openLogin = useUiStore((s) => s.openLogin);
   const heroLayout = useUiStore((s) => s.heroLayout);
 
-  // Drive the engine (same feed the home hero uses) + the room's social picks.
+  // Drive the engine (same feed the home hero uses) + the room's social picks. HatBot-only: a
+  // private session gets the bot's commentary + betting nudges, but NOT the simulated public
+  // stands — the fake crowd makes no sense in a closed room with your friends.
   useLiveFeed();
+  useCrowdDirector({ hatBotOnly: true });
   useRoomPicksDriver();
   const roomQuery = useRoom(roomId);
   const membersQuery = useRoomMembersQuery(roomId);
@@ -68,8 +72,11 @@ export function RoomView({ roomId }: { roomId: string }) {
   const members = membersQuery.data;
 
   // Everyone lands on the ROOM's match; the ambient auto-replay stays off until we know the room
-  // has no fixture of its own (prevents a random replay flashing in first).
-  const { pending: fixturePending } = useRoomFixture(room?.fixtureId);
+  // has no fixture of its own (prevents a random replay flashing in first). The fixture resolves in
+  // the background — we don't block the room on it: the widgets (bets, chat, invite) are useful right
+  // away and the pitch's own pre-match banner (MatchStateOverlay) is the single "waiting" indicator,
+  // so we never stack a loading card on top of it.
+  useRoomFixture(room?.fixtureId);
   useAutoReplay(room !== undefined && room.fixtureId == null);
 
   const setRoom = useRoomStore((s) => s.setRoom);
@@ -140,12 +147,13 @@ export function RoomView({ roomId }: { roomId: string }) {
         </Link>
       </RoomStateCard>
     );
-  } else if (!room || fixturePending) {
-    // Hold until the ROOM's match is on the store — the widgets must never flash the fallback match.
+  } else if (!room) {
+    // Only hold while the room itself is loading; the fixture points the pitch at the match in the
+    // background, and the pre-match banner covers the "waiting for kickoff" state on its own.
     gate = (
       <RoomStateCard>
         <CircleNotch className="size-6 animate-spin text-neon" />
-        <span className="text-sm font-semibold">{room ? 'Loading the match…' : 'Joining room…'}</span>
+        <span className="text-sm font-semibold">Joining room…</span>
       </RoomStateCard>
     );
   }
@@ -154,8 +162,10 @@ export function RoomView({ roomId }: { roomId: string }) {
     <div className="relative w-full">
       <SiteNavbar />
       <section className="relative h-[100svh] w-full overflow-hidden">
-        {/* Ambient engine — never remounts on layout toggles (mirrors home). */}
-        <ParallaxStage />
+        {/* Ambient engine — the room's per-team "new model" pitch; never remounts on layout toggles. */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <RoomMatchBackdrop bridgeHud feedRadar />
+        </div>
 
         {gate ?? (
           <>

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recolor lab — France → any team (soft-mask methods)</title>
+<style>
+  :root { --bg:#0b0f17; --panel:#131a26; --line:#243044; --ink:#e7eefc; --muted:#8ea0bd; --accent:#39e0a3; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:13px/1.45 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:12px 18px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:15px; margin:0 0 2px; font-weight:650; }
+  header p { margin:0; color:var(--muted); font-size:12px; }
+  .wrap { display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 52px); }
+  .side { border-right:1px solid var(--line); padding:16px; display:flex; flex-direction:column; gap:14px; overflow:auto; }
+  h2 { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:0 0 7px; }
+  .presets, .modes { display:flex; gap:6px; flex-wrap:wrap; }
+  button { background:#1b2436; color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:6px 9px; cursor:pointer; font-size:12px; }
+  button:hover { border-color:var(--accent); }
+  button.on { background:var(--accent); color:#04241a; border-color:var(--accent); font-weight:650; }
+  .band { display:flex; gap:9px; align-items:center; margin-bottom:8px; }
+  .band input[type=color] { width:34px; height:26px; border:none; background:none; padding:0; cursor:pointer; }
+  .band .lbl { font-size:12px; } .band .lbl small { display:block; color:var(--muted); font-size:10px; }
+  .slider { margin-bottom:7px; font-size:11px; color:var(--muted); }
+  .slider .row { display:flex; justify-content:space-between; margin-bottom:2px; }
+  .slider input { width:100%; }
+  .chk { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink); margin-bottom:6px; }
+  .stage { padding:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { display:flex; flex-direction:column; gap:6px; align-items:center; }
+  .cell .cap { font-size:11px; color:var(--muted); } .cell .cap b { color:var(--ink); }
+  .frame { background:
+      linear-gradient(45deg,#0d1420 25%,transparent 25%,transparent 75%,#0d1420 75%),
+      linear-gradient(45deg,#0d1420 25%,#10192a 25%,#10192a 75%,#0d1420 75%);
+    background-size:12px 12px; background-position:0 0,6px 6px; border:1px solid var(--line); border-radius:9px; padding:8px; }
+  canvas { image-rendering:pixelated; display:block; }
+  .frame.big canvas { height:340px; width:auto; }
+  .frame.mini { background:#12351f; } .frame.mini canvas { height:112px; width:auto; }
+  .foot { color:var(--muted); font-size:11px; padding:6px 18px 20px; max-width:960px; }
+  code { color:#bfe; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Recolor lab — France <code>idle_front</code> → any team</h1>
+  <p>Soft hue+saturation masks (no hard classification → no boundary faults). Five methods compared. White/black are auto-excluded from hue masks.</p>
+</header>
+
+<div class="wrap">
+  <aside class="side">
+    <div><h2>Team preset</h2><div class="presets">
+      <button data-preset="canada" class="on">🇨🇦 Canada</button>
+      <button data-preset="brazil">🇧🇷 Brazil</button>
+      <button data-preset="croatia">🇭🇷 Croatia</button>
+      <button data-preset="netherlands">🇳🇱 Neth.</button>
+    </div></div>
+
+    <div><h2>Kit target colors</h2>
+      <div class="band"><input type="color" id="colShirt" value="#d52b1e"><div class="lbl">Shirt<small>← FR blue band</small></div></div>
+      <div class="band"><input type="color" id="colShorts" value="#ffffff"><div class="lbl">Shorts / whites<small>← FR white band</small></div></div>
+      <div class="band"><input type="color" id="colSocks" value="#d52b1e"><div class="lbl">Socks / red trim<small>← FR red band</small></div></div>
+    </div>
+
+    <div>
+      <label class="chk"><input type="checkbox" id="regionSplit"> Region split (Y)</label>
+      <div class="slider"><div class="row"><span>Shirt/shorts split line</span><span id="ysplitV">0.52</span></div><input type="range" id="ysplit" min="0.3" max="0.75" step="0.01" value="0.52"></div>
+      <small style="color:var(--muted)">Fixes striped kits: whites above the line follow the shirt, below follow the shorts.</small>
+    </div>
+
+    <div><h2>Mask tuning</h2>
+      <div class="slider"><div class="row"><span>Saturation gate</span><span id="satMinV">0.22</span></div><input type="range" id="satMin" min="0.05" max="0.45" step="0.01" value="0.22"></div>
+      <div class="slider"><div class="row"><span>Hue window ±</span><span id="hueWV">30</span></div><input type="range" id="hueW" min="10" max="60" step="1" value="30"></div>
+      <div class="slider"><div class="row"><span>Feather</span><span id="featherV">22</span></div><input type="range" id="feather" min="4" max="45" step="1" value="22"></div>
+      <div class="slider"><div class="row"><span>Dark cutoff (outline)</span><span id="olThrV">52</span></div><input type="range" id="olThr" min="20" max="90" step="1" value="52"></div>
+      <div class="slider"><div class="row"><span>Navy hue center</span><span id="navyCV">auto</span></div><input type="range" id="navyC" min="180" max="270" step="1" value="228"></div>
+      <div class="slider"><div class="row"><span>Red hue center</span><span id="redCV">auto</span></div><input type="range" id="redC" min="330" max="380" step="1" value="353"></div>
+    </div>
+
+    <div><h2>Shading (gradient/multiply)</h2>
+      <div class="slider"><div class="row"><span>Shadow spread</span><span id="spreadV">0.42</span></div><input type="range" id="spread" min="0" max="0.7" step="0.02" value="0.42"></div>
+      <div class="slider"><div class="row"><span>Highlight lift</span><span id="hiliteV">0.34</span></div><input type="range" id="hilite" min="0" max="0.6" step="0.02" value="0.34"></div>
+    </div>
+
+    <div><h2>View</h2><div class="modes">
+      <button id="maskBtn">🔎 Show masks</button>
+      <button id="dl">⬇ Download (hybrid, full-res)</button>
+    </div></div>
+  </aside>
+
+  <main>
+    <div class="stage">
+      <div class="row" id="grid"></div>
+    </div>
+    <p class="foot">
+      <b>How masks work:</b> each pixel gets a soft weight per band from hue-distance × saturation-gate. White (desaturated) and near-black (below dark cutoff) fall out of every hue mask automatically, so they never get miscolored — that's what killed the old faults.
+      <b>Methods:</b>
+      <code>Hue</code> keeps the source shading/texture and just re-tints (closest to the clean hue-shift; best for chromatic→chromatic like navy→red);
+      <code>Colorize</code> sets hue+sat, keeps source lightness;
+      <code>Gradient</code> maps band luminance onto a shadow→base→highlight ramp (great for big luminance jumps, navy→yellow);
+      <code>Multiply</code> tints a level-stretched greyscale;
+      <code>Hybrid ★</code> = Hue for shirt/socks + Gradient for the white band (needed when shorts change to a real color).
+      Turn on <b>Region split</b> for striped kits (Brazil) so shirt whites don't bleed into shorts color.
+    </p>
+  </main>
+</div>
+
+<script>
+const ROOT='/game/franca/players', SRC=`${ROOT}/idle_front_frame_01.png`;
+const PRESETS={
+  canada:      {name:'Canada',      shirt:'#d52b1e', shorts:'#ffffff', socks:'#d52b1e', split:false},
+  brazil:      {name:'Brazil',      shirt:'#f4d000', shorts:'#1b3fae', socks:'#eef2f7', split:true},
+  croatia:     {name:'Croatia',     shirt:'#d0212f', shorts:'#101a33', socks:'#eef2f7', split:true},
+  netherlands: {name:'Netherlands', shirt:'#f36c21', shorts:'#101a33', socks:'#f36c21', split:false},
+};
+const METHODS=[['orig','Original'],['hue','Hue'],['colorize','Colorize'],['gradient','Gradient'],['multiply','Multiply'],['hybrid','Hybrid ★']];
+
+// ---- color ----
+const clamp=v=>v<0?0:v>255?255:v;
+const hex2rgb=h=>{const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255];};
+const lum=(r,g,b)=>0.299*r+0.587*g+0.114*b;
+const mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+const smooth=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+function rgb2hsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0,l=(mx+mn)/2; if(mx!==mn){ const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn); if(mx===r)h=(g-b)/d+(g<b?6:0); else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; } return [h,s,l]; }
+function hue2rgb(p,q,t){ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; }
+function hsl2rgb(h,s,l){ h=((h%360)+360)%360/360; let r,g,b; if(s===0){r=g=b=l;} else { const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q; r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);} return [r*255,g*255,b*255]; }
+const circDist=(a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d;};
+
+// ---- state ----
+let SRC_FULL=null, WORK=null;   // ImageData: full-res + downscaled working copy
+const ui={}; ['colShirt','colShorts','colSocks','ysplit','satMin','hueW','feather','olThr','navyC','redC','spread','hilite'].forEach(id=>ui[id]=document.getElementById(id));
+const state={ preset:'canada', kit:{...PRESETS.canada}, split:false, mask:false, navyAuto:true, redAuto:true };
+
+function cfg(){ return {
+  satMin:+ui.satMin.value, hueW:+ui.hueW.value, feather:+ui.feather.value, olThr:+ui.olThr.value,
+  navyC:+ui.navyC.value, redC:+ui.redC.value, spread:+ui.spread.value, hilite:+ui.hilite.value,
+  ysplit:+ui.ysplit.value, split:document.getElementById('regionSplit').checked,
+  shirt:hex2rgb(ui.colShirt.value), shorts:hex2rgb(ui.colShorts.value), socks:hex2rgb(ui.colSocks.value),
+}; }
+
+// auto-detect the two chromatic hue centers from the source
+function detectCenters(img,c){
+  const hist=new Array(360).fill(0), d=img.data;
+  for(let i=0;i<d.length;i+=4){ if(d[i+3]<40)continue; const r=d[i],g=d[i+1],b=d[i+2]; const mx=Math.max(r,g,b); if(mx<c.olThr)continue; const [h,s]=rgb2hsl(r,g,b); if(s<0.25)continue; hist[Math.round(h)%360]++; }
+  const peak=(lo,hi)=>{let bi=(lo+360)%360,bv=-1; for(let a=lo;a<=hi;a++){const idx=(a+360)%360; if(hist[idx]>bv){bv=hist[idx];bi=idx;}} return {idx:bi,v:bv};};
+  const nb=peak(190,260), rb=peak(330,380);
+  return { navyC: nb.v>50?nb.idx:228, redC: rb.v>30?rb.idx:353 };
+}
+
+// soft weights for a pixel
+function weights(r,g,b,c){
+  const mx=Math.max(r,g,b), L=lum(r,g,b), [h,s,l]=rgb2hsl(r,g,b);
+  const dark=smooth((mx-c.olThr)/12);                 // 0 for outline/near-black
+  const sat=smooth((s-c.satMin)/0.12);                // colorful gate
+  const hm=(ctr)=>{ const d=circDist(h,ctr); return d<=c.hueW?1:(d>=c.hueW+c.feather?0:1-(d-c.hueW)/c.feather); };
+  const navyDark=smooth((85-L)/15);   // keep only the dark shirt navy; drop bright blue accents/trim
+  const wNavy=hm(c.navyC)*sat*dark*navyDark;
+  const wRed =hm(c.redC)*sat*dark;
+  const light=smooth((L-140)/50);                     // bright
+  const wWhite=light*dark;                            // any light source pixel = kit white (no sat gate)
+  return {wNavy,wRed,wWhite,h,s,l,L};
+}
+
+// apply a target color to a pixel by a given method, using band luminance range [lo,hi]
+function apply(method,T,px,range,c){
+  const [Th,Ts,Tl]=rgb2hsl(T[0],T[1],T[2]);
+  const t=Math.max(0,Math.min(1,(px.L-range[0])/Math.max(1,range[1]-range[0])));
+  if(method==='hue'){ const newS=px.s+(Ts-px.s)*(1-Math.min(1,px.s/0.35)); return hsl2rgb(Th,newS,px.l); }
+  if(method==='colorize'){ return hsl2rgb(Th,Ts,px.l); }
+  if(method==='multiply'){ const g=0.4+0.75*Math.pow(t,0.85); return [T[0]*g,T[1]*g,T[2]*g]; }
+  // gradient
+  const sh=mix(T,[0,0,0],c.spread), li=mix(T,[255,255,255],c.hilite);
+  return t<0.5?mix(sh,T,t*2):mix(T,li,(t-0.5)*2);
+}
+
+// precompute per-band L ranges over the working image (weight>0.5)
+function bandRanges(img,c){
+  const R={navy:[255,0],red:[255,0],white:[255,0]}, d=img.data;
+  for(let i=0;i<d.length;i+=4){ if(d[i+3]<40)continue; const w=weights(d[i],d[i+1],d[i+2],c);
+    const upd=(k,ww)=>{ if(ww>0.5){ if(w.L<R[k][0])R[k][0]=w.L; if(w.L>R[k][1])R[k][1]=w.L; } };
+    upd('navy',w.wNavy); upd('red',w.wRed); upd('white',w.wWhite); }
+  for(const k in R){ if(R[k][0]>R[k][1])R[k]=[0,255]; if(R[k][1]-R[k][0]<8)R[k]=[Math.max(0,R[k][0]-8),Math.min(255,R[k][1]+8)]; }
+  return R;
+}
+
+const MASKCOL={navy:[70,120,235],red:[230,70,70],white:[210,210,210]};
+function recolor(img,method,c,ranges){
+  const out=new ImageData(img.width,img.height), s=img.data, d=out.data, H=img.height;
+  // Hybrid picks per band. The white (achromatic) source has no hue to rotate, so it must always
+  // colorize → gradient. Chromatic sources (navy shirt, red socks) keep their texture via hue UNLESS the
+  // target is bright — navy is always dark, so a bright target (yellow, orange) needs re-lighting → gradient.
+  const chromatic=T=>lum(T[0],T[1],T[2])>120?'gradient':'hue';
+  const shirtM=method==='hybrid'?chromatic(c.shirt):method,
+        sockM =method==='hybrid'?chromatic(c.socks):method,
+        whiteM=method==='hybrid'?'multiply':method;
+  for(let i=0;i<s.length;i+=4){
+    const a=s[i+3]; if(a<20){ d[i+3]=0; continue; }
+    const r=s[i],g=s[i+1],b=s[i+2], w=weights(r,g,b,c);
+    if(method==='mask'){ const c2=mix(mix(mix([20,20,26],MASKCOL.navy,w.wNavy),MASKCOL.red,w.wRed),MASKCOL.white,w.wWhite); d[i]=c2[0];d[i+1]=c2[1];d[i+2]=c2[2];d[i+3]=a; continue; }
+    let col=[r,g,b];
+    // region split: whites above the split follow the shirt, below follow shorts
+    let whiteT=c.shorts;
+    if(c.split){ const y=(i/4/img.width); whiteT = y < c.ysplit*H ? c.shirt : c.shorts; }
+    col=mix(col,apply(shirtM,c.shirt,w,ranges.navy,c),w.wNavy);
+    col=mix(col,apply(sockM ,c.socks,w,ranges.red ,c),w.wRed);
+    col=mix(col,apply(whiteM,whiteT ,w,ranges.white,c),w.wWhite);
+    d[i]=clamp(col[0]); d[i+1]=clamp(col[1]); d[i+2]=clamp(col[2]); d[i+3]=a;
+  }
+  return out;
+}
+
+// ---- rendering ----
+const grid=document.getElementById('grid'); const cells={};
+for(const [id,label] of METHODS){ const el=document.createElement('div'); el.className='cell';
+  el.innerHTML=`<div class="cap"><b>${label}</b></div><div class="frame big"><canvas></canvas></div><div class="frame mini"><canvas></canvas></div>`;
+  grid.appendChild(el); cells[id]={big:el.querySelector('.big canvas'),mini:el.querySelector('.mini canvas')}; }
+
+function put(canvas,img){ canvas.width=img.width; canvas.height=img.height; canvas.getContext('2d').putImageData(img,0,0); }
+function putMini(canvas,img){ const th=28,tw=Math.max(1,Math.round(img.width*th/img.height)); const buf=document.createElement('canvas'); buf.width=img.width;buf.height=img.height;buf.getContext('2d').putImageData(img,0,0); canvas.width=tw;canvas.height=th; const cx=canvas.getContext('2d'); cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high'; cx.drawImage(buf,0,0,tw,th); }
+
+let ranges=null;
+function recomputeRanges(){ if(!WORK)return; const c=cfg();
+  if(state.navyAuto||state.redAuto){ const det=detectCenters(WORK,c); if(state.navyAuto){ui.navyC.value=det.navyC; document.getElementById('navyCV').textContent='auto '+det.navyC;} if(state.redAuto){ui.redC.value=det.redC; document.getElementById('redCV').textContent='auto '+det.redC;} }
+  ranges=bandRanges(WORK,cfg());
+}
+function render(){ if(!WORK)return; const c=state.mask?{...cfg()}:cfg();
+  for(const [id] of METHODS){
+    if(id==='orig'){ put(cells.orig.big,WORK); putMini(cells.orig.mini,WORK); continue; }
+    const m=state.mask?'mask':id; const img=recolor(WORK,m,c,ranges);
+    put(cells[id].big,img); putMini(cells[id].mini,img);
+  }
+}
+
+// ---- controls ----
+function refresh(fullRanges=true){ if(fullRanges) recomputeRanges(); render(); }
+['colShirt','colShorts','colSocks'].forEach(id=>ui[id].addEventListener('input',()=>{ state.kit={...state.kit, [id]:ui[id].value}; refresh(false); }));
+[['ysplit','ysplitV'],['spread','spreadV'],['hilite','hiliteV']].forEach(([id,o])=>ui[id].addEventListener('input',()=>{ document.getElementById(o).textContent=(+ui[id].value).toFixed(2); render(); }));
+[['satMin','satMinV'],['hueW','hueWV'],['feather','featherV'],['olThr','olThrV']].forEach(([id,o])=>ui[id].addEventListener('input',()=>{ document.getElementById(o).textContent=ui[id].value; refresh(true); }));
+ui.navyC.addEventListener('input',()=>{ state.navyAuto=false; document.getElementById('navyCV').textContent=ui.navyC.value; refresh(true); });
+ui.redC .addEventListener('input',()=>{ state.redAuto=false;  document.getElementById('redCV').textContent=ui.redC.value;  refresh(true); });
+document.getElementById('regionSplit').addEventListener('change',()=>render());
+document.querySelectorAll('[data-preset]').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('[data-preset]').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  const p=PRESETS[btn.dataset.preset]; state.preset=btn.dataset.preset;
+  ui.colShirt.value=p.shirt; ui.colShorts.value=p.shorts; ui.colSocks.value=p.socks;
+  document.getElementById('regionSplit').checked=p.split; state.kit={...p};
+  state.navyAuto=true; state.redAuto=true; refresh(true);
+});
+document.getElementById('maskBtn').onclick=e=>{ state.mask=!state.mask; e.target.classList.toggle('on',state.mask); render(); };
+document.getElementById('dl').onclick=()=>{ if(!SRC_FULL)return; const c=cfg(); const rFull=bandRanges(SRC_FULL,c); const img=recolor(SRC_FULL,'hybrid',c,rFull); const cv=document.createElement('canvas'); cv.width=img.width;cv.height=img.height; cv.getContext('2d').putImageData(img,0,0); const a=document.createElement('a'); a.download=`${(PRESETS[state.preset].name).toLowerCase()}_idle_front_frame_01.png`; a.href=cv.toDataURL('image/png'); a.click(); };
+
+// ---- load ----
+const img=new Image();
+img.onload=()=>{
+  const c1=document.createElement('canvas'); c1.width=img.naturalWidth; c1.height=img.naturalHeight; const x1=c1.getContext('2d',{willReadFrequently:true}); x1.drawImage(img,0,0); SRC_FULL=x1.getImageData(0,0,c1.width,c1.height);
+  const th=460, tw=Math.round(img.naturalWidth*th/img.naturalHeight); const c2=document.createElement('canvas'); c2.width=tw; c2.height=th; const x2=c2.getContext('2d',{willReadFrequently:true}); x2.imageSmoothingEnabled=true; x2.drawImage(img,0,0,tw,th); WORK=x2.getImageData(0,0,tw,th);
+  refresh(true);
+};
+img.onerror=()=>{ document.getElementById('grid').innerHTML='<p style="color:#f66">Could not load '+SRC+'</p>'; };
+img.src=SRC;
+</script>
+</body>
+</html>

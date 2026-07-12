@@ -2,6 +2,7 @@ import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team }
 import { pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { PERSONA_COUNT } from '../assets/manifest';
+import { freshPlayerFeel } from './feel';
 
 const BLUE_PERSONAS = [3, 7, 0, 9, 4, 1, 10, 5, 2, 8, 6];
 const RED_PERSONAS = [8, 2, 6, 1, 10, 7, 3, 0, 9, 5, 4];
@@ -68,5 +69,6 @@ export function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: nu
     introDelay: 0,
     spawnX: pt.x,
     spawnY: pt.y,
+    feel: freshPlayerFeel(idle),
   };
 }

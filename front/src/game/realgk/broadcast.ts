@@ -110,6 +110,48 @@ function paintFlagBody(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
     ctx.fill();
     return;
   }
+  if (flagId === 'england') {
+    // St George's Cross: white field, centered red cross.
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#CE1124';
+    const cw = Math.max(2, w * 0.16);
+    const ch = Math.max(2, h * 0.24);
+    ctx.fillRect(x + (w - cw) / 2, y, cw, h);
+    ctx.fillRect(x, y + (h - ch) / 2, w, ch);
+    return;
+  }
+  if (flagId === 'netherlands') {
+    // Horizontal red / white / blue tricolour.
+    ctx.fillStyle = '#AE1C28';
+    ctx.fillRect(x, y, w, h / 3 + 0.5);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, y + h / 3, w, h / 3 + 0.5);
+    ctx.fillStyle = '#21468B';
+    ctx.fillRect(x, y + (h * 2) / 3, w, h / 3);
+    return;
+  }
+  if (flagId === 'norway') {
+    // Nordic cross: red field, white fence, blue cross — both offset to the hoist.
+    ctx.fillStyle = '#BA0C2F';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x + w * (24 / 90), y, w * (16 / 90), h);
+    ctx.fillRect(x, y + h * (22 / 60), w, h * (16 / 60));
+    ctx.fillStyle = '#00205B';
+    ctx.fillRect(x + w * (28 / 90), y, w * (8 / 90), h);
+    ctx.fillRect(x, y + h * (26 / 60), w, h * (8 / 60));
+    return;
+  }
+  if (flagId === 'switzerland') {
+    // Red field with a centered white cross (drawn 3:2, not the real 1:1, to fit the flag rect).
+    ctx.fillStyle = '#D52B1E';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x + w * (40 / 90), y + h * (16 / 60), w * (10 / 90), h * (28 / 60));
+    ctx.fillRect(x + w * (31 / 90), y + h * (25 / 60), w * (28 / 90), h * (10 / 60));
+    return;
+  }
   // Unknown/empty id → generic tricolor stripes.
   const sw = w / 3;
   for (let i = 0; i < 3; i++) {

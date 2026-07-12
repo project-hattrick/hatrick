@@ -14,6 +14,7 @@ export const matchActionConfig: Record<MatchAction, MatchActionMeta> = {
   [MatchAction.Corner]: { label: 'Corner', dotClass: 'bg-team-home' },
   [MatchAction.FreeKick]: { label: 'Free Kick', dotClass: 'bg-muted-foreground' },
   [MatchAction.Penalty]: { label: 'Penalty', dotClass: 'bg-neon' },
+  [MatchAction.Shot]: { label: 'Shot', dotClass: 'bg-team-home' },
   [MatchAction.Var]: { label: 'VAR', dotClass: 'bg-muted-foreground' },
   [MatchAction.Possession]: { label: 'Possession', dotClass: 'bg-muted-foreground' },
   [MatchAction.Unknown]: { label: 'Event', dotClass: 'bg-muted-foreground' },
@@ -30,6 +31,7 @@ const NOTABLE_ACTIONS = new Set<MatchAction>([
   MatchAction.Corner,
   MatchAction.FreeKick,
   MatchAction.Penalty,
+  MatchAction.Shot,
   MatchAction.Var,
 ]);
 

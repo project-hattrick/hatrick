@@ -93,8 +93,8 @@ function pickerPool(selfId: string | undefined): FakePicker[] {
 
 /**
  * Drives the room's social picks layer: the signed-in user's REAL bets become
- * picks instantly, and mock members/friends "place picks" on a lively cadence.
- * Front-only simulation for the demo — no backend.
+ * picks instantly (relayed to the room over `room:pick`). Only when the backend
+ * is off (USE_MOCK) do mock members/friends "place picks" on a lively cadence.
  */
 export function useRoomPicksDriver(): void {
   const self = useSelfIdentity();
@@ -135,43 +135,46 @@ export function useRoomPicksDriver(): void {
       }
     });
 
-    // (b) Fake picker cadence.
+    // (b) Fake picker cadence — mock mode only; with the backend on, picks are real bets relayed
+    // over the socket (here for the sender, use-room-feed for everyone else).
     const timers: number[] = [];
-    const recent: string[] = [];
-    const selfId = useAuthStore.getState().user?.id;
+    if (!backendEnabled) {
+      const recent: string[] = [];
+      const selfId = useAuthStore.getState().user?.id;
 
-    const fakePick = () => {
-      const pool = pickerPool(selfId).filter((p) => !recent.includes(p.userId));
-      if (pool.length === 0) return;
-      const picker = pool[Math.floor(Math.random() * pool.length)];
-      recent.push(picker.userId);
-      if (recent.length > RECENT_PICKERS) recent.shift();
+      const fakePick = () => {
+        const pool = pickerPool(selfId).filter((p) => !recent.includes(p.userId));
+        if (pool.length === 0) return;
+        const picker = pool[Math.floor(Math.random() * pool.length)];
+        recent.push(picker.userId);
+        if (recent.length > RECENT_PICKERS) recent.shift();
 
-      const selection = randomSelection();
-      addPick({
-        id: crypto.randomUUID(),
-        userId: picker.userId,
-        name: picker.name,
-        avatarSrc: picker.avatarSrc,
-        isSelf: false,
-        market: selection.market,
-        selectionId: selection.selectionId,
-        label: pickLabel(selection, teamNameFor(selection.selectionId)),
-        odds: selection.odds,
-        createdAt: Date.now(),
-      });
-    };
+        const selection = randomSelection();
+        addPick({
+          id: crypto.randomUUID(),
+          userId: picker.userId,
+          name: picker.name,
+          avatarSrc: picker.avatarSrc,
+          isSelf: false,
+          market: selection.market,
+          selectionId: selection.selectionId,
+          label: pickLabel(selection, teamNameFor(selection.selectionId)),
+          odds: selection.odds,
+          createdAt: Date.now(),
+        });
+      };
 
-    const schedule = () => {
-      const id = window.setTimeout(() => {
-        fakePick();
-        schedule();
-      }, randomBetween(MIN_GAP_MS, MAX_GAP_MS));
-      timers.push(id);
-    };
+      const schedule = () => {
+        const id = window.setTimeout(() => {
+          fakePick();
+          schedule();
+        }, randomBetween(MIN_GAP_MS, MAX_GAP_MS));
+        timers.push(id);
+      };
 
-    SEED_DELAYS_MS.forEach((delay) => timers.push(window.setTimeout(fakePick, delay)));
-    schedule();
+      SEED_DELAYS_MS.forEach((delay) => timers.push(window.setTimeout(fakePick, delay)));
+      schedule();
+    }
 
     return () => {
       unsubscribe();

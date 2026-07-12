@@ -1,7 +1,7 @@
 import { DIVE_DURATION, DIVE_FORWARD, DIVE_LIFT, DIVE2_FLIGHT, DIVE2_LAUNCH, DIVE2_TRIGGER_RANGE } from '../constants';
 import { BodyAnim, HeadView, PlayerAction, Role, Team } from '../enums';
-import { goalCenterForTeam } from '../field';
-import type { RealGkPlayer, RealGkWorld } from '../types';
+import { GOALS, fieldRatios, goalCenterForTeam } from '../field';
+import type { RealGkPlayer, RealGkWorld, Vec2 } from '../types';
 import { clamp, easeOutCubic, lerp } from '../util';
 import { KEEPER_FRAME_CONFIG, type FrameCfg } from '../assets/configs';
 
@@ -60,8 +60,10 @@ export function dive2SmearAt(elapsed: number): { from: number; to: number; t: nu
 }
 
 // Compact lateral dive is the main keeper save; v6's dive-v2 pack wins where explicitly enabled, and
-// `keeperDiveSave` swaps in the playground's classic 8-frame gk_dive_save pack.
+// `keeperDiveSave` swaps in the playground's classic 8-frame gk_dive_save pack. The sandbox override
+// (handle.setKeeperDivePack) trumps the flags so any pack can be played manually via Q/E.
 const diveAnimFor = (world: RealGkWorld): BodyAnim => {
+  if (world.divePackOverride) return world.divePackOverride;
   if (world.cfg.features?.keeperDiveV2) return BodyAnim.GkDiveV2;
   return world.cfg.features?.keeperDiveSave ? BodyAnim.GkDive : BodyAnim.GkDiveCompact;
 };
@@ -150,4 +152,22 @@ export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer)
 
   // Only dash toward the pitch — never backward into the keeper's own goal.
   return startKeeperDive(player, player.dir, targetX, targetY, diveAnimFor(world));
+}
+
+/**
+ * A lofted ball (cross / corner) dropping CENTRALLY near the keeper's line is his to claim — he rushes off
+ * his line to catch it. Wide or deep balls stay the defenders' (so he doesn't hoover up every corner). The
+ * landing is fixed at the cross (ball.landX/landY), so the target is stable — no per-frame flicker. Returns
+ * the spot to come to, or null. `maybeClaimBall` grabs the ball once he's there and it lands.
+ */
+export function keeperCrossTarget(world: RealGkWorld, keeper: RealGkPlayer): Vec2 | null {
+  const { ball, size } = world;
+  if (keeper.actionTimer > 0 || keeper.saveCooldown > 0 || ball.ownerId || !ball.lofted || ball.z < 14) return null;
+  const land: Vec2 = { x: ball.landX, y: ball.landY };
+  const r = fieldRatios(size, land.x, land.y);
+  const goalLatDist = keeper.team === Team.Blue ? r.lat : 1 - r.lat;
+  const g = GOALS[keeper.team];
+  const goalMid = (g.depthTop + g.depthBottom) / 2;
+  if (goalLatDist > 0.14 || Math.abs(r.depth - goalMid) > 0.13) return null;
+  return land;
 }

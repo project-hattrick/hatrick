@@ -19,9 +19,11 @@ function goalPointFor(world: RealGkWorld, player: RealGkPlayer): { x: number; y:
   // shots downward past the mouth and flipped the strike pose (rear/front) the wrong way.
   const opponent = player.team === Team.Blue ? Team.Red : Team.Blue;
   const target = goalCenterForTeam(world.size, opponent);
-  // Feed-driven: shots are ALWAYS saved — aim straight at the keeper (dive/claim wins it); the
-  // goal-mouth parry backstops anything that slips past. Real goals arrive only via injectGoal.
+  // Feed-driven: an outcome-specific aim (OffTarget wide / Woodwork post) wins, so the shot matches the
+  // feed. Otherwise aim straight at the keeper (dive/claim wins it); the goal-mouth parry backstops
+  // anything that slips past. Real goals arrive only via injectGoal.
   if (world.driven) {
+    if (player.drivenShotAim) return player.drivenShotAim;
     const keeper = world.players.find((p) => p.team !== player.team && p.role === Role.GK);
     if (keeper) return { x: target.x, y: keeper.y + (Math.random() - 0.5) * 24 };
   }
@@ -78,6 +80,7 @@ export function commitShot(world: RealGkWorld, owner: RealGkPlayer): void {
   }
   const goalPoint = goalPointFor(world, owner);
   kickBall(world, owner, goalPoint.x, goalPoint.y, 405, false, { intent: KickIntent.Shot });
+  owner.drivenShotAim = null; // instant-strike path consumes the outcome aim immediately
   const note = Status.shot(owner.name);
   setStatus(world, note.title, note.text);
 }
@@ -102,6 +105,7 @@ export function updatePowerShot(world: RealGkWorld, player: RealGkPlayer, dt: nu
     player.action = PlayerAction.None;
     player.mode = player.idleMode;
     player.modeLock = 0;
+    player.drivenShotAim = null; // consumed — the next shot re-derives its aim from the feed outcome
     return false;
   }
   return true;

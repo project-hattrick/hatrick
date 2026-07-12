@@ -17,6 +17,8 @@ const PREGAME_LEAD_MS = 15 * 60 * 1_000;
 const LIVE_WINDOW_MS = 3 * 60 * 60 * 1_000;
 /** After `game_finalised`, let the confirmations/final odds land, then drop the fixture's streams. */
 const POST_FT_GRACE_MS = 2 * 60 * 1_000;
+/** How many raw penalty/VAR frames to dump before muting the probe (a VAR-heavy game can't flood logs). */
+const PENALTY_PROBE_CAP = 60;
 
 const STREAMS: StreamKind[] = ['scores', 'odds'];
 
@@ -49,6 +51,8 @@ export class TxlineIngestService implements OnModuleInit, OnModuleDestroy {
   /** Fixtures whose coverage ended (game_finalised → disconnected) — the sweep must not resubscribe. */
   private readonly finished = new Set<number>();
   private sweepTimer: NodeJS.Timeout | null = null;
+  /** Raw penalty/VAR frames dumped so far (see probePenaltyFrame). */
+  private penaltyProbes = 0;
 
   constructor(
     private readonly config: ConfigService,
@@ -172,6 +176,37 @@ export class TxlineIngestService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * One-off characterization probe: dumps the UNTOUCHED wire shape of penalty/VAR frames so the real
+   * schema gets pinned from a live match instead of guessed. Two open questions this answers (see
+   * docs/txline-provider.md): does a penalty award arrive as `Action:"penalty"` or only as a stat key
+   * (penaltyAttempts/penaltyGoals), and what `Outcome` vocabulary do miss/save/retake actually use.
+   * Runs BEFORE the mapper, so it still catches a frame the mapper would route as Unknown. Capped so a
+   * VAR-heavy game can't flood the logs; delete this probe once the shape is confirmed.
+   */
+  private probePenaltyFrame(payload: unknown): void {
+    if (this.penaltyProbes >= PENALTY_PROBE_CAP) return;
+    let blob: string;
+    try {
+      blob = JSON.stringify(payload);
+    } catch {
+      return; // circular / unserializable — nothing to characterize
+    }
+    const lower = blob.toLowerCase();
+    // `penalt` catches the action AND the stat keys (penaltyAttempts/penaltyGoals) — the whole point is
+    // to see WHICH mechanism carries it. The action/flag checks catch VAR-awarded penalties.
+    const isPenalty = lower.includes('penalt');
+    const isVar = /"action"\s*:\s*"[^"]*var/.test(lower) || /"var"\s*:\s*true/.test(lower);
+    if (!isPenalty && !isVar) return;
+    this.penaltyProbes += 1;
+    const tag = isPenalty ? 'PENALTY' : 'VAR';
+    const snippet = blob.length > 2_000 ? `${blob.slice(0, 2_000)}…(+${blob.length - 2_000}b)` : blob;
+    this.logger.warn(`[${tag}-PROBE ${this.penaltyProbes}/${PENALTY_PROBE_CAP}] raw wire frame → ${snippet}`);
+    if (this.penaltyProbes === PENALTY_PROBE_CAP) {
+      this.logger.warn('[PENALTY-PROBE] cap reached — further penalty/VAR frames muted this session.');
+    }
+  }
+
   private dispatch(stream: StreamKind, conn: StreamConn, line: string): void {
     if (!line || line.startsWith(':')) return; // blank line / SSE comment
     if (line.startsWith('id:')) {
@@ -190,6 +225,7 @@ export class TxlineIngestService implements OnModuleInit, OnModuleDestroy {
       const payload = msg.data && typeof msg.data === 'object' ? msg.data : msg;
       // Mappers return null for unroutable frames — skip rather than emit garbage.
       if (stream === 'scores') {
+        this.probePenaltyFrame(payload);
         const ev = mapWireScore(payload as WireScoreEvent);
         if (ev) this.normalizer.handleScore(ev);
         // Observed end sequence: game_finalised → disconnected. Drop the fixture's streams after a

@@ -7,6 +7,7 @@ export enum MatchAction {
   Corner = 'Corner',
   FreeKick = 'FreeKick',
   Penalty = 'Penalty',
+  Shot = 'Shot',
   Var = 'VAR',
   Possession = 'Possession',
   Unknown = 'Unknown',

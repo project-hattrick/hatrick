@@ -182,6 +182,12 @@ export function updateIntroCamera(cam: RealGkCamera, world: RealGkWorld): void {
   clampToField(cam, world);
 }
 
+/** Plain camera rattle (no referee focus / zoom) — used for the keeper save-impact beat (feel.saveImpact). */
+export function requestShake(cam: RealGkCamera, seconds: number): void {
+  cam.shakeT = Math.max(cam.shakeT, seconds);
+  if (cam.shakeT === seconds) cam.shakePhase = 0;
+}
+
 /** Kicks off the "objection!" beat: lock focus on the referee through his run-in + card, rattle the frame. */
 export function triggerRefereeFocus(cam: RealGkCamera): void {
   cam.refFocus = true;
@@ -290,6 +296,29 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
       const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
       const calm = cam.sponsorCooldown === 0 && cam.targetIdx < 0 && preset.follow && !world.ball.ownerId && ballRatio.lat > 0.34 && ballRatio.lat < 0.66;
       if (calm) cam.sponsorT = SPONSOR_LIVE_SECONDS;
+    }
+  }
+
+  // Keeper-control (manual sandbox): dead-zone follow so the keeper visibly MOVES inside the frame — a
+  // tight follow glued him to screen-center and read as "not responding". The camera only nudges once he
+  // nears the edge of the box, so small inputs are legible and he never leaves the screen.
+  if (world.cfg.keeperControl && !world.cfg.keeperAutopilot && preset.follow) {
+    const kt = cam.targetIdx >= 0 && cam.targetIdx < world.players.length ? world.players[cam.targetIdx] : null;
+    if (kt && kt.id === world.controlId) {
+      const dzx = (world.view.width / (2 * cam.z)) * 0.6;
+      const dzy = (world.view.height / (2 * cam.z)) * 0.6;
+      let nx = cam.x;
+      let ny = cam.y;
+      if (kt.x > cam.x + dzx) nx = kt.x - dzx;
+      else if (kt.x < cam.x - dzx) nx = kt.x + dzx;
+      if (kt.y > cam.y + dzy) ny = kt.y - dzy;
+      else if (kt.y < cam.y - dzy) ny = kt.y + dzy;
+      cam.x += (nx - cam.x) * 0.1;
+      cam.y += (ny - cam.y) * 0.1;
+      cam.z += (preset.zoom - cam.z) * 0.06;
+      clampToField(cam, world);
+      applyShake(cam, dt);
+      return;
     }
   }
 

@@ -31,6 +31,28 @@ export function useFixtureScore() {
   return useMutation({ mutationFn: (fixtureId: number) => replayService.getScore(fixtureId) });
 }
 
+/** Whole-match timeline for a finished fixture (every notable event + final score). */
+export function useFixtureTimeline(input: { fixtureId: number; epochDay: number; startHour: number } | null) {
+  return useQuery({
+    queryKey: ['fixture-timeline', input?.fixtureId, input?.epochDay, input?.startHour],
+    queryFn: () => replayService.getTimeline(input as { fixtureId: number; epochDay: number; startHour: number }),
+    enabled: input != null,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/** Authoritative score snapshot for a fixture — replay surfaces show the FINAL result, not the playback minute. */
+export function useFixtureScoreQuery(fixtureId: number | null) {
+  return useQuery({
+    queryKey: ['fixture-score', fixtureId],
+    queryFn: () => replayService.getScore(fixtureId as number),
+    enabled: fixtureId != null,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 /** Latest odds snapshot for one fixture (pre-match boards). Books reprice slowly pre-match. */
 export function useFixtureOdds(fixtureId: number) {
   return useQuery({

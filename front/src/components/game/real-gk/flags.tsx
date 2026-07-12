@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react';
 
 /** Inline SVG national flags for the v5 intro card (emoji flags don't render on Windows). Add nations here. */
-export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina' | '';
+export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland' | '';
 
 const FRAME = { rx: 4, style: { stroke: 'rgba(0,0,0,0.28)', strokeWidth: 2, fill: 'none' } as const };
 
@@ -87,11 +87,61 @@ function Argentina() {
   );
 }
 
+/** Horizontal red-white-blue tricolour. */
+function Netherlands() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="20" fill="#AE1C28" />
+      <rect x="0" y="20" width="90" height="20" fill="#FFFFFF" />
+      <rect x="0" y="40" width="90" height="20" fill="#21468B" />
+    </>
+  );
+}
+
+/** St George's Cross: white field with a centered red cross. */
+function England() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#FFFFFF" />
+      <rect x="37" y="0" width="16" height="60" fill="#CE1124" />
+      <rect x="0" y="22" width="90" height="16" fill="#CE1124" />
+    </>
+  );
+}
+
+/** Nordic cross: red field, white-fenced blue cross offset to the hoist. */
+function Norway() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#BA0C2F" />
+      <rect x="24" y="0" width="16" height="60" fill="#FFFFFF" />
+      <rect x="0" y="22" width="90" height="16" fill="#FFFFFF" />
+      <rect x="28" y="0" width="8" height="60" fill="#00205B" />
+      <rect x="0" y="26" width="90" height="8" fill="#00205B" />
+    </>
+  );
+}
+
+/** Red field with a centered white cross. */
+function Switzerland() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#D52B1E" />
+      <rect x="40" y="16" width="10" height="28" fill="#FFFFFF" />
+      <rect x="31" y="25" width="28" height="10" fill="#FFFFFF" />
+    </>
+  );
+}
+
 const FLAG_BODY: Record<Exclude<FlagId, ''>, () => ReactElement> = {
   france: France,
   spain: Spain,
   brazil: Brazil,
   argentina: Argentina,
+  netherlands: Netherlands,
+  england: England,
+  norway: Norway,
+  switzerland: Switzerland,
 };
 
 /** Renders a national flag by id (falls back to a neutral panel for unknown/empty ids). */

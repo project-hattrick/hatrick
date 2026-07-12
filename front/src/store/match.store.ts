@@ -2,7 +2,14 @@ import { create } from 'zustand';
 import { MatchAction } from '@/enums/match-action.enum';
 import { GameState } from '@/enums/game-state.enum';
 import { recapMatch, recapEvents } from '@/config/recap-match.config';
-import type { LiveMatch, MatchEndPayload, MatchEventPayload, MatchScore } from '@/types/match';
+import type {
+  LineupsBySide,
+  LiveMatch,
+  MatchEndPayload,
+  MatchEventPayload,
+  MatchScore,
+  PlayerStatsBySide,
+} from '@/types/match';
 
 /** One home/away counter pair. */
 export interface StatTally {
@@ -35,11 +42,27 @@ export const emptyMatchStats = (): LiveMatchStats => ({
   possessionEvents: emptyTally(),
 });
 
+const emptyPlayerStats = (): PlayerStatsBySide => ({ home: {}, away: {} });
+
+/** A finished real fixture shown when the feed is dormant (no live match on). */
+export interface RecapSnapshot {
+  match: LiveMatch;
+  events: MatchEventPayload[];
+}
+
 interface MatchStore {
   match: LiveMatch | null;
   events: MatchEventPayload[];
+  /** Real recap fallback fetched from the replay catalog (backend mode) — displayed when match is null. */
+  recap: RecapSnapshot | null;
   /** Feed-derived stat totals for the current match (reset whenever the match switches). */
   stats: LiveMatchStats;
+  /** Cumulative real per-player stats keyed by TxLINE player ID (empty until the feed sends them). */
+  playerStats: PlayerStatsBySide;
+  /** Real lineups from the feed (`action=lineups`, ~40min pre-kickoff) — playerId → shirt, no names. */
+  lineups: LineupsBySide | null;
+  /** Regulation-time (H1+H2) score — settlement basis; `match.score` includes extra time. */
+  regulationScore: MatchScore | null;
   /** True while a picked past match is streaming back through the pipeline rather than live. */
   isReplay: boolean;
   /** Bumped on every beginReplay so the hero driver resets even when the same fixture restarts. */
@@ -62,6 +85,8 @@ interface MatchStore {
   applyEvent: (event: MatchEventPayload) => void;
   /** Kickoff reached with no event yet — flip pre-match to in-play so the UI reads live. */
   markLive: (fixtureId: number) => void;
+  /** Adopt a real finished fixture as the dormant-feed recap. */
+  setRecap: (recap: RecapSnapshot) => void;
 }
 
 /**
@@ -77,6 +102,11 @@ function resolveScore(events: MatchEventPayload[], fallback: MatchScore): MatchS
       return { home: s.home ?? 0, away: s.away ?? 0 };
     }
   }
+  // No Score object in the current 100-event window. On a long match (extra time) the early goals have
+  // rolled OFF the window, so re-counting this truncated set would DROP them — a 117' game showed the
+  // extra-time-only 1-0 instead of the 2-1 total. The real feed stamps the cumulative Total on its score
+  // events, so once we've seen one, KEEP the last known score. Only the mock (never sends Score) counts.
+  if (seenWireScore) return fallback;
   const goals = events.filter((event) => event.action === MatchAction.Goal);
   if (goals.length === 0) return fallback;
   return {
@@ -93,6 +123,41 @@ function reconcile(events: MatchEventPayload[], incoming: MatchEventPayload): Ma
 
 /** Seqs already tallied into `stats` — a during/after pair must count once, not twice. */
 const talliedSeqs = new Set<number>();
+
+/** Highest seq whose PlayerStats blob was applied — cumulative counters must not rewind on stale frames. */
+let playerStatsSeq = -1;
+
+/** True once this match has carried at least one authoritative wire Score — lets resolveScore keep the
+ *  last known total when the 100-event window rolls the early goals off (vs re-counting a truncated set). */
+let seenWireScore = false;
+
+/**
+ * Fold one event's PlayerStats blob into the running map. Counters are cumulative per player, so
+ * the newest blob wins outright (a VAR reversal can legitimately lower a count — no Math.max here).
+ */
+function mergePlayerStats(
+  current: PlayerStatsBySide,
+  event: MatchEventPayload,
+): PlayerStatsBySide | null {
+  const incoming = event.playerStats;
+  if (!incoming || event.seq < playerStatsSeq) return null;
+  playerStatsSeq = event.seq;
+  return {
+    home: { ...current.home, ...incoming.home },
+    away: { ...current.away, ...incoming.away },
+  };
+}
+
+/** Latest regulation-time score carried by any event, walking newest-first. */
+function resolveRegulation(events: MatchEventPayload[], fallback: MatchScore | null): MatchScore | null {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const s = events[i].regulationScore;
+    if (s && (typeof s.home === 'number' || typeof s.away === 'number')) {
+      return { home: s.home ?? 0, away: s.away ?? 0 };
+    }
+  }
+  return fallback;
+}
 
 /** Fold one event into the stat totals; null when it carries nothing countable. */
 function tallyEvent(stats: LiveMatchStats, event: MatchEventPayload): LiveMatchStats | null {
@@ -137,23 +202,63 @@ function tallyAll(events: MatchEventPayload[]): LiveMatchStats {
   return stats;
 }
 
-/** Fresh stats for a fresh match — clears the tallied-seq guard alongside. */
+/** Fresh stats for a fresh match — clears the tallied-seq and player-stats guards alongside. */
 function resetStats(): LiveMatchStats {
   talliedSeqs.clear();
+  playerStatsSeq = -1;
+  seenWireScore = false;
   return emptyMatchStats();
+}
+
+/** State slice that resets whenever the match switches. */
+const freshMatchSlice = () => ({
+  stats: resetStats(),
+  playerStats: emptyPlayerStats(),
+  lineups: null,
+  regulationScore: null,
+});
+
+/** Actions that themselves set/gate a phase — so they must NOT trigger the soft-full-time recovery. */
+const PHASE_ACTIONS = new Set(['game_finalised', 'disconnected', 'halftime_finalised', 'kickoff']);
+
+/**
+ * Derive the match phase from the latest event + clock. Shared by the live feed (applyEvent) and the
+ * front-driven replay (setReplayFrame) so BOTH surface extra time.
+ *  - `halftime_finalised` → HalfTime; `game_finalised` → FullTime (authoritative terminal).
+ *  - A late `disconnected` finalises ONLY when the tie is already decided or we're past 120' — a DRAW at
+ *    90'+ is heading into extra time, not over.
+ *  - A genuine in-play action, still level and under 120', RESCUES a match a coverage blip prematurely
+ *    froze at full-time (a real final whistle stops the feed; a later game_finalised re-ends it).
+ *  - A level tie past regulation reads as Extra Time, keeping the match LIVE instead of a frozen draw.
+ */
+function deriveGameState(current: GameState, raw: string, minute: number, drawn: boolean): GameState {
+  let gameState = current === GameState.PreMatch ? GameState.FirstHalf : current;
+  if (raw === 'halftime_finalised') gameState = GameState.HalfTime;
+  else if (raw === 'game_finalised') gameState = GameState.FullTime;
+  else if (raw === 'disconnected' && ((minute >= 90 && !drawn) || minute >= 120)) gameState = GameState.FullTime;
+  else if (gameState === GameState.HalfTime && (raw === 'kickoff' || minute > 45)) gameState = GameState.SecondHalf;
+  if (gameState === GameState.FullTime && drawn && minute < 120 && raw !== '' && !PHASE_ACTIONS.has(raw))
+    gameState = GameState.SecondHalf;
+  if (drawn && minute > 95 && gameState === GameState.SecondHalf) gameState = GameState.ExtraTime;
+  return gameState;
 }
 
 /** Live match state fed by the realtime socket or the mock feed. */
 export const useMatchStore = create<MatchStore>((set) => ({
   match: null,
   events: [],
+  recap: null,
   stats: emptyMatchStats(),
+  playerStats: emptyPlayerStats(),
+  lineups: null,
+  regulationScore: null,
   isReplay: false,
   replayNonce: 0,
   switching: false,
   setSwitching: (switching) => set({ switching }),
-  setMatch: (match) => set({ match, isReplay: false, stats: resetStats() }),
-  startMatch: (match) => set({ match, events: [], isReplay: false, switching: false, stats: resetStats() }),
+  setRecap: (recap) => set({ recap }),
+  setMatch: (match) => set({ match, isReplay: false, ...freshMatchSlice() }),
+  startMatch: (match) => set({ match, events: [], isReplay: false, switching: false, ...freshMatchSlice() }),
   beginReplay: (match) =>
     set((state) => ({
       match,
@@ -161,14 +266,17 @@ export const useMatchStore = create<MatchStore>((set) => ({
       isReplay: true,
       switching: true,
       replayNonce: state.replayNonce + 1,
-      stats: resetStats(),
+      ...freshMatchSlice(),
     })),
   setReplayFrame: (fixtureId, score, minute, events) =>
-    set((state) =>
-      state.match && state.match.fixtureId === fixtureId
-        ? { match: { ...state.match, score, minute }, events, stats: tallyAll(events) }
-        : {},
-    ),
+    set((state) => {
+      if (!state.match || state.match.fixtureId !== fixtureId) return {};
+      // Drive the phase off the replay's latest event + clock too, so a replayed knockout shows Extra
+      // Time (the FT overlay stays off during replays — useIsEnded guards on !isReplay — so no freeze).
+      const lastRaw = events.length ? (events[events.length - 1].rawAction ?? '').toLowerCase() : '';
+      const gameState = deriveGameState(state.match.gameState, lastRaw, minute, score.home === score.away);
+      return { match: { ...state.match, score, minute, gameState }, events, stats: tallyAll(events) };
+    }),
   setScore: (fixtureId, score) =>
     set((state) =>
       state.match && state.match.fixtureId === fixtureId ? { match: { ...state.match, score } } : {},
@@ -184,8 +292,13 @@ export const useMatchStore = create<MatchStore>((set) => ({
   finishMatch: (payload) =>
     set((state) => {
       if (!state.match || state.match.fixtureId !== payload.fixtureId) return {};
+      const regulation =
+        payload.regulationHomeScore !== undefined || payload.regulationAwayScore !== undefined
+          ? { home: payload.regulationHomeScore ?? 0, away: payload.regulationAwayScore ?? 0 }
+          : state.regulationScore;
       return {
         switching: false,
+        regulationScore: regulation,
         match: {
           ...state.match,
           gameState: GameState.FullTime,
@@ -213,27 +326,28 @@ export const useMatchStore = create<MatchStore>((set) => ({
           stats = tallied;
         }
       }
+      // Real per-player counters + lineups ride along on the events that carry them.
+      const playerStats = mergePlayerStats(state.playerStats, event) ?? state.playerStats;
+      const lineups = event.lineups ?? state.lineups;
       // Minute is monotonic within a match (during/after or out-of-order frames never rewind the clock);
       // a freshly picked match resets it via startMatch/beginReplay.
       const minute = Math.max(state.match.minute, event.minute ?? state.match.minute);
       // Match structure from the wire: pre-match ends at the first event; the half-time whistle pauses
       // the match (drives the pause overlay); the second-half kickoff (or any 46'+ event) resumes it.
       const raw = (event.rawAction ?? '').toLowerCase();
-      let gameState =
-        state.match.gameState === GameState.PreMatch ? GameState.FirstHalf : state.match.gameState;
-      if (raw === 'halftime_finalised') gameState = GameState.HalfTime;
-      else if (raw === 'game_finalised') gameState = GameState.FullTime;
-      // Observed end-of-coverage sequence: game_finalised → disconnected (97'). A late disconnect is a
-      // full-time fallback in case the whistle frame was missed; an early one is just a coverage blip.
-      else if (raw === 'disconnected' && minute >= 90) gameState = GameState.FullTime;
-      else if (gameState === GameState.HalfTime && (raw === 'kickoff' || (event.minute ?? 0) > 45))
-        gameState = GameState.SecondHalf;
+      if (event.score && (typeof event.score.home === 'number' || typeof event.score.away === 'number'))
+        seenWireScore = true;
+      const nextScore = resolveScore(events, state.match.score);
+      const gameState = deriveGameState(state.match.gameState, raw, minute, nextScore.home === nextScore.away);
       // The first real event means the replay is streaming — clear the "switching/buffering" state.
       return {
         events,
         stats,
+        playerStats,
+        lineups,
+        regulationScore: resolveRegulation(events, state.regulationScore),
         switching: false,
-        match: { ...state.match, score: resolveScore(events, state.match.score), minute, gameState },
+        match: { ...state.match, score: nextScore, minute, gameState },
       };
     }),
 }));
@@ -243,6 +357,15 @@ export const useMatchEvents = () => useMatchStore((state) => state.events);
 
 /** Feed-derived stat totals for the current match (zeros until events land). */
 export const useMatchStats = () => useMatchStore((state) => state.stats);
+
+/** Cumulative real per-player stats (TxLINE player ID → counters); empty maps until the feed sends them. */
+export const usePlayerMatchStats = () => useMatchStore((state) => state.playerStats);
+
+/** Real lineups for the current match, or null while unknown. */
+export const useMatchLineups = () => useMatchStore((state) => state.lineups);
+
+/** Regulation-time (H1+H2) score, or null while the feed hasn't broken periods down. */
+export const useRegulationScore = () => useMatchStore((state) => state.regulationScore);
 
 /** True once the current match has real feed events to count stats from. */
 export const useHasFeedStats = () =>
@@ -283,9 +406,10 @@ export const useIsEnded = () =>
 /** True while a freshly-picked match is still buffering (no events yet) — drives the "switching" overlay. */
 export const useIsSwitching = () => useMatchStore((state) => state.switching);
 
-/** The match to render — the live one when present, otherwise the finished recap fallback. */
-export const useDisplayMatch = () => useMatchStore((state) => state.match ?? recapMatch);
+/** The match to render — live one first, then the real fetched recap, then the hardcoded fallback. */
+export const useDisplayMatch = () =>
+  useMatchStore((state) => state.match ?? state.recap?.match ?? recapMatch);
 
 /** Events to render — live events when a match is on, otherwise the recap goals. */
 export const useDisplayEvents = () =>
-  useMatchStore((state) => (state.match ? state.events : recapEvents));
+  useMatchStore((state) => (state.match ? state.events : (state.recap?.events ?? recapEvents)));

@@ -1,7 +1,8 @@
-import { KickIntent, RefPhase, RestartKind, RestartStage, Role, Team } from '../enums';
+import { BodyAnim, KickIntent, PlayerAction, RefPhase, RestartKind, RestartStage, Role, Team } from '../enums';
 import { GOALS, fieldRatios, goalCenterForTeam, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld, RestartState, Vec2 } from '../types';
 import { clamp } from '../util';
+import { ITEM_MAP } from '../assets/items';
 import { integrateBallFlight, kickBall } from './ball';
 import { updateCoach } from './coach';
 import { holdFoulScene } from './foul';
@@ -187,13 +188,51 @@ function holdBallOnSpot(world: RealGkWorld, r: RestartState): void {
   world.ball.z = 0;
 }
 
-/** Strikes the ball back into play and (for a red card) despawns the sent-off offender. */
-function takeRestart(world: RealGkWorld, r: RestartState): void {
+/** Points the taker at the strike and drops him into a kick pose (persona shot body, or the power-shot
+ *  body when persona casting is off) so a corner / free kick / goal kick is VISIBLY struck, not teleported. */
+function poseTakerForKick(world: RealGkWorld, taker: RealGkPlayer, target: Vec2): void {
+  const persona = world.cfg.features?.personaShot === true || world.cfg.features?.personaHeads === true;
+  const gdx = target.x - taker.x;
+  const gdy = target.y - taker.y;
+  const upward = gdy < -Math.abs(gdx) * 0.35; // strike travels up/away → rear pose
+  if (Math.abs(gdx) > 1) taker.facing = gdx < 0 ? -1 : 1;
+  const mode = persona
+    ? upward
+      ? BodyAnim.ShotBack
+      : BodyAnim.ShotFront
+    : upward
+      ? BodyAnim.PowerShotBack
+      : BodyAnim.PowerShotFront;
+  if (!ITEM_MAP[mode]) return; // no asset for this pack — skip the pose, the strike still fires
+  taker.action = PlayerAction.None;
+  taker.mode = mode;
+  taker.idleMode = upward ? BodyAnim.IdleBack : BodyAnim.IdleFront;
+  taker.actionElapsed = 0;
+  taker.modeLock = 0.6;
+  taker.vx = 0;
+  taker.vy = 0;
+}
+
+/** Enters the Taking stage: pre-computes the strike (so pose + kick agree) and, for everything but a
+ *  penalty, poses the taker to wind up. Penalties strike instantly (the run-up already read as the kick). */
+function enterTaking(world: RealGkWorld, r: RestartState, taker: RealGkPlayer | null): void {
+  r.stage = RestartStage.Taking;
+  r.timer = 0;
+  r.strike = undefined;
+  if (taker && r.kind !== RestartKind.Penalty) {
+    r.strike = restartStrike(world, r, taker);
+    poseTakerForKick(world, taker, r.strike.target);
+  }
+}
+
+/** Strikes the ball back into play and (for a red card) despawns the sent-off offender. Does NOT clear
+ *  the restart — the Taking stage lets the wind-up play out first. */
+function strikeRestart(world: RealGkWorld, r: RestartState): void {
   const taker = world.players.find((p) => p.id === r.takerId) ?? null;
   if (taker) {
-    const { target, power, lob } = restartStrike(world, r, taker);
-    const intent = r.kind === RestartKind.Penalty || (r.kind === RestartKind.FreeKick && !lob) ? KickIntent.Shot : KickIntent.Pass;
-    kickBall(world, taker, target.x, target.y, power, lob, { intent });
+    const strike = r.strike ?? restartStrike(world, r, taker);
+    const intent = r.kind === RestartKind.Penalty || (r.kind === RestartKind.FreeKick && !strike.lob) ? KickIntent.Shot : KickIntent.Pass;
+    kickBall(world, taker, strike.target.x, strike.target.y, strike.power, strike.lob, { intent });
   }
   if (r.foul?.card) {
     const offender = world.players.find((p) => p.id === r.foul?.offenderId);
@@ -202,7 +241,6 @@ function takeRestart(world: RealGkWorld, r: RestartState): void {
       world.players = world.players.filter((p) => p.id !== offender.id);
     }
   }
-  world.match.restart = null;
 }
 
 /**
@@ -265,18 +303,29 @@ export function updateRestart(world: RealGkWorld, dt: number): void {
       // The run-up: sprint from the stand point to the ball, strike on contact.
       positionForRestart(world, r, dt, { x: world.ball.x, y: world.ball.y });
       if (distTo(taker, r.spot) <= PENALTY_STRIKE_REACH || r.timer >= READY_HOLD[r.kind]) {
-        r.stage = RestartStage.Taking;
-        r.timer = 0;
+        enterTaking(world, r, taker);
       }
       return;
     }
     positionForRestart(world, r, dt);
     if (r.timer >= READY_HOLD[r.kind]) {
-      r.stage = RestartStage.Taking;
-      r.timer = 0;
+      enterTaking(world, r, taker);
     }
     return;
   }
 
-  takeRestart(world, r);
+  // Taking: play a short wind-up (ball held on the spot) so the taker VISIBLY strikes, then release the
+  // ball and resume live play AT contact — clearing any later would leave the struck ball frozen mid-air
+  // (updateRestart doesn't integrate ball flight). Penalties (r.strike unset) fire on the first tick.
+  const contactAt = r.strike ? 0.24 : 0;
+  if (r.strike && taker && r.timer < contactAt) {
+    taker.vx = 0;
+    taker.vy = 0;
+    taker.actionElapsed = r.timer; // drives the non-looping shot-body frames through the wind-up
+    holdBallOnSpot(world, r);
+    return;
+  }
+  strikeRestart(world, r);
+  if (r.strike && taker) taker.modeLock = 0.2; // hold the follow-through pose briefly into live play
+  world.match.restart = null;
 }

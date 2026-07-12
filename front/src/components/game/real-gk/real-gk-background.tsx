@@ -9,6 +9,7 @@ import { Dimension } from '@/enums/dimension.enum';
 import { useUiStore } from '@/store/ui.store';
 import { useRealGkStore } from '@/store/real-gk.store';
 import { cn } from '@/lib/utils';
+import { CardBroadcastOverlay } from './card-broadcast-overlay';
 import { CrtOverlay } from './crt-overlay';
 import { MatchIntroOverlay } from './match-intro-overlay';
 
@@ -23,6 +24,8 @@ interface RealGkBackgroundProps {
   onReady?: (handle: RealGkHandle | null) => void;
   /** Overrides the intro overlay's team names (the hero shows the PICKED match, not the engine's static cast). */
   teamNames?: { blue: string; red: string };
+  /** CSS `filter` applied to the canvas (color grade / chromatic aberration). Undefined = untouched. */
+  canvasFilter?: string;
 }
 
 /**
@@ -36,6 +39,7 @@ export function RealGkBackground({
   config = REAL_GK_MATCH_CONFIG,
   onReady,
   teamNames,
+  canvasFilter,
 }: RealGkBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -94,7 +98,12 @@ export function RealGkBackground({
         ref={containerRef}
         className="absolute top-1/2 left-1/2 h-full w-[max(100%,177.78svh)] -translate-x-1/2 -translate-y-1/2 md:top-0 md:left-0 md:h-full md:w-full md:translate-x-0 md:translate-y-0"
       >
-        <canvas ref={canvasRef} aria-hidden className="pointer-events-none h-full w-full" style={{ imageRendering: 'pixelated' }} />
+        <canvas
+          ref={canvasRef}
+          aria-hidden
+          className="pointer-events-none h-full w-full"
+          style={{ imageRendering: 'pixelated', filter: canvasFilter, transition: canvasFilter ? 'filter 0.25s ease' : undefined }}
+        />
       </div>
       {config.crtFilter && <CrtOverlay />}
       <MatchIntroOverlay
@@ -105,6 +114,7 @@ export function RealGkBackground({
         blueFlag={teamBlueFlag}
         redFlag={teamRedFlag}
       />
+      <CardBroadcastOverlay blueName={teamNames?.blue ?? teamBlueName} redName={teamNames?.red ?? teamRedName} />
     </div>
   );
 }

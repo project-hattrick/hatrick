@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { historicalIntervalTtl } from './txline-cache-ttl';
 import { TxlineHttpService } from './txline-http.service';
 import { TxlineNormalizerService } from './txline-normalizer.service';
 import { mapWireOdds, mapWireScore, WireOddsEvent, WireScoreEvent } from './txline-mapper';
@@ -109,7 +110,9 @@ export class TxlineReplayService implements OnModuleInit {
     const found = new Map<number, { startTime: number; competitionId: number; p1: number; p2: number }>();
     for (let d = today - Math.max(1, daysBack); d <= today; d++) {
       for (const h of CATALOG_HOURS) {
-        const evs = await this.http.get<WireScoreEvent[]>(`/api/scores/updates/${d}/${h}/0`).catch(() => []);
+        const evs = await this.http
+          .getCached<WireScoreEvent[]>(`/api/scores/updates/${d}/${h}/0`, historicalIntervalTtl(d, h, 0))
+          .catch(() => []);
         for (const e of Array.isArray(evs) ? evs : []) {
           const fixtureId = Number(e.FixtureId);
           const startTime = Number(e.StartTime);
@@ -270,9 +273,11 @@ export class TxlineReplayService implements OnModuleInit {
       const day = epochDay + Math.floor(abs / 24);
       const hour = ((abs % 24) + 24) % 24;
       for (let iv = 0; iv < INTERVALS_PER_HOUR; iv++) {
+        // Finished intervals are immutable — cached reads make re-running a replay nearly free.
+        const ttl = historicalIntervalTtl(day, hour, iv);
         const [scores, odds] = await Promise.all([
-          this.http.get<WireScoreEvent[]>(`/api/scores/updates/${day}/${hour}/${iv}`).catch(() => []),
-          this.http.get<WireOddsEvent[]>(`/api/odds/updates/${day}/${hour}/${iv}`).catch(() => []),
+          this.http.getCached<WireScoreEvent[]>(`/api/scores/updates/${day}/${hour}/${iv}`, ttl).catch(() => []),
+          this.http.getCached<WireOddsEvent[]>(`/api/odds/updates/${day}/${hour}/${iv}`, ttl).catch(() => []),
         ]);
         for (const ev of Array.isArray(scores) ? scores : []) {
           if ((ev.FixtureId ?? ev.fixtureId) !== fixtureId) continue;

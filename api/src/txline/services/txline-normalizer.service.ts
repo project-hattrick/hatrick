@@ -7,7 +7,7 @@ import { MatchAction } from '../../events/enums/match-action.enum';
 import { MatchResultOutcome } from '../../events/enums/match-result-outcome.enum';
 import { MatchEndPayload, MatchEventPayload, OddsEventPayload } from '../../events/dto';
 import { RawOddsEvent, RawScoreEvent } from '../txline.types';
-import { goalsFromScore } from './txline-mapper';
+import { goalsFromScore, regulationGoalsFromScore } from './txline-mapper';
 import { TournamentStateService } from './tournament-state.service';
 
 /** Wire actions we knowingly handle — anything else is logged once (drift watch). */
@@ -16,7 +16,7 @@ const KNOWN_ACTIONS = new Set([
   'shot', 'kickoff', 'goal_kick', 'throw_in', 'injury', 'halftime_finalised', 'game_finalised',
   'safe_possession', 'attack_possession', 'danger_possession', 'high_danger_possession', 'possession',
   'clock_adjustment', 'status', 'additional_time', 'possible', 'comment', 'standby', 'disconnected',
-  'action_amend', 'action_discarded', 'var', '',
+  'action_amend', 'action_discarded', 'var', 'lineups', '',
 ]);
 
 /**
@@ -43,6 +43,8 @@ export class TxlineNormalizerService {
     const emission = raw.confirmed ? EmissionState.After : EmissionState.During;
     const [home, away] = this.parseScore(raw);
 
+    const [regHome, regAway] = this.parseRegulationScore(raw);
+
     const payload: MatchEventPayload = {
       fixtureId: raw.fixtureId,
       action,
@@ -54,9 +56,15 @@ export class TxlineNormalizerService {
       ts: raw.ts,
       minute: raw.dataSoccer?.Minutes,
       playerId: raw.dataSoccer?.PlayerId,
+      goalType: raw.dataSoccer?.GoalType,
+      outcome: raw.dataSoccer?.Outcome,
+      varType: raw.dataSoccer?.VarType,
+      freeKickType: raw.dataSoccer?.FreeKickType,
       participant: raw.dataSoccer?.Participant,
       score: home !== undefined || away !== undefined ? { home, away } : undefined,
+      regulationScore: regHome !== undefined || regAway !== undefined ? { home: regHome, away: regAway } : undefined,
       playerStats: raw.playerStats,
+      lineups: raw.lineups,
     };
 
     // Always emit the generic score-update (the gateway forwards these); also emit
@@ -76,13 +84,17 @@ export class TxlineNormalizerService {
     this.ended.add(raw.fixtureId);
 
     const [homeScore, awayScore] = this.parseScore(raw);
+    const [regulationHomeScore, regulationAwayScore] = this.parseRegulationScore(raw);
     const payload: MatchEndPayload = {
       fixtureId: raw.fixtureId,
       seq: raw.seq,
       ts: raw.ts,
       homeScore,
       awayScore,
+      regulationHomeScore,
+      regulationAwayScore,
       outcome: this.resolveOutcome(homeScore, awayScore),
+      regulationOutcome: this.resolveOutcome(regulationHomeScore, regulationAwayScore),
     };
     this.emitter.emit(EventName.MatchEndAfter, payload);
   }
@@ -95,6 +107,13 @@ export class TxlineNormalizerService {
   private parseScore(raw: RawScoreEvent): [number?, number?] {
     const home = raw.homeGoals ?? goalsFromScore(raw.scoreSoccer, 'Participant1');
     const away = raw.awayGoals ?? goalsFromScore(raw.scoreSoccer, 'Participant2');
+    return [home, away];
+  }
+
+  /** Regulation-time (H1+H2) goals — undefined when the wire has no period breakdown. */
+  private parseRegulationScore(raw: RawScoreEvent): [number?, number?] {
+    const home = raw.regulationHomeGoals ?? regulationGoalsFromScore(raw.scoreSoccer, 'Participant1');
+    const away = raw.regulationAwayGoals ?? regulationGoalsFromScore(raw.scoreSoccer, 'Participant2');
     return [home, away];
   }
 
@@ -131,11 +150,21 @@ export class TxlineNormalizerService {
 
   private resolveAction(raw: RawScoreEvent): MatchAction {
     const d = raw.dataSoccer;
-    if (!d) return MatchAction.Unknown;
-    if (d.Goal) return MatchAction.Goal;
-    if (d.RedCard) return MatchAction.RedCard;
-    if (d.YellowCard) return MatchAction.YellowCard;
-    if (d.Corner) return MatchAction.Corner;
+    // Boolean flags first: a scored penalty is a goal, so the flag wins over the raw action.
+    if (d?.Goal) return MatchAction.Goal;
+    if (d?.RedCard) return MatchAction.RedCard;
+    if (d?.YellowCard) return MatchAction.YellowCard;
+    if (d?.Corner) return MatchAction.Corner;
+    // Raw action string covers the moments the flags don't — otherwise these arrived as `Unknown`
+    // and the frontend's crowd/HatBot reactions for them never fired.
+    const a = raw.action ?? '';
+    if (a.includes('penalty')) return MatchAction.Penalty;
+    if (a.includes('var')) return MatchAction.Var;
+    if (a === 'substitution') return MatchAction.Substitution;
+    // A free kick is a set-piece moment only when it isn't an offside flag.
+    if (a === 'free_kick' && d?.FreeKickType !== 'Offside') return MatchAction.FreeKick;
+    // Shots are frequent; only the ones that make the stands gasp deserve a beat.
+    if (a === 'shot' && (d?.Outcome === 'OnTarget' || d?.Outcome === 'Woodwork')) return MatchAction.Shot;
     return MatchAction.Unknown;
   }
 

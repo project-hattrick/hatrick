@@ -3,7 +3,7 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
 
 import { getSocket } from './socket';
-import { driveMatchEvent } from './match-director-map';
+import { driveMatchEvent, type MatchDirector } from './match-director-map';
 import { env } from '@/lib/env';
 import { EmissionState } from '@/enums/emission-state.enum';
 import type { MatchEventPayload } from '@/types/match';
@@ -30,6 +30,12 @@ export function useRealgkFeedDriver(
   opts?: { cinematicIntro?: boolean; resetKey?: number },
 ): void {
   const startedRef = useRef(false);
+  // Celebration baseline per side. A `goal` feed event fires the on-pitch celebration ONLY when it
+  // raises a side's authoritative score — replayed (mid-match join buffer), duplicated (during+after,
+  // or the 2× after re-confirm) or VAR-reverted goal events don't move the score, so they must never
+  // re-celebrate. The score itself stays authoritative via setScore regardless of this gate.
+  const lastHome = useRef(0);
+  const lastAway = useRef(0);
   const cinematicIntro = opts?.cinematicIntro === true;
   // Restarting the SAME fixture (replay from kickoff) must also reset the engine — the caller bumps
   // this key so the effect re-runs even though the fixtureId is unchanged.
@@ -40,9 +46,30 @@ export function useRealgkFeedDriver(
     // the cinematic intro, straight into the held entrance (camera loop) while the feed buffers.
     // typeof guard: an HMR-stale engine handle may predate beginDrivenIntro — fall back to attract.
     startedRef.current = false;
+    lastHome.current = 0;
+    lastAway.current = 0;
     const handle = handleRef.current;
-    if (fixtureId != null && cinematicIntro && typeof handle?.beginDrivenIntro === 'function') handle.beginDrivenIntro();
-    else handle?.setDriven(false);
+    // Joining a match that's ALREADY in play (mid-game): the walk-on entrance only makes sense from
+    // pre-match — skip it and drop straight into live play (a center kickoff the feed takes over on its
+    // first event). A pre-match / not-yet-live fixture still gets the held cinematic entrance.
+    const joinInPlay =
+      fixtureId != null &&
+      !env.useMock &&
+      (() => {
+        const { match } = useMatchStore.getState();
+        return !!match && match.fixtureId === fixtureId && IN_PLAY_STATES.has(match.gameState);
+      })();
+    if (fixtureId != null && joinInPlay) {
+      const { match } = useMatchStore.getState();
+      handle?.setDriven(true); // straight to live — no entrance
+      startedRef.current = true;
+      lastHome.current = match?.score.home ?? 0;
+      lastAway.current = match?.score.away ?? 0;
+    } else if (fixtureId != null && cinematicIntro && typeof handle?.beginDrivenIntro === 'function') {
+      handle.beginDrivenIntro();
+    } else {
+      handle?.setDriven(false);
+    }
     if (fixtureId == null) return;
 
     // A live match must not wait for a wire event to leave the held entrance: if the STORE already says
@@ -58,12 +85,53 @@ export function useRealgkFeedDriver(
       if (!startedRef.current) {
         startedRef.current = true;
         h.setDriven(true); // releases the intro hold (whistle → kickoff → Live)
+        // Adopt the join-time score as the celebration baseline — goals scored before we joined
+        // (or that get re-sent from the feed buffer) must not replay a celebration.
+        lastHome.current = match.score.home;
+        lastAway.current = match.score.away;
       }
       if (typeof h.setScore === 'function') h.setScore(match.score.home, match.score.away);
       if (typeof h.setClock === 'function') h.setClock(match.minute);
     };
     syncFromStore();
     const unsubscribeStore = useMatchStore.subscribe(syncFromStore);
+
+    // Wrap the engine so a `goal` directive only celebrates on a REAL score increase (see lastHome/
+    // lastAway). setScore stays authoritative; injectGoal is gated. Built per event so setScore and
+    // injectGoal within the same event share the fresh score.
+    const driveGuarded = (h: RealGkHandle, p: MatchEventPayload) => {
+      let curHome = lastHome.current;
+      let curAway = lastAway.current;
+      const director: MatchDirector<Team> = {
+        setScore: (home, away) => {
+          curHome = home;
+          curAway = away;
+          // VAR/overturn: an authoritative drop lowers the baseline so a legit re-score can celebrate again.
+          if (home < lastHome.current) lastHome.current = home;
+          if (away < lastAway.current) lastAway.current = away;
+          h.setScore(home, away);
+        },
+        setPossession: (team, threat) => h.setPossession(team, threat),
+        injectShot: (team, outcome) => h.injectShot(team, outcome),
+        injectGoal: (team) => {
+          const isRed = team === Team.Red;
+          const cur = isRed ? curAway : curHome;
+          const base = isRed ? lastAway : lastHome;
+          if (cur > base.current) {
+            base.current = cur;
+            h.injectGoal(team);
+          }
+          // else: the score didn't move → stale / duplicate / reverted goal event, no celebration.
+        },
+        injectCorner: (team) => h.injectCorner(team),
+        injectCard: (team, red) => h.injectCard(team, red),
+        injectPenalty: (team) => h.injectPenalty(team),
+        injectFreeKick: (team, danger) => h.injectFreeKick(team, danger),
+        setClock: (minute) => h.setClock(minute),
+        setPhase: (phase) => h.setPhase(phase),
+      };
+      driveMatchEvent(director, teamOf, p);
+    };
 
     const socket = getSocket();
     const onMatch = (p: MatchEventPayload) => {
@@ -73,8 +141,11 @@ export function useRealgkFeedDriver(
       if (!startedRef.current) {
         startedRef.current = true;
         h.setDriven(true); // first real event → kick off the feed-driven match
+        const snap = useMatchStore.getState().match;
+        lastHome.current = snap?.score.home ?? 0;
+        lastAway.current = snap?.score.away ?? 0;
       }
-      driveMatchEvent(h, teamOf, p);
+      driveGuarded(h, p);
     };
     // FT backstop: replays that started mid-match may never carry a `game_finalised` raw action, but the
     // normalizer always emits match-end once per fixture. setPhase is idempotent (and HMR-stale safe).

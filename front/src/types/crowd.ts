@@ -26,4 +26,6 @@ export interface CrowdMessage {
   ageLabel: string;
   source: CrowdSource;
   action?: CrowdMessageAction;
+  /** Wall-clock ms when the message was minted — lets HatBot lines interleave with room chat by time. */
+  ts?: number;
 }

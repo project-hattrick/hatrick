@@ -23,8 +23,10 @@ import { SettleableStatus } from '../dto/settle-bet.dto';
  * wallet ledger (wallet_transactions) and the cached User.balance, so the balance
  * stays authoritative and auditable. (On-chain settling is deferred — Phase 2.)
  *
- * NOTE: settlement is client-reported for now (the match feed is still mocked); a
- * later TxLINE `*.after` subscription will drive it authoritatively instead.
+ * Settlement on real fixtures is driven by BetSettlementService on `match-end.after`;
+ * the client-reported settle endpoint remains for mock-fixture bets and is idempotent
+ * (already-settled → current state). The atomic settleIfPending claim guarantees
+ * exactly-once crediting whichever path lands first.
  */
 @Injectable()
 export class BettingService {
@@ -72,7 +74,11 @@ export class BettingService {
     return this.result(bet, debited);
   }
 
-  /** Resolve a pending bet: credit payout (Won) or refund the stake (Void). */
+  /**
+   * Resolve a pending bet: credit payout (Won) or refund the stake (Void).
+   * Idempotent — an already-settled bet returns its current state so late
+   * client reports (after the server settled at full time) are harmless.
+   */
   async settle(
     userId: string,
     betId: string,
@@ -81,27 +87,49 @@ export class BettingService {
     const existing = await this.bets.findById(betId);
     if (!existing) throw new NotFoundException('Bet not found');
     if (existing.userId !== userId) throw new ForbiddenException('Not your bet');
-    if (existing.status !== BetStatus.Pending) {
-      throw new BadRequestException('Bet is already settled');
+
+    const settled = await this.bets.settleIfPending(betId, status);
+    if (!settled) {
+      // Already settled (possibly by the match-end.after pass) — report as-is.
+      const current = (await this.bets.findById(betId)) ?? existing;
+      const user = await this.users.findById(userId);
+      if (!user) throw new NotFoundException('User not found');
+      return this.result(current, user);
     }
 
-    const settled = await this.bets.settle(betId, status);
-    let user = await this.users.findById(userId);
+    const user = await this.credit(settled, status);
+    return this.result(settled, user);
+  }
+
+  /**
+   * Settle on behalf of the system (match-end.after pass) — no ownership check.
+   * Returns the settled bet, or null when the bet was already settled elsewhere.
+   */
+  async systemSettle(bet: Bet, status: SettleableStatus): Promise<Bet | null> {
+    const settled = await this.bets.settleIfPending(bet.id, status);
+    if (!settled) return null;
+    await this.credit(settled, status);
+    return settled;
+  }
+
+  /** Mirror a settlement into the wallet: ledger row + cached balance. */
+  private async credit(bet: Bet, status: SettleableStatus): Promise<User> {
+    let user = await this.users.findById(bet.userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const credit = this.payout(settled, status);
+    const credit = this.payout(bet, status);
     if (credit > 0) {
-      user = await this.users.adjustBalance(userId, credit);
+      user = await this.users.adjustBalance(bet.userId, credit);
       await this.wallet.record({
-        user: { connect: { id: userId } },
+        user: { connect: { id: bet.userId } },
         type: status === BetStatus.Won ? WalletTxType.BetPayout : WalletTxType.BetRefund,
         amount: credit,
         balanceAfter: user.balance,
         refType: 'bet',
-        refId: betId,
+        refId: bet.id,
       });
     }
-    return this.result(settled, user);
+    return user;
   }
 
   /** Coins to credit back on settlement: full payout on a win, stake on a void, nothing on a loss. */

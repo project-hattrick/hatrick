@@ -1,6 +1,7 @@
 import { BodyAnim, HeadView } from './enums';
 import type { FrameCfg } from './assets/configs';
 import type { HeadKey } from './assets/loader';
+import { DIVE2_HEIGHT_RATIO } from './sim/keeper';
 
 /**
  * Single source of truth for the body+head compositing used by BOTH the in-match renderer (`render.ts`)
@@ -51,6 +52,19 @@ export function spriteHeightForBase(base: number, frameCfg: FrameCfg | null, nor
   return base * frameCfg.bodyScale * sizeScale;
 }
 
+/**
+ * Per-frame drawn-height ratio for the v6 dive. Family packs (pre-trimmed frames, e.g. /game/franca)
+ * keep a constant source-pixel scale — each frame's own height vs the standing frame 0 — so no pose can
+ * shrink or balloon regardless of how the cuts were trimmed. The baked candidate_01 pack (no per-frame
+ * images passed) keeps its approved hand-tuned DIVE2_HEIGHT_RATIO.
+ */
+export function dive2HeightRatio(frameIdx: number, frame?: HTMLImageElement | null, frame0?: HTMLImageElement | null): number {
+  if (frame?.complete && frame.naturalHeight && frame0?.complete && frame0.naturalHeight) {
+    return frame.naturalHeight / frame0.naturalHeight;
+  }
+  return DIVE2_HEIGHT_RATIO[frameIdx] ?? 1;
+}
+
 /** Whole-sprite draw (head baked in), foot-anchored at (x, footY); mirrors horizontally when `mirror`. */
 export function drawSprite(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, footY: number, height: number, mirror: boolean): void {
   if (!image || !image.complete || !image.naturalWidth) return;
@@ -99,10 +113,22 @@ export function drawTrimmedSprite(
   return { drawX, drawY, drawW, drawH, sourceW, sourceH };
 }
 
+/** Runtime clamp for a composited head's drawn height (game-only, see RealGkConfig.head*Fraction). */
+export interface HeadBounds {
+  min?: number;
+  max?: number;
+}
+
+/** Head pixel height for a body rect under the optional bounds — shared by the draw and hit-rect math. */
+export function composedHeadHeight(bodyRect: SpriteRect, frameCfg: FrameCfg, bounds?: HeadBounds): number {
+  return Math.min(Math.max(bodyRect.drawH * frameCfg.headScale, bounds?.min ?? 0), bounds?.max ?? Infinity);
+}
+
 /**
  * Composites a head over a body rect per `frameCfg` (scale + offset ratios); mirrors side heads with facing.
- * `maxHeadHeight` (game-only runtime guard, see RealGkConfig.headMaxFraction) caps the drawn head so
- * per-frame headScale outliers can't balloon it — the editors omit it on purpose to show raw values.
+ * `bounds` (game-only runtime guard, see RealGkConfig.headMaxFraction/headMinFraction) clamps the drawn
+ * head so per-frame headScale outliers can't balloon it and short-drawn bodies (slide tackle) can't
+ * shrink it — the editors omit it on purpose to show raw values.
  */
 export function drawComposedHead(
   ctx: CanvasRenderingContext2D,
@@ -111,10 +137,10 @@ export function drawComposedHead(
   bodyRect: SpriteRect,
   mirror: boolean,
   frameCfg: FrameCfg,
-  maxHeadHeight?: number,
+  bounds?: HeadBounds,
 ): void {
   if (!image.complete || !image.naturalWidth) return;
-  const headHeight = Math.min(bodyRect.drawH * frameCfg.headScale, maxHeadHeight ?? Infinity);
+  const headHeight = composedHeadHeight(bodyRect, frameCfg, bounds);
   const headWidth = image.naturalWidth * (headHeight / image.naturalHeight);
   const xShift = bodyRect.drawW * frameCfg.offsetXRatio * (mirror ? -1 : 1);
   const yOverlap = bodyRect.drawH * frameCfg.offsetYRatio;

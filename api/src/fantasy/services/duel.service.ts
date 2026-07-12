@@ -4,8 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DuelResult, DuelStatus, WalletTxType, type OwnedCard } from '@prisma/client';
+import { DuelResult, DuelStatus, NotificationType, WalletTxType, type OwnedCard } from '@prisma/client';
 
+import { NotificationsService } from '../../users/notifications.service';
 import { UserRepository, WalletRepository } from '../../users/repositories';
 import { DuelRepository, OwnedCardRepository } from '../repositories';
 import { CreateDuelDto, DuelDto, DuelResultDto, SettleDuelDto } from '../dto/duel.dto';
@@ -23,6 +24,7 @@ export class DuelService {
     private readonly owned: OwnedCardRepository,
     private readonly users: UserRepository,
     private readonly wallet: WalletRepository,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(userId: string): Promise<DuelDto[]> {
@@ -118,6 +120,19 @@ export class DuelService {
         refId: duelId,
       });
     }
+
+    const title =
+      dto.result === DuelResult.Win
+        ? 'Duel won'
+        : dto.result === DuelResult.Draw
+          ? 'Duel drawn'
+          : 'Duel lost';
+    await this.notifications.notify(userId, {
+      type: NotificationType.Duel,
+      title,
+      body: `${dto.hostScore}–${dto.guestScore}${mmrDelta !== 0 ? ` · ${mmrDelta > 0 ? '+' : ''}${mmrDelta} MMR` : ''}`,
+      href: '/profile',
+    });
 
     return { duel: DuelDto.fromEntity(finished), balance: balance.toFixed(2) };
   }

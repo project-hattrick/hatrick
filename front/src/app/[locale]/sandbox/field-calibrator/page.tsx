@@ -24,17 +24,17 @@ interface CourtPreset {
 /** Courts the calibrator can map — each keeps its own saved trace and opens on the court's CURRENT
  *  in-game mapping (`initial`), so editing a new stadium starts from what the engine already uses. */
 const COURTS: Record<string, CourtPreset> = {
-  rain: { label: 'Rain court (v1)', src: '/game/stadiums/rain-court/court.png' },
+  rain: { label: 'Rain court — home / live / room', src: '/game/stadiums/rain-court/court.png' },
   franca: {
     label: 'France night stadium',
     src: '/game/franca/court.png',
-    storageKey: 'hat-trick:field-calibrator:franca:v1',
+    storageKey: 'hat-trick:field-calibrator:franca:v2',
     initial: stateFromFieldSpec(FRANCE_STADIUM_FIELD),
   },
   sunset: {
     label: 'Sunset stadium',
     src: '/game/stadiums/sunset-court/court.png',
-    storageKey: 'hat-trick:field-calibrator:sunset:v1',
+    storageKey: 'hat-trick:field-calibrator:sunset:v2',
     initial: stateFromFieldSpec(SUNSET_FIELD),
   },
 };
