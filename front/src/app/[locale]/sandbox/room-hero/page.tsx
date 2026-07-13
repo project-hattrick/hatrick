@@ -1,7 +1,7 @@
 import { RoomHeroFigureEditor } from '@/components/aligner/room-hero-figure-editor';
 
 export const metadata = {
-  title: 'Room Hero Figure Editor — Hat-trick',
+  title: 'Room Hero Figure Editor — Hatrick',
 };
 
 /** Dev page: reposition the room "starting soon" header players without touching the landing card. */

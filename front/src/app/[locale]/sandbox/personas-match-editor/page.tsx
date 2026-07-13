@@ -1,7 +1,7 @@
 import { PersonasMatchEditor } from '@/components/aligner/personas-match-editor';
 
 export const metadata = {
-  title: 'Personas Match Editor — Hat-trick',
+  title: 'Personas Match Editor — Hatrick',
 };
 
 /** Dev tool: the REAL real-gk-personas match (same engine + config) with live-editable frame configs —

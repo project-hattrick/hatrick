@@ -14,7 +14,7 @@ export function HolofoteLoader() {
             />
             <Image
               src="/logo.png"
-              alt="Hat-trick"
+              alt="Hatrick"
               width={472}
               height={481}
               priority

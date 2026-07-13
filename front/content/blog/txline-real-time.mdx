@@ -8,17 +8,17 @@ readingMinutes: 5
 
 ## What is TxLINE?
 
-TxLINE is the real-time sports data provider behind Hat-trick. It supplies a continuous stream of confirmed match events — goals, assists, yellow and red cards, substitutions, corner kicks, penalties — via a secured Server-Sent Events connection. Every piece of live data you see on Hat-trick originates from TxLINE.
+TxLINE is the real-time sports data provider behind Hatrick. It supplies a continuous stream of confirmed match events — goals, assists, yellow and red cards, substitutions, corner kicks, penalties — via a secured Server-Sent Events connection. Every piece of live data you see on Hatrick originates from TxLINE.
 
-The key word is _confirmed_. TxLINE distinguishes between optimistic events (fast, unconfirmed signals that fire the moment something probably happened) and authoritative events (confirmed signals that fire once the event has been verified). Hat-trick uses both: optimistic events drive the immediate UI animation, and authoritative events trigger market settlement and attribute recalculation.
+The key word is _confirmed_. TxLINE distinguishes between optimistic events (fast, unconfirmed signals that fire the moment something probably happened) and authoritative events (confirmed signals that fire once the event has been verified). Hatrick uses both: optimistic events drive the immediate UI animation, and authoritative events trigger market settlement and attribute recalculation.
 
 ## The event lifecycle
 
-When a goal is scored in a World Cup match, the following happens on Hat-trick:
+When a goal is scored in a World Cup match, the following happens on Hatrick:
 
 **1. TxLINE fires an optimistic event.** Within seconds, the 2D match view animates the goal. The scorer's name appears in the event feed. Live market odds shift to reflect the new score.
 
-**2. TxLINE fires a confirmed event.** This is the authoritative signal. Hat-trick's backend receives it and begins settlement: live markets that resolve on this goal are closed, winners' balances are credited, and the scorer's Fantasy attribute recalculation job is queued.
+**2. TxLINE fires a confirmed event.** This is the authoritative signal. Hatrick's backend receives it and begins settlement: live markets that resolve on this goal are closed, winners' balances are credited, and the scorer's Fantasy attribute recalculation job is queued.
 
 **3. Attributes propagate.** The scorer's goal tally is updated, feeding into their shooting and impact scores. Every player in every Fantasy squad that includes this player sees the updated scores on their next squad view.
 
@@ -28,19 +28,19 @@ When a goal is scored in a World Cup match, the following happens on Hat-trick:
 
 Server-Sent Events are a one-way push protocol: the server sends events to the client, and the client listens. For match data, this is the correct model. You don't need to send match events _to_ the provider — you receive them. SSE is lighter, natively supported by every modern browser, and automatically reconnects after a connection drop without any client-side logic.
 
-Hat-trick's backend holds a single persistent SSE connection to TxLINE per active match and fans the events out to connected clients via its own WebSocket gateway. This means one upstream connection per match, not one per connected user — an important efficiency at scale.
+Hatrick's backend holds a single persistent SSE connection to TxLINE per active match and fans the events out to connected clients via its own WebSocket gateway. This means one upstream connection per match, not one per connected user — an important efficiency at scale.
 
 ## The confirmation model: during vs after
 
-One architectural pattern runs through the entire Hat-trick backend: every domain event exists in two states.
+One architectural pattern runs through the entire Hatrick backend: every domain event exists in two states.
 
 - `*.during` — optimistic/live. Fires immediately when TxLINE detects an event. Drives UI animations and instant feedback without waiting for verification.
 - `*.after` — authoritative. Fires when TxLINE confirms the event. Drives settlement, attribute recalculation, and any irreversible state changes.
 
-This split matters because the real world is noisy. VAR can overturn a goal. By keeping optimistic and authoritative events separate, Hat-trick can animate a goal immediately while only settling the market once the referee has confirmed it.
+This split matters because the real world is noisy. VAR can overturn a goal. By keeping optimistic and authoritative events separate, Hatrick can animate a goal immediately while only settling the market once the referee has confirmed it.
 
 ## Latency in practice
 
-During the group stage, Hat-trick regularly receives confirmed goal events within three to eight seconds of the ball crossing the line. Substitution events arrive within fifteen seconds. Full-time events, which trigger the largest batch of settlement jobs, arrive within thirty seconds of the final whistle.
+During the group stage, Hatrick regularly receives confirmed goal events within three to eight seconds of the ball crossing the line. Substitution events arrive within fifteen seconds. Full-time events, which trigger the largest batch of settlement jobs, arrive within thirty seconds of the final whistle.
 
 For Live Mode users, this means market settlement is effectively instant. For Fantasy Mode users, attribute score updates are visible within a minute of the triggering event. The same feed keeps Fantasy honest: a player's attributes shift with their real match data, so the squad you duel with reflects how footballers are actually performing — not a static card printed months ago.

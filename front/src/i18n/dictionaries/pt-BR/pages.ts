@@ -2,7 +2,7 @@ export const pages = {
   contact: {
     metadata: {
       title: 'Contato',
-      description: 'Fale com a equipe Hat-trick - suporte, parcerias, imprensa ou relatos de bugs.',
+      description: 'Fale com a equipe Hatrick - suporte, parcerias, imprensa ou relatos de bugs.',
     },
     eyebrow: 'Entre em contato',
     title: 'Fale conosco',
@@ -31,11 +31,11 @@ export const pages = {
     metadata: {
       title: 'Blog',
       description:
-        'Guias, análises e novidades do produto pela equipe Hat-trick - Modo Live, duelos Fantasy, dados em tempo real da TxLINE e mais.',
+        'Guias, análises e novidades do produto pela equipe Hatrick - Modo Live, duelos Fantasy, dados em tempo real da TxLINE e mais.',
     },
     eyebrow: 'Blog',
     title: 'Histórias do gramado',
-    intro: 'Guias, análises e novidades do produto pela equipe Hat-trick.',
+    intro: 'Guias, análises e novidades do produto pela equipe Hatrick.',
     empty: 'Ainda não há posts - volte em breve.',
     readMinutes: '{minutes} min de leitura',
   },

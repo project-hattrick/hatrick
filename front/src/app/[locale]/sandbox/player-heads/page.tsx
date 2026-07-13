@@ -1,7 +1,7 @@
 import { PlayerAligner } from '@/components/aligner/player-aligner';
 
 export const metadata = {
-  title: 'Player Head Aligner — Hat-trick',
+  title: 'Player Head Aligner — Hatrick',
 };
 
 /** Dev tool: align a separate head onto the headless player body frames at hero scale. */

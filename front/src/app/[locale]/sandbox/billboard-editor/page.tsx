@@ -5,7 +5,7 @@ import type { Billboard } from '@/game/realgk/billboards';
 import { FRANCE_BILLBOARDS } from '@/game/realgk/config';
 
 export const metadata = {
-  title: 'Billboard Editor — Hat-trick',
+  title: 'Billboard Editor — Hatrick',
 };
 
 interface CourtPreset {

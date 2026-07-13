@@ -8,18 +8,18 @@ export interface FaqItem {
 
 export const faqItems: FaqItem[] = [
   {
-    q: 'What is Hat-trick?',
-    a: 'Hat-trick is a dual-mode World Cup platform powered by the TxLINE real-time feed. Live Mode lets you predict and place play-money bets on real matches as they happen. Fantasy Mode lets you build a squad and challenge friends to simulated 1v1 arena duels. Both modes share one profile and wallet.',
+    q: 'What is Hatrick?',
+    a: 'Hatrick is a dual-mode World Cup platform powered by the TxLINE real-time feed. Live Mode lets you predict and place play-money bets on real matches as they happen. Fantasy Mode lets you build a squad and challenge friends to simulated 1v1 arena duels. Both modes share one profile and wallet.',
     category: FaqCategory.General,
   },
   {
-    q: 'Is Hat-trick free to use?',
-    a: 'Yes. Hat-trick runs on Solana Devnet with play-money tokens that carry zero real-world value. Every feature is accessible without spending anything.',
+    q: 'Is Hatrick free to use?',
+    a: 'Yes. Hatrick runs on Solana Devnet with play-money tokens that carry zero real-world value. Every feature is accessible without spending anything.',
     category: FaqCategory.General,
   },
   {
     q: 'Is this real-money gambling?',
-    a: 'No. This is a hackathon demo on Solana Devnet. All tokens are fictitious play-money. Nothing on Hat-trick constitutes real-money gambling, and no purchase is required.',
+    a: 'No. This is a hackathon demo on Solana Devnet. All tokens are fictitious play-money. Nothing on Hatrick constitutes real-money gambling, and no purchase is required.',
     category: FaqCategory.General,
   },
   {
@@ -54,7 +54,7 @@ export const faqItems: FaqItem[] = [
   },
   {
     q: 'How do I connect my wallet?',
-    a: 'Click the wallet button in the top-right corner. Hat-trick supports Phantom and any Solana-compatible wallet adapter. Make sure your wallet is set to Solana Devnet — Mainnet connections are blocked to prevent accidental real-fund exposure.',
+    a: 'Click the wallet button in the top-right corner. Hatrick supports Phantom and any Solana-compatible wallet adapter. Make sure your wallet is set to Solana Devnet — Mainnet connections are blocked to prevent accidental real-fund exposure.',
     category: FaqCategory.Account,
   },
   {
@@ -74,7 +74,7 @@ export const faqItems: FaqItem[] = [
   },
   {
     q: 'Why do I see "devnet demo" labels?',
-    a: 'Hat-trick was built for the TxODDS World Cup Hackathon 2026 and runs entirely on Solana Devnet. All tokens are fictitious, no real money is involved, and the service is provided as a demonstration only.',
+    a: 'Hatrick was built for the TxODDS World Cup Hackathon 2026 and runs entirely on Solana Devnet. All tokens are fictitious, no real money is involved, and the service is provided as a demonstration only.',
     category: FaqCategory.Technical,
   },
   {

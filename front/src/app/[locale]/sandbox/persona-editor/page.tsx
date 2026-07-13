@@ -1,7 +1,7 @@
 import { PersonaEditor } from '@/components/aligner/persona-editor';
 
 export const metadata = {
-  title: 'Persona Editor — Hat-trick',
+  title: 'Persona Editor — Hatrick',
 };
 
 /** Dev tool: tune the persona boneco's head placement/size per anim, rendered 1:1 with the match. */

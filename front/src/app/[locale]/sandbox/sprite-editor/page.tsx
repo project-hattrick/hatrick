@@ -1,7 +1,7 @@
 import { SpriteEditor } from '@/components/aligner/sprite-editor';
 
 export const metadata = {
-  title: 'Sprite Editor — Hat-trick',
+  title: 'Sprite Editor — Hatrick',
 };
 
 /** Dev tool: edit head placement + size for every composited sprite, export the configs. */

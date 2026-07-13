@@ -1,7 +1,7 @@
 export const common = {
   searchPlayers: 'Buscar jogadores',
   addCoins: 'Adicionar moedas',
-  home: 'Início do Hat-trick',
+  home: 'Início do Hatrick',
   navigation: 'Navegação',
   openNavigation: 'Abrir menu de navegação',
   changeLanguage: 'Alterar idioma',
@@ -30,7 +30,7 @@ export const common = {
     account: 'Conta',
     changeLanguage: 'Alterar idioma',
     close: 'Fechar',
-    home: 'Início do Hat-trick',
+    home: 'Início do Hatrick',
     loading: 'Carregando',
     navigation: 'Navegação',
     notifications: 'Notificações',
@@ -62,7 +62,7 @@ export const common = {
   },
   ageGate: {
     title: 'Você tem 18 anos ou mais?',
-    descriptionPrefix: 'O Hat-trick inclui recursos de previsão e apostas destinados a maiores de 18 anos.',
+    descriptionPrefix: 'O Hatrick inclui recursos de previsão e apostas destinados a maiores de 18 anos.',
     demo: 'Esta é uma demonstração devnet com dinheiro fictício',
     descriptionSuffix:
       'os tokens não têm valor real - mas você ainda precisa cumprir a idade mínima da sua jurisdição. Ao continuar, você confirma que tem 18 anos ou mais e aceita nossos',
@@ -75,10 +75,10 @@ export const common = {
     confirm: 'Tenho 18+ e concordo',
     blockedTitle: 'Você precisa ter 18 anos ou mais',
     blockedDescription:
-      'As áreas de previsão e apostas do Hat-trick são estritamente para adultos com 18 anos ou mais. Você não pode continuar agora - mas, se apostas estiverem afetando você ou alguém que você conhece, há suporte confidencial gratuito disponível:',
+      'As áreas de previsão e apostas do Hatrick são estritamente para adultos com 18 anos ou mais. Você não pode continuar agora - mas, se apostas estiverem afetando você ou alguém que você conhece, há suporte confidencial gratuito disponível:',
   },
   cookies: {
-    bodyPrefix: 'O Hat-trick usa',
+    bodyPrefix: 'O Hatrick usa',
     essentialOnly: 'apenas cookies essenciais',
     bodySuffix: 'para manter sua sessão ativa e lembrar suas preferências. Sem cookies de anúncios ou rastreamento.',
     policy: 'Política de Cookies',

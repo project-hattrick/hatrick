@@ -7,9 +7,9 @@ import { localizePath } from '@/i18n/path';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hat-trick.app';
 
 export const SITE = {
-  name: 'Hat-trick',
+  name: 'Hatrick',
   url: SITE_URL,
-  title: 'Hat-trick — Live & Fantasy football, one platform',
+  title: 'Hatrick — Live & Fantasy football, one platform',
   description:
     'One platform, two ways to live the World Cup: predict and bet on real matches in Live Mode, or build your XI and duel friends 1v1 in Fantasy — powered by the TxLINE real-time feed.',
   keywords: [
@@ -20,7 +20,7 @@ export const SITE = {
     '1v1 duels',
     'real-time odds',
     'TxLINE',
-    'Hat-trick',
+    'Hatrick',
   ],
   twitter: '@hattrick',
   locale: 'en_US',

@@ -96,7 +96,7 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
           aria-label={t('common.home')}
           className="absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0"
         >
-          <Image src="/logo.png" alt="Hat-trick" width={472} height={481} priority className="h-8 w-auto md:h-10" />
+          <Image src="/logo.png" alt="Hatrick" width={472} height={481} priority className="h-8 w-auto md:h-10" />
         </Link>
 
         <div className="flex items-center justify-end gap-2 sm:gap-3 md:flex-1 md:gap-5">

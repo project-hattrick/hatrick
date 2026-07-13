@@ -30,8 +30,8 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-7xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:gap-10">
         <div className="flex flex-col gap-4">
           <Link href={localizePath('/', locale)} className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Hat-trick" width={472} height={481} className="h-8 w-auto" />
-            <span className="text-lg font-bold text-foreground">Hat-trick</span>
+            <Image src="/logo.png" alt="Hatrick" width={472} height={481} className="h-8 w-auto" />
+            <span className="text-lg font-bold text-foreground">Hatrick</span>
           </Link>
           <p className="max-w-xs text-sm text-muted-foreground">{copy.tagline}</p>
           <div className="flex items-center gap-2">

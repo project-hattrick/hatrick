@@ -2,10 +2,10 @@ export const about = {
   metadata: {
     title: 'Sobre',
     description:
-      'Hat-trick é uma plataforma de Copa do Mundo com dois modos: preveja partidas ao vivo em tempo real ou monte seu XI e duele 1v1 com amigos, tudo com o feed da TxLINE.',
+      'Hatrick é uma plataforma de Copa do Mundo com dois modos: preveja partidas ao vivo em tempo real ou monte seu XI e duele 1v1 com amigos, tudo com o feed da TxLINE.',
   },
   hero: {
-    eyebrow: 'Hat-trick',
+    eyebrow: 'Hatrick',
     title: 'Uma plataforma, duas formas de viver a Copa do Mundo',
   },
   sections: {
@@ -31,7 +31,7 @@ export const about = {
     },
   ],
   txline:
-    'Cada evento que você vê no Hat-trick vem da TxLINE, um stream seguro de Server-Sent Events que entrega dados confirmados de partidas em milissegundos após o apito. Gols liquidam suas apostas. Assistências aumentam a nota do seu jogador. Cartões vermelhos mudam a simulação. A TxLINE é a fonte única da verdade que mantém Live e Fantasy alinhados com a realidade.',
+    'Cada evento que você vê no Hatrick vem da TxLINE, um stream seguro de Server-Sent Events que entrega dados confirmados de partidas em milissegundos após o apito. Gols liquidam suas apostas. Assistências aumentam a nota do seu jogador. Cartões vermelhos mudam a simulação. A TxLINE é a fonte única da verdade que mantém Live e Fantasy alinhados com a realidade.',
   tags: ['Eventos da partida', 'Estatísticas de jogadores', 'Liquidação de mercados', 'Recalculo de atributos'],
   values: [
     {
@@ -40,7 +40,7 @@ export const about = {
     },
     {
       title: 'Competitivo por design',
-      body: 'De duelos 1v1 ranqueados a previsões em mercados ao vivo, o Hat-trick foi criado para quem quer testar seu conhecimento de futebol contra adversários reais.',
+      body: 'De duelos 1v1 ranqueados a previsões em mercados ao vivo, o Hatrick foi criado para quem quer testar seu conhecimento de futebol contra adversários reais.',
     },
     {
       title: 'Palco global',
@@ -56,7 +56,7 @@ export const about = {
     },
     {
       title: 'Social no centro',
-      body: 'Adicione amigos, desafie rivais e acompanhe confrontos diretos. O diretório de Duelistas coloca toda a comunidade Hat-trick a uma busca de distância.',
+      body: 'Adicione amigos, desafie rivais e acompanhe confrontos diretos. O diretório de Duelistas coloca toda a comunidade Hatrick a uma busca de distância.',
     },
   ],
 } as const;

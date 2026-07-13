@@ -1,7 +1,7 @@
 import { HeroFigureEditor } from '@/components/aligner/hero-figure-editor';
 
 export const metadata = {
-  title: 'Hero Figure Editor — Hat-trick',
+  title: 'Hero Figure Editor — Hatrick',
 };
 
 /** Dev page: pick any two teams and reposition their pixel-art players on the match-hero card. */

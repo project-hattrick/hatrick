@@ -6,7 +6,7 @@ import { FRANCE_STADIUM_FIELD } from '@/game/realgk/config';
 import type { FieldSpec } from '@/game/realgk/field';
 
 export const metadata = {
-  title: 'Field Calibrator — Hat-trick',
+  title: 'Field Calibrator — Hatrick',
 };
 
 /** Sunset stadium grass trapezoid (largest-green-component scan) — seed only; refine by dragging. */

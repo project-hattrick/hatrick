@@ -16,7 +16,7 @@ export async function generateMetadata({
   const { username } = await params;
   return buildMetadata({
     title: `@${username}`,
-    description: `View ${username}'s public profile, dueling stats and collection on Hat-trick.`,
+    description: `View ${username}'s public profile, dueling stats and collection on Hatrick.`,
     path: `/duelists/${username}`,
   });
 }

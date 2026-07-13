@@ -23,7 +23,7 @@ export function buildSignInMessage(
   walletAddress: string,
   nonce: string,
 ): string {
-  return `Sign in to Hat-trick.\n\nWallet: ${walletAddress}\nNonce: ${nonce}`;
+  return `Sign in to Hatrick.\n\nWallet: ${walletAddress}\nNonce: ${nonce}`;
 }
 
 @Injectable()

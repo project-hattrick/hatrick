@@ -1,7 +1,7 @@
 import { StyleGuide } from '@/components/design-system/style-guide';
 
 export const metadata = {
-  title: 'Design System — Hat-trick',
+  title: 'Design System — Hatrick',
   robots: { index: false, follow: false },
 };
 

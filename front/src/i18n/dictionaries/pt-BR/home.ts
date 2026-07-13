@@ -1,14 +1,14 @@
 export const home = {
-  srTitle: 'Hat-trick - futebol Live e Fantasy para a Copa do Mundo',
+  srTitle: 'Hatrick - futebol Live e Fantasy para a Copa do Mundo',
   site: {
-    title: 'Hat-trick - futebol Live e Fantasy em uma só plataforma',
+    title: 'Hatrick - futebol Live e Fantasy em uma só plataforma',
     description:
       'Uma plataforma, duas formas de viver a Copa do Mundo: preveja e aposte em partidas reais no Modo Live ou monte seu XI e duele 1v1 com amigos no Fantasy - tudo com o feed em tempo real da TxLINE.',
   },
   footer: {
     tagline: 'A plataforma que coloca você no centro do jogo - live, fantasy e previsões em um só lugar.',
     getApp: 'Baixe o app',
-    copyright: '© 2026 Hat-trick. Todos os direitos reservados.',
+    copyright: '© 2026 Hatrick. Todos os direitos reservados.',
     disclaimer: 'Demo devnet · dinheiro fictício · sem afiliação com a FIFA.',
     socials: {
       website: 'Site',

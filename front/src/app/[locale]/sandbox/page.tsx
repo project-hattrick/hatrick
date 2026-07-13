@@ -4,7 +4,7 @@ import { RealGkStage } from '@/components/game/real-gk/real-gk-stage';
 import { DEFAULT_CHECKPOINT, RuntimeKind, getCheckpointMeta, isCheckpointId } from '@/game/checkpoints/registry';
 
 export const metadata = {
-  title: 'Sandbox — Hat-trick',
+  title: 'Sandbox — Hatrick',
 };
 
 /** Dev playground: runs a checkpoint of the 2.5D engine. `?cp=<id>` selects the version + runtime. */

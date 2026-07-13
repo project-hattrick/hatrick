@@ -1,7 +1,7 @@
 import { ShadowEditor } from '@/components/aligner/shadow-editor';
 
 export const metadata = {
-  title: 'Shadow Editor — Hat-trick',
+  title: 'Shadow Editor — Hatrick',
 };
 
 /** Dev tool: tune/add/resize the foot, cast and beam shadows, then export the numbers. */

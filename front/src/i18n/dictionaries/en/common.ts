@@ -1,7 +1,7 @@
 export const common = {
   searchPlayers: 'Search players',
   addCoins: 'Add coins',
-  home: 'Hat-trick home',
+  home: 'Hatrick home',
   navigation: 'Navigation',
   openNavigation: 'Open navigation menu',
   changeLanguage: 'Change language',
@@ -30,7 +30,7 @@ export const common = {
     account: 'Account',
     changeLanguage: 'Change language',
     close: 'Close',
-    home: 'Hat-trick home',
+    home: 'Hatrick home',
     loading: 'Loading',
     navigation: 'Navigation',
     notifications: 'Notifications',
@@ -62,7 +62,7 @@ export const common = {
   },
   ageGate: {
     title: 'Are you 18 or older?',
-    descriptionPrefix: 'Hat-trick includes prediction and betting features intended for adults aged 18+.',
+    descriptionPrefix: 'Hatrick includes prediction and betting features intended for adults aged 18+.',
     demo: 'This is a play-money devnet demo',
     descriptionSuffix:
       'tokens have no real-world value - but you still must meet the minimum age for your jurisdiction. By continuing you confirm you are 18 or older and agree to our',
@@ -75,10 +75,10 @@ export const common = {
     confirm: "I'm 18+ & I agree",
     blockedTitle: 'You must be 18 or older',
     blockedDescription:
-      "Hat-trick's prediction and betting surfaces are strictly for adults aged 18+. You can't continue right now - but if gambling is affecting you or someone you know, free confidential support is available:",
+      "Hatrick's prediction and betting surfaces are strictly for adults aged 18+. You can't continue right now - but if gambling is affecting you or someone you know, free confidential support is available:",
   },
   cookies: {
-    bodyPrefix: 'Hat-trick uses',
+    bodyPrefix: 'Hatrick uses',
     essentialOnly: 'essential cookies only',
     bodySuffix: 'to keep you signed in and remember your preferences. No ad or tracking cookies.',
     policy: 'Cookie Policy',

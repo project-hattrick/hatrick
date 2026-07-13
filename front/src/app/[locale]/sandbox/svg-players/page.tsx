@@ -1,7 +1,7 @@
 import { SvgPlayerTest } from '@/components/aligner/svg-player-test';
 
 export const metadata = {
-  title: 'v5 SVG Player Test — Hat-trick',
+  title: 'v5 SVG Player Test — Hatrick',
 };
 
 /** v5 experiment: vectorized (SVG) player bodies, normalized to one size, vs the PNG originals. */

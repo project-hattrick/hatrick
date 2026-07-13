@@ -1,7 +1,7 @@
 import { Broadcast, ArrowUpRight } from '@/components/common/icons';
 import { cn } from '@/lib/utils';
 
-/** The real-time data provider behind Hat-trick — a small credit link ("puxa a sardinha" do TxLINE). */
+/** The real-time data provider behind Hatrick — a small credit link ("puxa a sardinha" do TxLINE). */
 export const TXLINE_URL = 'https://txline.txodds.com';
 
 /**

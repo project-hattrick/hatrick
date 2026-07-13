@@ -41,7 +41,7 @@ export function buildHeadline(match: LiveMatch, event: MatchEventPayload): Crowd
   const ctx = buildReactionContext(match, event);
   const text = pick(templates)(ctx);
   if (event.action !== MatchAction.Goal) return botMessage(text);
-  const shareText = `${ctx.playerLabel ?? ctx.teamName} scores! ${ctx.scoreline} at ${ctx.minute}' — watching live on Hat-trick 🎩⚽`;
+  const shareText = `${ctx.playerLabel ?? ctx.teamName} scores! ${ctx.scoreline} at ${ctx.minute}' — watching live on Hatrick 🎩⚽`;
   return botMessage(text, { kind: CrowdActionKind.ShareMoment, shareText });
 }
 
@@ -89,7 +89,7 @@ export function buildPostGoalCta(match: LiveMatch | null): CrowdMessage | null {
 const LOGIN_HOOKS = [
   'Enjoying the match? Sign in to keep your coins, bets and duel record.',
   'You are watching as a guest — sign in to place bets that count.',
-  'Connect your wallet to unlock the full Hat-trick experience.',
+  'Connect your wallet to unlock the full Hatrick experience.',
 ];
 
 /** Guest-only login nudge — null for signed-in users. */
@@ -121,7 +121,7 @@ export function buildInsight(match: LiveMatch | null, events: MatchEventPayload[
 /** Celebration when the user's bet settles as a win — with a brag-worthy share. */
 export function buildBetWon(bet: Bet): CrowdMessage {
   const payout = Math.round(bet.stake * bet.odds);
-  const shareText = `Just won ${payout.toLocaleString()} coins on ${bet.label} (${bet.matchLabel}) on Hat-trick 🎩🔥`;
+  const shareText = `Just won ${payout.toLocaleString()} coins on ${bet.label} (${bet.matchLabel}) on Hatrick 🎩🔥`;
   return botMessage(`🎉 Someone in the crowd just cashed ${payout.toLocaleString()} coins on "${bet.label}"! That's how it's done.`, {
     kind: CrowdActionKind.ShareMoment,
     shareText,

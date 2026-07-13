@@ -2,7 +2,7 @@ export const pages = {
   contact: {
     metadata: {
       title: 'Contact',
-      description: 'Get in touch with the Hat-trick team - support, partnerships, press, or bug reports.',
+      description: 'Get in touch with the Hatrick team - support, partnerships, press, or bug reports.',
     },
     eyebrow: 'Get in touch',
     title: 'Contact us',
@@ -31,11 +31,11 @@ export const pages = {
     metadata: {
       title: 'Blog',
       description:
-        'Guides, deep-dives and product updates from the Hat-trick team - Live Mode, Fantasy duels, TxLINE real-time data and more.',
+        'Guides, deep-dives and product updates from the Hatrick team - Live Mode, Fantasy duels, TxLINE real-time data and more.',
     },
     eyebrow: 'Blog',
     title: 'Stories from the pitch',
-    intro: 'Guides, deep-dives and product updates from the Hat-trick team.',
+    intro: 'Guides, deep-dives and product updates from the Hatrick team.',
     empty: 'No posts yet - check back soon.',
     readMinutes: '{minutes} min read',
   },

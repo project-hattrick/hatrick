@@ -2,10 +2,10 @@ export const about = {
   metadata: {
     title: 'About',
     description:
-      'Hat-trick is a dual-mode World Cup platform: predict live matches in real time or build your XI and duel friends 1v1, all powered by the TxLINE feed.',
+      'Hatrick is a dual-mode World Cup platform: predict live matches in real time or build your XI and duel friends 1v1, all powered by the TxLINE feed.',
   },
   hero: {
-    eyebrow: 'Hat-trick',
+    eyebrow: 'Hatrick',
     title: 'One platform, two ways to live the World Cup',
   },
   sections: {
@@ -31,7 +31,7 @@ export const about = {
     },
   ],
   txline:
-    "Every event you see on Hat-trick originates from TxLINE, a secured Server-Sent Events stream that delivers confirmed match data within milliseconds of the whistle. Goals settle your bets. Assists bump your player's rating. Red cards change the match simulation. TxLINE is the single source of truth that keeps Live and Fantasy in lockstep with reality.",
+    "Every event you see on Hatrick originates from TxLINE, a secured Server-Sent Events stream that delivers confirmed match data within milliseconds of the whistle. Goals settle your bets. Assists bump your player's rating. Red cards change the match simulation. TxLINE is the single source of truth that keeps Live and Fantasy in lockstep with reality.",
   tags: ['Match events', 'Player stats', 'Market settlement', 'Attribute recalculation'],
   values: [
     {
@@ -40,7 +40,7 @@ export const about = {
     },
     {
       title: 'Competitive by design',
-      body: 'From ranked 1v1 duels to live-market predictions, Hat-trick is built for players who want to test their football knowledge against real opponents.',
+      body: 'From ranked 1v1 duels to live-market predictions, Hatrick is built for players who want to test their football knowledge against real opponents.',
     },
     {
       title: 'Global stage',
@@ -56,7 +56,7 @@ export const about = {
     },
     {
       title: 'Social at the core',
-      body: 'Add friends, challenge rivals, and track head-to-head records. The Duelists directory puts the entire Hat-trick community a search away.',
+      body: 'Add friends, challenge rivals, and track head-to-head records. The Duelists directory puts the entire Hatrick community a search away.',
     },
   ],
 } as const;

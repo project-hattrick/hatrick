@@ -85,7 +85,7 @@ export function StyleGuide() {
     <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-10">
       <header className="flex flex-col gap-2 border-b border-border pb-6">
         <span className="text-eyebrow text-neon">Design System</span>
-        <h1 className="text-display">Hat-trick — Neon Turf</h1>
+        <h1 className="text-display">Hatrick — Neon Turf</h1>
         <p className="text-lead max-w-2xl text-muted-foreground">
           The single source of truth. Every colour, size, radius and shadow is a token in{' '}
           <code className="rounded bg-surface-2 px-1 text-neon">globals.css</code>; components reference roles,

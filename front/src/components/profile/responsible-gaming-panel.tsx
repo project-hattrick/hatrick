@@ -115,7 +115,7 @@ export function ResponsibleGamingPanel() {
               <DialogTitle>Self-exclude from betting?</DialogTitle>
               <DialogDescription>
                 This takes effect immediately and lasts a minimum of 24 hours. You won't be able to
-                place staked bets until you reactivate. Free predictions and the rest of Hat-trick
+                place staked bets until you reactivate. Free predictions and the rest of Hatrick
                 stay available. Support is at{' '}
                 <Link href="/legal/responsible-gaming">Responsible Gaming</Link>.
               </DialogDescription>

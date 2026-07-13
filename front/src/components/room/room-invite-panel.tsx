@@ -24,7 +24,7 @@ interface RoomInvitePanelProps {
   embedded?: boolean;
 }
 
-const SHARE_TEXT = 'Come watch the match with me in my private Hat-trick room →';
+const SHARE_TEXT = 'Come watch the match with me in my private Hatrick room →';
 const LIST_SCROLL_CLASS = 'custom-scrollbar max-h-36 overflow-y-auto overscroll-contain pr-1';
 
 /**

@@ -1,7 +1,7 @@
 import { MarkerVariations } from '@/components/aligner/marker-variations';
 
 export const metadata = {
-  title: 'Marker Variations — Hat-trick',
+  title: 'Marker Variations — Hatrick',
 };
 
 /** Dev page: pick the active-player marker style for the sandbox. */

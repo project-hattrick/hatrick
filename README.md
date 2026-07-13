@@ -4,10 +4,10 @@
 <br />
 <div align="center">
   <a href="https://github.com/your-org/hat-trick">
-    <img src="front/public/logo.png" alt="Hat-trick" width="96" />
+    <img src="front/public/logo.png" alt="Hatrick" width="96" />
   </a>
 
-  <h1 align="center">Hat-trick</h1>
+  <h1 align="center">Hatrick</h1>
 
   <p align="center">
     One platform, two ways to live the 2026 World Cup — simulated fantasy duels and a live 2D match arena, both driven by the same real-time data source: the <strong>TxLINE</strong> feed on <strong>Solana</strong>.
@@ -36,7 +36,7 @@
 > Hackathon entry for the **TxODDS World Cup 2026 → Consumer & Fan Experiences** track. Devnet only, fictitious tokens — no real money moves. Not affiliated with FIFA; no official marks are used.
 
 <div align="center">
-  <img src="https://placehold.co/760x400/0b0b0b/14F195?text=Hat-trick+preview" alt="Hat-trick preview (placeholder)" width="760">
+  <img src="https://placehold.co/760x400/0b0b0b/14F195?text=Hatrick+preview" alt="Hatrick preview (placeholder)" width="760">
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -76,13 +76,13 @@
 
 <div id="about-the-project"></div>
 
-**Hat-trick** treats the World Cup as what it really is — a universe of live data — and builds one place to *play it* and *watch + bet it*. Two modes share one profile, one wallet, and one design, all fed by the same TxLINE feed.
+**Hatrick** treats the World Cup as what it really is — a universe of live data — and builds one place to *play it* and *watch + bet it*. Two modes share one profile, one wallet, and one design, all fed by the same TxLINE feed.
 
 ### Problem
 
 <div id="problem"></div>
 
-Most fans watch with a phone in hand and a fragmented setup: score in one tab, fantasy in a separate app, odds in yet another. The data exists — TxLINE streams scores, events, and odds for all 104 matches — but the unified experience hasn't been built. Hat-trick is that experience.
+Most fans watch with a phone in hand and a fragmented setup: score in one tab, fantasy in a separate app, odds in yet another. The data exists — TxLINE streams scores, events, and odds for all 104 matches — but the unified experience hasn't been built. Hatrick is that experience.
 
 ### The Two Modes
 
@@ -299,7 +299,7 @@ npm run dev                            # http://localhost:3000
 
 <div id="architecture"></div>
 
-Everything you see in Hat-trick originates from **[TxLINE](https://txline.txodds.com)**, TxODDS' real-time World Cup data product. There is no scraped or invented match data: one feed, one ingest path, many consumers.
+Everything you see in Hatrick originates from **[TxLINE](https://txline.txodds.com)**, TxODDS' real-time World Cup data product. There is no scraped or invented match data: one feed, one ingest path, many consumers.
 
 ### Where the data comes from
 
@@ -339,9 +339,9 @@ The core contract: **every domain event fires twice**. `*.during` is the optimis
 
 <div id="track-fit"></div>
 
-How Hat-trick answers each judging criterion of the track:
+How Hatrick answers each judging criterion of the track:
 
-| Criterion | How Hat-trick answers it |
+| Criterion | How Hatrick answers it |
 |---|---|
 | **Fan Accessibility & UX** | One platform instead of three tabs: watch, play, and bet share one profile, wallet, and design system. Two clear modes from a single home; built for a non-technical fan. |
 | **Real-Time Responsiveness** | The during/after contract makes latency a feature: the arena animates the instant an event arrives (`*.during`) and reconciles when TxLINE confirms it (`*.after`). One SSE ingest → WebSocket fan-out to every surface. |
@@ -384,7 +384,7 @@ project/
 - [x] Responsible gaming — 18+ age gate, self-exclusion, stake limits
 - [x] Geo-blocking on betting surfaces (`proxy.ts`, `?geo=demo` bypass)
 - [ ] **Crowd** — chat + X balloons with moderation & ranking (front-simulated for the demo)
-- [ ] Public deploy (scaffolding ready — see [`DEPLOY.md`](DEPLOY.md)) + demo video ([script](../docs/demo-video-script.md))
+- [ ] Public deploy (scaffolding ready — deploy notes kept outside the repo) + demo video ([script](../docs/demo-video-script.md))
 - [ ] *(Phase 2)* On-chain escrow + `validate_stat` settlement + Merkle-proof UI
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
@@ -459,7 +459,7 @@ Distributed under the **MIT License**. See `LICENSE.txt` for details once the li
 
 <div id="contact"></div>
 
-Team Hat-trick · Repository: [https://github.com/your-org/hat-trick](https://github.com/your-org/hat-trick)
+Team Hatrick · Repository: [https://github.com/your-org/hat-trick](https://github.com/your-org/hat-trick)
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

@@ -1,7 +1,7 @@
 import { TxlineTester } from '@/components/txline-tester/txline-tester';
 
 export const metadata = {
-  title: 'TxLINE Match Tester — Hat-trick',
+  title: 'TxLINE Match Tester — Hatrick',
 };
 
 export default function TxlineTesterPage() {

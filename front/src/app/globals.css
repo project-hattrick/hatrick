@@ -49,7 +49,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Brand tokens — dark-only Hat-trick identity (neutral graphite surfaces + lime-neon accent). */
+/* Brand tokens — dark-only Hatrick identity (neutral graphite surfaces + lime-neon accent). */
 @theme {
   --color-surface-1: #141519;
   --color-surface-2: #1b1c21;

@@ -9,7 +9,7 @@ export class NonceResponseDto {
 
   @ApiProperty({
     description: 'The exact message the wallet must sign',
-    example: 'Sign in to Hat-trick.\n\nWallet: 7xKX...\nNonce: a3f1c0...9e',
+    example: 'Sign in to Hatrick.\n\nWallet: 7xKX...\nNonce: a3f1c0...9e',
   })
   message!: string;
 }
