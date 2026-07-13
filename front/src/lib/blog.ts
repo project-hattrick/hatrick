@@ -4,6 +4,10 @@ import * as whatIsHatTrick from '../../content/blog/what-is-hat-trick.mdx';
 import * as liveVsFantasy from '../../content/blog/live-vs-fantasy.mdx';
 import * as txlineRealTime from '../../content/blog/txline-real-time.mdx';
 import * as duelsExplained from '../../content/blog/1v1-duels-explained.mdx';
+import * as responsibleGaming from '../../content/blog/responsible-gaming.mdx';
+import * as buildingFantasyXi from '../../content/blog/building-your-fantasy-xi.mdx';
+import * as readingLiveOdds from '../../content/blog/reading-live-odds.mdx';
+import * as worldCup2026Guide from '../../content/blog/world-cup-2026-guide.mdx';
 
 export interface PostMeta {
   slug: string;
@@ -33,6 +37,10 @@ const MODULES: Record<string, BlogModule> = {
   'live-vs-fantasy': liveVsFantasy as unknown as BlogModule,
   'txline-real-time': txlineRealTime as unknown as BlogModule,
   '1v1-duels-explained': duelsExplained as unknown as BlogModule,
+  'responsible-gaming': responsibleGaming as unknown as BlogModule,
+  'building-your-fantasy-xi': buildingFantasyXi as unknown as BlogModule,
+  'reading-live-odds': readingLiveOdds as unknown as BlogModule,
+  'world-cup-2026-guide': worldCup2026Guide as unknown as BlogModule,
 };
 
 const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : fallback);

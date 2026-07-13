@@ -30,7 +30,11 @@ import { NonceResponseDto } from './dto/nonce-response.dto';
 import { RequestNonceDto } from './dto/request-nonce.dto';
 import { VerifySignatureDto } from './dto/verify-signature.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { SESSION_COOKIE, sessionCookieOptions } from './session-cookie.util';
+import {
+  SESSION_COOKIE,
+  sessionCookieOptions,
+  clearSessionCookieOptions,
+} from './session-cookie.util';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -97,7 +101,7 @@ export class AuthController {
   })
   @ApiNoContentResponse({ description: 'Session cookie cleared' })
   logout(@Res({ passthrough: true }) res: Response): void {
-    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    res.clearCookie(SESSION_COOKIE, clearSessionCookieOptions());
   }
 
   @Get('me')

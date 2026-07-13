@@ -20,7 +20,7 @@ export const legal = {
       { heading: 'How we use it', body: 'To power your profile, recompute fantasy attributes, settle predictions, and improve reliability. We do not sell personal data.' },
       { heading: 'Cookies & storage', body: 'One essential httpOnly cookie holds your login session; local storage holds UI preferences and squad/bet state. No tracking or advertising cookies - see the Cookie Policy for details.' },
       { heading: 'Your rights', body: 'You may request access to, correction of, or deletion of your profile data at any time via the contact below.' },
-      { heading: 'Contact', body: 'Privacy questions: privacy@hat-trick.demo (placeholder).' },
+      { heading: 'Contact', body: 'Privacy questions: reach us through the Contact page. This is a devnet hackathon demo, not a production service.' },
     ],
   },
   terms: {

@@ -20,7 +20,7 @@ export const legal = {
       { heading: 'Como usamos esses dados', body: 'Para alimentar seu perfil, recalcular atributos fantasy, liquidar previsões e melhorar a confiabilidade. Não vendemos dados pessoais.' },
       { heading: 'Cookies e armazenamento', body: 'Um cookie essencial httpOnly mantém sua sessão de login; o armazenamento local guarda preferências de UI e estado de elenco/apostas. Sem cookies de rastreamento ou publicidade - veja a Política de Cookies para detalhes.' },
       { heading: 'Seus direitos', body: 'Você pode solicitar acesso, correção ou exclusão dos dados do seu perfil a qualquer momento pelo contato abaixo.' },
-      { heading: 'Contato', body: 'Dúvidas de privacidade: privacy@hat-trick.demo (placeholder).' },
+      { heading: 'Contato', body: 'Dúvidas de privacidade: fale com a gente pela página de Contato. Esta é uma demo de hackathon em devnet, não um serviço de produção.' },
     ],
   },
   terms: {

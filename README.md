@@ -169,8 +169,9 @@ A **polyglot monorepo of independent apps** — nothing shared, no cross-app imp
 # 1) API + infra (run from project/)
 cd api
 docker compose up -d                  # postgres :5432 + redis :6379
-npm install
+npm install                           # postinstall runs `prisma generate`
 cp .env.example .env                   # set TXLINE_* to ingest live data
+npm run prisma:deploy                  # apply migrations to a fresh DB
 npm run start:dev                      # http://localhost:3001/health
 
 # 2) Front (separate terminal)
@@ -271,8 +272,9 @@ project/
 - [x] **Live Mode** — feed-driven 2D arena, live odds board, markets, in-match betting + settlement
 - [x] **Fantasy Mode** — packs, XI builder, dynamic attributes, 1v1 arena duels
 - [x] Responsible gaming — 18+ age gate, self-exclusion, stake limits
-- [ ] **Crowd** — chat + X balloons with moderation & ranking
-- [ ] Geo-blocking, public deploy, demo video
+- [x] Geo-blocking on betting surfaces (`proxy.ts`, `?geo=demo` bypass)
+- [ ] **Crowd** — chat + X balloons with moderation & ranking (front-simulated for the demo)
+- [ ] Public deploy (scaffolding ready — see [`DEPLOY.md`](DEPLOY.md)) + demo video ([script](../docs/demo-video-script.md))
 - [ ] *(Phase 2)* On-chain escrow + `validate_stat` settlement + Merkle-proof UI
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>

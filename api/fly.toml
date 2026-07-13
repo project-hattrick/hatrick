@@ -1,0 +1,32 @@
+# Fly.io config for hat-trick / api. Rename `app` after `fly launch --no-deploy`.
+# Secrets (DATABASE_URL, JWT_SECRET, TXLINE_*, FRONT_ORIGIN, SESSION_COOKIE_SAMESITE=none)
+# are set with `fly secrets set …`, NOT here. Postgres + Redis: `fly postgres create`
+# and Upstash Redis, then wire their URLs as secrets.
+
+app = "hat-trick-api"
+primary_region = "gru" # São Paulo — closest to the demo audience; change as needed.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1 # keep 1 warm so the SSE ingest + WS stay connected during the demo
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "15s"
+    timeout = "3s"
+    grace_period = "20s" # let migrate deploy + Nest boot finish before probing
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
