@@ -36,10 +36,6 @@
 > Hackathon entry for the **TxODDS World Cup 2026 → Consumer & Fan Experiences** track. Devnet only, fictitious tokens — no real money moves. Not affiliated with FIFA; no official marks are used.
 
 <div align="center">
-  <h3>🎯 Everyone else built a picks leaderboard or a pundit bot.<br/>Hatrick is the only entry where you actually <em>play</em> the match.</h3>
-</div>
-
-<div align="center">
   <!-- still capture — for extra punch, swap for a 3–5s GIF loop of the arena taking a goal (during → after) -->
   <img src="docs/media/hero-demo.png" alt="Hatrick live arena demo" width="760">
 </div>
