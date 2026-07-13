@@ -54,7 +54,11 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (!res.ok) throw new ApiError(res.status, await extractError(res));
   if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  // A 200 with an empty body (e.g. a handler that returns `null`, like GET /fantasy/squad
+  // with no squad yet) must NOT be fed to JSON.parse — that throws and rejects the whole
+  // call. Treat an empty body as `undefined` so nullable endpoints resolve cleanly.
+  const text = await res.text();
+  return (text ? (JSON.parse(text) as T) : (undefined as T));
 }
 
 /** Verb helpers — thin sugar over apiFetch. */

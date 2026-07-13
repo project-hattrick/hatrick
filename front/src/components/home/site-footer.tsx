@@ -40,7 +40,7 @@ export function SiteFooter() {
               const label = copy.socials[social.labelKey];
               return (
                 <Link
-                  key={social.href}
+                  key={social.labelKey}
                   href={localizePath(social.href, locale)}
                   aria-label={label}
                   className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-surface-2 text-muted-foreground transition hover:border-neon/40 hover:text-neon"

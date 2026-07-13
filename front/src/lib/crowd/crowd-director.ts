@@ -1,6 +1,6 @@
 import { BetStatus } from '@/enums/bet-status.enum';
 import { MatchAction } from '@/enums/match-action.enum';
-import { HATBOT_CADENCE, HatBotPriority, hatbotHeadlines } from '@/config/hatbot.config';
+import { HATBOT_CADENCE, HatBotPriority, hatbotHeadlines, isMajorEvent } from '@/config/hatbot.config';
 import { crowdReactions } from '@/config/crowd-reactions.config';
 import { buildFanBurst, ambientFanMessage } from '@/lib/crowd/fan-burst';
 import {
@@ -16,7 +16,7 @@ import { useMatchStore } from '@/store/match.store';
 import { useBetsStore } from '@/store/bets.store';
 import type { Bet } from '@/types/bet';
 import type { CrowdMessage } from '@/types/crowd';
-import type { MatchEventPayload } from '@/types/match';
+import type { LiveMatch, MatchEventPayload } from '@/types/match';
 
 type QueueKind = 'event' | 'cta' | 'insight' | 'login';
 
@@ -28,6 +28,9 @@ interface QueueItem {
 }
 
 const eventKey = (event: MatchEventPayload): string => `${event.fixtureId}:${event.seq}`;
+
+/** The biggest beats — jump the queue ahead of a big-chance shot / VAR so they land first. */
+const MAJOR_MOMENTS = new Set<MatchAction>([MatchAction.Goal, MatchAction.RedCard, MatchAction.Penalty]);
 
 /** An event is notable when the fans or the bot have something to say about it. */
 const isNotable = (event: MatchEventPayload): boolean =>
@@ -125,7 +128,7 @@ class CrowdDirector {
     this.enqueue('login', HatBotPriority.Cta, () => buildLoginCta());
   }
 
-  /** Diff the event list by fixture:seq — new notable events trigger reactions once. */
+  /** Diff the event list by fixture:seq — new events feed the bot voice and the simulated stands. */
   private onMatchChange(fixtureId: number | null, events: MatchEventPayload[]): void {
     if (fixtureId !== this.fixtureId) {
       // Fresh match (or replay pick): baseline silently, no burst from history.
@@ -134,29 +137,39 @@ class CrowdDirector {
       this.queue = this.queue.filter((item) => item.kind !== 'event');
       return;
     }
-    const fresh = events.filter((event) => !this.seen.has(eventKey(event)));
-    fresh.forEach((event) => this.seen.add(eventKey(event)));
-    const notable = fresh.filter(isNotable);
-    if (notable.length === 0) return;
-    // A replay seek can land a batch at once — react only to the latest moment.
-    const toReact = notable.length > 2 ? notable.slice(-1) : notable;
-    toReact.forEach((event) => this.reactTo(event));
-  }
-
-  private reactTo(event: MatchEventPayload): void {
     const match = useMatchStore.getState().match;
     if (!match) return;
-    // Fan bursts are the simulated stands — the HatBot still calls the moment below.
+    const fresh = events.filter((event) => !this.seen.has(eventKey(event)));
+    fresh.forEach((event) => this.seen.add(eventKey(event)));
+
+    // HatBot voice: every "big moment" gets called — majors are rare, so never batch-dropped.
+    const major = fresh.filter(isMajorEvent);
+    major.forEach((event) => this.headline(event));
+
+    // Simulated stands react to any notable event as background ambience. Throttle the minor ones
+    // so a replay seek / flurry doesn't flood the crowd, but never drop a major moment's burst.
     if (!this.hatBotOnly) {
-      for (const { delayMs, message } of buildFanBurst(match, event)) {
-        this.later(delayMs, () => useCrowdStore.getState().add(message));
-      }
+      const minor = fresh.filter((event) => isNotable(event) && !isMajorEvent(event));
+      const burst = minor.length > 2 ? minor.slice(-2) : minor;
+      [...major, ...burst].forEach((event) => this.fanBurst(match, event));
     }
-    this.enqueue('event', HatBotPriority.Event, () => {
+  }
+
+  /** Queue the single HatBot headline for a big moment — goals also schedule the post-goal CTA. */
+  private headline(event: MatchEventPayload): void {
+    const priority = MAJOR_MOMENTS.has(event.action) ? HatBotPriority.BigMoment : HatBotPriority.Event;
+    this.enqueue('event', priority, () => {
       const current = useMatchStore.getState().match;
       return current ? buildHeadline(current, event) : null;
     });
     if (event.action === MatchAction.Goal) this.scheduleGoalCta();
+  }
+
+  /** The simulated stands' staggered reaction to an event (live/duel only, never in private rooms). */
+  private fanBurst(match: LiveMatch, event: MatchEventPayload): void {
+    for (const { delayMs, message } of buildFanBurst(match, event)) {
+      this.later(delayMs, () => useCrowdStore.getState().add(message));
+    }
   }
 
   private scheduleGoalCta(): void {

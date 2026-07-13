@@ -1,6 +1,7 @@
 import { MatchAction } from '@/enums/match-action.enum';
 import { TeamSide } from '@/enums/team-side.enum';
 import type { CrowdTemplate } from '@/config/crowd-reactions.config';
+import type { MatchEventPayload } from '@/types/match';
 
 /** The HatBot chat identity (side is irrelevant — the bot renders its own card). */
 export const HATBOT_PERSONA = {
@@ -11,7 +12,12 @@ export const HATBOT_PERSONA = {
   avatar: '',
 } as const;
 
-/** Event headlines the bot posts as they happen. */
+/**
+ * Event headlines the bot posts as they happen. Deliberately limited to the "big moments" — a
+ * goal, red card, penalty, VAR decision or a genuine big chance. Corners, free kicks, yellow
+ * cards and substitutions are left to the simulated stands (see `crowdReactions`) so the bot's
+ * single voice stays on the events that actually change the game. See `isMajorEvent`.
+ */
 export const hatbotHeadlines: Partial<Record<MatchAction, CrowdTemplate[]>> = {
   [MatchAction.Goal]: [
     (c) => `⚽ GOAL! ${c.scoreline} — ${c.playerLabel ?? c.teamName} strikes at ${c.minute}'!`,
@@ -35,12 +41,6 @@ export const hatbotHeadlines: Partial<Record<MatchAction, CrowdTemplate[]>> = {
   [MatchAction.RedCard]: [
     (c) => `🟥 RED CARD! ${c.teamName} down to 10 men at ${c.minute}'.`,
   ],
-  [MatchAction.YellowCard]: [
-    (c) => `🟨 Yellow card for ${c.playerLabel ?? c.teamName} at ${c.minute}'.`,
-  ],
-  [MatchAction.Corner]: [
-    (c) => `🚩 Corner for ${c.teamName} — pressure building at ${c.minute}'.`,
-  ],
   [MatchAction.Var]: [
     (c) =>
       c.outcome === 'Overturned'
@@ -49,13 +49,17 @@ export const hatbotHeadlines: Partial<Record<MatchAction, CrowdTemplate[]>> = {
           ? `📺 VAR checked the ${c.varType ?? 'decision'} — it STANDS. Play on at ${c.minute}'.`
           : `📺 VAR review in progress at ${c.minute}'... decision incoming.`,
   ],
-  [MatchAction.Substitution]: [
-    (c) => `🔁 Substitution for ${c.teamName} at ${c.minute}'.`,
-  ],
-  [MatchAction.FreeKick]: [
-    (c) => `⚡ Dangerous free kick for ${c.teamName} at ${c.minute}'.`,
-  ],
 };
+
+/** Shot outcomes that count as a real "big chance" — a blocked/off-target shot is not a headline. */
+const MAJOR_SHOT_OUTCOMES = new Set(['OnTarget', 'Saved', 'Woodwork']);
+
+/** True when this event is a HatBot-worthy "principal" moment (goal, red, penalty, VAR, big chance). */
+export function isMajorEvent(event: MatchEventPayload): boolean {
+  if (!(event.action in hatbotHeadlines)) return false;
+  if (event.action === MatchAction.Shot) return MAJOR_SHOT_OUTCOMES.has(event.outcome ?? '');
+  return true;
+}
 
 /** Bot pacing — one voice, never spammy. */
 export const HATBOT_CADENCE = {
@@ -78,9 +82,11 @@ export const HATBOT_CADENCE = {
   postGoalCtaDelayMs: 6_000,
 } as const;
 
-/** Queue priorities — event reactions beat CTAs beat insights. */
+/** Queue priorities — big moments beat other events beat CTAs beat insights. */
 export enum HatBotPriority {
   Insight = 1,
   Cta = 2,
   Event = 3,
+  /** Goal / red card / penalty — jumps ahead of a queued big-chance shot so the biggest beat lands first. */
+  BigMoment = 4,
 }

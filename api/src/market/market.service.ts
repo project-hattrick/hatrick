@@ -40,10 +40,12 @@ export class MarketService {
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    // Burn one owned copy of that card (no-op if the user doesn't hold it).
+    // A sale must burn a copy the user actually owns — otherwise a client could mint
+    // coins by "selling" cards it never held. Reject when no owned copy is found.
     const owned = (await this.owned.findByUser(userId)) as Array<OwnedCard & { card: CardCatalog }>;
     const copy = owned.find((oc) => oc.card.name === dto.cardName);
-    if (copy) await this.owned.delete(copy.id);
+    if (!copy) throw new BadRequestException(`You don't own a copy of "${dto.cardName}"`);
+    await this.owned.delete(copy.id);
 
     return this.move(userId, WalletTxType.MarketSale, dto.price, dto.cardName);
   }
