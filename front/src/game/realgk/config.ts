@@ -230,22 +230,22 @@ export const FRANCE_STADIUM_FIELD: FieldSpec = {
  */
 export const FRANCE_BILLBOARDS: Billboard[] = [
   // Animated neon LED (left) · static black Hatrick board (centered) · animated neon LED (right).
-  // Spaced with clear gaps so no panel overlaps its neighbor.
+  // Adjacent (edge-to-edge) like before, but meeting exactly at the Hatrick board's edges — no overlap.
   {
     kind: BillboardKind.Led,
-    corners: [[0.27, 0.295], [0.4, 0.295], [0.4, 0.327], [0.27, 0.327]],
+    corners: [[0.3, 0.295], [0.43, 0.295], [0.43, 0.327], [0.3, 0.327]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.42, 0.295], [0.58, 0.295], [0.58, 0.327], [0.42, 0.327]],
+    corners: [[0.43, 0.295], [0.57, 0.295], [0.57, 0.327], [0.43, 0.327]],
     src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.6, 0.295], [0.73, 0.295], [0.73, 0.327], [0.6, 0.327]],
+    corners: [[0.57, 0.295], [0.7, 0.295], [0.7, 0.327], [0.57, 0.327]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,

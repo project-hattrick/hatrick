@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { RealGkBackground } from '@/components/game/real-gk/real-gk-background';
 import { REAL_GK_MATCH_CONFIG, type RealGkFeatures } from '@/game/realgk/config';
 import { buildRealGkFixtureConfig } from '@/game/realgk/fixture-config';
+import { loadRealGkAssets } from '@/game/realgk/assets/loader';
 import { COURTS, courtByKey } from '@/game/realgk/courts';
 import { Team } from '@/game/realgk/enums';
 import type { RealGkHandle, RealGkRadar } from '@/game/realgk/types';
@@ -54,6 +55,7 @@ export function HeroEngineSurface() {
   const [speed, setSpeed] = useState(1);
   const [paused, setPaused] = useState(false);
   const [radar, setRadar] = useState<RealGkRadar | null>(null);
+  const [ready, setReady] = useState(false);
   const handleRef = useRef<RealGkHandle | null>(null);
 
   // Poll the live positions a few times a second for the minimap (mirrors the actual on-pitch dots + ball).
@@ -93,6 +95,49 @@ export function HeroEngineSurface() {
       features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true },
     };
   }, [heroLook, blue, red, court]);
+
+  // Hide the match behind a loading veil until the court PNG + sprite atlases are actually decoded — else
+  // the first boot flashes a black pitch with only foot-rings/LED boards while the images stream in. This
+  // shares the engine's image cache (`loadRealGkAssets` caches by src), so it just waits on the same
+  // requests. `setReady(true)` runs in a callback (not the effect body) so it stays cheap and rule-clean.
+  useEffect(() => {
+    const assets = loadRealGkAssets(
+      config.features !== undefined,
+      config.features?.personaHeads === true,
+      config.personaBodyRoot,
+      config.courtImage,
+      config.assetVersion,
+      config.personaBodyRootAway,
+      config.assetVersionAway,
+    );
+    const images: HTMLImageElement[] = [];
+    const collect = (node: unknown): void => {
+      if (node instanceof HTMLImageElement) images.push(node);
+      else if (Array.isArray(node)) node.forEach(collect);
+      else if (node && typeof node === 'object') Object.values(node).forEach(collect);
+    };
+    collect(assets);
+    const settled = (img: HTMLImageElement): Promise<void> =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise((res) => {
+            img.addEventListener('load', () => res(), { once: true });
+            img.addEventListener('error', () => res(), { once: true });
+          });
+    let cancelled = false;
+    const cap = window.setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 5000); // never trap the veil on a stalled asset
+    void Promise.all(images.map(settled)).then(() => {
+      if (cancelled) return;
+      window.clearTimeout(cap);
+      setReady(true);
+    });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(cap);
+    };
+  }, [config]);
 
   // Any reboot (team / court / hero swap) drops calibration mode so the overlay never binds a dead engine.
   const setBlue = (v: string) => { setEditing(false); setBlueKey(v); };
@@ -173,6 +218,16 @@ export function HeroEngineSurface() {
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <RealGkBackground config={config} onReady={onReady} bridgeHud teamNames={{ blue: blue.name, red: red.name }} />
+
+      {/* Loading veil — covers the black first-boot flash until the court + sprites are decoded. */}
+      {!ready ? (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
+          <div className="flex items-center gap-3 text-sm text-white/60">
+            <span className="size-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+            Loading pitch…
+          </div>
+        </div>
+      ) : null}
 
       {editing && fit && calState ? <CourtCalibrationOverlay fit={fit} state={calState} onChange={applyCal} /> : null}
 

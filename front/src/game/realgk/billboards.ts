@@ -30,22 +30,22 @@ export interface Billboard {
  */
 export const BILLBOARDS: Billboard[] = [
   // Animated neon LED (left) · static black Hatrick board (centered) · animated neon LED (right).
-  // Spaced with clear gaps so no panel overlaps its neighbor.
+  // Adjacent (edge-to-edge) like before, meeting exactly at the Hatrick board's edges — no overlap.
   {
     kind: BillboardKind.Led,
-    corners: [[0.27, 0.3], [0.4, 0.3], [0.4, 0.336], [0.27, 0.336]],
+    corners: [[0.3, 0.3], [0.43, 0.3], [0.43, 0.336], [0.3, 0.336]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.42, 0.3], [0.58, 0.3], [0.58, 0.336], [0.42, 0.336]],
+    corners: [[0.43, 0.3], [0.57, 0.3], [0.57, 0.336], [0.43, 0.336]],
     src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.6, 0.3], [0.73, 0.3], [0.73, 0.336], [0.6, 0.336]],
+    corners: [[0.57, 0.3], [0.7, 0.3], [0.7, 0.336], [0.57, 0.336]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,
