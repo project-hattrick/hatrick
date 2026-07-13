@@ -1,23 +1,13 @@
-# Rust / Anchor build artifacts
+# Build artifacts
 target/
+
+# Anchor internal state
 .anchor/
-**/*.rs.bk
 
-# Local validator state
-test-ledger/
-.ledger/
+# Program keypairs (private keys — NEVER commit)
+target/deploy/*-keypair.json
 
-# Node (tests / IDL tooling)
+# JS deps
 node_modules/
-yarn-error.log
 
-# Secrets — NEVER commit keypairs (program, deploy, oracle, faucet)
-*-keypair.json
-*.keypair.json
-wallet*.json
-id.json
-.env
-.env.*
-
-# local validator log
-*.log
+build.sh

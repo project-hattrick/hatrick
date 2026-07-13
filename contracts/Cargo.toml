@@ -1,5 +1,10 @@
 [workspace]
-members = ["programs/*"]
+members = [
+  "programs/hattrick_packs",
+  "programs/hattrick_betting",
+  "programs/hattrick_fantasy",
+  "programs/hattrick_provably_fair",
+]
 resolver = "2"
 
 [profile.release]
