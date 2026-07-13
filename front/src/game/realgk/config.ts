@@ -1,4 +1,3 @@
-import { CheckpointId } from '../checkpoints/types';
 import { BillboardKind, type Billboard } from './billboards';
 import type { FieldSpec } from './field';
 import type { RealGkFeel } from './sim/feel';
@@ -66,6 +65,14 @@ export interface RealGkFeatures {
   /** Match structure beats via `handle.setPhase`: half-time walk-off + banner, full-time whistle with the
    *  winner celebrating, then a frozen sim under the final-score overlay. Off → setPhase is a no-op. */
   matchStructure?: boolean;
+  /** Smart football AI: the team shape slides as a unit (role-based zonal shift), off-ball players make
+   *  time-persistent runs, the back line loosely man-marks + presses, and the ball owner picks passes by
+   *  openness (through-balls, dribble into space, sane shots). Off → the legacy support/decide path is
+   *  byte-identical. Feed authority is unchanged (no new goal path in driven mode). */
+  smartAI?: boolean;
+  /** Full-pitch match opening: the first Live kickoff frames the whole court (zoom 0) for ~2.5s, then
+   *  eases into the normal follow camera. Off → the camera starts on the follow preset as before. */
+  openingFullPitch?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -97,6 +104,9 @@ export interface RealGkConfig {
   cinematic: boolean;
   /** v4 feature gates — leave unset to keep the exact legacy behavior. */
   features?: RealGkFeatures;
+  /** Real player names per side (from feed lineups), ordered starters-first, spawn slot 0..10. Unset →
+   *  the generic `${TAG}-${n}` labels. Also settable live via the handle's `setRosterNames`. */
+  rosterNames?: { blue?: string[]; red?: string[] };
   /** How many controllable players the playable sandbox spawns (1 = solo court test; default 2). */
   playableRoster?: number;
   /** Adds a controllable blue goalkeeper to playable sandbox variants. */
@@ -149,120 +159,6 @@ export interface RealGkConfig {
   replayTiming?: { lookback?: number; speed?: number; wipe?: number };
 }
 
-/** Checkpoint 3 — the original Real Match GK feel. Pitch fits the screen 1:1. */
-export const REAL_GK_V2_CONFIG: RealGkConfig = {
-  fieldScale: 1,
-  spriteMinH: 35,
-  spriteMaxH: 58,
-  presets: [
-    { label: 'Broadcast', zoom: 1.9, follow: true },
-    { label: 'Close', zoom: 2.6, follow: true },
-    { label: 'Wide', zoom: 1.4, follow: true },
-    { label: 'Full pitch', zoom: 1.0, follow: false },
-  ],
-  cinematic: false,
-};
-
-/** Home hero backdrop — small players on a larger pitch, calm cinematic camera + the tuned visual styles. */
-export const REAL_GK_HERO_CONFIG: RealGkConfig = {
-  fieldScale: 1.5,
-  spriteMinH: 26,
-  spriteMaxH: 44,
-  ballScale: 0.62,
-  presets: [
-    { label: 'Broadcast', zoom: 1.7, follow: true },
-    { label: 'Close', zoom: 2.2, follow: true },
-    { label: 'Wide', zoom: 1.3, follow: true },
-    { label: 'Full pitch', zoom: 0.7, follow: false },
-  ],
-  cinematic: true,
-  // Visual polish only — keeps the hero's instant shot + sizes (no extraAnims/celebrations/replay/playable).
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: false, duskShadow: true, playable: false, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
-  actorScale: { referee: 0.95, coach: 0.95 },
-};
-
-/** Checkpoint 4 — "Cinema": a large pitch the camera roams, small players, dramatic dynamic zoom. */
-export const REAL_GK_CINEMA_CONFIG: RealGkConfig = {
-  fieldScale: 1.85,
-  spriteMinH: 22,
-  spriteMaxH: 38,
-  presets: [
-    { label: 'Cinematic', zoom: 1.2, follow: true },
-    { label: 'Tight', zoom: 1.75, follow: true },
-    { label: 'Aerial', zoom: 0.82, follow: true },
-    { label: 'Full pitch', zoom: 0.55, follow: false },
-  ],
-  cinematic: true,
-};
-
-/** Checkpoint 5 — "Broadcast": hero-standardized sizes, new anims, celebrations and TV goal replays. */
-export const REAL_GK_V4_CONFIG: RealGkConfig = {
-  fieldScale: 1.5,
-  spriteMinH: 26,
-  spriteMaxH: 44,
-  ballScale: 0.62,
-  presets: [
-    { label: 'Broadcast', zoom: 1.7, follow: true },
-    { label: 'Close', zoom: 2.2, follow: true },
-    { label: 'Wide', zoom: 1.3, follow: true },
-    { label: 'Full pitch', zoom: 0.7, follow: false },
-  ],
-  cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
-  actorScale: { referee: 0.95, coach: 0.95 },
-  nearGoalPush: 1.42,
-};
-
-/**
- * Playable sandbox — the HERO look (best feel: instant shot, hero sprite sizes, cinematic camera) made
- * controllable, with goal celebrations added. `extraAnims: false` keeps the crisp instant strike;
- * `celebrations: true` (with the v4 anim pack still loaded because `features` is defined) adds the party.
- */
-export const REAL_GK_PLAY_CONFIG: RealGkConfig = {
-  fieldScale: 1.5,
-  spriteMinH: 26,
-  spriteMaxH: 44,
-  ballScale: 0.62,
-  presets: [
-    { label: 'Broadcast', zoom: 1.7, follow: true },
-    { label: 'Close', zoom: 2.2, follow: true },
-    { label: 'Wide', zoom: 1.3, follow: true },
-    { label: 'Full pitch', zoom: 0.7, follow: false },
-  ],
-  cinematic: true,
-  features: { extraAnims: false, celebrations: true, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, billboards: false, matchIntro: false, deadBallSequence: false, fouls: false, debugBounds: false, keeperDiveV2: false },
-  actorScale: { referee: 0.95, coach: 0.95 },
-};
-
-/**
- * Solo court test — ONE controllable player on the empty court with the calibration overlay on:
- * pitch trapezoid, out-of-play lines, center spot, goal mouths and restart spots drawn in-game.
- * Dead-ball flow stays on so kicking the ball out shows exactly where the lines catch it.
- */
-export const REAL_GK_SOLO_CONFIG: RealGkConfig = {
-  fieldScale: 1.5,
-  spriteMinH: 26,
-  spriteMaxH: 44,
-  ballScale: 0.62,
-  presets: [
-    { label: 'Broadcast', zoom: 1.7, follow: true },
-    { label: 'Close', zoom: 2.2, follow: true },
-    { label: 'Wide', zoom: 1.3, follow: true },
-    { label: 'Full pitch', zoom: 0.7, follow: false },
-  ],
-  cinematic: true,
-  features: { extraAnims: false, celebrations: false, replay: false, normalizedSizes: true, duskShadow: true, playable: true, goalNet: false, goalFrame: false, billboards: false, matchIntro: false, deadBallSequence: true, fouls: false, debugBounds: true, keeperDiveV2: false },
-  actorScale: { referee: 0.95, coach: 0.95 },
-  playableRoster: 1,
-};
-
-/** Effects lab — a clean playable field with ball-impact particles and a repeatable high drop. */
-export const EFFECTS_LAB_CONFIG: RealGkConfig = {
-  ...REAL_GK_PLAY_CONFIG,
-  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), ballEffects: true },
-  playableRoster: 1,
-};
-
 /** Auto full match — identical look/assets to the sandbox, but 11-a-side AI with goal replays. */
 export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
   fieldScale: 1.5,
@@ -280,41 +176,6 @@ export const REAL_GK_MATCH_CONFIG: RealGkConfig = {
   actorScale: { referee: 0.95, coach: 0.95 },
   nearGoalPush: 1.42,
   crtFilter: true,
-};
-
-/**
- * Checkpoint 6 — "Matchday": v4 Broadcast plus a team+flag entrance (players walk on, referee whistles)
- * and legible dead-ball restarts (ball rolls out, banner, taker walks to the correct corner / touchline /
- * goal-area spot and puts it back in play).
- */
-export const REAL_GK_V5_CONFIG: RealGkConfig = {
-  fieldScale: 1.5,
-  spriteMinH: 26,
-  spriteMaxH: 44,
-  ballScale: 0.62,
-  presets: [
-    { label: 'Broadcast', zoom: 1.7, follow: true },
-    { label: 'Close', zoom: 2.2, follow: true },
-    { label: 'Wide', zoom: 1.3, follow: true },
-    { label: 'Full pitch', zoom: 0.7, follow: false },
-  ],
-  cinematic: true,
-  features: { extraAnims: true, celebrations: true, replay: true, normalizedSizes: true, duskShadow: true, playable: false, goalNet: false, billboards: true, matchIntro: true, deadBallSequence: true, fouls: true, debugBounds: false, keeperDiveV2: false },
-  actorScale: { referee: 0.95, coach: 0.95 },
-  nearGoalPush: 1.42,
-  teams: {
-    blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
-    red: { name: 'Spain', flagId: 'spain', colors: ['#AA151B', '#F1BF00', '#AA151B'] },
-  },
-};
-
-/**
- * Checkpoint 7 — "Reflex": Matchday plus the new keeper dive pack (candidate_01) — crouch anticipation,
- * a smeared ghost-trail launch (the approved save effect), prone slide and kneel recovery.
- */
-export const REAL_GK_V6_CONFIG: RealGkConfig = {
-  ...REAL_GK_V5_CONFIG,
-  features: { ...(REAL_GK_V5_CONFIG.features as RealGkFeatures), keeperDiveV2: true },
 };
 
 /**
@@ -339,25 +200,6 @@ export const REAL_GK_PERSONAS_CONFIG: RealGkConfig = {
   // ball from ever snapping on out-of-play; drivenFiller keeps the 90' watch alive between feed events.
   features: { ...(REAL_GK_MATCH_CONFIG.features as RealGkFeatures), personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true, livelyMatch: true, celebrations: false, deadBallSequence: true, drivenFiller: true, matchStructure: true },
   // Mock matchup so scoreboards/goal overlay show real names + flags instead of generic Blue/Red.
-  teams: {
-    blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },
-    red: { name: 'Argentina', flagId: 'argentina', colors: ['#75AADB', '#FFFFFF', '#75AADB'] },
-  },
-};
-
-/**
- * Playable persona sandbox — the Playable config (control your teammates, pass/shoot with the ball) with
- * persona casting on, so the players you drive wear distinct persona heads. `extraAnims` is turned on so
- * the shot plays its animated power-shot wind-up (composited over the persona head) instead of an instant
- * strike, and header/trap (C / V / B) become available.
- */
-export const REAL_GK_PERSONA_PLAY_CONFIG: RealGkConfig = {
-  ...REAL_GK_PLAY_CONFIG,
-  spriteMinH: 23,
-  spriteMaxH: 38,
-  actorScale: { referee: 1.3, coach: 1.3 },
-  cameraLift: 0.12,
-  features: { ...(REAL_GK_PLAY_CONFIG.features as RealGkFeatures), extraAnims: true, personaHeads: true, personaShot: true, ballEffects: true, slideTackles: true },
   teams: {
     blue: { name: 'Brazil', flagId: 'brazil', colors: ['#009C3B', '#FFDF00', '#002776'] },
     red: { name: 'Argentina', flagId: 'argentina', colors: ['#75AADB', '#FFFFFF', '#75AADB'] },
@@ -407,27 +249,6 @@ export const FRANCE_BILLBOARDS: Billboard[] = [
     speed: 9,
   },
 ];
-
-/** France kit review sandbox - playable persona arena using the approved France body cuts. */
-export const REAL_GK_FRANCE_PLAY_CONFIG: RealGkConfig = {
-  ...REAL_GK_PERSONA_PLAY_CONFIG,
-  personaBodyRoot: '/game/franca',
-  personaHeadScale: 0.82,
-  headMaxFraction: 0.44,
-  headMinFraction: 0.32,
-  courtImage: '/game/franca/court.png',
-  assetVersion: 'france-stadium-slide-gkclean3-idleback2-20260710',
-  field: FRANCE_STADIUM_FIELD,
-  billboards: FRANCE_BILLBOARDS,
-  spriteMinH: 20,
-  spriteMaxH: 31,
-  playableRoster: 1,
-  playableGoalkeeper: true,
-  teams: {
-    blue: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
-    red: { name: 'France', flagId: 'france', colors: ['#0055A4', '#FFFFFF', '#EF4135'] },
-  },
-};
 
 /** France complete match sandbox - autonomous 11-a-side sim using the full France player + keeper pack. */
 export const REAL_GK_FRANCE_COMPLETE_CONFIG: RealGkConfig = {
@@ -485,117 +306,3 @@ export const AWAY_TEAM_PACKS: Record<string, { root: string; brand: TeamBrand; a
   switzerland: { root: '/game/teams/switzerland', brand: { name: 'Switzerland', flagId: 'switzerland', colors: ['#D52B1E', '#FFFFFF', '#D52B1E'] }, accent: '#D52B1E' },
 };
 
-export type FranceSizeVariantId = 'base' | 'a' | 'b' | 'c';
-
-/**
- * Size candidates for the france-complete sandbox (`?size=a|b|c`) — same match, only the read size of
- * the actors changes. All keep the ~0.65 min:max depth ratio and leave `fieldScale` alone (it feeds sim
- * distances, e.g. the dive trigger); variant `c` magnifies via camera zoom instead, which is purely
- * visual. Referee/coach shrink as players grow (their 1.3x existed to match the smaller players).
- * Once a winner is picked, fold its values into REAL_GK_FRANCE_COMPLETE_CONFIG and drop the switcher.
- */
-export const FRANCE_COMPLETE_SIZE_VARIANTS: Record<FranceSizeVariantId, { label: string; config: RealGkConfig }> = {
-  base: { label: 'Base', config: REAL_GK_FRANCE_COMPLETE_CONFIG },
-  a: {
-    label: 'Bigger',
-    config: {
-      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
-      spriteMinH: 28,
-      spriteMaxH: 43,
-      actorScale: { referee: 1.15, coach: 1.15 },
-    },
-  },
-  b: {
-    label: 'Biggest',
-    config: {
-      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
-      spriteMinH: 31,
-      spriteMaxH: 48,
-      ballScale: 0.68,
-      actorScale: { referee: 1.05, coach: 1.05 },
-    },
-  },
-  c: {
-    label: 'Zoom',
-    config: {
-      ...REAL_GK_FRANCE_COMPLETE_CONFIG,
-      spriteMinH: 26,
-      spriteMaxH: 40,
-      actorScale: { referee: 1.2, coach: 1.2 },
-      presets: [
-        { label: 'Broadcast', zoom: 1.9, follow: true },
-        { label: 'Close', zoom: 2.4, follow: true },
-        { label: 'Wide', zoom: 1.3, follow: true },
-        { label: 'Full pitch', zoom: 0.7, follow: false },
-      ],
-    },
-  },
-};
-
-/**
- * England complete match sandbox — the France-complete match feel driving the England body pack
- * (`public/game/england/players/`, keyed + trimmed from the AI review frames). Plays on the shared
- * France stadium court/field/billboards; both sides wear the England kit, split only by name + foot ring.
- */
-export const REAL_GK_ENGLAND_COMPLETE_CONFIG: RealGkConfig = {
-  ...REAL_GK_FRANCE_COMPLETE_CONFIG,
-  personaBodyRoot: '/game/england',
-  assetVersion: 'england-v1',
-  teams: {
-    blue: { name: 'England Blue', flagId: 'england', colors: ['#FFFFFF', '#CE1124', '#001489'] },
-    red: { name: 'England Red', flagId: 'england', colors: ['#CE1124', '#FFFFFF', '#001489'] },
-  },
-};
-
-/** Size candidates for the england-complete sandbox (`?size=a|b|c`) — mirrors the France variants. */
-export const ENGLAND_COMPLETE_SIZE_VARIANTS: Record<FranceSizeVariantId, { label: string; config: RealGkConfig }> = {
-  base: { label: 'Base', config: REAL_GK_ENGLAND_COMPLETE_CONFIG },
-  a: {
-    label: 'Bigger',
-    config: {
-      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
-      spriteMinH: 28,
-      spriteMaxH: 43,
-      actorScale: { referee: 1.15, coach: 1.15 },
-    },
-  },
-  b: {
-    label: 'Biggest',
-    config: {
-      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
-      spriteMinH: 31,
-      spriteMaxH: 48,
-      ballScale: 0.68,
-      actorScale: { referee: 1.05, coach: 1.05 },
-    },
-  },
-  c: {
-    label: 'Zoom',
-    config: {
-      ...REAL_GK_ENGLAND_COMPLETE_CONFIG,
-      spriteMinH: 26,
-      spriteMaxH: 40,
-      actorScale: { referee: 1.2, coach: 1.2 },
-      presets: [
-        { label: 'Broadcast', zoom: 1.9, follow: true },
-        { label: 'Close', zoom: 2.4, follow: true },
-        { label: 'Wide', zoom: 1.3, follow: true },
-        { label: 'Full pitch', zoom: 0.7, follow: false },
-      ],
-    },
-  },
-};
-
-/** Resolves the variant config for a RealGk checkpoint id (defaults to v2). */
-export function realGkConfigFor(id: CheckpointId): RealGkConfig {
-  if (id === CheckpointId.RealGkPersonaPlay) return REAL_GK_PERSONA_PLAY_CONFIG;
-  if (id === CheckpointId.RealGkPersonas) return REAL_GK_PERSONAS_CONFIG;
-  if (id === CheckpointId.EffectsLab) return EFFECTS_LAB_CONFIG;
-  if (id === CheckpointId.RealGkV6) return REAL_GK_V6_CONFIG;
-  if (id === CheckpointId.RealGkMatch) return REAL_GK_MATCH_CONFIG;
-  if (id === CheckpointId.RealGkSolo) return REAL_GK_SOLO_CONFIG;
-  if (id === CheckpointId.RealGkPlay) return REAL_GK_PLAY_CONFIG;
-  if (id === CheckpointId.RealGkV5) return REAL_GK_V5_CONFIG;
-  if (id === CheckpointId.RealGkV4) return REAL_GK_V4_CONFIG;
-  return id === CheckpointId.RealGkV3 ? REAL_GK_CINEMA_CONFIG : REAL_GK_V2_CONFIG;
-}

@@ -1,5 +1,7 @@
 import { en } from './dictionaries/en';
+import { es } from './dictionaries/es';
 import { ptBR } from './dictionaries/pt-BR';
+import { ru } from './dictionaries/ru';
 import { DEFAULT_LOCALE, type Locale } from './locales';
 
 type DictionaryShape<T> = T extends string
@@ -13,6 +15,8 @@ export type Dictionary = DictionaryShape<typeof en>;
 const dictionaries: Record<Locale, Dictionary> = {
   en,
   'pt-BR': ptBR,
+  es,
+  ru,
 };
 
 export function getDictionary(locale: Locale = DEFAULT_LOCALE): Dictionary {

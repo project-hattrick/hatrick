@@ -38,6 +38,6 @@ export interface MatchEventPayload {
   };
   /** Per-player cumulative stats keyed by TxLINE player ID — drives Fantasy attribute recalculation. */
   playerStats?: PlayerStatsBySide;
-  /** Present only on `action=lineups` events — playerId → shirt/position, no names. */
+  /** Present only on `action=lineups` events — playerId → name/shirt/position. */
   lineups?: LineupsBySide;
 }

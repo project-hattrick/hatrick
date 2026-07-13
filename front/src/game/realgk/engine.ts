@@ -1,25 +1,22 @@
 import { MAX_DT } from './constants';
-import { REAL_GK_V2_CONFIG, type RealGkConfig } from './config';
+import { REAL_GK_MATCH_CONFIG, type RealGkConfig } from './config';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
-import { cameraLabel, createCamera, cyclePreset, cycleTarget, requestShake, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
-import { BodyAnim, DrivenDirective, MatchPhase, PlayerAction, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import { cameraLabel, calibrationRect, createCamera, pinCalibrationCamera, requestShake, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
+import { BodyAnim, DrivenDirective, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
 import { fieldRatios, pointOnField, setFieldSpec } from './field';
-import { cycleShotEffect, shotEffectLabelFor, shotSlowMoScale } from './effects';
+import { shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
 import { detectQualityTier, quality, setQualityTier } from './quality';
 import { createDirector, type ReplayDirector } from './replay/director';
 import { createRecorder, type ReplayRecorder } from './replay/recorder';
 import { resetCoach } from './sim/coach';
 import { controlPass, controlShoot } from './sim/control';
-import { startFoul } from './sim/foul';
 import { startHeader } from './sim/header';
 import { resetPlayers } from './sim/players';
 import { startReceive } from './sim/receive';
-import { startPowerShot } from './sim/shot';
-import { controlKeeperDive, startKeeperDive } from './sim/keeper';
+import { controlKeeperDive } from './sim/keeper';
 import { startSlideTackle } from './sim/slide';
-import { spawnReferee } from './sim/referee';
 import { freshDrivenClock, setClockDriven } from './sim/driven-clock';
 import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, resumeFromBreak, setPhaseDriven, step } from './sim/world';
 import { directDriven } from './sim/directives';
@@ -66,7 +63,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   if (!ctx) throw new Error('2D canvas context unavailable');
   ctx.imageSmoothingEnabled = false;
 
-  const config = opts.config ?? REAL_GK_V2_CONFIG;
+  const config = opts.config ?? REAL_GK_MATCH_CONFIG;
   // Detect the device tier once — caps the retina buffer, particle count and ambient shadows on weak devices.
   setQualityTier(detectQualityTier());
   // Map the pitch onto this config's court art BEFORE the world spawns off metrics().
@@ -161,6 +158,9 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
   let paused = false;
   let speed = 1;
   let flat = false;
+  // Calibration view (opt-in via handle.setCalibrationView): pins the camera to a fixed full-court frame
+  // so the /engine court editor can drag handles against a static court while the match plays live.
+  let calibration = false;
   let raf = 0;
   // Activity gate: false stops the RAF loop entirely (tab hidden / hero scrolled off-screen). Distinct
   // from `paused`, which only halts the sim — the loop kept rendering. Here nothing runs while inactive.
@@ -314,8 +314,11 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       if (foulStage === RestartStage.RefArrive && lastFoulStage !== RestartStage.RefArrive) triggerRefereeFocus(cam);
       lastFoulStage = foulStage;
       const replayScene = director?.scene() ?? null;
-      // Live camera follows play; the intro has its own choreography; the replay flow owns the camera (snap + track).
-      if (!replayScene) {
+      // Calibration view pins a fixed full-court frame (court editor); otherwise the live camera follows
+      // play, the intro has its own choreography, and the replay flow owns the camera (snap + track).
+      if (calibration) {
+        pinCalibrationCamera(cam, world);
+      } else if (!replayScene) {
         if (phase === MatchPhase.Intro) updateIntroCamera(cam, world);
         else if (phase !== MatchPhase.ReplayIn && phase !== MatchPhase.Replay && phase !== MatchPhase.ReplayOut)
           updateCamera(cam, world, rawDt); // Live / Celebration / HalfTime / FullTime all use the follow camera
@@ -379,88 +382,18 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     setFlat: (value: boolean) => {
       flat = value;
     },
-    cycleCamera: () => opts.onHud({ cameraLabel: cyclePreset(cam) }),
-    cycleTarget: () => opts.onHud({ targetLabel: cycleTarget(cam, world) }),
-    keeperDive: (side) => controlKeeperDive(world, side),
-    cycleControlledPlayer: () => {
-      const choices = world.players.filter((p) => p.team === Team.Blue);
-      if (!choices.length) return 'Control: none';
-      const current = choices.findIndex((p) => p.id === world.controlId);
-      const next = choices[(current + 1 + choices.length) % choices.length];
-      world.controlId = next.id;
-      cam.targetIdx = world.players.findIndex((p) => p.id === next.id);
-      const label = next.role === Role.GK ? 'Goalkeeper' : 'Player';
-      opts.onHud({ targetLabel: `Follow: ${next.name}` });
-      return `Control: ${label}`;
+    // Live per-court field remap: setFieldSpec already resets to field.ts DEFAULT_* before applying, so a
+    // full spec each drag overwrites the previous court's mapping (no stale merge). metrics() reads the
+    // mutated refs every frame, so players/ball/goals re-map live.
+    setField: (spec) => setFieldSpec(spec),
+    setCalibrationView: (on) => {
+      calibration = on;
     },
+    calibrationFit: () => (calibration ? calibrationRect(world) : null),
     restart: () => {
       director?.reset();
       recorder?.clear();
       restartMatch(world);
-    },
-    spawnReferee: () => {
-      spawnReferee(world);
-      triggerRefereeFocus(cam);
-    },
-    debugAction: (kind) => {
-      if (!config.features) return;
-      const squad = world.players.filter((p) => p.team === Team.Blue && p.role !== Role.GK);
-      if (!squad.length) return;
-      const p = squad.reduce((best, q) =>
-        Math.hypot(q.x - world.ball.x, q.y - world.ball.y) < Math.hypot(best.x - world.ball.x, best.y - world.ball.y) ? q : best,
-      );
-      if (kind === 'header') startHeader(p);
-      else if (kind === 'receive') startReceive(world, p, false);
-      else if (kind === 'intercept') startReceive(world, p, true);
-      else startPowerShot(world, p, config.features?.personaHeads === true);
-    },
-    debugGoal: () => {
-      // v4-only test hook — never active for v2/v3 (no features), so their 'g' stays a no-op.
-      if (!config.features) return;
-      if (world.match.phase !== MatchPhase.Live || world.match.celebration > 0) return;
-      const { ball } = world;
-      const squad = world.players.filter((p) => p.team === Team.Blue && p.role !== Role.GK);
-      const shooter = squad.length
-        ? squad.reduce((best, p) => (Math.hypot(p.x - ball.x, p.y - ball.y) < Math.hypot(best.x - ball.x, best.y - ball.y) ? p : best))
-        : null;
-      // Fire from close range into a top corner so the keeper rarely intercepts, regardless of viewport.
-      const start = pointOnField(world.size, 0.9, 0.42);
-      ball.ownerId = null;
-      ball.lastKickerId = shooter?.id ?? null;
-      ball.x = start.x;
-      ball.y = start.y;
-      ball.z = 4;
-      ball.vx = 640;
-      ball.vy = -40;
-      ball.vz = 30;
-      ball.spinRate = 0;
-      ball.cooldown = 1.0;
-    },
-    debugIncomingShot: () => {
-      // GK-control helper: fires a midfield shot AT the blue keeper's goal so saves can be practiced.
-      if (!config.features) return;
-      if (world.match.phase !== MatchPhase.Live || world.match.celebration > 0) return;
-      const { ball } = world;
-      const gk = world.players.find((p) => p.role === Role.GK && p.team === Team.Blue);
-      const start = pointOnField(world.size, 0.3, 0.34 + Math.random() * 0.32);
-      const target = gk
-        ? { x: gk.x - 24, y: gk.y + (Math.random() - 0.5) * 150 }
-        : pointOnField(world.size, 0.01, 0.44);
-      ball.ownerId = null;
-      ball.lastKickerId = null;
-      ball.x = start.x;
-      ball.y = start.y;
-      ball.z = 6;
-      const dx = target.x - start.x;
-      const dy = target.y - start.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const speed = 520 + Math.random() * 160;
-      ball.vx = (dx / len) * speed;
-      ball.vy = (dy / len) * speed;
-      ball.vz = 16;
-      ball.spinRate = 0;
-      ball.lofted = false;
-      ball.cooldown = 0.6;
     },
     setKeeperDivePack: (variant) => {
       // Sandbox knob: which dive pack Q/E (and the AI keepers) play. 'auto' = config feature flags.
@@ -470,89 +403,6 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     setFeel: (patch) => {
       // Feel lab: flip smoothing experiments live (no reboot). Merged over the current flags.
       Object.assign(world.feel, patch);
-    },
-    debugKeeperDive: (variant) => {
-      // GK debug: plays a SPECIFIC dive pack through the real dive machinery (dash, timeline, smear),
-      // regardless of which one the config's feature flags would pick — for reviewing each pack in-game.
-      if (!config.features) return;
-      const gk = world.players.find((p) => p.role === Role.GK && p.team === Team.Blue);
-      if (!gk) return;
-      const anim = variant === 'v2' ? BodyAnim.GkDiveV2 : variant === 'save' ? BodyAnim.GkDive : BodyAnim.GkDiveCompact;
-      // A preview must always fire: clear the action/cooldown gates startKeeperDive respects.
-      gk.action = PlayerAction.None;
-      gk.actionTimer = 0;
-      gk.saveCooldown = 0;
-      const reach = 72 * (config.fieldScale / 1.5);
-      const side = Math.random() < 0.5 ? -1 : 1;
-      startKeeperDive(gk, gk.dir, gk.x, gk.y + side * reach, anim);
-    },
-    debugBallDrop: dropTestBall,
-    cycleShotEffect: () => opts.onHud({ shotEffectLabel: cycleShotEffect(world) }),
-    playIntro: () => {
-      if (!config.features?.matchIntro) return;
-      director?.reset();
-      recorder?.clear();
-      enterIntro(world);
-    },
-    debugFoul: (kind) => {
-      // v5-only test hook: manufactures a challenge so the real sanction flow runs end-to-end.
-      if (!config.features?.fouls) return;
-      if (world.match.phase !== MatchPhase.Live || world.match.restart || world.match.celebration > 0) return;
-      const victim = world.players
-        .filter((p) => p.team === Team.Blue && p.role !== Role.GK)
-        .sort((a, b) => Math.hypot(a.x - world.ball.x, a.y - world.ball.y) - Math.hypot(b.x - world.ball.x, b.y - world.ball.y))[0];
-      if (!victim) return;
-      const offender = world.players
-        .filter((p) => p.team === Team.Red && p.role !== Role.GK)
-        .sort((a, b) => Math.hypot(a.x - victim.x, a.y - victim.y) - Math.hypot(b.x - victim.x, b.y - victim.y))[0];
-      if (!offender) return;
-      if (kind === 'penalty') {
-        // Stage the challenge inside Red's box so the detection awards the spot kick.
-        const p = pointOnField(world.size, 0.88, 0.42);
-        victim.x = p.x;
-        victim.y = p.y;
-        offender.x = p.x + 14;
-        offender.y = p.y + 8;
-        world.ball.x = p.x;
-        world.ball.y = p.y;
-        world.ball.z = 0;
-        world.ball.ownerId = victim.id;
-      }
-      startFoul(world, offender, victim, kind === 'red');
-    },
-    debugRestart: (kind) => {
-      // v5-only test hook: nudges the ball out of play so the real detection places the correct restart.
-      if (!config.features?.deadBallSequence) return;
-      if (world.match.phase !== MatchPhase.Live || world.match.restart || world.match.celebration > 0) return;
-      const { ball, players, size } = world;
-      const blue = players.find((p) => p.team === Team.Blue && p.role !== Role.GK);
-      ball.ownerId = null;
-      ball.z = 2;
-      ball.vz = 12;
-      ball.spinRate = 0;
-      ball.cooldown = 0;
-      if (kind === 'throwin') {
-        const p = pointOnField(size, 0.5, 0.22);
-        ball.x = p.x;
-        ball.y = p.y;
-        ball.vx = 0;
-        ball.vy = -520; // over the top touchline → Red throw-in (Blue touched last)
-        ball.lastKickerId = blue?.id ?? null;
-      } else if (kind === 'corner') {
-        const p = pointOnField(size, 0.9, 0.1);
-        ball.x = p.x;
-        ball.y = p.y;
-        ball.vx = 520; // over Red's goal line, above the mouth → Blue corner
-        ball.vy = -60;
-        ball.lastKickerId = blue?.id ?? null;
-      } else {
-        const p = pointOnField(size, 0.1, 0.12);
-        ball.x = p.x;
-        ball.y = p.y;
-        ball.vx = -520; // Blue puts it over its OWN goal line → Blue goal kick
-        ball.vy = -40;
-        ball.lastKickerId = blue?.id ?? null;
-      }
     },
     // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
     beginDrivenIntro: () => {
@@ -600,6 +450,23 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     setScore: (blue, red) => setScoreDriven(world, blue, red),
     setClock: (minute) => setClockDriven(world, minute, performance.now()),
     setPhase: (phase) => setPhaseDriven(world, phase),
+    setRosterNames: (blue, red) => {
+      // Persist for any future re-spawn, then rename the current squad in place (name only drives the
+      // HUD/commentary — safe to mutate live). Assigns per-team in array order; missing rows keep their label.
+      world.cfg.rosterNames = { blue, red };
+      const assign = (team: Team, names: string[]): void => {
+        if (!names?.length) return;
+        let i = 0;
+        for (const p of world.players) {
+          if (p.team !== team) continue;
+          const real = names[i]?.trim();
+          if (real) p.name = real;
+          i += 1;
+        }
+      };
+      assign(Team.Blue, blue);
+      assign(Team.Red, red);
+    },
     sampleRadar: () => {
       const ballRatio = fieldRatios(world.size, world.ball.x, world.ball.y);
       return {

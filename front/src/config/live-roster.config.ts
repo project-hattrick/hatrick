@@ -6,7 +6,7 @@ import type {
   TeamInfo,
 } from '@/types/match';
 import { numberForId, teamPlayerLabel } from '@/lib/player-identity';
-import { liveFormBoost, playerForShirt, shirtForPlayer, statsForPlayer } from '@/lib/player-form';
+import { liveFormBoost, nameForPlayer, playerForShirt, shirtForPlayer, statsForPlayer } from '@/lib/player-form';
 
 /** A player that can hold the ball in the live hero focus card — derived from the current fixture. */
 export interface FocusPlayer {
@@ -63,11 +63,17 @@ function statsFor(id: string): { rating: number; pass: string; touches: number; 
   return { rating: rint(78, 95), pass: `${rint(74, 93)}%`, touches: rint(28, 72), goals: rint(0, 3) };
 }
 
-function makeFocusPlayer(team: TeamInfo, shirt: number, position: string, portraitSrc: string): FocusPlayer {
+function makeFocusPlayer(
+  team: TeamInfo,
+  shirt: number,
+  position: string,
+  portraitSrc: string,
+  realName?: string,
+): FocusPlayer {
   const id = `${team.code}-${shirt}`;
   return {
     id,
-    name: teamPlayerLabel(team.code, shirt),
+    name: realName?.trim() || teamPlayerLabel(team.code, shirt),
     team: team.name,
     position,
     code: `#${shirt}`,
@@ -81,6 +87,17 @@ function makeFocusPlayer(team: TeamInfo, shirt: number, position: string, portra
 
 function playersForSide(team: TeamInfo): FocusPlayer[] {
   return FOCUS_SLOTS.map((slot) => makeFocusPlayer(team, slot.shirt, slot.position, slot.portraitSrc));
+}
+
+/** Overlay REAL player names from the feed lineups onto a side's seeded players (by shirt). */
+function applyRealNames(players: FocusPlayer[], side: 'home' | 'away', context?: FocusContext): void {
+  if (!context?.lineups) return;
+  for (const player of players) {
+    const playerId = playerForShirt(context.lineups, side, player.shirt);
+    if (!playerId) continue;
+    const realName = nameForPlayer(context.lineups, side, playerId);
+    if (realName) player.name = realName;
+  }
 }
 
 /** Overlay REAL feed stats onto a side's seeded players: actual goals/shots + a form swing on the rating. */
@@ -112,6 +129,8 @@ export function buildFocusRoster(
 ): FocusPlayer[] {
   const home = playersForSide(match.home);
   const away = playersForSide(match.away);
+  applyRealNames(home, 'home', context);
+  applyRealNames(away, 'away', context);
   applyRealStats(home, 'home', context);
   applyRealStats(away, 'away', context);
   const roster = [...home, ...away];
@@ -126,7 +145,8 @@ export function buildFocusRoster(
     onBall = side.find((p) => p.shirt === shirt);
     if (!onBall) {
       const slot = FOCUS_SLOTS[shirt % FOCUS_SLOTS.length];
-      onBall = makeFocusPlayer(sideKey === 'away' ? match.away : match.home, shirt, slot.position, slot.portraitSrc);
+      const realName = nameForPlayer(context?.lineups, sideKey, latest.playerId);
+      onBall = makeFocusPlayer(sideKey === 'away' ? match.away : match.home, shirt, slot.position, slot.portraitSrc, realName);
       const stats = statsForPlayer(context?.playerStats, sideKey, latest.playerId);
       if (stats?.goals !== undefined) onBall.goals = stats.goals;
       if (stats?.shots !== undefined) onBall.shots = stats.shots;

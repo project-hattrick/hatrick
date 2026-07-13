@@ -94,4 +94,15 @@ export const common = {
     openingPack: 'Abrindo seu Starter Pack',
     starterPack: 'Starter Pack',
   },
+  settings: {
+    language: 'Idioma',
+    notifications: 'Notificações',
+    privacy: 'Privacidade',
+    inAppNotifications: 'Notificações no app',
+    notificationsDescription: 'Alertas de partidas, duelos e pacotes no menu do sino.',
+    cookieNotice: 'Aviso de cookies',
+    cookieNoticeDescription: 'Apenas cookies essenciais - sem rastreamento.',
+    cookiePolicy: 'Política de Cookies',
+    showAgain: 'Mostrar novamente',
+  },
 } as const;

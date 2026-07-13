@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationPhase, PlayerAction, Role, RunKind, Team } from '../enums';
 import { fieldBounds, fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
@@ -13,6 +13,7 @@ import { maybeTriggerHeader, updateHeader } from './header';
 import { maybeTriggerReceive, updateReceive } from './receive';
 import { commitShot, updatePowerShot } from './shot';
 import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
+import { buildShapeContext, decideOwnerActionSmart, smartSupportTarget, supportTarget, updateMarking, updateOffBallRun } from './positioning';
 import { dive2FrameAt, keeperCrossTarget, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
 import { Status } from './messages';
 import { createPlayer } from './player-factory';
@@ -39,9 +40,12 @@ export function resetPlayers(world: RealGkWorld): void {
     return;
   }
   for (const team of [Team.Blue, Team.Red]) {
+    const names = team === Team.Blue ? world.cfg.rosterNames?.blue : world.cfg.rosterNames?.red;
     FORMATION.forEach((slot, index) => {
       const lat = team === Team.Blue ? slot.lat : 1 - slot.lat;
-      world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, `${TEAM_TAG[team]}-${index + 1}`, index));
+      // Real feed name for this slot when available, else the generic CODE label.
+      const label = names?.[index]?.trim() || `${TEAM_TAG[team]}-${index + 1}`;
+      world.players.push(createPlayer(world, team, slot.role, lat, slot.depth, label, index));
     });
   }
   // A red card holds across kickoff resets — the sent-off player stays in the dressing room (v5 fouls).
@@ -314,46 +318,11 @@ function idNoise(id: number, salt: number): number {
   return x - Math.floor(x);
 }
 
-function supportTarget(world: RealGkWorld, player: RealGkPlayer, possessionTeam: Team | null) {
-  const { ball, size } = world;
-  const ballRatio = fieldRatios(size, ball.x, ball.y);
-  const attacking = possessionTeam === player.team;
-  const press = possessionTeam && possessionTeam !== player.team;
-  const lively = world.cfg.features?.livelyMatch === true;
-  // Stable per-player variety so the shape breathes instead of moving in lockstep.
-  const jLat = lively ? (idNoise(player.id, 1) - 0.5) * 0.09 : 0;
-  const jDepth = lively ? (idNoise(player.id, 2) - 0.5) * 0.11 : 0;
-  const drift = lively ? 0.72 + idNoise(player.id, 3) * 0.66 : 1; // per-player lead/lag on the ball
-
-  let lat = player.homeLat;
-  let depth = player.homeDepth;
-
-  if (player.role === Role.GK) {
-    if (lively) {
-      // Sweeper-keeper: advance off the line when the ball is upfield, drop onto it as it nears; track depth.
-      const blue = player.team === Team.Blue;
-      const goalLat = blue ? 0.035 : 0.965;
-      const upfield = blue ? clamp(ballRatio.lat, 0, 1) : clamp(1 - ballRatio.lat, 0, 1);
-      lat = blue ? goalLat + upfield * 0.1 : goalLat - upfield * 0.1;
-      depth = clamp(0.5 + (ballRatio.depth - 0.5) * 0.72, 0.28, 0.72);
-    } else {
-      lat = player.team === Team.Blue ? 0.05 : 0.95;
-      depth = clamp(ballRatio.depth, 0.34, 0.66);
-    }
-  } else if (attacking) {
-    lat = clamp(player.homeLat + player.dir * 0.06 + (ballRatio.lat - 0.5) * 0.18 * drift + jLat, 0.06, 0.94);
-    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.42 * drift + jDepth, 0.14, 0.86);
-  } else if (press) {
-    lat = clamp(player.homeLat + (ballRatio.lat - player.homeLat) * 0.16 * drift + jLat, 0.05, 0.95);
-    depth = clamp(player.homeDepth + (ballRatio.depth - player.homeDepth) * 0.25 * drift + jDepth, 0.12, 0.88);
-  } else {
-    lat = clamp(player.homeLat + jLat, 0.05, 0.95);
-    depth = clamp(player.homeDepth + jDepth, 0.12, 0.88);
-  }
-  return pointOnField(size, lat, depth);
-}
-
 function decideOwnerAction(world: RealGkWorld, owner: RealGkPlayer): void {
+  if (world.cfg.features?.smartAI) {
+    decideOwnerActionSmart(world, owner);
+    return;
+  }
   const { size } = world;
   const goalPoint = pointOnField(size, owner.team === Team.Blue ? 0.98 : 0.02, 0.5);
   const distToGoal = Math.hypot(goalPoint.x - owner.x, goalPoint.y - owner.y);
@@ -493,6 +462,8 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   const possessionTeam = owner ? owner.team : null;
   const blueChaser = nearestPlayerToBall(world, Team.Blue);
   const redChaser = nearestPlayerToBall(world, Team.Red);
+  // smartAI: dynamic team shape + runs + press/mark. Shared context computed once per tick (null = legacy).
+  const shapeCtx = world.cfg.features?.smartAI ? buildShapeContext(world) : null;
 
   // Sandbox: control follows the Blue player who has the ball, so a pass hands control to the receiver.
   // keeperControl pins control to the keeper instead — a pass out must not drag control upfield.
@@ -601,6 +572,16 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       continue;
     }
 
+    if (shapeCtx) {
+      player.isPresser = shapeCtx.presserIds.has(player.id);
+      updateOffBallRun(world, player, shapeCtx, dt);
+      updateMarking(world, player, shapeCtx, dt);
+      const smart = smartSupportTarget(world, player, shapeCtx);
+      // A committed off-ball run or a 2nd presser sprints; otherwise the normal support jog.
+      const speed = player.role === Role.GK ? 75 : player.runKind !== RunKind.None || player.isPresser ? 150 : 126;
+      moveToward(world, player, smart.x, smart.y, speed, dt);
+      continue;
+    }
     const target = supportTarget(world, player, possessionTeam);
     moveToward(world, player, target.x, target.y, player.role === Role.GK ? 75 : 126, dt);
   }

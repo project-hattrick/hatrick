@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Bell, Check, Cookie } from '@/components/common/icons';
-import { useI18n } from '@/i18n/i18n-provider';
+import { useI18n, useT } from '@/i18n/i18n-provider';
 import { localeLabels, locales, type Locale } from '@/i18n/locales';
 import { localizePath } from '@/i18n/path';
 import { useCookieNoticeStore } from '@/store/cookie-notice.store';
@@ -19,6 +19,7 @@ function SectionLabel({ children }: { children: string }) {
 /** Preferences tab of the Settings dialog — language, in-app notifications and the cookie notice. */
 export function SettingsPreferencesTab() {
   const { locale } = useI18n();
+  const t = useT();
   const pathname = usePathname();
   const muted = useNotificationsStore((s) => s.muted);
   const setMuted = useNotificationsStore((s) => s.setMuted);
@@ -30,7 +31,7 @@ export function SettingsPreferencesTab() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <SectionLabel>Language</SectionLabel>
+        <SectionLabel>{t('common.settings.language')}</SectionLabel>
         <div className="flex flex-col divide-y divide-border/40 rounded-xl border border-border/60 bg-surface-1/60">
           {locales.map((value) => (
             <Link
@@ -47,13 +48,13 @@ export function SettingsPreferencesTab() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <SectionLabel>Notifications</SectionLabel>
+        <SectionLabel>{t('common.settings.notifications')}</SectionLabel>
         <label className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-surface-1/60 px-3 py-2.5">
           <Bell className="size-4 shrink-0 text-muted-foreground" />
           <span className="flex flex-1 flex-col">
-            <span className="text-sm">In-app notifications</span>
+            <span className="text-sm">{t('common.settings.inAppNotifications')}</span>
             <span className="text-micro text-muted-foreground">
-              Match, duel and pack alerts in the bell menu.
+              {t('common.settings.notificationsDescription')}
             </span>
           </span>
           <Switch checked={!muted} onCheckedChange={(checked) => setMuted(!checked)} />
@@ -61,20 +62,20 @@ export function SettingsPreferencesTab() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <SectionLabel>Privacy</SectionLabel>
+        <SectionLabel>{t('common.settings.privacy')}</SectionLabel>
         <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-surface-1/60 px-3 py-2.5">
           <Cookie className="size-4 shrink-0 text-muted-foreground" />
           <span className="flex flex-1 flex-col">
-            <span className="text-sm">Cookie notice</span>
+            <span className="text-sm">{t('common.settings.cookieNotice')}</span>
             <span className="text-micro text-muted-foreground">
-              Essential cookies only — no tracking.{' '}
-              <Link href="/legal/cookies" className="text-neon">
-                Cookie Policy
+              {t('common.settings.cookieNoticeDescription')}{' '}
+              <Link href={localizePath('/legal/cookies', locale)} className="text-neon">
+                {t('common.settings.cookiePolicy')}
               </Link>
             </span>
           </span>
           <Button size="sm" variant="ghost" disabled={!acknowledged} onClick={resetCookieNotice}>
-            Show again
+            {t('common.settings.showAgain')}
           </Button>
         </div>
       </div>

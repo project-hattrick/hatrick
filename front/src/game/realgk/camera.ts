@@ -1,4 +1,5 @@
 import { BILLBOARDS } from './billboards';
+import { OPENING_FULL_PITCH_SECONDS } from './constants';
 import type { CamPreset } from './config';
 import { IntroStage, RefPhase, RestartKind, RestartStage, Team } from './enums';
 import { fieldRatios, goalCenterForTeam, metrics, pointOnField } from './field';
@@ -33,6 +34,10 @@ export interface RealGkCamera {
 /** How long the shake rattles + its strength. */
 const REF_SHAKE_SECONDS = 0.6;
 const REF_SHAKE_PX = 9;
+
+/** Full-pitch opening (features.openingFullPitch): total length (shared constant) + the wide-hold. */
+const OPENING_SECONDS = OPENING_FULL_PITCH_SECONDS;
+const OPENING_HOLD = 1.1;
 
 /** v5 sponsor sweep timing: the intro pan length, the in-play pan length, and the gap between in-play sweeps. */
 const INTRO_SWEEP_SECONDS = 3.4;
@@ -231,6 +236,28 @@ export function updateCamera(cam: RealGkCamera, world: RealGkWorld, dt = 0.016):
   let tx: number;
   let ty: number;
   let zt: number;
+
+  // Full-pitch match opening (features.openingFullPitch): reveal the whole court, then ease into the
+  // follow camera. openingT is only set at the first Live kickoff, when no ref/restart beat is active,
+  // so taking precedence here is safe.
+  if (world.openingT > 0) {
+    world.openingT = Math.max(0, world.openingT - dt);
+    const fullZ = calibrationZoom(world);
+    const cx = world.size.width / 2;
+    const cy = world.size.height / 2;
+    if (world.openingT > OPENING_SECONDS - OPENING_HOLD) {
+      cam.x = cx;
+      cam.y = cy;
+      cam.z = fullZ; // hold the whole pitch (snapped — a stable reveal)
+    } else {
+      const k = 1 - world.openingT / (OPENING_SECONDS - OPENING_HOLD); // 0 → 1 over the ease window
+      cam.x = lerp(cx, world.ball.x, k);
+      cam.y = lerp(cy, world.ball.y, k);
+      cam.z = lerp(fullZ, preset.zoom, k); // at k=1 this matches the follow framing seamlessly
+    }
+    clampToField(cam, world);
+    return;
+  }
 
   // After the red card, linger on the coach for a beat.
   cam.coachFocusT = Math.max(0, cam.coachFocusT - dt);
@@ -448,4 +475,27 @@ export function snapCamera(cam: RealGkCamera, world: RealGkWorld, x: number, y: 
   cam.y = y;
   cam.z = z;
   clampToField(cam, world);
+}
+
+/** Contain-fit zoom that shows the whole virtual field within the viewport (calibration framing). */
+const calibrationZoom = (world: RealGkWorld): number =>
+  Math.min(world.view.width / world.size.width, world.view.height / world.size.height);
+
+/**
+ * Calibration view: pin the camera to a fixed full-court frame so the /engine court editor can drag
+ * handles against a static court while the match plays live. No ease and no clamp — the framing must be
+ * pixel-stable frame-to-frame. Requires flat OFF so the court maps 1:1 (see `calibrationRect`).
+ */
+export function pinCalibrationCamera(cam: RealGkCamera, world: RealGkWorld): void {
+  cam.x = world.size.width / 2;
+  cam.y = world.size.height / 2;
+  cam.z = calibrationZoom(world);
+}
+
+/** The on-canvas rect (CSS px) the pinned court occupies — the `Fit` the overlay maps image-ratios into. */
+export function calibrationRect(world: RealGkWorld): { x: number; y: number; w: number; h: number } {
+  const z = calibrationZoom(world);
+  const w = world.size.width * z;
+  const h = world.size.height * z;
+  return { x: world.view.width / 2 - w / 2, y: world.view.height / 2 - h / 2, w, h };
 }

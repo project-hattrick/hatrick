@@ -94,4 +94,15 @@ export const common = {
     openingPack: 'Opening your Starter Pack',
     starterPack: 'Starter Pack',
   },
+  settings: {
+    language: 'Language',
+    notifications: 'Notifications',
+    privacy: 'Privacy',
+    inAppNotifications: 'In-app notifications',
+    notificationsDescription: 'Match, duel and pack alerts in the bell menu.',
+    cookieNotice: 'Cookie notice',
+    cookieNoticeDescription: 'Essential cookies only - no tracking.',
+    cookiePolicy: 'Cookie Policy',
+    showAgain: 'Show again',
+  },
 } as const;

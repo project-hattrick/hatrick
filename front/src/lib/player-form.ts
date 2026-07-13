@@ -49,3 +49,24 @@ export function playerForShirt(
 ): number | undefined {
   return lineups?.[side]?.find((slot) => slot.shirt === shirt)?.playerId;
 }
+
+/** Real display name for a player ID from the feed lineups, or undefined while unknown. */
+export function nameForPlayer(
+  lineups: LineupsBySide | null | undefined,
+  side: 'home' | 'away',
+  playerId: number,
+): string | undefined {
+  return lineups?.[side]?.find((slot) => slot.playerId === playerId)?.name || undefined;
+}
+
+/** Ordered real names for a side (starters first, then shirt order) — for seeding the game roster. */
+export function rosterNamesForSide(slots: LineupSlotLike[] | undefined): string[] {
+  if (!slots?.length) return [];
+  return [...slots]
+    .sort((a, b) => Number(b.starter ?? true) - Number(a.starter ?? true) || (a.shirt ?? 99) - (b.shirt ?? 99))
+    .map((slot) => slot.name)
+    .filter((name): name is string => !!name);
+}
+
+/** Minimal slot shape the roster-name ordering needs. */
+type LineupSlotLike = { name?: string; shirt?: number; starter?: boolean };

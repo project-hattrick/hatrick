@@ -1,30 +1,24 @@
 import Image from 'next/image';
 
-/** Spotlight (holofote) over a pulsing logo — the single loading visual for the app. */
+/** Small, dry pulsing mark on black — the single loading visual for the app. */
 export function HolofoteLoader() {
   return (
-    <>
-      <div className="fixed inset-0 z-[70] grid place-items-center bg-black px-8">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative grid place-items-center">
-            {/* Soft neutral halo so the mark reads warm, not flat, on black. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute size-[min(64vw,340px)] rounded-full bg-white/[0.06] blur-[70px]"
-            />
-            <Image
-              src="/logo.png"
-              alt="Hatrick"
-              width={472}
-              height={481}
-              priority
-              className="holofote-logo relative h-auto w-[min(52vw,300px)]"
-            />
-          </div>
-          <div className="holofote-bar" role="progressbar" aria-label="Loading" />
-        </div>
-      </div>
-      <div className="holofote-spot pointer-events-none fixed inset-0 z-[71]" aria-hidden />
-    </>
+    <div
+      className="fixed inset-0 z-[70] grid place-items-center bg-black"
+      role="status"
+      aria-label="Loading"
+    >
+      <Image
+        src="/logo.png"
+        alt="Hatrick"
+        width={472}
+        height={481}
+        priority
+        className="holofote-logo h-auto w-[64px]"
+      />
+      <p className="absolute bottom-8 text-[10px] font-medium uppercase tracking-[0.2em] text-white/25">
+        Powered by <span className="text-white/40">TxLINE</span>
+      </p>
+    </div>
   );
 }

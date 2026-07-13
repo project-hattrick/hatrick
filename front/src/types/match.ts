@@ -23,9 +23,11 @@ export interface PlayerStatsBySide {
   away: Record<string, PlayerMatchStats>;
 }
 
-/** One player slot from the `lineups` action — feed IDs only, never names. */
+/** One player slot from the `lineups` action — carries the real name when the feed provides it. */
 export interface LineupSlot {
   playerId: number;
+  /** Real player name from TxLINE `preferredName` (factual data — OK to display). */
+  name?: string;
   shirt?: number;
   positionId?: number;
   starter?: boolean;

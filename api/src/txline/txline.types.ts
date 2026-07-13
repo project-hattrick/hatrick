@@ -20,9 +20,11 @@ export interface PlayerStatsBySide {
   away: Record<string, PlayerMatchStats>;
 }
 
-/** One player slot from the `lineups` action — names are dropped at the source (CODE-N identity). */
+/** One player slot from the `lineups` action — carries the real display name when TxLINE provides it. */
 export interface LineupSlot {
   playerId: number;
+  /** Real player name from `player.preferredName` (factual TxLINE data — OK to display per the brief). */
+  name?: string;
   /** Shirt number parsed from `rosterNumber`, when numeric. */
   shirt?: number;
   positionId?: number;

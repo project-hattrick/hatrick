@@ -1,0 +1,35 @@
+export const faq = {
+  metadata: {
+    title: 'FAQ',
+    description:
+      'Respuestas a las preguntas más comunes sobre Hatrick: Modo Live, duelos Fantasy, wallets y el feed de TxLINE.',
+  },
+  eyebrow: 'Centro de ayuda',
+  title: 'Preguntas frecuentes',
+  introPrefix: 'Todo lo que necesitas saber sobre Hatrick. ¿No encuentras tu respuesta?',
+  contact: 'Contáctanos.',
+  categories: {
+    General: 'General',
+    Live: 'Live',
+    Fantasy: 'Fantasy',
+    Account: 'Cuenta',
+    Technical: 'Técnico',
+  },
+  items: [
+    { category: 'General', q: '¿Qué es Hatrick?', a: 'Hatrick es una plataforma de dos modos para el Mundial impulsada por el feed en tiempo real de TxLINE. El Modo Live te permite predecir y hacer apuestas con dinero ficticio en partidos reales mientras suceden. El Modo Fantasy te permite crear una plantilla y retar amigos a duelos simulados 1v1 en la arena. Ambos modos comparten un perfil y una wallet.' },
+    { category: 'General', q: '¿Hatrick es gratis?', a: 'Sí. Hatrick funciona en Solana Devnet con tokens de dinero ficticio que no tienen valor real. Todas las funciones son accesibles sin gastar nada.' },
+    { category: 'General', q: '¿Esto es juego con dinero real?', a: 'No. Es una demo de hackathon en Solana Devnet. Todos los tokens son ficticios. Nada en Hatrick constituye juego con dinero real y no se requiere ninguna compra.' },
+    { category: 'Live', q: '¿Qué es el Modo Live?', a: 'El Modo Live transmite partidos del Mundial en tiempo real mediante TxLINE. Ves los eventos del partido en la vista 2D en vivo y haces predicciones sobre resultados, goleadores y mercados en vivo. Los mercados se abren y liquidan automáticamente cuando TxLINE confirma eventos.' },
+    { category: 'Live', q: '¿Qué mercados están disponibles?', a: 'Los mercados incluyen resultado del partido (1X2), más/menos goles, próximo goleador, ambos equipos anotan y especiales de córners/tarjetas. La disponibilidad depende del feed de TxLINE para cada partido.' },
+    { category: 'Live', q: '¿Cómo se liquidan las apuestas?', a: 'La liquidación es totalmente automática. Cuando TxLINE envía un evento confirmado, nuestro backend resuelve todos los mercados abiertos y acredita o debita tu saldo ficticio al instante.' },
+    { category: 'Fantasy', q: '¿Qué es el Modo Fantasy?', a: 'El Modo Fantasy te permite armar una plantilla de jugadores reales del Mundial cuyos atributos se recalculan con datos de rendimiento en vivo. Luego retas a un amigo a un duelo 1v1 donde ambas plantillas se enfrentan en el motor de juego 2D.' },
+    { category: 'Fantasy', q: '¿Cómo funcionan los duelos 1v1 entre amigos?', a: 'Encuentra un rival en el directorio de Duelistas, envía un reto y, cuando lo acepte, ambas plantillas entran en la arena. El motor 2D simula el partido usando las puntuaciones reales de atributos. Los resultados son instantáneos y actualizan tu rating.' },
+    { category: 'Fantasy', q: '¿Cómo se calculan las valoraciones de jugadores?', a: 'Las valoraciones derivan de métricas reales del Mundial ingeridas vía TxLINE: goles, asistencias, pases clave, entradas, atajadas y más. Se actualizan después de cada evento confirmado, así que un hat-trick real impulsa significativamente tu carta.' },
+    { category: 'Account', q: '¿Cómo conecto mi wallet?', a: 'Haz clic en el botón de wallet en la esquina superior derecha. Hatrick admite Phantom y cualquier adaptador de wallet compatible con Solana. Asegúrate de que tu wallet esté en Solana Devnet: las conexiones a Mainnet se bloquean para evitar exposición accidental a fondos reales.' },
+    { category: 'Account', q: '¿Cómo agrego amigos y envío retos?', a: 'Ve al directorio de Duelistas, encuentra un jugador y haz clic en Agregar amigo o Retar. Las solicitudes de amistad se guardan en tu navegador hasta que la capa social del backend llegue en una versión futura.' },
+    { category: 'Account', q: '¿Cómo reporto un bug o envío feedback?', a: 'Usa la página de Contacto para enviar un mensaje o únete a nuestro canal de comunidad. Agradecemos todo feedback durante la demo del hackathon.' },
+    { category: 'Technical', q: '¿Qué es el feed de TxLINE?', a: 'TxLINE es nuestro proveedor de datos en tiempo real. Entrega eventos del partido, estadísticas de jugadores y liquidaciones de mercados mediante un stream seguro de Server-Sent Events. Cada gol, tarjeta, sustitución y silbato final fluye desde TxLINE hacia la plataforma en milisegundos.' },
+    { category: 'Technical', q: '¿Por qué veo etiquetas de "devnet demo"?', a: 'Hatrick fue creado para el TxODDS World Cup Hackathon 2026 y funciona completamente en Solana Devnet. Todos los tokens son ficticios, no hay dinero real involucrado y el servicio se ofrece solo como demostración.' },
+    { category: 'Technical', q: '¿Qué navegadores son compatibles?', a: 'Cualquier navegador moderno: Chrome, Firefox, Edge o Safari. WebGL es necesario para el motor de juego 2D. Los navegadores móviles son compatibles, pero desktop ofrece la mejor experiencia de arena.' },
+  ],
+} as const;

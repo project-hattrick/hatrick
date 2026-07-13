@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, Team } from '../enums';
+import { BodyAnim, CelebrationKind, CelebrationPhase, PlayerAction, Role, RunKind, Team } from '../enums';
 import { pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { PERSONA_COUNT } from '../assets/manifest';
@@ -70,5 +70,15 @@ export function createPlayer(world: RealGkWorld, team: Team, role: Role, lat: nu
     spawnX: pt.x,
     spawnY: pt.y,
     feel: freshPlayerFeel(idle),
+    runKind: RunKind.None,
+    runTargetLat: lat,
+    runTargetDepth: depth,
+    runTimer: 0,
+    runCooldown: 0,
+    markId: -1,
+    markCooldown: 0,
+    isPresser: false,
+    // Small per-slot lateral spread (±) so lines under smartAI keep width instead of stacking.
+    laneOffset: (((slotIndex ?? id) % 3) - 1) * 0.03,
   };
 }

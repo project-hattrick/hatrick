@@ -11,7 +11,7 @@ import { SIDE_MODES, dive2HeightRatio, gkHead, spriteHeightForBase, drawSprite, 
 import { ITEM_MAP } from './assets/items';
 import { PERSONA_GK_BODY_ANIMS } from './assets/manifest';
 import type { HeadSet, RealGkAssets, RefereeSprites } from './assets/loader';
-import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from '../assets/manifest';
+import { BALL_IMPACT_FRAME, ballFrameIndex as v1BallFrameIndex } from './assets/v1-ball';
 import { dive2SmearAt, keeperConfigFor } from './sim/keeper';
 import { frameIndexFor } from './sim/players';
 import { GHOST_WINDOW, applyLeanTransform, drawKeeperGhost, isGhostable } from './render-feel';

@@ -8,7 +8,7 @@ import {
   ScreenFilterDefs,
   ScreenFilterLayers,
   canvasFilterCss,
-} from '@/components/txline-arena/screen-filters';
+} from '@/components/game/screen-filters';
 import { recapMatch } from '@/config/recap-match.config';
 import { buildRealGkFixtureConfig } from '@/game/realgk/fixture-config';
 import type { RealGkHandle } from '@/game/realgk/types';

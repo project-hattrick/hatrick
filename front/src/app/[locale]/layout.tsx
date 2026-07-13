@@ -17,7 +17,7 @@ import { localizePath } from '@/i18n/path';
 
 const inter = Inter({
   variable: '--font-sans',
-  subsets: ['latin'],
+  subsets: ['latin', 'cyrillic'],
 });
 
 const geistMono = Geist_Mono({

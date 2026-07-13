@@ -1,4 +1,4 @@
-import { BodyAnim, CelebrationKind, RefPhase, ShotEffectStyle } from '../enums';
+import { BodyAnim, CelebrationKind, RefPhase, RunKind, ShotEffectStyle } from '../enums';
 import { PERSONA_COUNT } from '../assets/manifest';
 import { freshPlayerFeel } from '../sim/feel';
 import { personaIdFor } from '../sim/player-factory';
@@ -118,6 +118,16 @@ function playerFromSnap(snap: ReplayPlayerSnap): RealGkPlayer {
     // Reproduce the live persona casting (slot = per-team creation order) so replays keep faces.
     personaId: personaIdFor(snap.team, (snap.id - 1) % Math.max(1, PERSONA_COUNT)),
     feel: freshPlayerFeel(snap.mode),
+    // smartAI fields are inert in replay (a frozen snapshot, no AI runs).
+    runKind: RunKind.None,
+    runTargetLat: 0.5,
+    runTargetDepth: 0.5,
+    runTimer: 0,
+    runCooldown: 0,
+    markId: -1,
+    markCooldown: 0,
+    isPresser: false,
+    laneOffset: 0,
   };
 }
 
@@ -167,5 +177,6 @@ export function materializeWorld(live: RealGkWorld, sample: ReplaySample): RealG
     intent: live.intent,
     feel: live.feel,
     feelFx: live.feelFx,
+    openingT: 0,
   };
 }

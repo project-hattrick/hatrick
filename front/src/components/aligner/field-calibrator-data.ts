@@ -276,6 +276,35 @@ export function clearCalibratorState(key: string = STORAGE_KEY): void {
   }
 }
 
+/** The engine `FieldSpec` for a calibrator state — the same numbers `buildSnippet` prints, as a live
+ *  object. Feeds `handle.setField(...)` so dragging a handle remaps the pitch in real time. */
+export function fieldSpecFromState(s: CalibratorState): FieldSpec {
+  const { corners, playLines, center } = s;
+  const blue = goalBand(corners, s.goals.blue);
+  const red = goalBand(corners, s.goals.red);
+  return {
+    ratios: {
+      topY: (corners.tl.y + corners.tr.y) / 2,
+      bottomY: (corners.bl.y + corners.br.y) / 2,
+      topLeft: corners.tl.x,
+      topRight: corners.tr.x,
+      bottomLeft: corners.bl.x,
+      bottomRight: corners.br.x,
+    },
+    goals: {
+      [Team.Blue]: { lat: blue.lat, depthTop: blue.depthTop, depthBottom: blue.depthBottom, crossbar: blue.crossbar },
+      [Team.Red]: { lat: red.lat, depthTop: red.depthTop, depthBottom: red.depthBottom, crossbar: red.crossbar },
+    },
+    center: { lat: center.lat, depth: center.depth },
+    playLines: {
+      latLeft: playLines.latLeft,
+      latRight: playLines.latRight,
+      depthTop: playLines.depthTop,
+      depthBottom: playLines.depthBottom,
+    },
+  };
+}
+
 /** Paste-ready field.ts values (+ the goal frames and pinned notes as comment lines). */
 export function buildSnippet(s: CalibratorState): string {
   const { corners, playLines, center } = s;

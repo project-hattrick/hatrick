@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { resolveAssets } from '@/game/assets/loader';
-import { HERO_CHECKPOINT, RuntimeKind, getCheckpointMeta, getSharedCheckpoint } from '@/game/checkpoints/registry';
 import { loadRealGkAssets } from '@/game/realgk/assets/loader';
 
 /** Hard cap so a stalled sprite/CDN can never trap the intro overlay on screen (kept low for mobile). */
@@ -32,13 +30,12 @@ function collectImages(node: unknown, out: HTMLImageElement[] = []): HTMLImageEl
 }
 
 /**
- * The exact Image objects the hero backdrop engine draws with — both loaders cache by src,
+ * The exact Image objects the hero backdrop engine draws with — the loader caches by src,
  * so this piggybacks on (or kicks off) the same requests instead of duplicating them.
  * `includeV4=true` mirrors the hero boot (REAL_GK_MATCH_CONFIG defines `features`).
  */
 function heroAssetImages(): HTMLImageElement[] {
-  const isRealGk = getCheckpointMeta(HERO_CHECKPOINT).runtime === RuntimeKind.RealGk;
-  return collectImages(isRealGk ? loadRealGkAssets(true) : resolveAssets(getSharedCheckpoint(HERO_CHECKPOINT).manifest));
+  return collectImages(loadRealGkAssets(true));
 }
 
 const pageLoaded = (): Promise<void> =>

@@ -10,6 +10,7 @@ import type { MatchEventPayload } from '@/types/match';
 import type { RealGkHandle } from '@/game/realgk/types';
 import { DrivenPhase, Team } from '@/game/realgk/enums';
 import { IN_PLAY_STATES, useMatchStore } from '@/store/match.store';
+import { rosterNamesForSide } from '@/lib/player-form';
 
 /** Authoritative end-of-match channel (same one use-match-feed listens on). */
 const CH_MATCH_END = 'match-end.after';
@@ -36,6 +37,8 @@ export function useRealgkFeedDriver(
   // re-celebrate. The score itself stays authoritative via setScore regardless of this gate.
   const lastHome = useRef(0);
   const lastAway = useRef(0);
+  // Guards a redundant setRosterNames push — only re-send when the resolved name list actually changes.
+  const lastRosterKey = useRef('');
   const cinematicIntro = opts?.cinematicIntro === true;
   // Restarting the SAME fixture (replay from kickoff) must also reset the engine — the caller bumps
   // this key so the effect re-runs even though the fixtureId is unchanged.
@@ -48,6 +51,7 @@ export function useRealgkFeedDriver(
     startedRef.current = false;
     lastHome.current = 0;
     lastAway.current = 0;
+    lastRosterKey.current = '';
     const handle = handleRef.current;
     // Joining a match that's ALREADY in play (mid-game): the walk-on entrance only makes sense from
     // pre-match — skip it and drop straight into live play (a center kickoff the feed takes over on its
@@ -93,8 +97,28 @@ export function useRealgkFeedDriver(
       if (typeof h.setScore === 'function') h.setScore(match.score.home, match.score.away);
       if (typeof h.setClock === 'function') h.setClock(match.minute);
     };
-    syncFromStore();
-    const unsubscribeStore = useMatchStore.subscribe(syncFromStore);
+    // Real player names from the feed lineups → the on-pitch squad (HUD/commentary read real names).
+    // Runs independently of the in-play gate: lineups arrive ~40min pre-kickoff, before the match is live.
+    const pushRosterNames = () => {
+      const h = handleRef.current;
+      if (!h || typeof h.setRosterNames !== 'function') return;
+      const { match, lineups } = useMatchStore.getState();
+      if (!match || match.fixtureId !== fixtureId || !lineups) return;
+      const blue = rosterNamesForSide(lineups.home);
+      const red = rosterNamesForSide(lineups.away);
+      if (!blue.length && !red.length) return;
+      const key = `${blue.join('|')}#${red.join('|')}`;
+      if (key === lastRosterKey.current) return;
+      lastRosterKey.current = key;
+      h.setRosterNames(blue, red);
+    };
+
+    const onStore = () => {
+      pushRosterNames();
+      syncFromStore();
+    };
+    onStore();
+    const unsubscribeStore = useMatchStore.subscribe(onStore);
 
     // Wrap the engine so a `goal` directive only celebrates on a REAL score increase (see lastHome/
     // lastAway). setScore stays authoritative; injectGoal is gated. Built per event so setScore and

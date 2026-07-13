@@ -38,6 +38,7 @@ export const pages = {
     intro: 'Guides, deep-dives and product updates from the Hatrick team.',
     empty: 'No posts yet - check back soon.',
     readMinutes: '{minutes} min read',
+    backToBlog: 'Back to Blog',
   },
   bets: {
     title: 'My bets',

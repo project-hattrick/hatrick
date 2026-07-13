@@ -1,5 +1,6 @@
 import type { RealGkConfig } from './config';
-import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, DrivenPhase, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, ShotEffectStyle, Team } from './enums';
+import type { FieldSpec } from './field';
+import type { BallEffectKind, BodyAnim, CelebrationKind, CelebrationPhase, CoachMode, DrivenDirective, DrivenPhase, IntroStage, KickIntent, MatchPhase, PlayerAction, RefMode, RefPhase, RestartKind, RestartStage, Role, RunKind, ShotEffectStyle, Team } from './enums';
 import type { DrivenClock } from './sim/driven-clock';
 import type { FeelFxState, PlayerFeelState, RealGkFeel } from './sim/feel';
 
@@ -77,6 +78,19 @@ export interface RealGkPlayer {
   drivenShotAim?: Vec2 | null;
   /** Feel-experiment scratch state (France GK sandbox); inert while every `world.feel` flag is off. */
   feel: PlayerFeelState;
+  /** smartAI off-ball run state (persists ~1.5-3s, then resets with a cooldown). Inert unless `smartAI`. */
+  runKind: RunKind;
+  runTargetLat: number;
+  runTargetDepth: number;
+  runTimer: number;
+  runCooldown: number;
+  /** smartAI loose man-marking (DEF): sticky assigned opponent id (-1 = none) + re-assign cooldown. */
+  markId: number;
+  markCooldown: number;
+  /** smartAI: set each tick when this player is acting as the 2nd presser (read by the shape target). */
+  isPresser: boolean;
+  /** Stable per-slot lateral spacing offset (set once at spawn) so lines keep width. */
+  laneOffset: number;
 }
 
 export interface Ball {
@@ -287,6 +301,9 @@ export interface RealGkWorld {
   feel: RealGkFeel;
   /** One-shot feel effects consumed by the loop: sim hitstop + camera-shake request. */
   feelFx: FeelFxState;
+  /** Seconds left on the full-pitch match opening (`features.openingFullPitch`; 0 = off). Set at the
+   *  first Live kickoff — the camera holds the whole court, then eases into the follow framing. */
+  openingT: number;
 }
 
 /** A queued feed directive (see `sim/directives.ts`). */
@@ -392,36 +409,18 @@ export interface RealGkHandle {
   cycleSpeed: () => void;
   /** Toggles the 2D (flat) render: constant sprite size + squashed pitch. */
   setFlat: (value: boolean) => void;
-  cycleCamera: () => void;
-  cycleTarget: () => void;
-  /** Playable sandbox helper: cycles keyboard control between available blue test actors. */
-  cycleControlledPlayer: () => string;
-  /** Manual keeper dive for the controlled keeper (side < 0 = top post, > 0 = bottom post). */
-  keeperDive: (side: -1 | 1) => boolean;
-  /** GK-control helper: fires a shot at the blue keeper's goal so saves can be practiced on demand. */
-  debugIncomingShot: () => void;
-  /** GK debug: plays a specific dive pack on the blue keeper through the real dive machinery. */
-  debugKeeperDive: (variant: 'compact' | 'save' | 'v2') => void;
+  /** Live per-court field remap (no reboot): re-applies field.ts defaults, then this spec. */
+  setField: (spec: FieldSpec) => void;
+  /** Calibration view: pins the camera to a fixed full-court frame (court maps 1:1 to the canvas) so an
+   *  overlay can place editing handles in image-ratio space. The match keeps playing on the pinned frame. */
+  setCalibrationView: (on: boolean) => void;
+  /** The pinned court rect on the canvas (CSS px) while calibration view is on; null otherwise. */
+  calibrationFit: () => { x: number; y: number; w: number; h: number } | null;
   /** Sandbox knob: pins which dive pack Q/E (and AI keepers) play. 'auto' = config feature flags. */
   setKeeperDivePack: (variant: 'auto' | 'compact' | 'save' | 'v2') => void;
   /** Feel lab: flips keeper-feel experiment flags live (no engine reboot). */
   setFeel: (patch: Partial<RealGkFeel>) => void;
   restart: () => void;
-  spawnReferee: () => void;
-  /** Debug helper: fires the ball into the right goal so the goal/replay flow can be tested on demand. */
-  debugGoal: () => void;
-  /** Effects lab helper: releases a high ball at midfield to exercise repeated ground impacts. */
-  debugBallDrop: () => void;
-  /** Effects lab helper: selects the next shot-contact visual. */
-  cycleShotEffect: () => void;
-  /** Debug helper: forces an action anim on the nearest outfielder to review sprite sizes on demand. */
-  debugAction: (kind: 'header' | 'receive' | 'intercept' | 'powershot') => void;
-  /** v5: replays the pre-match entrance (teams walk on, referee whistle, kickoff). */
-  playIntro: () => void;
-  /** v5: forces a dead-ball restart so the corner / throw-in / goal-kick flow can be tested on demand. */
-  debugRestart: (kind: 'throwin' | 'corner' | 'goalkick') => void;
-  /** v5: forces a foul (free kick / penalty / straight red) so the sanction flow can be tested on demand. */
-  debugFoul: (kind: 'free' | 'penalty' | 'red') => void;
   // ---- feed director (drives the sim from an external match event stream; mirrors HeadsOnlyHandle) ----
   /** Match switch: run the cinematic entrance and hold its camera loop until `setDriven(true)` releases it. */
   beginDrivenIntro: () => void;
@@ -448,6 +447,9 @@ export interface RealGkHandle {
   /** Match structure from the feed: half-time break, final whistle, (second-half) kickoff resume.
    *  No-op unless the variant sets `features.matchStructure`. */
   setPhase: (phase: DrivenPhase) => void;
+  /** Real player names per side (from feed lineups), ordered starters-first. Renames the on-pitch
+   *  squad in place so the HUD/commentary read real names; falls back to CODE labels for missing rows. */
+  setRosterNames: (blue: string[], red: string[]) => void;
   /** Live field-ratio snapshot of all players + the ball, for the room's 2D radar (mini-pitch). */
   sampleRadar: () => RealGkRadar;
   /** Activity gate: `false` stops the RAF loop entirely (tab hidden / backdrop off-screen), `true` resumes it. */

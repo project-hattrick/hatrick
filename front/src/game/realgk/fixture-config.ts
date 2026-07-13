@@ -6,7 +6,14 @@ import {
   type RealGkFeatures,
   type TeamBrand,
 } from './config';
+import type { FieldSpec } from './field';
 import { allFeelOn } from './sim/feel';
+
+/** Optional stadium override (a court from courts.ts) — swaps the court PNG + its field mapping. */
+export interface FixtureCourtOverride {
+  png: string;
+  field: FieldSpec;
+}
 
 /** Minimal team identity needed to pick a body pack — matches `TeamInfo` from the feed. */
 export interface FixtureTeam {
@@ -62,7 +69,11 @@ export interface FixtureConfigResult {
  * bodies with no filter ("new model, default, no style"). `crtFilter` is forced off — the styled path
  * applies the richer Signature overlay externally, so the built-in CRT must not stack on top.
  */
-export function buildRealGkFixtureConfig(home: FixtureTeam, away: FixtureTeam): FixtureConfigResult {
+export function buildRealGkFixtureConfig(
+  home: FixtureTeam,
+  away: FixtureTeam,
+  court?: FixtureCourtOverride,
+): FixtureConfigResult {
   const homePack = teamPack(home);
   const awayPack = teamPack(away);
   const styled = homePack !== null && awayPack !== null;
@@ -71,6 +82,9 @@ export function buildRealGkFixtureConfig(home: FixtureTeam, away: FixtureTeam): 
     styled,
     config: {
       ...REAL_GK_FRANCE_VS_NL_CONFIG,
+      // Stadium override (/engine court swap): a different PNG + its own field mapping. France's billboard
+      // coordinates are court-specific, so clear them on non-France courts to avoid floating ad panels.
+      ...(court ? { courtImage: court.png, field: court.field, billboards: [] } : {}),
       // Room liveliness: between real feed events, allow harmless autonomous action (saved shots, slide
       // tackles, intercepts) so a 90' watch reads like a real match instead of freezing between beats.
       // Goals/score stay strictly feed-authoritative (a driven ball can never self-score — see filler.ts).

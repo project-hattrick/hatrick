@@ -1,13 +1,15 @@
 export const DEFAULT_LOCALE = 'en';
 export const LOCALE_COOKIE = 'hat-trick-locale';
 
-export const locales = ['en', 'pt-BR'] as const;
+export const locales = ['en', 'pt-BR', 'es', 'ru'] as const;
 
 export type Locale = (typeof locales)[number];
 
 export const localeLabels: Record<Locale, { label: string; shortLabel: string; flag: string; ogLocale: string }> = {
   en: { label: 'English', shortLabel: 'EN', flag: 'us', ogLocale: 'en_US' },
   'pt-BR': { label: 'Portuguese', shortLabel: 'PT', flag: 'br', ogLocale: 'pt_BR' },
+  es: { label: 'Español', shortLabel: 'ES', flag: 'es', ogLocale: 'es_ES' },
+  ru: { label: 'Русский', shortLabel: 'RU', flag: 'ru', ogLocale: 'ru_RU' },
 };
 
 export function isLocale(value: string | undefined): value is Locale {
@@ -19,5 +21,7 @@ export function normalizeLocale(value: string | undefined): Locale {
   const normalized = value.toLowerCase();
   if (normalized === 'pt' || normalized === 'pt-br') return 'pt-BR';
   if (normalized === 'en' || normalized.startsWith('en-')) return 'en';
+  if (normalized === 'es' || normalized.startsWith('es-')) return 'es';
+  if (normalized === 'ru' || normalized.startsWith('ru-')) return 'ru';
   return DEFAULT_LOCALE;
 }

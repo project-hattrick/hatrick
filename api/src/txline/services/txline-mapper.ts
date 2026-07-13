@@ -156,7 +156,7 @@ export function mapPlayerStats(blob: unknown): PlayerStatsBySide | undefined {
   return { home, away };
 }
 
-/** One team's slot list from a `lineups` action — drops names on purpose (CODE-N identity). */
+/** One team's slot list from a `lineups` action — keeps the real `preferredName` for display. */
 function lineupSlots(team: unknown): LineupSlot[] {
   if (!isObj(team)) return [];
   const players = arrOf<Record<string, unknown>>(team.lineups ?? team.Lineups);
@@ -170,8 +170,11 @@ function lineupSlots(team: unknown): LineupSlot[] {
     const shirt = numOr(0, slot.rosterNumber, slot.RosterNumber);
     const positionId = numOr(-1, slot.positionId, slot.PositionId);
     const starter = slot.starter ?? slot.Starter;
+    // Real name is factual TxLINE data (brief: OK to display). Tolerate casing/aliases; skip empties.
+    const name = strOr('', player?.preferredName, player?.PreferredName, player?.name, player?.Name).trim();
     out.push({
       playerId,
+      name: name || undefined,
       shirt: shirt > 0 ? shirt : undefined,
       positionId: positionId >= 0 ? positionId : undefined,
       starter: typeof starter === 'boolean' ? starter : undefined,

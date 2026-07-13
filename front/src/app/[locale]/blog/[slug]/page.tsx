@@ -3,21 +3,30 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { PageShell } from '@/components/common/page-shell';
 import { buildMetadata, SITE } from '@/lib/seo';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { isLocale, locales, type Locale } from '@/i18n/locales';
+import { localizePath } from '@/i18n/path';
+import { translate } from '@/i18n/translate';
 // NOTE: @/lib/blog does not exist yet — being built by the infra owner in parallel.
 // This import will be unresolved until that module lands; the page is correct once it does.
 import { getPostBySlug, getAllPosts } from '@/lib/blog';
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
+}
+
+function resolveLocale(locale: string): Locale {
+  return isLocale(locale) ? locale : 'en';
 }
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
-  return posts.map((post) => ({ slug: post.slug }));
+  return locales.flatMap((locale) => posts.map((post) => ({ locale, slug: post.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale = resolveLocale(rawLocale);
   const post = await getPostBySlug(slug);
   if (!post) return {};
 
@@ -26,11 +35,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: post.meta.description,
     path: `/blog/${slug}`,
     image: post.meta.cover,
+    locale,
   });
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale = resolveLocale(rawLocale);
+  const dictionary = getDictionary(locale);
   const post = await getPostBySlug(slug);
 
   if (!post) notFound();
@@ -43,7 +55,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: meta.title,
     description: meta.description,
     datePublished: meta.date,
-    url: `${SITE.url}/blog/${slug}`,
+    url: new URL(localizePath(`/blog/${slug}`, locale), SITE.url).toString(),
     author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
     publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
     ...(meta.cover ? { image: meta.cover } : {}),
@@ -64,13 +76,15 @@ export default async function BlogPostPage({ params }: PageProps) {
           <p className="text-sm leading-relaxed text-muted-foreground">{meta.description}</p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
             <time dateTime={meta.date}>
-              {new Date(meta.date).toLocaleDateString('en-US', {
+              {new Date(meta.date).toLocaleDateString(locale, {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
               })}
             </time>
-            {meta.readingMinutes && <span>{meta.readingMinutes} min read</span>}
+            {meta.readingMinutes && (
+              <span>{translate(dictionary, 'pages.blog.readMinutes', { minutes: meta.readingMinutes })}</span>
+            )}
           </div>
         </header>
 
@@ -82,10 +96,10 @@ export default async function BlogPostPage({ params }: PageProps) {
         {/* Back link */}
         <footer className="mt-12 border-t border-border/50 pt-6">
           <Link
-            href="/blog"
+            href={localizePath('/blog', locale)}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-neon hover:underline"
           >
-            ← Back to Blog
+            ← {dictionary.pages.blog.backToBlog}
           </Link>
         </footer>
       </article>

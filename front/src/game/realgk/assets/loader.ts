@@ -1,5 +1,5 @@
 import { BodyAnim } from '../enums';
-import { BALL_FRAMES as V1_BALL_FRAMES, ballFramePath as v1BallFramePath } from '../../assets/manifest';
+import { BALL_FRAMES as V1_BALL_FRAMES, ballFramePath as v1BallFramePath } from './v1-ball';
 import {
   bodyFramePath,
   COACH_PATHS,

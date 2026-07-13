@@ -18,8 +18,10 @@ export function keeperConfigFor(mode: BodyAnim, frameIdx: number): FrameCfg {
  * in-game reaction time: two anticipation holds, a smeared launch (frame 1 → 2), extension and recovery.
  */
 const DIVE2_STEPS: { frame: number; duration: number; smearFrom?: number }[] = [
-  { frame: 0, duration: 0.22 },
-  { frame: 1, duration: 0.2 },
+  // Tighter anticipation (was 0.22 + 0.2 = 0.42s) so the keeper launches sooner and doesn't dive after the
+  // ball has passed — kept a brief reflex crouch, not instant. Sum of these two = DIVE2_LAUNCH (constants).
+  { frame: 0, duration: 0.1 },
+  { frame: 1, duration: 0.12 },
   { frame: 2, duration: 0.26, smearFrom: 1 },
   { frame: 2, duration: 0.16 },
   { frame: 3, duration: 0.11 },

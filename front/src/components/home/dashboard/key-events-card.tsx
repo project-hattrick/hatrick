@@ -10,9 +10,9 @@ import { useDashboardMatch } from './use-dashboard-match';
 
 /**
  * "Key Events" — the match's real narrative from the event stream: goals and cards with their minute,
- * team and (when the feed sent line-ups) the CODE-shirt of the player involved. Everything here is real
- * feed data, so this is one of the few surfaces that needs no derivation. Falls back to the recap goals
- * while the feed is dormant.
+ * team and (when the feed sent line-ups) the real player involved. Prefers the TxLINE `preferredName`,
+ * falling back to the `${CODE}-${shirt}` label. Everything here is real feed data. Falls back to the
+ * recap goals while the feed is dormant.
  */
 
 const NOTABLE: Partial<Record<MatchAction, { label: string; dot: string }>> = {
@@ -32,11 +32,12 @@ export function KeyEventsCard() {
   const events = useDisplayEvents();
   const lineups = useMatchLineups();
 
-  // playerId → shirt, so a scorer/carded player reads as CODE-shirt (never a real name).
-  const shirtById = new Map<number, number>();
+  // playerId → { real name, shirt } so a scorer/carded player reads as their real name (feed data),
+  // falling back to CODE-shirt when the feed carries no name.
+  const infoById = new Map<number, { name?: string; shirt?: number }>();
   [lineups?.home, lineups?.away].forEach((side) =>
     side?.forEach((slot) => {
-      if (slot.shirt != null) shirtById.set(slot.playerId, slot.shirt);
+      infoById.set(slot.playerId, { name: slot.name?.trim() || undefined, shirt: slot.shirt });
     }),
   );
 
@@ -56,8 +57,8 @@ export function KeyEventsCard() {
             if (!meta) return null;
             const home = event.participant !== 2;
             const team = home ? match.home : match.away;
-            const shirt = event.playerId != null ? shirtById.get(event.playerId) : undefined;
-            const who = shirt != null ? teamPlayerLabel(team.code, shirt) : null;
+            const info = event.playerId != null ? infoById.get(event.playerId) : undefined;
+            const who = info?.name ?? (info?.shirt != null ? teamPlayerLabel(team.code, info.shirt) : null);
             return (
               <div
                 key={`${event.seq}-${i}`}

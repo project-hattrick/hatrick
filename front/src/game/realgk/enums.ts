@@ -12,6 +12,14 @@ export enum Role {
   ST = 'ST',
 }
 
+/** smartAI off-ball run kind (a time-persistent run commitment; None = holding shape). */
+export enum RunKind {
+  None = 'none',
+  Forward = 'forward',
+  Diagonal = 'diagonal',
+  Overlap = 'overlap',
+}
+
 /** Body animation ids — values double as the `items` keys and on-disk frame prefixes. */
 export enum BodyAnim {
   IdleBack = 'idle_back',

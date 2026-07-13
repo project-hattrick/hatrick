@@ -34,8 +34,8 @@ export function lineupFor(code: string): LineupPlayer[] {
 const POSITION_TAGS: Record<number, string> = { 1: 'GK', 2: 'DF', 3: 'MF', 4: 'FW' };
 
 /**
- * The REAL starting XI from feed lineups: starters first, then shirt order, labels carry the real
- * shirt numbers (still `${CODE}-${shirt}` — never names). Rows without a shirt get a stable stand-in.
+ * The REAL starting XI from feed lineups: starters first, then shirt order. Rows show the real player
+ * name when TxLINE provides it (`preferredName`), falling back to the `${CODE}-${shirt}` label.
  */
 export function realLineupFor(code: string, slots: LineupSlot[]): LineupPlayer[] {
   const shirt = (slot: LineupSlot) => slot.shirt ?? numberForId(slot.playerId);
@@ -44,7 +44,7 @@ export function realLineupFor(code: string, slots: LineupSlot[]): LineupPlayer[]
     .slice(0, LINEUP_POSITIONS.length);
   return ordered.map((slot, i) => ({
     pos: POSITION_TAGS[slot.positionId ?? 0] ?? LINEUP_POSITIONS[i],
-    name: teamPlayerLabel(code, shirt(slot)),
+    name: slot.name?.trim() || teamPlayerLabel(code, shirt(slot)),
   }));
 }
 

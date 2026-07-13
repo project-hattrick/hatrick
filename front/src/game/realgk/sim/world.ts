@@ -1,4 +1,4 @@
-import { TIME_SCALE } from '../constants';
+import { OPENING_FULL_PITCH_SECONDS, TIME_SCALE } from '../constants';
 import type { RealGkConfig } from '../config';
 import { DrivenPhase, IntroStage, MatchPhase, RefMode, RefPhase, Role, ShotEffectStyle, Team } from '../enums';
 import { clearBallEffects, updateBallEffects } from '../effects';
@@ -180,6 +180,7 @@ export function createWorld(view: Size, cfg: RealGkConfig): RealGkWorld {
     pendingDirectives: [],
     feel: { ...defaultFeel(), ...(cfg.feel ?? {}) },
     feelFx: { hitstop: 0, shake: 0 },
+    openingT: 0,
   };
   restartMatch(world);
   return world;
@@ -203,6 +204,8 @@ export function enterDrivenKickoff(world: RealGkWorld): void {
   world.match.scorer = null;
   world.match.restart = null;
   world.match.phase = MatchPhase.Live;
+  // Full-pitch reveal at the (driven) match-start kickoff — match-start only, not post-goal kickoffReset.
+  if (world.cfg.features?.openingFullPitch) world.openingT = OPENING_FULL_PITCH_SECONDS;
   world.match.kickoffTeam = Team.Blue;
   clearCelebrations(world);
   resetPlayers(world);

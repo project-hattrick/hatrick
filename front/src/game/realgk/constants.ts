@@ -5,6 +5,11 @@ export const BALL_FRAME_COUNT = 20;
 /** Match-clock acceleration (state.time += dt * TIME_SCALE). */
 export const TIME_SCALE = 4.4;
 
+/** Full-pitch match opening total duration (`features.openingFullPitch`). Set on `world.openingT` at the
+ *  first Live kickoff; the camera holds the whole court then eases into follow. Single source so the
+ *  setter and the camera's hold/ease split can't drift. */
+export const OPENING_FULL_PITCH_SECONDS = 2.6;
+
 /** Perspective sprite height range from far (top) to near (bottom) of the pitch. */
 export const SPRITE_MIN_H = 35;
 export const SPRITE_MAX_H = 58;
@@ -29,11 +34,13 @@ export const DIVE_LIFT = 20;
  * v6 keeper dive (candidate_01 pack): crouch anticipation → smeared launch → prone slide → recovery.
  * The launch delay + flight window drive the motion profile; the frame timeline lives in sim/keeper.ts.
  */
-export const DIVE2_LAUNCH = 0.42;
+/** Seconds of crouch before the launch/flight begins. MUST equal the sum of the two anticipation-frame
+ *  durations in DIVE2_STEPS (sim/keeper.ts) so the motion launch stays synced to the launch frame. */
+export const DIVE2_LAUNCH = 0.22;
 export const DIVE2_FLIGHT = 0.53;
 
-/** v6 dive trigger distance — earlier than legacy so the crouch anticipation plays out before the ball arrives. */
-export const DIVE2_TRIGGER_RANGE = 240;
+/** v6 dive trigger distance — earlier than legacy so the (now shorter) crouch plays out before the ball arrives. */
+export const DIVE2_TRIGGER_RANGE = 320;
 
 /**
  * Diving-keeper footprint. The dive frames are horizontal poses (wide, short bboxes), so sizing them by

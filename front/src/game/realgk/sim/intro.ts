@@ -1,3 +1,4 @@
+import { OPENING_FULL_PITCH_SECONDS } from '../constants';
 import { IntroStage, MatchPhase, RefPhase, Role } from '../enums';
 import { centerSpot, pointOnField } from '../field';
 import type { RealGkWorld } from '../types';
@@ -127,6 +128,8 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
         world.ball.lastKickerId = null;
         world.ball.cooldown = 0;
         match.phase = MatchPhase.Live;
+        // Full-pitch reveal as the intro hands off to live play (the autonomous /engine match start).
+        if (world.cfg.features?.openingFullPitch) world.openingT = OPENING_FULL_PITCH_SECONDS;
         const note = Status.kickoff();
         setStatus(world, note.title, note.text);
         // Anything the feed sent during the intro lands on the pitch now.

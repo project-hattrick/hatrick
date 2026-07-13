@@ -38,6 +38,7 @@ export const pages = {
     intro: 'Guias, análises e novidades do produto pela equipe Hatrick.',
     empty: 'Ainda não há posts - volte em breve.',
     readMinutes: '{minutes} min de leitura',
+    backToBlog: 'Voltar ao Blog',
   },
   bets: {
     title: 'Minhas apostas',
