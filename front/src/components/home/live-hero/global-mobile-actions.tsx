@@ -30,7 +30,7 @@ function Action({ icon: IconGlyph, label, children }: { icon: Icon; label: strin
 /** Mobile-only: the hero widgets as pills that open each panel in a modal (no invites on the global view). */
 export function GlobalMobileActions() {
   return (
-    <div className="absolute inset-x-3 bottom-20 z-20 flex items-center justify-center gap-2 md:hidden">
+    <div className="absolute inset-x-3 bottom-20 z-20 flex items-center justify-center gap-2 xl:hidden">
       <Action icon={ChartBar} label="Stats & Crowd">
         <div className="flex h-[70svh] min-h-0 flex-col">
           <GlobalSocialPanel className="flex-1" />

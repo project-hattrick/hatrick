@@ -37,7 +37,7 @@ interface RoomMobileActionsProps {
 /** Mobile-only: the room widgets as pills that open each panel in a modal. */
 export function RoomMobileActions({ roomId, inviteToken, inviteUrl }: RoomMobileActionsProps) {
   return (
-    <div className="absolute inset-x-3 bottom-20 z-20 flex items-center justify-center gap-2 md:hidden">
+    <div className="absolute inset-x-3 bottom-20 z-20 flex items-center justify-center gap-2 xl:hidden">
       <Action icon={ChatCircle} label="Chat">
         <div className="flex h-[70svh] min-h-0 flex-col">
           <RoomChatPanel roomId={roomId} />

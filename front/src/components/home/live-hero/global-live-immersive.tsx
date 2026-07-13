@@ -29,22 +29,24 @@ export function GlobalLiveImmersive() {
         <RoomPickToast />
       </div>
 
-      {/* Bet widget — desktop left rail; slides down and away during a goal beat. */}
+      {/* Bet widget — desktop left rail; slides down and away during a goal beat.
+          Gated at xl: below ~1280px the 560px centre dock would overlap the edge rails,
+          so md–xl falls back to the pill layout (GlobalMobileActions) instead. */}
       <ImpactSlide
         direction="down"
-        className="hidden md:absolute md:top-20 md:bottom-24 md:left-6 md:flex md:min-h-0 md:w-[330px] md:flex-col md:gap-3"
+        className="hidden xl:absolute xl:top-20 xl:bottom-24 xl:left-6 xl:flex xl:min-h-0 xl:w-[330px] xl:flex-col xl:gap-3"
       >
         <RoomBetPanel className="min-h-0 flex-1" />
         <RoomBetSlip />
       </ImpactSlide>
 
       {/* Stats + live crowd — desktop right rail (stays visible on beats). */}
-      <div className="hidden md:absolute md:top-20 md:right-6 md:bottom-24 md:flex md:min-h-0 md:w-[340px] md:flex-col md:gap-3">
+      <div className="hidden xl:absolute xl:top-20 xl:right-6 xl:bottom-24 xl:flex xl:min-h-0 xl:w-[340px] xl:flex-col xl:gap-3">
         <GlobalSocialPanel className="flex-1" />
       </div>
 
-      {/* Mini watcher — right of the bet rail, above the timeline (lg+ only). */}
-      <ImpactSlide direction="down" className="absolute bottom-24 left-[370px] z-10 hidden lg:block">
+      {/* Mini watcher — right of the bet rail, above the timeline (xl+ only, where the rails exist). */}
+      <ImpactSlide direction="down" className="absolute bottom-24 left-[370px] z-10 hidden xl:block">
         <RoomMiniPitch />
       </ImpactSlide>
 
@@ -52,7 +54,7 @@ export function GlobalLiveImmersive() {
           both slide down together on beats. */}
       <ImpactSlide
         direction="down"
-        className="absolute inset-x-3 bottom-[7.5rem] z-20 flex flex-col items-center gap-2 sm:inset-x-4 md:inset-x-auto md:bottom-24 md:left-1/2 md:-translate-x-1/2"
+        className="absolute inset-x-3 bottom-[7.5rem] z-20 flex flex-col items-center gap-2 sm:inset-x-4 xl:inset-x-auto xl:bottom-24 xl:left-1/2 xl:-translate-x-1/2"
       >
         <span className="inline-flex items-center rounded-full border border-white/15 bg-overlay/55 px-3 py-1.5 backdrop-blur-md">
           <PoweredByTxline tone="hero" className="pointer-events-auto" />

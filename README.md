@@ -36,8 +36,24 @@
 > Hackathon entry for the **TxODDS World Cup 2026 → Consumer & Fan Experiences** track. Devnet only, fictitious tokens — no real money moves. Not affiliated with FIFA; no official marks are used.
 
 <div align="center">
-  <img src="https://placehold.co/760x400/0b0b0b/14F195?text=Hatrick+preview" alt="Hatrick preview (placeholder)" width="760">
+  <h3>🎯 Everyone else built a picks leaderboard or a pundit bot.<br/>Hatrick is the only entry where you actually <em>play</em> the match.</h3>
 </div>
+
+<div align="center">
+  <!-- still capture — for extra punch, swap for a 3–5s GIF loop of the arena taking a goal (during → after) -->
+  <img src="docs/media/hero-demo.png" alt="Hatrick live arena demo" width="760">
+</div>
+
+<p align="center">
+  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>3</strong> engine runtimes · <strong>2 states</strong> per event (during / after)
+</p>
+
+> [!TIP]
+> **For judges — try it in ~60s:**
+> 1. Open the live demo. In a restricted region? Append `?geo=demo` to unblock the betting surfaces.
+> 2. Connect a **Solana wallet** (Phantom) to sign in as a Competitor — or use an email account just to browse.
+> 3. Confirm the **18+** gate, then top up test coins from the navbar.
+> 4. Open a pack → build your XI → run a 1v1 duel, or jump into **Live** and place an in-match bet.
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -88,9 +104,9 @@ Most fans watch with a phone in hand and a fragmented setup: score in one tab, f
 
 <div id="the-two-modes"></div>
 
-- **🎮 Fantasy** — open sticker packs, build your XI, and face other users in **simulated 2D arena duels** where player attributes are driven by real tournament performance via TxLINE.
-- **📺 Live** — follow real matches as a **2D real-time arena** shaped live by the TxLINE SSE feed (possession, shots, goals, corners), with live odds and in-match betting on one screen.
-- **🗣️ Crowd layer** — internal chat + curated X posts become comic-style **speech balloons** over the stands, timed to the latest match event.
+- **🎮 Fantasy** — open packs, build your XI, and stake in **simulated 1v1 arena duels**.
+- **📺 Live** — real matches as a **2D real-time arena** with live odds and in-match betting on one screen.
+- **🗣️ Crowd layer** — chat + curated posts become comic-style **speech balloons** over the stands.
 
 > The defining mechanic: every event is emitted in **two states** — `during` (optimistic, animates instantly) and `after` (confirmed by TxLINE, authoritative). See [Architecture](#architecture).
 
@@ -158,8 +174,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 <table>
   <tr>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-packs.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Sticker+Packs" alt="Opening a sticker pack" width="100%">
+      <img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%">
     </td>
     <td width="54%" valign="top">
       <h3>🃏 Sticker packs → your cards</h3>
@@ -185,8 +200,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
       </ul>
     </td>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-fantasy-duel.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Fantasy+1v1+Duel" alt="Fantasy 1v1 duel arena" width="100%">
+      <img src="docs/media/feature-fantasy-duel.png" alt="Fantasy 1v1 duels — ranked ladder" width="100%">
     </td>
   </tr>
 </table>
@@ -195,8 +209,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 <table>
   <tr>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-live.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Live+Mode" alt="Live 2D arena with odds" width="100%">
+      <img src="docs/media/feature-live.png" alt="Live 2D arena with odds" width="100%">
     </td>
     <td width="54%" valign="top">
       <h3>📺 Live mode + in-match betting</h3>
@@ -227,8 +240,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 <table>
   <tr>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-crowd.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Crowd+%2B+HatBot" alt="Crowd speech balloons and HatBot" width="100%">
+      <img src="docs/media/feature-crowd.png" alt="Crowd speech balloons and HatBot" width="100%">
     </td>
     <td width="54%" valign="top">
       <h3>🗣️ Crowd &amp; HatBot</h3>
@@ -249,8 +261,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
       </ul>
     </td>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-store.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Store+%26+Wallet" alt="Team store and wallet" width="100%">
+      <img src="docs/media/feature-store.png" alt="Team store and wallet" width="100%">
     </td>
   </tr>
 </table>
@@ -325,6 +336,11 @@ TxLINE SSE (scores + odds)
 
 The core contract: **every domain event fires twice**. `*.during` is the optimistic read (TxLINE `confirmed=false`) — it drives instant animation. `*.after` is the authoritative read (`confirmed=true`) — it settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
 
+<div align="center">
+  <!-- replace with: docs/media/during-after.png — the same moment twice: optimistic pick vs confirmed settlement -->
+  <img src="https://placehold.co/820x300/0b0b0b/14F195?text=during%20(optimistic)%20%E2%86%92%20after%20(confirmed)" alt="during vs after — optimistic animation, then authoritative settlement" width="820">
+</div>
+
 ### What the feed drives on screen
 
 - **Live 2D arena** — a match director translates feed events (possession shifts, shots, goals, corners) into the simulated pitch in real time; the scoreboard is authoritative from `*.after`.
@@ -350,6 +366,19 @@ How Hatrick answers each judging criterion of the track:
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation → live ingest → betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
+
+### Real vs simulated — an honest scope
+
+We'd rather show the seams than oversell. What's genuinely live/on-chain today, and what's simulated for the demo:
+
+| ✅ Real (live / on-chain) | 🎭 Simulated (for the demo) |
+|---|---|
+| TxLINE SSE ingest — scores + odds | Crowd speech balloons & social picks |
+| On-chain TxLINE token activation (devnet) | Fantasy 1v1 opponent (matchmaking) |
+| Betting markets + settlement from `*.after` | — |
+| Match **replay** through the real pipeline | — |
+
+> 🔗 **Proof it's on-chain:** [TxLINE token activation — Solana Explorer (devnet)](https://explorer.solana.com/?cluster=devnet) *(paste the real activation tx signature here)*.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
