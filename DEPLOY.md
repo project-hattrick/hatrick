@@ -58,6 +58,7 @@ fly deploy
   | `NEXT_PUBLIC_USE_MOCK` | `false` |
   | `NEXT_PUBLIC_SOLANA_CLUSTER` | `devnet` |
   | `NEXT_PUBLIC_HAT_TRICK_PROGRAM_ID` | (from `.env.example`) |
+  | `NEXT_PUBLIC_SITE_URL` | `https://<front>.vercel.app` (canonical/OG URLs — else they point at the default domain) |
 
 ## 3. Smoke test (do this before recording)
 

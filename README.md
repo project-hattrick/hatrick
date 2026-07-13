@@ -52,6 +52,7 @@
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
+    <li><a href="#features">Features</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -144,6 +145,115 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 - **Data:** TxLINE (SSE scores + odds, REST snapshots, Merkle proofs) — see [Data & Architecture](#architecture)
 - **Chain:** Solana (devnet) · Anchor *(Phase 2)*
 - **Infra:** Docker (Postgres + Redis) · GitHub Actions CI
+
+<p align="right">(<a href="#readme-top">Back to top</a>)</p>
+
+## Features
+
+<div id="features"></div>
+
+> 📸 Screenshots are placeholders — drop the real captures into [`docs/media/`](docs) (path noted in each block) and they render automatically.
+
+<!-- FEATURE: Sticker packs / collection -->
+<table>
+  <tr>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-packs.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Sticker+Packs" alt="Opening a sticker pack" width="100%">
+    </td>
+    <td width="54%" valign="top">
+      <h3>🃏 Sticker packs → your cards</h3>
+      <p>Open packs to reveal player stickers with <strong>fixed ratings</strong>, a country, and a rarity. Each card is a collectible you own — the plan is to mint them as <strong>cNFTs on Solana</strong> so your collection lives in your own wallet.</p>
+      <ul>
+        <li>Attributes are locked at open time (never change).</li>
+        <li>Cards feed the <strong>Fantasy 1v1</strong> — not the live matches.</li>
+        <li>Country is recorded for future country-based mechanics.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<!-- FEATURE: Fantasy 1v1 duel -->
+<table>
+  <tr>
+    <td width="54%" valign="top">
+      <h3>⚔️ Fantasy 1v1 duels</h3>
+      <p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings seed the sim (e.g. 95 vs 80 ≈ 86% edge).</p>
+      <ul>
+        <li>Challenge a friend or get matched.</li>
+        <li>Wager settles to the winner; result is provable.</li>
+      </ul>
+    </td>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-fantasy-duel.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Fantasy+1v1+Duel" alt="Fantasy 1v1 duel arena" width="100%">
+    </td>
+  </tr>
+</table>
+
+<!-- FEATURE: Live mode + betting -->
+<table>
+  <tr>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-live.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Live+Mode" alt="Live 2D arena with odds" width="100%">
+    </td>
+    <td width="54%" valign="top">
+      <h3>📺 Live mode + in-match betting</h3>
+      <p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result.</p>
+      <ul>
+        <li>Optimistic <code>during</code> animation, confirmed <code>after</code> settlement.</li>
+        <li>1X2 / Over-Under markets from the real odds feed.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<!-- FEATURE: Rooms -->
+<table>
+  <tr>
+    <td width="54%" valign="top">
+      <h3>👥 Watch-together rooms</h3>
+      <p>Invite-only <strong>rooms</strong> to watch a match with friends — shared chat, social picks, and a match backdrop driven by the same feed.</p>
+    </td>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-rooms.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Rooms" alt="Watch-together room" width="100%">
+    </td>
+  </tr>
+</table>
+
+<!-- FEATURE: Crowd + HatBot -->
+<table>
+  <tr>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-crowd.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Crowd+%2B+HatBot" alt="Crowd speech balloons and HatBot" width="100%">
+    </td>
+    <td width="54%" valign="top">
+      <h3>🗣️ Crowd &amp; HatBot</h3>
+      <p>Match moments become comic-style <strong>speech balloons</strong> over the stands. <strong>HatBot</strong> narrates the big beats (goals, reds, penalties, VAR) — a nicely-formatted feed of real events, by design not AI.</p>
+    </td>
+  </tr>
+</table>
+
+<!-- FEATURE: Store + wallet -->
+<table>
+  <tr>
+    <td width="54%" valign="top">
+      <h3>🛒 Team store &amp; wallet</h3>
+      <p>A themed <strong>store</strong> for packs and cards, and one <strong>wallet</strong> shared across both modes. Sign in with Phantom (Solana) or an email account.</p>
+      <ul>
+        <li>Wager balance shown as a stablecoin ticker (devnet).</li>
+        <li>Betting gated to wallet accounts; compliance built in (18+, geo, self-exclusion).</li>
+      </ul>
+    </td>
+    <td width="46%" valign="top">
+      <!-- replace with: docs/media/feature-store.png -->
+      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Store+%26+Wallet" alt="Team store and wallet" width="100%">
+    </td>
+  </tr>
+</table>
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

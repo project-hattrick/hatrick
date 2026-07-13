@@ -17,7 +17,14 @@ import { useUiStore } from '@/store/ui.store';
 import { useBalance, useWalletStore } from '@/store/wallet.store';
 import { cn } from '@/lib/utils';
 
-/** Coins granted by the navbar "+" top-up (mock play-money). */
+/**
+ * Wager currency shown in the navbar. Front-only label for now (no on-chain wiring yet) — the app
+ * settles bets in a stablecoin, so the balance reads as a token ticker rather than generic "coins".
+ * Single source so it's a one-line switch (USDT ↔ USDC) when the SPL token lands.
+ */
+const CURRENCY_SYMBOL = 'USDT';
+
+/** Balance granted by the navbar "+" top-up (mock, front-only faucet). */
 const TOP_UP_AMOUNT = 1_000_000;
 
 const WalletAvatar = dynamic(() => import('./wallet-avatar').then((m) => m.WalletAvatar), { ssr: false });
@@ -37,7 +44,7 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
 
   const topUp = () => {
     credit(TOP_UP_AMOUNT);
-    toast.success(`+${formatThousands(TOP_UP_AMOUNT)} coins added.`);
+    toast.success(`+${formatThousands(TOP_UP_AMOUNT)} ${CURRENCY_SYMBOL} added.`);
   };
 
   // Transparent at the very top; the background comes in as soon as you scroll (hysteresis avoids
@@ -106,13 +113,14 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
             <NotificationsMenu />
           </span>
           <div className="hidden items-center gap-2 md:flex">
-            <Image src="/coin.png" alt="Coins" width={22} height={22} className="size-5" />
+            <Image src="/coin.png" alt={CURRENCY_SYMBOL} width={22} height={22} className="size-5" />
             <span suppressHydrationWarning className="text-sm font-bold text-foreground tabular-nums">
               {formatThousands(coins)}
             </span>
+            <span className="text-xs font-semibold text-foreground/55">{CURRENCY_SYMBOL}</span>
             <button
               type="button"
-              aria-label={t('common.addCoins')}
+              aria-label={`Add ${CURRENCY_SYMBOL}`}
               onClick={topUp}
               className="flex size-6 items-center justify-center rounded-full bg-neon text-primary-foreground transition hover:bg-neon-hover"
             >
