@@ -14,9 +14,9 @@ function Action({ icon: IconGlyph, label, children }: { icon: Icon; label: strin
     <Dialog>
       <DialogTrigger
         aria-label={label}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-overlay/60 px-3 py-2 text-xs font-semibold text-white/85 backdrop-blur-md transition hover:bg-overlay/75"
+        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-overlay/70 px-3.5 py-2 text-xs font-semibold text-white/90 shadow-lg shadow-black/20 backdrop-blur-md transition hover:border-white/25 hover:bg-overlay/85 active:scale-95"
       >
-        <IconGlyph className="size-4" />
+        <IconGlyph className="size-4 shrink-0" />
         {label}
       </DialogTrigger>
       <DialogContent className="overflow-hidden p-0">

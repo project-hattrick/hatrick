@@ -55,7 +55,7 @@ export function SearchCommand() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('search.placeholder')}
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           <kbd className="text-micro hidden rounded border border-border/60 px-1.5 py-0.5 text-muted-foreground sm:inline">
             ESC

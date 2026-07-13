@@ -67,7 +67,7 @@ export function RoomSocialPanel({ roomId, className }: { roomId: string; classNa
       {!open ? null : tab === 'chat' ? (
         <RoomChatPanel roomId={roomId} embedded />
       ) : (
-        <div data-lenis-prevent className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        <div data-lenis-prevent className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden p-3">
           <LiveMatchCard />
           <TeamStatisticCard />
           <PerformanceChart />

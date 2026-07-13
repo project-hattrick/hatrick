@@ -43,13 +43,13 @@ export function ChallengePicker({ onPick }: ChallengePickerProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-surface-deep/40 px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-surface-deep/40 px-3 py-2">
         <MagnifyingGlass className="size-4 shrink-0 text-muted-foreground" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search players…"
-          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+          className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
       </div>
 

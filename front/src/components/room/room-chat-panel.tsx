@@ -105,12 +105,12 @@ export function RoomChatPanel({ roomId, embedded = false }: { roomId: string; em
         )}
       </div>
       <form onSubmit={onSubmit} className="border-t border-border bg-surface-1/70 p-4">
-        <div className="flex items-center rounded-full border border-border/50 bg-surface-3 px-4 py-2.5 transition focus-within:border-muted-foreground/60">
+        <div className="flex min-w-0 items-center rounded-full border border-border/50 bg-surface-3 px-4 py-2.5 transition focus-within:border-muted-foreground/60">
           <input
             {...form.register('body')}
             placeholder="Write a message..."
             autoComplete="off"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
       </form>

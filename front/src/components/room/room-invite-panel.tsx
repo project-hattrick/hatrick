@@ -77,22 +77,22 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
     <div data-lenis-prevent className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Share link */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-surface-2/60 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border/60 bg-surface-2/60 px-3 py-2">
             <ShareNetwork className="size-4 shrink-0 text-neon" />
-            <span className="truncate text-xs text-muted-foreground">{inviteUrl}</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{inviteUrl}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={copyLink} disabled={!inviteToken}>
+            <Button variant="outline" size="sm" className="min-w-0 gap-1.5" onClick={copyLink} disabled={!inviteToken}>
               {copied ? <Check className="size-3.5 text-neon" /> : <Copy className="size-3.5" />}
-              Copy
+              <span className="truncate">Copy</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => shareOn(buildWhatsAppUrl)}>
+            <Button variant="outline" size="sm" className="min-w-0 gap-1.5" onClick={() => shareOn(buildWhatsAppUrl)}>
               <WhatsappLogo className="size-3.5" />
-              WhatsApp
+              <span className="truncate">WhatsApp</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => shareOn(buildXIntentUrl)}>
+            <Button variant="outline" size="sm" className="min-w-0 gap-1.5" onClick={() => shareOn(buildXIntentUrl)}>
               <ShareNetwork className="size-3.5" />
-              Share
+              <span className="truncate">Share</span>
             </Button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function RoomInvitePanel({ inviteToken, inviteUrl, embedded = false }: Ro
   if (embedded) return body;
 
   return (
-    <GlassPanel tone="surface" className="flex flex-col overflow-hidden">
+    <GlassPanel tone="surface" className="flex min-h-0 flex-col overflow-hidden">
       <SectionHeader
         title="Invite friends"
         className="border-b border-border bg-surface-1/60"

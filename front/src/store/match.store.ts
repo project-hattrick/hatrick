@@ -54,6 +54,9 @@ export interface RecapSnapshot {
 interface MatchStore {
   match: LiveMatch | null;
   events: MatchEventPayload[];
+  /** Notable events (goals/cards/penalty/corner) accumulated over the whole match — uncapped, so the
+   *  timeline markers never slide off the 100-event display window. Reset when the match switches. */
+  keyEvents: MatchEventPayload[];
   /** Real recap fallback fetched from the replay catalog (backend mode) — displayed when match is null. */
   recap: RecapSnapshot | null;
   /** Feed-derived stat totals for the current match (reset whenever the match switches). */
@@ -125,6 +128,42 @@ function resolveScore(events: MatchEventPayload[], fallback: MatchScore): MatchS
 function reconcile(events: MatchEventPayload[], incoming: MatchEventPayload): MatchEventPayload[] {
   const others = events.filter((event) => event.seq !== incoming.seq);
   return [...others, incoming].sort((a, b) => a.seq - b.seq).slice(-100);
+}
+
+/** Actions that earn a persistent marker on the match timeline. */
+const NOTABLE_ACTIONS: ReadonlySet<MatchAction> = new Set([
+  MatchAction.Goal,
+  MatchAction.Penalty,
+  MatchAction.YellowCard,
+  MatchAction.RedCard,
+  MatchAction.Corner,
+]);
+
+const isNotable = (event: MatchEventPayload) =>
+  event.minute != null && NOTABLE_ACTIONS.has(event.action);
+
+/**
+ * Fold notable events into the persistent key-event list — deduped by seq (during→after supersedes),
+ * kept sorted, and UNCAPPED. The display `events` window is capped to the last 100, which slides a long
+ * replay's early goals/cards off; markers must survive that, so they live here instead. Returns the same
+ * reference when nothing notable changed, to keep selectors stable.
+ */
+function mergeKeyEvents(
+  existing: MatchEventPayload[],
+  incoming: MatchEventPayload[],
+): MatchEventPayload[] {
+  const notable = incoming.filter(isNotable);
+  if (notable.length === 0) return existing;
+  const bySeq = new Map(existing.map((event) => [event.seq, event]));
+  let changed = false;
+  for (const event of notable) {
+    if (bySeq.get(event.seq) !== event) {
+      bySeq.set(event.seq, event);
+      changed = true;
+    }
+  }
+  if (!changed) return existing;
+  return [...bySeq.values()].sort((a, b) => a.seq - b.seq);
 }
 
 /** Seqs already tallied into `stats` — a during/after pair must count once, not twice. */
@@ -276,6 +315,7 @@ function resetStats(): LiveMatchStats {
 /** State slice that resets whenever the match switches. */
 const freshMatchSlice = () => ({
   stats: resetStats(),
+  keyEvents: [] as MatchEventPayload[],
   authoritativeStats: null,
   playerStats: emptyPlayerStats(),
   lineups: null,
@@ -311,6 +351,7 @@ function deriveGameState(current: GameState, raw: string, minute: number, drawn:
 export const useMatchStore = create<MatchStore>((set) => ({
   match: null,
   events: [],
+  keyEvents: [],
   recap: null,
   stats: emptyMatchStats(),
   authoritativeStats: null,
@@ -345,6 +386,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
       return {
         match: { ...state.match, score, minute, gameState },
         events,
+        keyEvents: mergeKeyEvents(state.keyEvents, events),
         stats: mergeStatsMax(state.stats, tallyAll(events)),
       };
     }),
@@ -359,7 +401,11 @@ export const useMatchStore = create<MatchStore>((set) => ({
         : {},
     ),
   setEvents: (fixtureId, events) =>
-    set((state) => (state.match && state.match.fixtureId === fixtureId ? { events } : {})),
+    set((state) =>
+      state.match && state.match.fixtureId === fixtureId
+        ? { events, keyEvents: mergeKeyEvents(state.keyEvents, events) }
+        : {},
+    ),
   markLive: (fixtureId) =>
     set((state) =>
       state.match && state.match.fixtureId === fixtureId && state.match.gameState === GameState.PreMatch
@@ -426,6 +472,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
       // The first real event means the replay is streaming — clear the "switching/buffering" state.
       return {
         events,
+        keyEvents: mergeKeyEvents(state.keyEvents, [event]),
         stats,
         authoritativeStats,
         playerStats,
@@ -439,6 +486,9 @@ export const useMatchStore = create<MatchStore>((set) => ({
 
 export const useMatch = () => useMatchStore((state) => state.match);
 export const useMatchEvents = () => useMatchStore((state) => state.events);
+
+/** Persistent notable events (goals/cards/penalty/corner) for the current match — timeline markers. */
+export const useMatchKeyEvents = () => useMatchStore((state) => state.keyEvents);
 
 /** Feed-derived stat totals for the current match (zeros until events land). */
 export const useMatchStats = () => useMatchStore((state) => state.stats);

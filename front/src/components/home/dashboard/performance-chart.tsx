@@ -73,10 +73,10 @@ export function PerformanceChart({ title = 'Graphic Performance' }: { title?: st
         <Series points={match.perfHome} color={match.home.color} id="perf-home" />
       </svg>
 
-      <div className="flex items-center justify-between">
-        <div className="flex gap-4 text-micro font-semibold text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: match.home.color }} />{match.home.name}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: match.away.color }} />{match.away.name}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 gap-4 text-micro font-semibold text-muted-foreground">
+          <span className="inline-flex min-w-0 items-center gap-1.5"><span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: match.home.color }} /><span className="truncate">{match.home.name}</span></span>
+          <span className="inline-flex min-w-0 items-center gap-1.5"><span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: match.away.color }} /><span className="truncate">{match.away.name}</span></span>
         </div>
         <div className="hidden gap-3 font-mono text-micro text-muted-foreground/70 sm:flex">
           {match.perfLabels.map((l) => (

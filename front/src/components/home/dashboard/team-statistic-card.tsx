@@ -14,11 +14,11 @@ export function TeamStatisticCard({ title = 'Team Statistic', limit }: { title?:
 
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold">{title}</span>
-        <span className="flex items-center gap-2 text-micro font-semibold text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-neon" />{match.home.name}</span>
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-warning" />{match.away.name}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="shrink-0 text-sm font-bold">{title}</span>
+        <span className="flex min-w-0 items-center gap-2 text-micro font-semibold text-muted-foreground">
+          <span className="inline-flex min-w-0 items-center gap-1"><span className="size-2 shrink-0 rounded-full bg-neon" /><span className="truncate">{match.home.name}</span></span>
+          <span className="inline-flex min-w-0 items-center gap-1"><span className="size-2 shrink-0 rounded-full bg-warning" /><span className="truncate">{match.away.name}</span></span>
         </span>
       </div>
 

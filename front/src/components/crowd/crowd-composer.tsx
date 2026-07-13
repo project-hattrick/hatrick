@@ -19,12 +19,12 @@ export function CrowdComposer({ fixtureId }: { fixtureId: number }) {
 
   return (
     <form onSubmit={onSubmit} className="p-4">
-      <div className="flex items-center rounded-full border border-border/50 bg-surface-3 px-4 py-2.5 transition focus-within:border-muted-foreground/60">
+      <div className="flex min-w-0 items-center rounded-full border border-border/50 bg-surface-3 px-4 py-2.5 transition focus-within:border-muted-foreground/60">
         <input
           {...form.register('text')}
           placeholder="Write a message..."
           autoComplete="off"
-          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+          className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
       </div>
     </form>

@@ -65,7 +65,7 @@ export function SquadMiniStrip() {
 
   return (
     // Mobile: edge-to-edge swipe carousel (bleeds past the page padding); md+: the original even grid.
-    <div className="custom-scrollbar -mx-6 flex snap-x gap-2.5 overflow-x-auto px-6 pb-1 md:mx-0 md:grid md:w-full md:auto-cols-fr md:grid-flow-col md:overflow-visible md:px-0 md:pb-0">
+    <div className="custom-scrollbar -mx-4 flex snap-x gap-2.5 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:w-full md:auto-cols-fr md:grid-flow-col md:overflow-visible md:px-0 md:pb-0">
       {slots.map((player, index) =>
         player ? (
           <div

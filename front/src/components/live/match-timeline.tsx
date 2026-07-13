@@ -4,7 +4,15 @@ import { GlassPanel } from '@/components/common/glass-panel';
 import { IconButton } from '@/components/common/icon-button';
 import { Play, Pause, Lightning, ClockCounterClockwise } from '@/components/common/icons';
 import { HeroViewControls } from './hero-view-controls';
-import { useDisplayMatch, useIsEnded, useIsInPlay, useIsReplay, useMatch, useMatchEvents } from '@/store/match.store';
+import {
+  useDisplayEvents,
+  useDisplayMatch,
+  useIsEnded,
+  useIsInPlay,
+  useIsReplay,
+  useMatch,
+  useMatchKeyEvents,
+} from '@/store/match.store';
 import { useLiveMinute } from '@/hooks/use-live-minute';
 import { useReplaySessionStore } from '@/store/replay-session.store';
 import { useHeroControls } from '@/store/hero-engine.store';
@@ -44,7 +52,10 @@ export function MatchTimeline({ playback = true }: { playback?: boolean }) {
   const inPlay = useIsInPlay();
   const ended = useIsEnded();
   const liveMinute = useLiveMinute();
-  const events = useMatchEvents();
+  // Markers come from the persistent key-event list (survives the 100-event display window); when no
+  // live/replay match is on we fall back to the dormant recap's events.
+  const keyEvents = useMatchKeyEvents();
+  const recapEvents = useDisplayEvents();
   const replaySpeed = useReplaySessionStore((state) => state.speed);
   const hasSource = useReplaySessionStore((state) => state.source !== null);
   const { restartReplay, cycleReplaySpeed, forceLive } = useLoadReplay();
@@ -59,7 +70,8 @@ export function MatchTimeline({ playback = true }: { playback?: boolean }) {
   const total = FALLBACK_TOTAL;
   const position = Math.min(liveMinute, total);
   const speed = streaming ? replaySpeed : engineSpeed;
-  const markers = events.filter((event) => event.minute != null && MARKER_CLASS[event.action]);
+  const markerSource = hasMatch ? keyEvents : recapEvents;
+  const markers = markerSource.filter((event) => event.minute != null && MARKER_CLASS[event.action]);
 
   const onSpeed = () => {
     if (streaming) cycleReplaySpeed();
@@ -75,7 +87,11 @@ export function MatchTimeline({ playback = true }: { playback?: boolean }) {
   };
 
   return (
-    <GlassPanel tone="dark" radius="xl" className="pointer-events-auto flex items-center gap-3 px-3 py-2">
+    <GlassPanel
+      tone="dark"
+      radius="xl"
+      className="pointer-events-auto flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2 sm:flex-nowrap sm:gap-3"
+    >
       {playback && (
         <>
           <IconButton size="icon-sm" label={playing ? 'Pause' : 'Play'} onClick={togglePlaying}>
@@ -109,15 +125,16 @@ export function MatchTimeline({ playback = true }: { playback?: boolean }) {
           type="button"
           onClick={() => void forceLive()}
           aria-label="Force live mode"
-          className="inline-flex items-center gap-1.5 rounded-md border border-live/50 bg-live/10 px-2 py-1 font-mono text-xs font-bold text-live transition hover:bg-live/20"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-live px-2.5 py-1 text-[11px] font-bold uppercase leading-none tracking-wide text-white shadow-sm transition hover:brightness-110 active:scale-95"
         >
-          <span className="size-1.5 animate-pulse rounded-full bg-live motion-reduce:animate-none" />
-          GO LIVE
+          <span className="size-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
+          Go Live
         </button>
       )}
 
-      {/* Progress readout — the stream drives the playhead; markers at the streamed event minutes. */}
-      <div className="relative flex min-w-0 flex-1 items-center">
+      {/* Progress readout — the stream drives the playhead; markers at the streamed event minutes.
+          On small screens it drops to its own full-width row so the control cluster never clips. */}
+      <div className="relative order-last flex min-w-0 flex-1 basis-full items-center sm:order-none sm:basis-auto">
         <div
           role="progressbar"
           aria-label="Match progress"
