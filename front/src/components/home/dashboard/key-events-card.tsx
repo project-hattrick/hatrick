@@ -5,7 +5,7 @@ import { Flag } from '@/components/common/flag';
 import { MatchAction } from '@/enums/match-action.enum';
 import { formatMinute } from '@/lib/format';
 import { teamPlayerLabel } from '@/lib/player-identity';
-import { useDisplayEvents, useMatchLineups } from '@/store/match.store';
+import { useDisplayEvents, useMatchConditions, useMatchLineups } from '@/store/match.store';
 import { useDashboardMatch } from './use-dashboard-match';
 
 /**
@@ -25,12 +25,24 @@ const NOTABLE: Partial<Record<MatchAction, { label: string; dot: string }>> = {
   [MatchAction.Corner]: { label: 'Corner', dot: 'bg-team-home' },
 };
 
+/** Feed `Outcome` values worth showing as a qualifier next to the event. */
+const OUTCOME_TAG: Record<string, string> = {
+  Overturned: 'overturned',
+  Woodwork: 'woodwork',
+  OffTarget: 'off target',
+  Blocked: 'blocked',
+  Missed: 'missed',
+  Retake: 'retake',
+  NotReturning: 'injured',
+};
+
 const MAX_ROWS = 6;
 
 export function KeyEventsCard() {
   const match = useDashboardMatch();
   const events = useDisplayEvents();
   const lineups = useMatchLineups();
+  const conditions = useMatchConditions();
 
   // playerId → { real name, shirt } so a scorer/carded player reads as their real name (feed data),
   // falling back to CODE-shirt when the feed carries no name.
@@ -41,13 +53,26 @@ export function KeyEventsCard() {
     }),
   );
 
+  // Resolve any player id → real name (feed), else CODE-shirt for the given team, else null.
+  const nameFor = (id: number | undefined, teamCode: string): string | null => {
+    if (id == null) return null;
+    const info = infoById.get(id);
+    return info?.name ?? (info?.shirt != null ? teamPlayerLabel(teamCode, info.shirt) : null);
+  };
+
   const rows = events.filter((event) => event.minute != null && NOTABLE[event.action] != null).slice(-MAX_ROWS);
 
   return (
     <GlassPanel tone="surface" radius="xl" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold">Key Events</span>
-        <span className="font-mono text-micro font-semibold text-muted-foreground uppercase">Live feed</span>
+        {conditions?.length ? (
+          <span className="font-mono text-micro font-semibold text-muted-foreground uppercase">
+            {conditions.join(' · ')}
+          </span>
+        ) : (
+          <span className="font-mono text-micro font-semibold text-muted-foreground uppercase">Live feed</span>
+        )}
       </div>
 
       {rows.length ? (
@@ -57,8 +82,17 @@ export function KeyEventsCard() {
             if (!meta) return null;
             const home = event.participant !== 2;
             const team = home ? match.home : match.away;
-            const info = event.playerId != null ? infoById.get(event.playerId) : undefined;
-            const who = info?.name ?? (info?.shirt != null ? teamPlayerLabel(team.code, info.shirt) : null);
+            // Substitution reads "IN for OUT" with both real names; every other event names the one player.
+            const isSub = event.action === MatchAction.Substitution;
+            const inName = nameFor(event.playerInId, team.code);
+            const outName = nameFor(event.playerOutId, team.code);
+            const who = isSub
+              ? [inName, outName].some(Boolean)
+                ? `${inName ?? '—'} for ${outName ?? '—'}`
+                : null
+              : nameFor(event.playerId, team.code);
+            // Outcome context worth surfacing (VAR overturned, off target, injury not returning).
+            const tag = OUTCOME_TAG[event.outcome ?? ''];
             return (
               <div
                 key={`${event.seq}-${i}`}
@@ -71,6 +105,7 @@ export function KeyEventsCard() {
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                   {meta.label}
                   {who ? <span className="text-muted-foreground"> · {who}</span> : null}
+                  {tag ? <span className="text-muted-foreground italic"> · {tag}</span> : null}
                 </span>
                 <span className="flex shrink-0 items-center gap-1.5 font-mono font-semibold text-muted-foreground">
                   <Flag code={team.iso} className="text-sm" />

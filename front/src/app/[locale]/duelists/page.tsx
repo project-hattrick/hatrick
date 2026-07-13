@@ -33,7 +33,7 @@ export default async function DuelistsPage({ params }: LocalePageProps) {
 
   return (
     <PageShell>
-      <DuelistsHero eyebrow={copy.eyebrow} title={copy.title} intro={copy.intro} />
+      <DuelistsHero title={copy.title} intro={copy.intro} />
       <DuelistsDirectory />
     </PageShell>
   );

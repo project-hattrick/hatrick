@@ -76,12 +76,12 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
     >
       <div className="relative mx-auto flex h-full w-full items-center justify-between px-3 sm:px-4 md:px-6">
         <MobileNavMenu />
-        <div className="hidden flex-1 items-center gap-6 text-sm font-semibold md:flex">
+        <div className="hidden min-w-0 flex-1 items-center gap-3 text-sm font-semibold lg:flex xl:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={localizedPath(link.href)}
-              className="flex items-center gap-2 text-foreground/90 transition hover:text-foreground"
+              className="flex shrink-0 items-center gap-2 text-foreground/90 transition hover:text-foreground"
             >
               <link.icon className="size-4" />
               {t(link.labelKey)}
@@ -89,35 +89,35 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
           ))}
         </div>
 
-        {/* Below md the sides are uneven (hamburger vs sign-in/avatar), so the logo is pinned to the
-            true centre; md+ keeps it in flow between the equal flex-1 sides. */}
+        {/* Below lg the sides are uneven (hamburger vs sign-in/avatar), so the logo is pinned to the
+            true centre; lg+ keeps it in flow between the equal flex-1 sides. */}
         <Link
           href={localizedPath('/')}
           aria-label={t('common.home')}
-          className="absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0"
+          className="absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2 lg:static lg:translate-x-0 lg:translate-y-0"
         >
           <Image src="/logo.png" alt="Hatrick" width={472} height={481} priority className="h-8 w-auto md:h-10" />
         </Link>
 
-        <div className="flex items-center justify-end gap-2 sm:gap-3 md:flex-1 md:gap-5">
-          {/* Below md the bar is just hamburger | logo | avatar — everything else lives in the menu. */}
-          <span className="hidden md:inline-flex">
+        <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3 lg:flex-1 lg:gap-2 xl:gap-5">
+          {/* Below lg the bar is just hamburger | logo | avatar — everything else lives in the menu. */}
+          <span className="hidden lg:inline-flex">
             <IconButton label={t('common.searchPlayers')} onClick={() => openSearch(true)}>
               <MagnifyingGlass className="size-5" />
             </IconButton>
           </span>
-          <span className="hidden md:inline-flex">
+          <span className="hidden lg:inline-flex">
             <LanguageSwitcher />
           </span>
-          <span className="hidden md:inline-flex">
+          <span className="hidden lg:inline-flex">
             <NotificationsMenu />
           </span>
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">
             <Image src="/coin.png" alt={CURRENCY_SYMBOL} width={22} height={22} className="size-5" />
             <span suppressHydrationWarning className="text-sm font-bold text-foreground tabular-nums">
               {formatThousands(coins)}
             </span>
-            <span className="text-xs font-semibold text-foreground/55">{CURRENCY_SYMBOL}</span>
+            <span className="hidden text-xs font-semibold text-foreground/55 xl:inline">{CURRENCY_SYMBOL}</span>
             <button
               type="button"
               aria-label={`Add ${CURRENCY_SYMBOL}`}

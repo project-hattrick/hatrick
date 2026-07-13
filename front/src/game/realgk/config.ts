@@ -229,21 +229,23 @@ export const FRANCE_STADIUM_FIELD: FieldSpec = {
  * touchline); retune in /sandbox/billboard-editor?court=franca and paste the export back here.
  */
 export const FRANCE_BILLBOARDS: Billboard[] = [
+  // Animated neon LED (left) · static black Hatrick board (centered) · animated neon LED (right).
+  // Spaced with clear gaps so no panel overlaps its neighbor.
   {
     kind: BillboardKind.Led,
-    corners: [[0.32, 0.295], [0.45, 0.295], [0.45, 0.327], [0.32, 0.327]],
+    corners: [[0.27, 0.295], [0.4, 0.295], [0.4, 0.327], [0.27, 0.327]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.46, 0.295], [0.54, 0.295], [0.54, 0.327], [0.46, 0.327]],
-    src: '/game/ads/hat-trick.svg',
+    corners: [[0.42, 0.295], [0.58, 0.295], [0.58, 0.327], [0.42, 0.327]],
+    src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.55, 0.295], [0.68, 0.295], [0.68, 0.327], [0.55, 0.327]],
+    corners: [[0.6, 0.295], [0.73, 0.295], [0.73, 0.327], [0.6, 0.327]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,

@@ -78,10 +78,10 @@ export function WalletAvatar() {
       onClick={openLogin}
       disabled={busy}
       aria-label={busy ? 'Signing in' : 'Sign in'}
-      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neon px-3.5 text-sm font-semibold text-primary-foreground shadow-e1 transition hover:bg-neon-hover disabled:opacity-70"
+      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neon px-2.5 text-sm font-semibold text-primary-foreground shadow-e1 transition hover:bg-neon-hover disabled:opacity-70 sm:px-3.5"
     >
       {busy ? <CircleNotch className="size-4 animate-spin" /> : <UserCircle className="size-4" weight="fill" />}
-      {busy ? 'Signing in…' : 'Sign in'}
+      <span className="hidden sm:inline">{busy ? 'Signing in…' : 'Sign in'}</span>
     </button>
   );
 }

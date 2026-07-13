@@ -10,7 +10,7 @@ const CH = 520;
 const COURT_SRC = '/game/stadiums/rain-court/court.png';
 
 const AD_IMAGES = [
-  '/game/ads/hat-trick.svg',
+  '/game/ads/hatrick.svg',
   '/game/ads/txodds.svg',
   '/game/ads/solana.svg',
   '/game/ads/txline.svg',

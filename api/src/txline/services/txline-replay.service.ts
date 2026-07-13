@@ -223,9 +223,11 @@ export class TxlineReplayService implements OnModuleInit {
     const speed = opts.speed ?? DEFAULT_SPEED;
     const hours = opts.hours ?? DEFAULT_HOURS;
 
-    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, hours);
+    // Pre-scan the hour before kickoff so the pre-match `lineups` event (~40min early, carrying real
+    // player names) flows through the pipeline into the store — otherwise a from-kickoff scan misses it.
+    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, hours, 1);
     this.logger.log(
-      `replay fixture ${opts.fixtureId}: ${frames.length} frames loaded (${hours}h from day ${opts.epochDay} ${opts.startHour}:00 UTC), speed ${speed}x`,
+      `replay fixture ${opts.fixtureId}: ${frames.length} frames loaded (${hours}h from day ${opts.epochDay} ${opts.startHour}:00 UTC, +1h pre-match), speed ${speed}x`,
     );
     if (!frames.length) {
       this.logger.warn('no frames for fixture — nothing to replay');
@@ -235,6 +237,10 @@ export class TxlineReplayService implements OnModuleInit {
     this.running = true;
     const final: { home?: number; away?: number } = {}; // authoritative Score.Total.Goals
     const tally: [number, number] = [0, 0]; // fallback: counted confirmed goal actions
+    // Kickoff wall-clock: pre-match frames (odds + the ~40min-early `lineups` that carries player names)
+    // are FAST-FORWARDED — emitted with no wait — so names load instantly and the match kicks off at once
+    // instead of replaying a dead pre-match hour (added by the -1h pre-scan in load()).
+    const kickoffMs = opts.epochDay * 86_400_000 + opts.startHour * 3_600_000;
     let prevTs = frames[0].ts;
     let emitted = 0;
 
@@ -248,7 +254,8 @@ export class TxlineReplayService implements OnModuleInit {
       // speeds keep the idle-gap cap so quiet stretches don't stall. Sleep in ≤1s chunks so a stop/supersede
       // is picked up promptly even across a long real gap (e.g. half-time).
       const realGap = Math.max(0, (f.ts - prevTs) / speed);
-      let wait = speed <= 1 ? realGap : Math.min(MAX_GAP_MS, realGap);
+      // Pre-kickoff frames play instantly (no wait); in-play frames honor the paced/capped gap.
+      let wait = f.ts < kickoffMs ? 0 : speed <= 1 ? realGap : Math.min(MAX_GAP_MS, realGap);
       prevTs = f.ts;
       while (wait > 0) {
         if (superseded()) {
@@ -287,11 +294,12 @@ export class TxlineReplayService implements OnModuleInit {
   }
 
   /** Fetch every 5-min interval across the window and keep this fixture's events.
-   * Dedupes events that straddle interval boundaries (they appear in two buckets). */
-  private async load(fixtureId: number, epochDay: number, startHour: number, hours: number): Promise<Frame[]> {
+   * Dedupes events that straddle interval boundaries (they appear in two buckets).
+   * `preHours` extends the scan BEFORE kickoff (catches the pre-match `lineups` event). */
+  private async load(fixtureId: number, epochDay: number, startHour: number, hours: number, preHours = 0): Promise<Frame[]> {
     const frames: Frame[] = [];
     const seen = new Set<string>();
-    for (let h = 0; h < hours; h++) {
+    for (let h = -preHours; h < hours; h++) {
       const abs = startHour + h;
       const day = epochDay + Math.floor(abs / 24);
       const hour = ((abs % 24) + 24) % 24;

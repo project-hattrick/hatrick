@@ -44,7 +44,7 @@ export function StorePackTile({ pack }: { pack: StorePack }) {
       radius="xl"
       tone="dark"
       className={cn(
-        'flex h-full items-center gap-4 p-5',
+        'flex h-full w-full min-w-0 items-center gap-4 p-5',
         // Framed tile: the WRAPPER lifts on hover (panel + ring move together) — a lift here
         // would slide the panel out of the metal frame. `group` stays for the thumb scale.
         pack.highlight ? 'group rounded-[13px] border-transparent' : INTERACTIVE_CARD,
@@ -101,7 +101,7 @@ export function StorePackTile({ pack }: { pack: StorePack }) {
       ringCssPx={3}
       borderRadius={16}
       normalizeHostStyles={false}
-      className="flex h-full flex-col overflow-visible! rounded-2xl p-[3px] transition-transform duration-200 ease-out hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="flex h-full w-full min-w-0 flex-col items-stretch overflow-visible! rounded-2xl p-[3px] transition-transform duration-200 ease-out hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {tile}
     </MetalFx>

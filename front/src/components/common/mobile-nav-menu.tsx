@@ -25,8 +25,8 @@ const secondaryLinks = [
 ] as const;
 
 /**
- * Hamburger navigation for mobile (< md): the top bar hides its primary links below md, so this
- * exposes them (plus the secondary destinations) in a dropdown. Hidden on md+ where the inline nav shows.
+ * Hamburger navigation for compact widths (< lg): the top bar hides its primary links below lg, so this
+ * exposes them (plus the secondary destinations) in a dropdown. Hidden on lg+ where the inline nav shows.
  */
 export function MobileNavMenu() {
   const t = useT();
@@ -38,7 +38,7 @@ export function MobileNavMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t('common.openNavigation')}
-        className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-surface-2 hover:text-foreground md:hidden"
+        className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-surface-2 hover:text-foreground lg:hidden"
       >
         <List className="size-5" />
       </DropdownMenuTrigger>
@@ -55,7 +55,7 @@ export function MobileNavMenu() {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        {/* Language switch — the top bar hides the standalone switcher below md. */}
+        {/* Language switch — the top bar hides the standalone switcher below lg. */}
         {locales.map((value) => (
           <DropdownMenuItem key={value} render={<Link href={localizePath(pathname, value)} />}>
             <span className={`fi fi-${localeLabels[value].flag} rounded-sm`} />

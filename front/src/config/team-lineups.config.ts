@@ -30,8 +30,12 @@ export function lineupFor(code: string): LineupPlayer[] {
   return LINEUP_POSITIONS.map((pos, i) => ({ pos, name: teamPlayerLabel(code, i + 1) }));
 }
 
-/** Best-effort position tag from the feed's positionId (1=GK…4=FW convention — unverified, so fallback). */
-const POSITION_TAGS: Record<number, string> = { 1: 'GK', 2: 'DF', 3: 'MF', 4: 'FW' };
+/** Position tag from the feed's positionId. TxLINE lines: 34=GK, 35=DEF, 36=MID, 37=FWD (verified from
+ *  real snapshots); 1–4 kept as a legacy fallback. Unknown ids fall back to the row template. */
+const POSITION_TAGS: Record<number, string> = {
+  34: 'GK', 35: 'DF', 36: 'MF', 37: 'FW',
+  1: 'GK', 2: 'DF', 3: 'MF', 4: 'FW',
+};
 
 /**
  * The REAL starting XI from feed lineups: starters first, then shirt order. Rows show the real player

@@ -16,6 +16,9 @@ export interface MatchEventPayload {
   ts: number;
   minute?: number;
   playerId?: number;
+  /** Substitution: player coming ON (`PlayerInId`) and going OFF (`PlayerOutId`). */
+  playerInId?: number;
+  playerOutId?: number;
   /** `Head | Shot | OwnGoal | Other` when the provider qualifies a goal. */
   goalType?: string;
   /** Shot/penalty/VAR result: `OnTarget|OffTarget|Woodwork|Blocked | Scored|Missed|Retake | Stands|Overturned`. */
@@ -24,6 +27,8 @@ export interface MatchEventPayload {
   varType?: string;
   /** Free-kick danger tier: `Safe|Attack|Danger|HighDanger|Offside`. */
   freeKickType?: string;
+  /** Match conditions from the feed, e.g. `["Dry","Excellent"]` (pitch) or `["Covered","Day"]` (venue). */
+  conditions?: string[];
   participant?: number;
   /** Authoritative cumulative score at this event (from the wire `Score` object). */
   score?: { home?: number; away?: number };

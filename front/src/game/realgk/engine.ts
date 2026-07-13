@@ -1,5 +1,6 @@
 import { MAX_DT } from './constants';
 import { REAL_GK_MATCH_CONFIG, type RealGkConfig } from './config';
+import { debugEvent as runDebugEvent } from './engine-debug';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, calibrationRect, createCamera, pinCalibrationCamera, requestShake, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
@@ -450,6 +451,7 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
     setScore: (blue, red) => setScoreDriven(world, blue, red),
     setClock: (minute) => setClockDriven(world, minute, performance.now()),
     setPhase: (phase) => setPhaseDriven(world, phase),
+    debugEvent: (kind, team) => runDebugEvent(world, kind, team),
     setRosterNames: (blue, red) => {
       // Persist for any future re-spawn, then rename the current squad in place (name only drives the
       // HUD/commentary — safe to mutate live). Assigns per-team in array order; missing rows keep their label.

@@ -32,6 +32,10 @@ const ALONG_DEFEND: Record<Role, number> = { GK: 0, DEF: 0.55, MID: 0.44, ST: 0.
 const ALONG_NEUTRAL = 0.16;
 /** Across-pitch (ball-side slide) gain — the whole block shifts toward the ball's side, keeping shape. */
 const ACROSS_GAIN = 0.32;
+/** Engine-only upward bias: push the whole shape toward the far touchline (the ad boards / top of the
+ *  view) so the play happens UP near the placares instead of hugging the near touchline. depth 0 = far
+ *  side. Paired with a tight upper depth clamp so the block lives in the top of the pitch. */
+const UP_BIAS = 0.24;
 
 /** Per-role along-pitch clamp in ATTACK-PROGRESS space (0 = own goal, 1 = opponent goal). */
 const ALONG_BACK: Record<Role, number> = { GK: 0.02, DEF: 0.1, MID: 0.2, ST: 0.34 };
@@ -85,10 +89,13 @@ function gkTarget(world: RealGkWorld, player: RealGkPlayer, ballRatio: { lat: nu
   return pointOnField(size, lat, depth);
 }
 
-/** Clamp an along-pitch lat to the role's sane band (works both directions via attack-progress). */
-function clampAlong(role: Role, lat: number, dir: number): number {
+/** Clamp an along-pitch lat to the role's sane band (works both directions via attack-progress). When the
+ *  team is NOT attacking (kickoff / loose ball / defending), the forward limit caps at the halfway line so
+ *  each side stays in its OWN half — no mixed shape at the start. Attacking lets the block push up. */
+function clampAlong(role: Role, lat: number, dir: number, attacking: boolean): number {
   const a = dir > 0 ? lat : 1 - lat;
-  const c = clamp(a, ALONG_BACK[role], ALONG_FWD[role]);
+  const fwd = attacking ? ALONG_FWD[role] : 0.5;
+  const c = clamp(a, ALONG_BACK[role], fwd);
   return dir > 0 ? c : 1 - c;
 }
 
@@ -108,7 +115,7 @@ export function smartSupportTarget(world: RealGkWorld, player: RealGkPlayer, ctx
 
   // Base block: slide along toward the ball's lat (push/drop) + across toward the ball's side, keep width.
   let lat = player.homeLat + alongGain * (ballRatio.lat - player.homeLat);
-  let depth = clamp(player.homeDepth + ACROSS_GAIN * (ballRatio.depth - 0.5) + player.laneOffset * 4, 0.12, 0.88);
+  let depth = clamp(player.homeDepth - UP_BIAS + ACROSS_GAIN * (ballRatio.depth - 0.5) + player.laneOffset * 4, 0.03, 0.62);
   // Small stable per-player breathing so the line isn't robotic (much smaller than legacy jitter).
   lat += (idNoise(player.id, 1) - 0.5) * 0.02;
 
@@ -136,8 +143,8 @@ export function smartSupportTarget(world: RealGkWorld, player: RealGkPlayer, ctx
     depth = lerp(depth, player.runTargetDepth, 0.65 * ease);
   }
 
-  lat = clampAlong(player.role, lat, player.dir);
-  return pointOnField(size, clamp(lat, 0.06, 0.94), clamp(depth, 0.12, 0.88));
+  lat = clampAlong(player.role, lat, player.dir, attacking);
+  return pointOnField(size, clamp(lat, 0.06, 0.94), clamp(depth, 0.03, 0.62));
 }
 
 /** Stable per-player pseudo-random in [0,1) (no per-frame RNG) — matches players.ts idNoise. */

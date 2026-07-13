@@ -551,7 +551,10 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     if (owner && owner.id === player.id) {
       const ratios = fieldRatios(size, player.x, player.y);
       const dribbleLat = clamp(ratios.lat + player.dir * 0.055, 0.06, 0.94);
-      const dribbleDepth = clamp(ratios.depth + (0.5 - ratios.depth) * 0.04, 0.12, 0.88);
+      // smartAI carries the ball toward the top of the pitch (near the placares) so the whole play reads
+      // high; legacy just drifts to the width center.
+      const smart = world.cfg.features?.smartAI === true;
+      const dribbleDepth = clamp(ratios.depth + ((smart ? 0.34 : 0.5) - ratios.depth) * (smart ? 0.14 : 0.04), 0.06, 0.88);
       const target = pointOnField(size, dribbleLat, dribbleDepth);
       moveToward(world, player, target.x, target.y, 150, dt);
       player.think -= dt;

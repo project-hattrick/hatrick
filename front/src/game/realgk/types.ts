@@ -450,6 +450,9 @@ export interface RealGkHandle {
   /** Real player names per side (from feed lineups), ordered starters-first. Renames the on-pitch
    *  squad in place so the HUD/commentary read real names; falls back to CODE labels for missing rows. */
   setRosterNames: (blue: string[], red: string[]) => void;
+  /** Force a match event on demand (the /engine "Spawn event" buttons) — always fires (clears any staging
+   *  restart first) and a Goal actually counts. Set-piece events need `deadBallSequence` / `fouls`. */
+  debugEvent: (kind: 'goal' | 'shot' | 'corner' | 'card' | 'red' | 'penalty' | 'freeKick', team: Team) => void;
   /** Live field-ratio snapshot of all players + the ball, for the room's 2D radar (mini-pitch). */
   sampleRadar: () => RealGkRadar;
   /** Activity gate: `false` stops the RAF loop entirely (tab hidden / backdrop off-screen), `true` resumes it. */

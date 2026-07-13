@@ -29,21 +29,23 @@ export interface Billboard {
  * touchline by default — drag/retune them in the editor and paste the exported array back here.
  */
 export const BILLBOARDS: Billboard[] = [
+  // Animated neon LED (left) · static black Hatrick board (centered) · animated neon LED (right).
+  // Spaced with clear gaps so no panel overlaps its neighbor.
   {
     kind: BillboardKind.Led,
-    corners: [[0.255, 0.3], [0.44, 0.3], [0.44, 0.336], [0.255, 0.336]],
+    corners: [[0.27, 0.3], [0.4, 0.3], [0.4, 0.336], [0.27, 0.336]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.45, 0.3], [0.55, 0.3], [0.55, 0.336], [0.45, 0.336]],
-    src: '/game/ads/hat-trick.svg',
+    corners: [[0.42, 0.3], [0.58, 0.3], [0.58, 0.336], [0.42, 0.336]],
+    src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.56, 0.3], [0.745, 0.3], [0.745, 0.336], [0.56, 0.336]],
+    corners: [[0.6, 0.3], [0.73, 0.3], [0.73, 0.336], [0.6, 0.336]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,

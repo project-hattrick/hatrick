@@ -66,8 +66,10 @@ interface MatchStore {
   authoritativeStats: LiveMatchStats | null;
   /** Cumulative real per-player stats keyed by TxLINE player ID (empty until the feed sends them). */
   playerStats: PlayerStatsBySide;
-  /** Real lineups from the feed (`action=lineups`, ~40min pre-kickoff) — playerId → shirt, no names. */
+  /** Real lineups from the feed (`action=lineups`, ~40min pre-kickoff) — playerId → name/shirt/position. */
   lineups: LineupsBySide | null;
+  /** Match conditions from the feed, e.g. `["Dry","Excellent"]` / `["Covered","Day"]`. Null until sent. */
+  conditions: string[] | null;
   /** Regulation-time (H1+H2) score — settlement basis; `match.score` includes extra time. */
   regulationScore: MatchScore | null;
   /** True while a picked past match is streaming back through the pipeline rather than live. */
@@ -319,6 +321,7 @@ const freshMatchSlice = () => ({
   authoritativeStats: null,
   playerStats: emptyPlayerStats(),
   lineups: null,
+  conditions: null,
   regulationScore: null,
 });
 
@@ -357,6 +360,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
   authoritativeStats: null,
   playerStats: emptyPlayerStats(),
   lineups: null,
+  conditions: null,
   regulationScore: null,
   isReplay: false,
   replayNonce: 0,
@@ -452,6 +456,8 @@ export const useMatchStore = create<MatchStore>((set) => ({
       // Real per-player counters + lineups ride along on the events that carry them.
       const playerStats = mergePlayerStats(state.playerStats, event) ?? state.playerStats;
       const lineups = event.lineups ?? state.lineups;
+      // Conditions (pitch/venue) ride along on the events that carry them; keep the last non-empty set.
+      const conditions = event.conditions?.length ? event.conditions : state.conditions;
       // Authoritative team counters ride on the Score object (cumulative) — fold corners/cards from the
       // wire + shots from PlayerStats into authoritativeStats (monotonic) so the display is authoritative
       // instantly, not only on the 15s /stats poll.
@@ -477,6 +483,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
         authoritativeStats,
         playerStats,
         lineups,
+        conditions,
         regulationScore: resolveRegulation(events, state.regulationScore),
         switching: false,
         match: { ...state.match, score: nextScore, minute, gameState },
@@ -501,6 +508,9 @@ export const usePlayerMatchStats = () => useMatchStore((state) => state.playerSt
 
 /** Real lineups for the current match, or null while unknown. */
 export const useMatchLineups = () => useMatchStore((state) => state.lineups);
+
+/** Match conditions (pitch/venue) from the feed, or null while unknown. */
+export const useMatchConditions = () => useMatchStore((state) => state.conditions);
 
 /** Regulation-time (H1+H2) score, or null while the feed hasn't broken periods down. */
 export const useRegulationScore = () => useMatchStore((state) => state.regulationScore);

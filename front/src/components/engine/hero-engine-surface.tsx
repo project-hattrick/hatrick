@@ -7,7 +7,9 @@ import { RealGkBackground } from '@/components/game/real-gk/real-gk-background';
 import { REAL_GK_MATCH_CONFIG, type RealGkFeatures } from '@/game/realgk/config';
 import { buildRealGkFixtureConfig } from '@/game/realgk/fixture-config';
 import { COURTS, courtByKey } from '@/game/realgk/courts';
-import type { RealGkHandle } from '@/game/realgk/types';
+import { Team } from '@/game/realgk/enums';
+import type { RealGkHandle, RealGkRadar } from '@/game/realgk/types';
+import { EngineMinimap } from './engine-minimap';
 import {
   buildSnippet,
   fieldSpecFromState,
@@ -51,7 +53,17 @@ export function HeroEngineSurface() {
   const [fit, setFit] = useState<Fit | null>(null);
   const [speed, setSpeed] = useState(1);
   const [paused, setPaused] = useState(false);
+  const [radar, setRadar] = useState<RealGkRadar | null>(null);
   const handleRef = useRef<RealGkHandle | null>(null);
+
+  // Poll the live positions a few times a second for the minimap (mirrors the actual on-pitch dots + ball).
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const handle = handleRef.current;
+      setRadar(handle ? handle.sampleRadar() : null);
+    }, 90);
+    return () => window.clearInterval(id);
+  }, []);
 
   const blue = teamByKey(blueKey);
   const red = teamByKey(redKey);
@@ -63,10 +75,23 @@ export function HeroEngineSurface() {
     const built = buildRealGkFixtureConfig(
       { name: blue.name, code: blue.code },
       { name: red.name, code: red.code },
-      { png: court.png, field: court.field },
+      { png: court.png, field: court.field, billboards: court.billboards },
     ).config;
-    // Engine-only: smart football AI + full-pitch opening live HERE, not on the shared persona/room config.
-    return { ...built, features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true } };
+    // Engine-only: smart football AI + full-pitch opening + a WIDE framing so the whole pitch (far-
+    // touchline ad boards at the top AND the play) reads at once, with only a small upward lift so the
+    // play sits centered — a tight zoom + big lift crammed it at the bottom. Set HERE, not on the shared
+    // persona/room config.
+    return {
+      ...built,
+      cameraLift: 0.06,
+      presets: [
+        { label: 'Broadcast', zoom: 0.7, follow: true },
+        { label: 'Close', zoom: 1.05, follow: true },
+        { label: 'Wide', zoom: 0.56, follow: false },
+        { label: 'Full pitch', zoom: 0.54, follow: false },
+      ],
+      features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true },
+    };
   }, [heroLook, blue, red, court]);
 
   // Any reboot (team / court / hero swap) drops calibration mode so the overlay never binds a dead engine.
@@ -139,12 +164,19 @@ export function HeroEngineSurface() {
     setCalState(seed);
     handleRef.current?.setField(fieldSpecFromState(seed));
   };
+  // Force a real event on the running match + a screen toast so pressing the button always shows something.
+  const spawn = (kind: Parameters<RealGkHandle['debugEvent']>[0], team: Team, label: string) => {
+    handleRef.current?.debugEvent(kind, team);
+    toast(label);
+  };
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      <RealGkBackground config={config} onReady={onReady} teamNames={{ blue: blue.name, red: red.name }} />
+      <RealGkBackground config={config} onReady={onReady} bridgeHud teamNames={{ blue: blue.name, red: red.name }} />
 
       {editing && fit && calState ? <CourtCalibrationOverlay fit={fit} state={calState} onChange={applyCal} /> : null}
+
+      <EngineMinimap radar={radar} className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2" />
 
       <FloatingWidget title="Teams" className="left-4 top-4">
         <div className="flex items-end gap-2">
@@ -197,6 +229,18 @@ export function HeroEngineSurface() {
           <button className={btnCls} onClick={() => handleRef.current?.restart()}>Restart</button>
           <button className={btnCls} onClick={togglePause}>{paused ? 'Play' : 'Pause'}</button>
           <button className={btnCls} onClick={cycleSpeed}>{speed}×</button>
+        </div>
+      </FloatingWidget>
+
+      <FloatingWidget title="Spawn event" className="bottom-4 right-4">
+        <div className="flex max-w-[260px] flex-wrap gap-1.5">
+          <button className={btnCls} onClick={() => spawn('goal', Team.Blue, `⚽ Goal — ${blue.name}`)}>Goal</button>
+          <button className={btnCls} onClick={() => spawn('shot', Team.Blue, `Shot — ${blue.name}`)}>Shot</button>
+          <button className={btnCls} onClick={() => spawn('corner', Team.Blue, `Corner — ${blue.name}`)}>Corner</button>
+          <button className={btnCls} onClick={() => spawn('card', Team.Red, `🟨 Yellow card — ${red.name}`)}>Card</button>
+          <button className={btnCls} onClick={() => spawn('red', Team.Red, `🟥 Red card — ${red.name}`)}>Red</button>
+          <button className={btnCls} onClick={() => spawn('penalty', Team.Blue, `Penalty — ${blue.name}`)}>Penalty</button>
+          <button className={btnCls} onClick={() => spawn('freeKick', Team.Blue, `Free kick — ${blue.name}`)}>Free kick</button>
         </div>
       </FloatingWidget>
     </div>

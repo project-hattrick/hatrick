@@ -1,4 +1,5 @@
-import { FRANCE_STADIUM_FIELD } from './config';
+import { FRANCE_BILLBOARDS, FRANCE_STADIUM_FIELD } from './config';
+import type { Billboard } from './billboards';
 import type { FieldSpec } from './field';
 
 /** A selectable stadium: its own court PNG + its own field mapping (trapezoid / goals / lines). */
@@ -9,6 +10,8 @@ export interface CourtDef {
   png: string;
   /** Seed field limits for this court. `{}` = the field.ts rain-court defaults. */
   field: FieldSpec;
+  /** Perimeter advertiser boards for this court (far-touchline ads). Unset = none. */
+  billboards?: Billboard[];
 }
 
 /** Sunset stadium seed (largest-green-component scan) — refine live in the /engine court editor. */
@@ -19,7 +22,7 @@ const SUNSET_FIELD: FieldSpec = {
 /** The courts that ship with a PNG + mapping. Single source for the /engine court dropdown + editor seed. */
 export const COURTS: CourtDef[] = [
   { key: 'rain', label: 'Rain court', png: '/game/stadiums/rain-court/court.png', field: {} },
-  { key: 'franca', label: 'France night stadium', png: '/game/franca/court.png', field: FRANCE_STADIUM_FIELD },
+  { key: 'franca', label: 'France night stadium', png: '/game/franca/court.png', field: FRANCE_STADIUM_FIELD, billboards: FRANCE_BILLBOARDS },
   { key: 'sunset', label: 'Sunset stadium', png: '/game/stadiums/sunset-court/court.png', field: SUNSET_FIELD },
 ];
 
