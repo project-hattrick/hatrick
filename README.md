@@ -21,6 +21,8 @@
 
   <p align="center">
     <a href="https://your-deploy-url.example" target="_blank"><strong>🌐 Live demo (placeholder) »</strong></a>
+    ·
+    <a href="https://x.com/playhatrick" target="_blank"><strong>Follow @playhatrick on X</strong></a>
   </p>
 
   <p align="center">
@@ -77,7 +79,6 @@
     <li><a href="#apps">Apps</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#compliance">Compliance</a></li>
-    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#team">Team &amp; Contributors</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -427,19 +428,6 @@ Devnet only — fictitious tokens; no real money moves during the hackathon.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
-## Contributing
-
-<div id="contributing"></div>
-
-1. Open an issue describing the change.
-2. Create a feature branch (`git checkout -b feat/your-feature`).
-3. Follow the conventions: English · ≤600 lines/file · enums not strings · no cross-app imports · no tests this sprint (verify by running).
-4. Open a focused PR with a short explanation and screenshots/GIFs for UI changes.
-
-> CI builds both apps on every push/PR — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-
-<p align="right">(<a href="#readme-top">Back to top</a>)</p>
-
 ## License
 
 <div id="license"></div>
@@ -484,7 +472,7 @@ Distributed under the **MIT License**. See `LICENSE.txt` for details once the li
 
 <div id="contact"></div>
 
-Team Hatrick · Repository: [https://github.com/your-org/hat-trick](https://github.com/your-org/hat-trick)
+Team Hatrick · X: [@playhatrick](https://x.com/playhatrick) · Repository: [https://github.com/your-org/hat-trick](https://github.com/your-org/hat-trick)
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

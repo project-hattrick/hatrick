@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
 import { formationDots, formationFor, type FormationDot } from '@/config/team-lineups.config';
@@ -8,16 +10,21 @@ import { useDashboardMatch } from './use-dashboard-match';
 const HOME_COLOR = '#e5484d';
 const AWAY_COLOR = '#e2b33c';
 
-function Dots({ dots, color }: { dots: FormationDot[]; color: string }) {
+/** Players lie on the flat field; the portrait pitch has goals at top & bottom, so we map the
+ *  horizontal formation template onto the vertical field (its long axis becomes depth). */
+function Players({ dots, color }: { dots: FormationDot[]; color: string }) {
   return (
     <>
       {dots.map((dot) => (
         <div
           key={`${color}-${dot.number}`}
-          className="absolute grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-micro font-bold text-white shadow-e2 ring-2 ring-black/30"
-          style={{ left: `${dot.x}%`, top: `${dot.y}%`, backgroundColor: color }}
+          className="ftw3d__player"
+          style={{ left: `${dot.y}%`, top: `${dot.x}%` }}
         >
-          {dot.number}
+          <span className="ftw3d__shadow" />
+          <span className="ftw3d__chip" style={{ '--chip': color } as CSSProperties}>
+            {dot.number}
+          </span>
         </div>
       ))}
     </>
@@ -37,9 +44,10 @@ function TeamTag({ name, shape, code, align }: { name: string; shape: string; co
 }
 
 /**
- * "Team Formation" — a compact tactical shape for both sides on one landscape pitch. Positions are a
- * curated template per team (the live feed carries no player coordinates), so this reads as an
- * illustrative shape, not a tracking view — hence a small tile rather than the dashboard centrepiece.
+ * "Team Formation" — both sides' tactical shape on a 3D CSS-transform football field (faithful port of
+ * the reference pen: a flat pitch inside a receding world, 3D mud sides, painted markings, players
+ * standing upright via a counter-rotation). Positions are a curated template per team (the live feed
+ * carries no coordinates), so this reads as an illustrative shape, not a tracking view.
  */
 export function TeamFormationCard() {
   const match = useDashboardMatch();
@@ -58,12 +66,34 @@ export function TeamFormationCard() {
         <TeamTag name={match.away.name} shape={awayShape} code={match.away.iso} align="right" />
       </div>
 
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/10 bg-[repeating-linear-gradient(90deg,#0d2417_0_9%,#0f2a1b_9%_18%)]">
-        <div className="pointer-events-none absolute inset-2 rounded-md border border-white/10" />
-        <div className="pointer-events-none absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-white/10" />
-        <div className="pointer-events-none absolute top-1/2 left-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
-        <Dots dots={formationDots(homeShape, 'home')} color={HOME_COLOR} />
-        <Dots dots={formationDots(awayShape, 'away')} color={AWAY_COLOR} />
+      <div className="relative h-[380px] w-full overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(120%_100%_at_50%_-10%,#123524_0%,#0a1a12_55%,#060f0a_100%)]">
+        <div className="ftw3d">
+          <div className="ftw3d__scale">
+            <div className="ftw3d__world">
+              <div className="ftw3d__terrain">
+                <div className="ftw3d__field">
+                  <div className="ftw3d__grass" />
+                  <div className="ftw3d__gradient" />
+                  <div className="ftw3d__line ftw3d__line--outline" />
+                  <div className="ftw3d__line ftw3d__line--mid" />
+                  <div className="ftw3d__line ftw3d__line--circle" />
+                  <div className="ftw3d__line ftw3d__line--goal" />
+                  <div className="ftw3d__line ftw3d__line--goal ftw3d__line--goal-far" />
+                  <div className="ftw3d__line ftw3d__line--penalty" />
+                  <div className="ftw3d__line ftw3d__line--penalty ftw3d__line--penalty-far" />
+                  <div className="ftw3d__line ftw3d__line--arc" />
+                  <div className="ftw3d__line ftw3d__line--arc ftw3d__line--arc-far" />
+                  <Players dots={formationDots(homeShape, 'home')} color={HOME_COLOR} />
+                  <Players dots={formationDots(awayShape, 'away')} color={AWAY_COLOR} />
+                </div>
+                <div className="ftw3d__side ftw3d__side--front" />
+                <div className="ftw3d__side ftw3d__side--left" />
+                <div className="ftw3d__side ftw3d__side--right" />
+                <div className="ftw3d__side ftw3d__side--back" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </GlassPanel>
   );

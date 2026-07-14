@@ -277,6 +277,224 @@
     background: var(--foreground);
     box-shadow: 0 0 6px color-mix(in oklch, var(--foreground) 70%, transparent);
   }
+
+  /* --- 3D CSS-transform football field (Team Formation card) ---
+     Faithful port of the reference pen: a flat pitch (rotateX(90deg)) inside a
+     receding world, with 3D mud sides, painted markings and standing players.
+     Everything is scoped under `.ftw3d` so the generic class names can't leak. */
+  .ftw3d {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    perspective: 1200px;
+    perspective-origin: 50% -90px;
+    backface-visibility: hidden;
+  }
+  .ftw3d__scale {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(var(--ftw-scale, 0.62));
+    transform-style: preserve-3d;
+  }
+  .ftw3d__world {
+    position: relative;
+    width: 672px;
+    height: 840px;
+    transform: translateZ(-110px);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+  .ftw3d__terrain {
+    position: absolute;
+    inset: 0;
+    transform-style: inherit;
+  }
+  .ftw3d__field {
+    position: absolute;
+    inset: 0;
+    background-color: #2f8a51;
+    transform: rotateX(90deg) translateZ(0);
+    transform-origin: 50% 50%;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+  /* mow-stripe + grass texture, and a soft depth gradient over the far end */
+  .ftw3d__grass {
+    position: absolute;
+    inset: 0;
+    background:
+      url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/215059/grass2.png') repeat -20px -20px / 75px 75px,
+      repeating-linear-gradient(90deg, var(--pitch-stripe-a) 0 46px, var(--pitch-stripe-b) 46px 92px);
+    background-blend-mode: soft-light, normal;
+    opacity: 0.85;
+  }
+  .ftw3d__gradient {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to top, rgb(0 0 0 / 0.14), transparent 55%);
+  }
+  /* the 3D sides give the pitch its thickness (mud rim) */
+  .ftw3d__side {
+    position: absolute;
+    top: 420px;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    transform: rotateX(180deg) translateZ(-420px);
+    transform-origin: 50% 50%;
+    background-color: #10120f;
+  }
+  .ftw3d__side--left,
+  .ftw3d__side--right {
+    top: 0;
+    left: -8px;
+    height: 100%;
+    width: 8px;
+    transform-origin: 100% 50%;
+    transform: rotateX(90deg) rotateY(-90deg) translateZ(0);
+  }
+  .ftw3d__side--right {
+    left: auto;
+    right: 0;
+  }
+  .ftw3d__side--back {
+    transform: rotateX(180deg) translateZ(420px);
+  }
+  /* painted markings (children of the flat field) */
+  .ftw3d__line {
+    position: absolute;
+  }
+  .ftw3d__line--outline {
+    width: 92%;
+    height: 92%;
+    top: 4%;
+    left: 4%;
+    border: solid 3px rgb(255 255 255 / 0.5);
+  }
+  .ftw3d__line--mid {
+    top: 50%;
+    left: 4%;
+    width: 92%;
+    height: 3px;
+    background-color: rgb(255 255 255 / 0.5);
+  }
+  .ftw3d__line--circle {
+    width: 20%;
+    height: 20%;
+    inset: 0;
+    margin: auto;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-radius: 50%;
+  }
+  .ftw3d__line--goal {
+    width: 16%;
+    height: 6%;
+    left: 0;
+    right: 0;
+    bottom: 4%;
+    margin: auto;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-bottom: none;
+  }
+  .ftw3d__line--goal-far {
+    top: 4%;
+    bottom: auto;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-top: none;
+  }
+  .ftw3d__line--penalty {
+    width: 44%;
+    height: 16%;
+    left: 0;
+    right: 0;
+    bottom: 4%;
+    margin: auto;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-bottom: none;
+  }
+  .ftw3d__line--penalty-far {
+    top: 4%;
+    bottom: auto;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-top: none;
+  }
+  .ftw3d__line--arc {
+    width: 20%;
+    height: 20%;
+    left: 0;
+    right: 0;
+    bottom: 20%;
+    margin: auto;
+    overflow: hidden;
+  }
+  .ftw3d__line--arc::after {
+    content: '';
+    position: absolute;
+    top: 75%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-bottom: none;
+    border-radius: 50% 50% 0 0;
+    box-sizing: border-box;
+  }
+  .ftw3d__line--arc-far {
+    bottom: auto;
+    top: 20%;
+  }
+  .ftw3d__line--arc-far::after {
+    top: auto;
+    bottom: 75%;
+    border: solid 3px rgb(255 255 255 / 0.5);
+    border-top: none;
+    border-radius: 0 0 50% 50%;
+  }
+  /* players — lie on the field, then stand upright via a counter-rotation */
+  .ftw3d__player {
+    position: absolute;
+    transform-style: preserve-3d;
+    z-index: 9;
+    cursor: pointer;
+  }
+  .ftw3d__shadow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 40px;
+    height: 40px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(0 0 0 / 0.4), transparent 62%);
+  }
+  .ftw3d__chip {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: grid;
+    height: 40px;
+    width: 40px;
+    place-items: center;
+    transform: translate(-50%, -100%) rotateX(-90deg);
+    transform-origin: 50% 100%;
+    border-radius: 50%;
+    border: solid 2px rgb(255 255 255 / 0.8);
+    background: var(--chip, var(--color-neon));
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+    box-shadow:
+      0 10px 16px rgb(0 0 0 / 0.5),
+      0 0 20px color-mix(in oklch, var(--chip, var(--color-neon)) 55%, transparent);
+    transition: transform 0.2s ease;
+  }
+  .ftw3d__player:hover .ftw3d__chip {
+    transform: translate(-50%, -110%) rotateX(-90deg) scale(1.08);
+  }
 }
 
 @supports (animation-timeline: view()) {
