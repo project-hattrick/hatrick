@@ -46,6 +46,10 @@ export interface TimelineEvent {
   participant?: number;
   home: number;
   away: number;
+  /** Real player attributed to the moment (goal scorer, carded player) from the pre-match lineups. */
+  player?: string;
+  /** Shirt number of that player — the `${CODE}-${shirt}` fallback when no name was sent. */
+  shirt?: number;
 }
 
 export interface FixtureTimeline {
@@ -185,24 +189,34 @@ export class TxlineReplayService implements OnModuleInit {
     const lastHour = ((lastAbs % 24) + 24) % 24;
     const ttl = historicalIntervalTtl(lastDay, lastHour, INTERVALS_PER_HOUR - 1) > 0 ? TxlineCacheTtl.FinishedMatch : TxlineCacheTtl.None;
     return this.cache.getOrSet(
-      `replay:timeline:v1:${opts.fixtureId}:${opts.epochDay}:${opts.startHour}:${hours}`,
+      `replay:timeline:v2:${opts.fixtureId}:${opts.epochDay}:${opts.startHour}:${hours}`,
       ttl,
       () => this.buildTimeline(opts, hours),
     );
   }
 
   private async buildTimeline(opts: ReplayOptions, hours: number): Promise<FixtureTimeline> {
-    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, hours);
+    // +1h pre-scan catches the pre-match `lineups` frame (~40min early) that carries real player names,
+    // so goals/cards can name the player involved.
+    const frames = await this.load(opts.fixtureId, opts.epochDay, opts.startHour, hours, 1);
     let home = 0;
     let away = 0;
     let lastMinute = 0;
     const seen = new Set<number>();
     const events: TimelineEvent[] = [];
+    // playerId → real name/shirt, harvested from the lineups frame (arrives before any goal).
+    const roster = new Map<number, { name?: string; shirt?: number }>();
 
     for (const f of frames) {
       if (f.kind !== 'score') continue;
       const raw = mapWireScore(f.ev as WireScoreEvent);
-      if (!raw || !raw.confirmed) continue; // authoritative frames only
+      if (!raw) continue;
+      if (raw.lineups) {
+        for (const slot of [...raw.lineups.home, ...raw.lineups.away]) {
+          roster.set(slot.playerId, { name: slot.name, shirt: slot.shirt });
+        }
+      }
+      if (!raw.confirmed) continue; // authoritative frames only
       if (raw.homeGoals !== undefined) home = raw.homeGoals;
       if (raw.awayGoals !== undefined) away = raw.awayGoals;
       const minute = raw.dataSoccer?.Minutes ?? lastMinute;
@@ -210,7 +224,16 @@ export class TxlineReplayService implements OnModuleInit {
       const action = raw.action ?? '';
       if (!NOTABLE_ACTIONS.has(action) || seen.has(raw.seq)) continue;
       seen.add(raw.seq);
-      events.push({ minute, action, participant: raw.dataSoccer?.Participant, home, away });
+      const person = raw.dataSoccer?.PlayerId != null ? roster.get(raw.dataSoccer.PlayerId) : undefined;
+      events.push({
+        minute,
+        action,
+        participant: raw.dataSoccer?.Participant,
+        home,
+        away,
+        player: person?.name,
+        shirt: person?.shirt,
+      });
     }
 
     events.sort((a, b) => a.minute - b.minute);

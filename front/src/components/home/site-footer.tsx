@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { AppleLogo, Globe, Play, XLogo, type Icon } from '@/components/common/icons';
+import { XLogo, type Icon } from '@/components/common/icons';
 import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { useI18n } from '@/i18n/i18n-provider';
 import { localizePath } from '@/i18n/path';
@@ -11,16 +11,10 @@ const socials: { labelKey: 'x'; icon: Icon; href: string }[] = [
   { labelKey: 'x', icon: XLogo, href: 'https://x.com/playhatrick' },
 ];
 
-const storeIcons: Record<string, Icon> = {
-  'App Store': AppleLogo,
-  'Google Play': Play,
-};
-
 /** Landing footer: brand, link columns, app badges and the devnet disclaimer. */
 export function SiteFooter() {
   const { dictionary, locale } = useI18n();
   const copy = dictionary.home.footer;
-  const appBadges = [copy.badges.appStore, copy.badges.googlePlay];
 
   return (
     <footer className="relative z-10 border-t border-border bg-background px-6 py-10 md:py-14">
@@ -66,26 +60,6 @@ export function SiteFooter() {
             ))}
           </div>
         ))}
-
-        <div className="flex flex-col gap-3">
-          <span className="text-eyebrow text-muted-foreground">{copy.getApp}</span>
-          {appBadges.map((badge) => {
-            const Icon = storeIcons[badge.store] ?? Globe;
-            return (
-              <Link
-                key={badge.store}
-                href="#"
-                className="inline-flex items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-2.5 transition hover:border-neon/40"
-              >
-                <Icon className="size-6" />
-                <span className="flex flex-col leading-tight">
-                  <span className="text-micro text-muted-foreground">{badge.tagline}</span>
-                  <span className="text-sm font-semibold">{badge.store}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
       </div>
 
       <div className="mx-auto mt-10 flex w-full max-w-7xl flex-col gap-2 border-t border-border/40 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">

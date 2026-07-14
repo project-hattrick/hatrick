@@ -27,6 +27,10 @@ export interface TimelineEvent {
   participant?: number;
   home: number;
   away: number;
+  /** Real player attributed to the moment (goal scorer, carded player), when the feed sent lineups. */
+  player?: string;
+  /** Shirt number for the `${CODE}-${shirt}` fallback when no name was sent. */
+  shirt?: number;
 }
 
 export interface FixtureTimeline {
