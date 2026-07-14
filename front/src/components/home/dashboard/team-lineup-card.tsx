@@ -40,12 +40,6 @@ export function TeamLineupCard() {
             LIVE XI
           </span>
         ) : null}
-        <span className="flex-1" />
-        <span className="flex items-center gap-2 text-micro font-mono text-muted-foreground">
-          <Flag code={match.home.iso} className="text-sm" /> {match.home.code}
-          <span className="opacity-50">·</span>
-          {match.away.code} <Flag code={match.away.iso} className="text-sm" />
-        </span>
       </div>
 
       <div className="flex items-center justify-between">
@@ -55,11 +49,11 @@ export function TeamLineupCard() {
 
       <FormationField />
 
-      <div className="flex flex-1 flex-col justify-between">
+      <div className="flex flex-col">
         {home.map((row, i) => (
           <div
             key={`${row.pos}-${i}`}
-            className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-1.5 text-xs ${
+            className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 text-xs ${
               i > 0 ? 'border-t border-border' : ''
             }`}
           >
