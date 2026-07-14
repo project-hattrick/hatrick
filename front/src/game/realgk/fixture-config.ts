@@ -42,6 +42,19 @@ const CODE_TO_PACK: Record<string, keyof typeof AWAY_TEAM_PACKS> = {
   NOR: 'norway',
   ENG: 'england',
   SUI: 'switzerland', SWI: 'switzerland',
+  CAN: 'canada',
+  BEL: 'belgium',
+  POR: 'portugal', PRT: 'portugal',
+  GER: 'germany', DEU: 'germany',
+  CRO: 'croatia', HRV: 'croatia',
+  MAR: 'morocco', MOR: 'morocco',
+  JPN: 'japan',
+  USA: 'usa',
+  MEX: 'mexico',
+  URU: 'uruguay', URY: 'uruguay',
+  COL: 'colombia',
+  DEN: 'denmark', DNK: 'denmark',
+  POL: 'poland',
 };
 
 /** Resolve a feed team to its recolored body pack (by lowercase name first, then 3-letter code). */

@@ -44,6 +44,19 @@ const TEAMS: TeamOption[] = [
   { key: 'norway', name: 'Norway', code: 'NOR' },
   { key: 'england', name: 'England', code: 'ENG' },
   { key: 'switzerland', name: 'Switzerland', code: 'SUI' },
+  { key: 'canada', name: 'Canada', code: 'CAN' },
+  { key: 'belgium', name: 'Belgium', code: 'BEL' },
+  { key: 'portugal', name: 'Portugal', code: 'POR' },
+  { key: 'germany', name: 'Germany', code: 'GER' },
+  { key: 'croatia', name: 'Croatia', code: 'CRO' },
+  { key: 'morocco', name: 'Morocco', code: 'MAR' },
+  { key: 'japan', name: 'Japan', code: 'JPN' },
+  { key: 'usa', name: 'USA', code: 'USA' },
+  { key: 'mexico', name: 'Mexico', code: 'MEX' },
+  { key: 'uruguay', name: 'Uruguay', code: 'URU' },
+  { key: 'colombia', name: 'Colombia', code: 'COL' },
+  { key: 'denmark', name: 'Denmark', code: 'DEN' },
+  { key: 'poland', name: 'Poland', code: 'POL' },
 ];
 const teamByKey = (k: string): TeamOption => TEAMS.find((t) => t.key === k) ?? TEAMS[0];
 const SPEED_CYCLE = [1, 2, 3] as const;

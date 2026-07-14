@@ -1,7 +1,10 @@
 import type { CSSProperties, ReactElement } from 'react';
 
 /** Inline SVG national flags for the v5 intro card (emoji flags don't render on Windows). Add nations here. */
-export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland' | '';
+export type FlagId =
+  | 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland'
+  | 'canada' | 'belgium' | 'portugal' | 'germany' | 'croatia' | 'morocco' | 'japan' | 'usa' | 'mexico'
+  | 'uruguay' | 'colombia' | 'denmark' | 'poland' | '';
 
 const FRAME = { rx: 4, style: { stroke: 'rgba(0,0,0,0.28)', strokeWidth: 2, fill: 'none' } as const };
 
@@ -133,6 +136,164 @@ function Switzerland() {
   );
 }
 
+/** Vertical black-yellow-red tricolour. */
+function Belgium() {
+  return (
+    <>
+      <rect x="0" y="0" width="30" height="60" fill="#000000" />
+      <rect x="30" y="0" width="30" height="60" fill="#FAE042" />
+      <rect x="60" y="0" width="30" height="60" fill="#ED2939" />
+    </>
+  );
+}
+
+/** Red-white-red vertical with a central maple leaf. */
+function Canada() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#FFFFFF" />
+      <rect x="0" y="0" width="22" height="60" fill="#D52B1E" />
+      <rect x="68" y="0" width="22" height="60" fill="#D52B1E" />
+      <polygon points="45,16 47,24 55,22 50,28 54,34 46,32 45,42 44,32 36,34 40,28 35,22 43,24" fill="#D52B1E" />
+    </>
+  );
+}
+
+/** Green hoist (2/5), red field, with a simplified armillary/shield emblem on the divide. */
+function Portugal() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#DA020E" />
+      <rect x="0" y="0" width="36" height="60" fill="#046A38" />
+      <circle cx="36" cy="30" r="8" fill="none" stroke="#FFD100" strokeWidth="2" />
+      <rect x="32.5" y="26" width="7" height="8" rx="1" fill="#FFFFFF" stroke="#DA020E" strokeWidth="1" />
+    </>
+  );
+}
+
+/** Horizontal black-red-gold tricolour. */
+function Germany() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="20" fill="#000000" />
+      <rect x="0" y="20" width="90" height="20" fill="#DD0000" />
+      <rect x="0" y="40" width="90" height="20" fill="#FFCE00" />
+    </>
+  );
+}
+
+/** Red-white-blue horizontal with a chequy shield hint. */
+function Croatia() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="20" fill="#FF0000" />
+      <rect x="0" y="20" width="90" height="20" fill="#FFFFFF" />
+      <rect x="0" y="40" width="90" height="20" fill="#171796" />
+      <rect x="39" y="20" width="12" height="12" fill="#FFFFFF" stroke="#171796" strokeWidth="0.6" />
+      <rect x="39" y="20" width="6" height="6" fill="#FF0000" />
+      <rect x="45" y="26" width="6" height="6" fill="#FF0000" />
+    </>
+  );
+}
+
+/** Red field with a green pentagram. */
+function Morocco() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#C1272D" />
+      <polygon
+        points="45,21 47.35,27.76 54.51,27.91 48.8,32.24 50.88,39.09 45,35 39.12,39.09 41.2,32.24 35.49,27.91 42.65,27.76"
+        fill="none"
+        stroke="#006233"
+        strokeWidth="2"
+      />
+    </>
+  );
+}
+
+/** White field with a centered red sun disc (Hinomaru). */
+function Japan() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#FFFFFF" />
+      <circle cx="45" cy="30" r="14" fill="#BC002D" />
+    </>
+  );
+}
+
+/** Simplified Stars and Stripes: red stripes over white with a blue canton. */
+function Usa() {
+  const stripes = Array.from({ length: 6 }, (_, i) => (
+    <rect key={i} x="0" y={4.6 + i * 9.2} width="90" height="4.6" fill="#B22234" />
+  ));
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#FFFFFF" />
+      {stripes}
+      <rect x="0" y="0" width="40" height="32.2" fill="#3C3B6E" />
+    </>
+  );
+}
+
+/** Vertical green-white-red with a central emblem hint. */
+function Mexico() {
+  return (
+    <>
+      <rect x="0" y="0" width="30" height="60" fill="#006847" />
+      <rect x="30" y="0" width="30" height="60" fill="#FFFFFF" />
+      <rect x="60" y="0" width="30" height="60" fill="#CE1126" />
+      <circle cx="45" cy="30" r="4" fill="none" stroke="#5E3200" strokeWidth="1.4" />
+    </>
+  );
+}
+
+/** Nine white/blue stripes with a white canton bearing the Sol de Mayo. */
+function Uruguay() {
+  const stripes = [1, 3, 5, 7].map((i) => (
+    <rect key={i} x="0" y={i * 6.67} width="90" height="6.67" fill="#0038A8" />
+  ));
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#FFFFFF" />
+      {stripes}
+      <rect x="0" y="0" width="30" height="26.67" fill="#FFFFFF" />
+      <circle cx="15" cy="13" r="5" fill="#FCD116" stroke="#8A6D00" strokeWidth="0.8" />
+    </>
+  );
+}
+
+/** Yellow (top half), blue and red quarters. */
+function Colombia() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="30" fill="#FCD116" />
+      <rect x="0" y="30" width="90" height="15" fill="#003893" />
+      <rect x="0" y="45" width="90" height="15" fill="#CE1126" />
+    </>
+  );
+}
+
+/** Red field with an off-centre white Nordic cross. */
+function Denmark() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="60" fill="#C60C30" />
+      <rect x="24" y="0" width="10" height="60" fill="#FFFFFF" />
+      <rect x="0" y="25" width="90" height="10" fill="#FFFFFF" />
+    </>
+  );
+}
+
+/** White over red horizontal bicolour. */
+function Poland() {
+  return (
+    <>
+      <rect x="0" y="0" width="90" height="30" fill="#FFFFFF" />
+      <rect x="0" y="30" width="90" height="30" fill="#DC143C" />
+    </>
+  );
+}
+
 const FLAG_BODY: Record<Exclude<FlagId, ''>, () => ReactElement> = {
   france: France,
   spain: Spain,
@@ -142,6 +303,19 @@ const FLAG_BODY: Record<Exclude<FlagId, ''>, () => ReactElement> = {
   england: England,
   norway: Norway,
   switzerland: Switzerland,
+  canada: Canada,
+  belgium: Belgium,
+  portugal: Portugal,
+  germany: Germany,
+  croatia: Croatia,
+  morocco: Morocco,
+  japan: Japan,
+  usa: Usa,
+  mexico: Mexico,
+  uruguay: Uruguay,
+  colombia: Colombia,
+  denmark: Denmark,
+  poland: Poland,
 };
 
 /** Renders a national flag by id (falls back to a neutral panel for unknown/empty ids). */

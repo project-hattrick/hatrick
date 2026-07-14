@@ -82,7 +82,10 @@ export interface RealGkFeatures {
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
-export type FlagId = 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland';
+export type FlagId =
+  | 'france' | 'spain' | 'brazil' | 'argentina' | 'netherlands' | 'england' | 'norway' | 'switzerland'
+  | 'canada' | 'belgium' | 'portugal' | 'germany' | 'croatia' | 'morocco' | 'japan' | 'usa' | 'mexico'
+  | 'uruguay' | 'colombia' | 'denmark' | 'poland';
 
 export interface TeamBrand {
   name: string;
@@ -314,5 +317,18 @@ export const AWAY_TEAM_PACKS: Record<string, { root: string; brand: TeamBrand; a
   norway: { root: '/game/teams/norway', brand: { name: 'Norway', flagId: 'norway', colors: ['#BA0C2F', '#FFFFFF', '#001E50'] }, accent: '#BA0C2F' },
   england: { root: '/game/teams/england', brand: { name: 'England', flagId: 'england', colors: ['#F2F4F8', '#002366', '#EEF2F7'] }, accent: '#C8102E' },
   switzerland: { root: '/game/teams/switzerland', brand: { name: 'Switzerland', flagId: 'switzerland', colors: ['#D52B1E', '#FFFFFF', '#D52B1E'] }, accent: '#D52B1E' },
+  canada: { root: '/game/teams/canada', brand: { name: 'Canada', flagId: 'canada', colors: ['#D52B1E', '#FFFFFF', '#D52B1E'] }, accent: '#D52B1E' },
+  belgium: { root: '/game/teams/belgium', brand: { name: 'Belgium', flagId: 'belgium', colors: ['#E30613', '#000000', '#FFE936'] }, accent: '#E30613' },
+  portugal: { root: '/game/teams/portugal', brand: { name: 'Portugal', flagId: 'portugal', colors: ['#046A38', '#DA020E', '#FFD100'] }, accent: '#DA020E' },
+  germany: { root: '/game/teams/germany', brand: { name: 'Germany', flagId: 'germany', colors: ['#F2F4F8', '#000000', '#DD0000'] }, accent: '#111111' },
+  croatia: { root: '/game/teams/croatia', brand: { name: 'Croatia', flagId: 'croatia', colors: ['#D32F2F', '#FFFFFF', '#171796'] }, accent: '#D32F2F' },
+  morocco: { root: '/game/teams/morocco', brand: { name: 'Morocco', flagId: 'morocco', colors: ['#C1272D', '#006233', '#C1272D'] }, accent: '#C1272D' },
+  japan: { root: '/game/teams/japan', brand: { name: 'Japan', flagId: 'japan', colors: ['#12228A', '#BC002D', '#EEF2F7'] }, accent: '#12228A' },
+  usa: { root: '/game/teams/usa', brand: { name: 'USA', flagId: 'usa', colors: ['#3C3B6E', '#B22234', '#FFFFFF'] }, accent: '#3C3B6E' },
+  mexico: { root: '/game/teams/mexico', brand: { name: 'Mexico', flagId: 'mexico', colors: ['#006847', '#FFFFFF', '#CE1126'] }, accent: '#006847' },
+  uruguay: { root: '/game/teams/uruguay', brand: { name: 'Uruguay', flagId: 'uruguay', colors: ['#5AAEE0', '#001A57', '#EEF2F7'] }, accent: '#5AAEE0' },
+  colombia: { root: '/game/teams/colombia', brand: { name: 'Colombia', flagId: 'colombia', colors: ['#FCD116', '#003893', '#CE1126'] }, accent: '#FCD116' },
+  denmark: { root: '/game/teams/denmark', brand: { name: 'Denmark', flagId: 'denmark', colors: ['#C60C30', '#FFFFFF', '#C60C30'] }, accent: '#C60C30' },
+  poland: { root: '/game/teams/poland', brand: { name: 'Poland', flagId: 'poland', colors: ['#FFFFFF', '#DC143C', '#FFFFFF'] }, accent: '#DC143C' },
 };
 
