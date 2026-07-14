@@ -2,14 +2,30 @@
 
 import { GlassPanel } from '@/components/common/glass-panel';
 import { Flag } from '@/components/common/flag';
-import { lineupFor, realLineupFor } from '@/config/team-lineups.config';
+import { formationFor, lineupFor, realLineupFor } from '@/config/team-lineups.config';
 import { useMatchLineups } from '@/store/match.store';
+import { FormationField } from './formation-field';
 import { useDashboardMatch } from './use-dashboard-match';
 
-/** "Team Line Up" — each side's XI for the SELECTED match (position badge down the middle). */
+function TeamTag({ name, shape, code, align }: { name: string; shape: string; code: string; align?: 'right' }) {
+  return (
+    <div className={align === 'right' ? 'flex flex-row-reverse items-center gap-1.5 text-right' : 'flex items-center gap-1.5'}>
+      <Flag code={code} className="text-sm" />
+      <div className={align === 'right' ? 'flex flex-col items-end' : 'flex flex-col'}>
+        <span className="text-micro font-bold">{name}</span>
+        <span className="font-mono text-micro text-muted-foreground">{shape}</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Team Line Up" — the merged formation + XI card: a draggable 3D pitch showing both sides' tactical
+ * shape, then each side's starting XI for the SELECTED match (position badge down the middle). Real
+ * feed lineups (`action=lineups`) win; the 1–11 template stands in.
+ */
 export function TeamLineupCard() {
   const match = useDashboardMatch();
-  // Real feed lineups (same fixture as the dashboard match) win; the 1–11 template stands in.
   const lineups = useMatchLineups();
   const home = lineups?.home.length ? realLineupFor(match.home.code, lineups.home) : lineupFor(match.home.code);
   const away = lineups?.away.length ? realLineupFor(match.away.code, lineups.away) : lineupFor(match.away.code);
@@ -31,6 +47,13 @@ export function TeamLineupCard() {
           {match.away.code} <Flag code={match.away.iso} className="text-sm" />
         </span>
       </div>
+
+      <div className="flex items-center justify-between">
+        <TeamTag name={match.home.name} shape={formationFor(match.home.code)} code={match.home.iso} />
+        <TeamTag name={match.away.name} shape={formationFor(match.away.code)} code={match.away.iso} align="right" />
+      </div>
+
+      <FormationField />
 
       <div className="flex flex-1 flex-col justify-between">
         {home.map((row, i) => (

@@ -286,22 +286,33 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
-    perspective: 1200px;
-    perspective-origin: 50% -90px;
+    perspective: 1150px;
+    perspective-origin: 50% -170px;
     backface-visibility: hidden;
+    cursor: grab;
+    touch-action: none;
+  }
+  .ftw3d.is-dragging {
+    cursor: grabbing;
   }
   .ftw3d__scale {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(var(--ftw-scale, 0.62));
+    transform: translate(-50%, -50%) scale(var(--ftw-scale, 0.56));
+    transform-style: preserve-3d;
+  }
+  /* draggable camera — vertical drag tilts (--ftw-rx), horizontal orbits (--ftw-ry) */
+  .ftw3d__tilt {
+    position: relative;
+    transform: rotateX(var(--ftw-rx, 0deg)) rotateY(var(--ftw-ry, 0deg));
     transform-style: preserve-3d;
   }
   .ftw3d__world {
     position: relative;
     width: 672px;
     height: 840px;
-    transform: translateZ(-110px);
+    transform: translateZ(-150px);
     transform-style: preserve-3d;
     backface-visibility: hidden;
   }
@@ -333,6 +344,24 @@
     position: absolute;
     inset: 0;
     background-image: linear-gradient(to top, rgb(0 0 0 / 0.14), transparent 55%);
+  }
+  /* team flag painted onto each half of the pitch, low-opacity (cover, not the .fi inline sizing) */
+  .ftw3d__flag {
+    position: absolute;
+    left: 6%;
+    width: 88%;
+    height: 42%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.16;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .ftw3d__flag--home {
+    top: 6%;
+  }
+  .ftw3d__flag--away {
+    bottom: 6%;
   }
   /* the 3D sides give the pitch its thickness (mud rim) */
   .ftw3d__side {

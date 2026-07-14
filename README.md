@@ -155,8 +155,8 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 
 - **API:** NestJS · `@nestjs/event-emitter` (event-driven) · Socket.IO · Axios
 - **Front:** Next.js (App Router) · shadcn/ui · Zustand · React Query · Solana Wallet Adapter · custom canvas game engine (framework-free TS)
-- **Data:** TxLINE (SSE scores + odds, REST snapshots, Merkle proofs) — see [Data & Architecture](#architecture)
-- **Chain:** Solana (devnet) · Anchor *(Phase 2)*
+- **Data:** TxLINE (SSE scores + odds, REST snapshots, oracle-signed settlement inputs) — see [Data & Architecture](#architecture)
+- **Chain:** Solana (devnet) · Anchor programs for betting, fantasy duels, packs, and provably-fair seeds
 - **Infra:** Docker (Postgres + Redis) · GitHub Actions CI
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
@@ -278,6 +278,7 @@ A **polyglot monorepo of independent apps** — nothing shared, no cross-app imp
 - Node.js 20+
 - Docker (for Postgres + Redis)
 - A Solana wallet (e.g. Phantom) for the front
+- Rust, Solana CLI 2.2.16, and Anchor 0.31.1 when building or deploying `contracts/`
 
 ### Installation
 
@@ -297,9 +298,15 @@ cd front
 npm install
 cp .env.example .env.local
 npm run dev                            # http://localhost:3000
+
+# 3) Contracts (only when deploying or testing on-chain mode)
+cd ../contracts
+yarn install
+anchor build --release
+yarn test                              # local validator-backed Anchor tests
 ```
 
-> The API boots cleanly with `TXLINE_ENABLED=false` (no credentials needed). See [`api/README.md`](api/README.md) for TxLINE setup.
+> The API boots cleanly with `TXLINE_ENABLED=false` and `SOLANA_ENABLED=false` (no credentials needed). See [`api/README.md`](api/README.md) for TxLINE and chain setup, and [`contracts/README.md`](contracts/README.md) for Anchor build/deploy instructions.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -316,7 +323,7 @@ Everything you see in Hatrick originates from **[TxLINE](https://txline.txodds.c
 | **TxLINE SSE — scores** | Live match events (goals, cards, corners, possession…) with a `confirmed` flag | The heartbeat of the whole app |
 | **TxLINE SSE — odds** | Real-time market prices | Odds boards + in-match betting markets |
 | **TxLINE REST snapshots** | Fixtures, lineups, current state | Fixture pages, initial state on connect |
-| **Solana devnet** | On-chain subscribe + activate for the TxLINE API token; Merkle proofs *(Phase 2 settlement)* | Access to the feed itself is provisioned on-chain |
+| **Solana devnet** | TxLINE token activation plus Hatrick Anchor programs for betting, fantasy duels, card packs, and provably-fair seeds | Access to the feed is provisioned on-chain; app flows can run in play-money mode or chain-authoritative mode |
 
 ### One feed, two states, many consumers
 
@@ -341,7 +348,7 @@ The core contract: **every domain event fires twice**. `*.during` is the optimis
 ### What the feed drives on screen
 
 - **Live 2D arena** — a match director translates feed events (possession shifts, shots, goals, corners) into the simulated pitch in real time; the scoreboard is authoritative from `*.after`.
-- **Betting** — markets and odds mirror the odds stream; settlement only ever happens on confirmed events.
+- **Betting** — markets and odds mirror the odds stream; settlement only ever happens on confirmed events and can be mirrored from the Anchor betting program when chain mode is enabled.
 - **Fantasy attributes** — player cards get stronger or weaker based on real tournament performance, recalculated on `*.after`.
 - **Hero backdrop** — the landing page itself is a live render driven by the same feed.
 - **Replay** — `POST /replay` re-plays a finished match through the *same* during/after pipeline, so every surface can be demonstrated 1:1 without waiting for kickoff.
@@ -360,7 +367,7 @@ How Hatrick answers each judging criterion of the track:
 | **Real-Time Responsiveness** | The during/after contract makes latency a feature: the arena animates the instant an event arrives (`*.during`) and reconciles when TxLINE confirms it (`*.after`). One SSE ingest → WebSocket fan-out to every surface. |
 | **Originality & Value Creation** | Not another picks leaderboard or pundit bot — a **playable match simulation** driven by real data. Live matches become a 2D arena; fantasy cards get stronger from real performances; both are the same engine fed by the same feed. |
 | **Commercial Viability** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
-| **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation → live ingest → betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
+| **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
 
@@ -368,14 +375,15 @@ And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** �
 
 We'd rather show the seams than oversell. What's genuinely live/on-chain today, and what's simulated for the demo:
 
-| ✅ Real (live / on-chain) | 🎭 Simulated (for the demo) |
+| ✅ Real (live / on-chain capable) | 🎭 Simulated (for the demo) |
 |---|---|
 | TxLINE SSE ingest — scores + odds | Crowd speech balloons & social picks |
 | On-chain TxLINE token activation (devnet) | Fantasy 1v1 opponent (matchmaking) |
+| Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds | — |
 | Betting markets + settlement from `*.after` | — |
 | Match **replay** through the real pipeline | — |
 
-> 🔗 **Proof it's on-chain:** [TxLINE token activation — Solana Explorer (devnet)](https://explorer.solana.com/?cluster=devnet) *(paste the real activation tx signature here)*.
+> 🔗 **Proof it's on-chain:** program ids, deploy commands, and verification steps live in [`contracts/README.md`](contracts/README.md) and [`docs/onchain-integration.md`](../docs/onchain-integration.md).
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -387,13 +395,13 @@ We'd rather show the seams than oversell. What's genuinely live/on-chain today, 
 |---|---|---|---|
 | [`api/`](api) | NestJS, event-driven (TxLINE → DURING/AFTER → WebSocket) | 3001 | active |
 | [`front/`](front) | Next.js (App Router) + shadcn/ui + Zustand + React Query | 3000 | active |
-| [`contracts/`](contracts) | Anchor / Solana (devnet) | — | ⏸ Phase 2 (deferred) |
+| [`contracts/`](contracts) | Anchor / Solana (devnet): betting, fantasy, packs, provably-fair seeds | — | active |
 
 ```text
 project/
 ├─ api/        # NestJS — event-driven, TxLINE ingest, WS gateway (+ docker-compose)
 ├─ front/      # Next.js — shadcn, Zustand, React Query, services/
-└─ contracts/  # Anchor / Solana — ⏸ deferred (Phase 2)
+└─ contracts/  # Anchor / Solana — betting, fantasy duels, packs, provably-fair seeds
 ```
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
@@ -409,9 +417,10 @@ project/
 - [x] **Fantasy Mode** — packs, XI builder, dynamic attributes, 1v1 arena duels
 - [x] Responsible gaming — 18+ age gate, self-exclusion, stake limits
 - [x] Geo-blocking on betting surfaces (`proxy.ts`, `?geo=demo` bypass)
+- [x] **Contracts** — Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds
 - [ ] **Crowd** — chat + X balloons with moderation & ranking (front-simulated for the demo)
 - [ ] Public deploy (scaffolding ready — deploy notes kept outside the repo) + demo video ([script](../docs/demo-video-script.md))
-- [ ] *(Phase 2)* On-chain escrow + `validate_stat` settlement + Merkle-proof UI
+- [ ] On-chain proof polish — Explorer links, proof panels, and demo-friendly transaction receipts
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

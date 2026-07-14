@@ -1,7 +1,6 @@
 import { MatchHeroCard } from './match-hero-card';
 import { LiveMatchCard } from './live-match-card';
 import { TeamStatisticCard } from './team-statistic-card';
-import { TeamFormationCard } from './team-formation-card';
 import { TeamLineupCard } from './team-lineup-card';
 import { GroupStageTable } from './group-stage-table';
 import { UpcomingOddsCard } from './upcoming-odds-card';
@@ -31,7 +30,6 @@ export function MatchDashboard() {
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_300px] lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-4">
           <MatchHeroCard />
-          <TeamFormationCard />
           <TeamLineupCard />
         </div>
         <div className="flex flex-col gap-4">
