@@ -19,25 +19,22 @@ import { keccak_256 } from 'js-sha3';
 
 import { MarketType } from '../events/enums/market-type.enum';
 
-/** On-chain MarketKind discriminants (order matches contracts state.rs). */
-export enum MarketKind {
-  LiveMatch = 0,
-  Fantasy1v1 = 1,
-}
-
-/** On-chain MarketStatus discriminants (order matches contracts state.rs). */
+/** On-chain MarketStatus discriminants (order matches contracts state/mod.rs). */
 export enum MarketStatus {
   Open = 0,
   Settled = 1,
   Voided = 2,
 }
 
+/**
+ * Decoded `hattrick_betting::Market` account. Layout mirrors the Rust struct in
+ * `programs/hattrick_betting/src/state/mod.rs` exactly (there is NO `kind` field).
+ */
 export interface MarketAccount {
   authority: PublicKey;
   oracle: PublicKey;
   mint: PublicKey;
   marketId: Buffer;
-  kind: MarketKind;
   status: MarketStatus;
   totalPool: bigint;
   winningPool: bigint;
@@ -111,7 +108,6 @@ export class HatTrickClient {
     authority: PublicKey;
     mint: PublicKey;
     marketId: Buffer;
-    kind: MarketKind;
     oracle: PublicKey;
     closeTs: bigint | number;
     voidDelay: bigint | number;
@@ -129,10 +125,10 @@ export class HatTrickClient {
         meta(SystemProgram.programId, false, false),
         meta(SYSVAR_RENT_PUBKEY, false, false),
       ],
+      // args: market_id([u8;16]) || oracle(Pubkey) || close_ts(i64) || void_delay(i64)
       data: Buffer.concat([
         disc('initialize_market'),
         params.marketId,
-        Buffer.from([params.kind]),
         params.oracle.toBuffer(),
         i64(params.closeTs),
         i64(params.voidDelay),
@@ -253,7 +249,6 @@ export class HatTrickClient {
     const oracle = pk();
     const mint = pk();
     const marketId = bytes(16);
-    const kind = data.readUInt8(o++) as MarketKind;
     const status = data.readUInt8(o++) as MarketStatus;
     const totalPool = data.readBigUInt64LE(o);
     o += 8;
@@ -271,7 +266,6 @@ export class HatTrickClient {
       oracle,
       mint,
       marketId,
-      kind,
       status,
       totalPool,
       winningPool,

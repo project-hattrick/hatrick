@@ -7,10 +7,30 @@ The consumer web app for both modes — **Fantasy** (pack → XI → simulated 1
 ## Run
 ```bash
 npm install
-cp .env.example .env.local   # point at the backend + pick the Solana cluster
+cp .env.example .env.local   # see "Configuration" section below
 npm run dev                  # http://localhost:3000
 ```
 Scripts: `dev` · `build` · `start` · `lint` (no test script — verify by running the app).
+
+## Configuration
+
+### API & Network
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=http://localhost:3001
+NEXT_PUBLIC_SOLANA_CLUSTER=devnet
+```
+
+### On-Chain Mode
+```bash
+# Enable on-chain betting, duel deposits, and pack opens (requires backend with SOLANA_ENABLED=true)
+NEXT_PUBLIC_CHAIN_ENABLED=false
+
+# Play-token mint (set after backend deploys contracts)
+NEXT_PUBLIC_PLAY_TOKEN_MINT=
+```
+
+**Full details**: [`docs/onchain-integration.md`](../../docs/onchain-integration.md) and the backend [`project/api/README.md`](../api/README.md).
 
 ## Routes (`src/app`)
 | Route | Role |

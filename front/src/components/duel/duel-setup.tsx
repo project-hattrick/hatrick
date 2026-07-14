@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import { FormationPitch } from '@/components/home/widgets/formation-pitch';
 import { formatTokens } from '@/components/fantasy/bet-selector';
@@ -10,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { fifaToIso } from '@/lib/country';
 import { type PlayerProfile } from '@/config/duelists.config';
 import { useSelfProfile } from '@/hooks/use-self-identity';
+import { isChainSession } from '@/services/session-mode';
+import { useDepositDuelStake } from '@/services/queries/use-deposit-duel-stake';
 import { useDuelStore } from '@/store/duel.store';
 import { cn } from '@/lib/utils';
 
@@ -51,11 +55,40 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
   const opponent = useDuelStore((s) => s.opponent);
   const bet = useDuelStore((s) => s.bet);
   const confirmSetup = useDuelStore((s) => s.confirmSetup);
+  const depositStake = useDepositDuelStake();
+  const [depositing, setDepositing] = useState(false);
 
   if (!opponent) return null;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     confirmSetup();
+    // On-chain path: if a stake is involved and chain is active, deposit immediately.
+    // The duel.store.confirmSetup() call above persists the duel and populates serverId
+    // asynchronously. We poll the store for it before depositing.
+    if (bet && isChainSession()) {
+      setDepositing(true);
+      // Wait briefly for duel.store to populate serverId from the backend response.
+      const id = await new Promise<string | null>((resolve) => {
+        let attempts = 0;
+        const check = () => {
+          const sid = useDuelStore.getState().serverId;
+          if (sid) return resolve(sid);
+          if (++attempts >= 20) return resolve(null);
+          setTimeout(check, 250);
+        };
+        check();
+      });
+      if (id) {
+        depositStake.mutate(id, {
+          onSuccess: () => toast.success('Stake deposited on-chain'),
+          onError: (err) => toast.error((err as Error)?.message ?? 'Deposit failed'),
+          onSettled: () => setDepositing(false),
+        });
+      } else {
+        setDepositing(false);
+        toast.error('Could not get duel ID for deposit — contact support');
+      }
+    }
     onConfirm?.();
   };
 
@@ -92,9 +125,15 @@ export function DuelSetup({ embedded = false, onConfirm }: DuelSetupProps) {
 
       <FormationPitch />
 
-      <Button size="lg" shape="pill" className="w-full gap-2 font-semibold" onClick={handleConfirm}>
+      <Button
+        size="lg"
+        shape="pill"
+        className="w-full gap-2 font-semibold"
+        onClick={() => void handleConfirm()}
+        disabled={depositing || depositStake.isPending}
+      >
         <Lightning className="size-4" weight="fill" />
-        Lock XI & enter the pitch
+        {depositing || depositStake.isPending ? 'Depositing stake…' : 'Lock XI & enter the pitch'}
       </Button>
     </div>
   );

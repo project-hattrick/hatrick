@@ -62,4 +62,15 @@ export const endpoints = {
   crowd: {
     message: '/crowd/message',
   },
+  chain: {
+    balance: '/chain/balance',
+    confirm: '/chain/confirm',
+    duels: {
+      depositBuild: (duelId: string) => `/chain/duels/${duelId}/deposit/build`,
+    },
+    packs: {
+      openBuild: '/chain/packs/open/build',
+      fulfill: (packOpenId: string) => `/chain/packs/${packOpenId}/fulfill`,
+    },
+  },
 } as const;

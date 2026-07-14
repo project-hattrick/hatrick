@@ -15,6 +15,9 @@ import { useLocalizedPath } from '@/hooks/use-localized-path';
 import { useT } from '@/i18n/i18n-provider';
 import { useUiStore } from '@/store/ui.store';
 import { useBalance, useWalletStore } from '@/store/wallet.store';
+import { useChainBalance } from '@/services/queries/use-chain-balance';
+import { isChainSession } from '@/services/session-mode';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
 /**
@@ -39,8 +42,12 @@ export function SiteNavbar(_props: { heroBackdrop?: boolean } = {}) {
   const t = useT();
   const localizedPath = useLocalizedPath();
   const openSearch = useUiStore((s) => s.setSearchOpen);
-  const coins = useBalance();
+  const playMoneyCoins = useBalance();
   const credit = useWalletStore((s) => s.credit);
+  const { data: chainBalance } = useChainBalance();
+  // When chain is enabled and the user has an authed session, show on-chain play-token balance.
+  const chainMode = env.chainEnabled && isChainSession();
+  const coins = chainMode && chainBalance ? Number(chainBalance.playToken) : playMoneyCoins;
 
   const topUp = () => {
     credit(TOP_UP_AMOUNT);

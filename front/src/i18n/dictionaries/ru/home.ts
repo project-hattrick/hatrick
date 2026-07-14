@@ -11,10 +11,7 @@ export const home = {
     copyright: '© 2026 Hatrick. Все права защищены.',
     disclaimer: 'Devnet demo · только игровые деньги · не связано с FIFA.',
     socials: {
-      website: 'Сайт',
-      community: 'Сообщество',
-      telegram: 'Telegram',
-      email: 'Email',
+      x: 'X / Twitter',
     },
     badges: {
       appStore: { store: 'App Store', tagline: 'Скачать в' },

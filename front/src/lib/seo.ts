@@ -22,7 +22,7 @@ export const SITE = {
     'TxLINE',
     'Hatrick',
   ],
-  twitter: '@hattrick',
+  twitter: '@playhatrick',
   locale: 'en_US',
 } as const;
 

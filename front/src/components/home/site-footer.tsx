@@ -2,16 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { AppleLogo, Globe, Envelope, ChatCircle, Play, PaperPlaneTilt, type Icon } from '@/components/common/icons';
+import { AppleLogo, Globe, Play, XLogo, type Icon } from '@/components/common/icons';
 import { PoweredByTxline } from '@/components/common/powered-by-txline';
 import { useI18n } from '@/i18n/i18n-provider';
 import { localizePath } from '@/i18n/path';
 
-const socials: { labelKey: 'website' | 'community' | 'telegram' | 'email'; icon: Icon; href: string }[] = [
-  { labelKey: 'website', icon: Globe, href: '/' },
-  { labelKey: 'community', icon: ChatCircle, href: '/faq' },
-  { labelKey: 'telegram', icon: PaperPlaneTilt, href: '/contact' },
-  { labelKey: 'email', icon: Envelope, href: '/contact' },
+const socials: { labelKey: 'x'; icon: Icon; href: string }[] = [
+  { labelKey: 'x', icon: XLogo, href: 'https://x.com/playhatrick' },
 ];
 
 const storeIcons: Record<string, Icon> = {
@@ -39,14 +36,16 @@ export function SiteFooter() {
               const Icon = social.icon;
               const label = copy.socials[social.labelKey];
               return (
-                <Link
+                <a
                   key={social.labelKey}
-                  href={localizePath(social.href, locale)}
+                  href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
                   aria-label={label}
                   className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-surface-2 text-muted-foreground transition hover:border-neon/40 hover:text-neon"
                 >
                   <Icon className="size-4" />
-                </Link>
+                </a>
               );
             })}
           </div>

@@ -25,6 +25,15 @@ export const backendEnabled = !env.useMock;
 export const isBackendSession = (): boolean =>
   backendEnabled && useAuthStore.getState().status === 'authed';
 
+/**
+ * True when the on-chain path is active: chain flag is enabled, the user has an
+ * authenticated backend session, and the auth user has a wallet address. Components
+ * that also need `publicKey` from the wallet adapter should use `useIsChainSession()`
+ * (React hook) instead.
+ */
+export const isChainSession = (): boolean =>
+  env.chainEnabled && isBackendSession() && !!useAuthStore.getState().user?.walletAddress;
+
 /** Play-money balance for a mock (backend-off) session — mirrors the wallet seed. */
 export const MOCK_SEED_BALANCE = 28_105_820;
 

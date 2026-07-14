@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { MarketType } from '../../events/enums/market-type.enum';
 import { ChainConfig } from '../chain.config';
 import { SolanaService } from './solana.service';
-import { HatTrickClient, MarketKind } from '../hat-trick.client';
+import { HatTrickClient } from '../hat-trick.client';
 
 /**
  * Opens on-chain markets for real fixtures (Live Mode). A market is pre-match:
@@ -31,7 +31,6 @@ export class MarketService {
       authority: authority.publicKey,
       mint,
       marketId,
-      kind: MarketKind.LiveMatch,
       oracle: this.cfg.oracle().publicKey,
       closeTs,
       voidDelay: this.cfg.voidDelaySeconds,

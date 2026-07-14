@@ -193,6 +193,14 @@ enum WalletTxType {
 }
 
 /**
+ * On-chain provably-fair context: either a fantasy duel commit or a pack open.
+ */
+enum SeedCommitContext {
+  Duel
+  Pack
+}
+
+/**
  * What a limited store item unlocks — mirrors the front /store sections.
  */
 enum StoreItemKind {
@@ -351,6 +359,8 @@ model CardAttributeSnapshot {
 
 /**
  * One row per owned copy — the user's arsenal. Duplicates are distinct rows.
+ * `assetMint` and `mintTxSig` are populated by pack-chain fulfillPack once
+ * the Metaplex Core asset is confirmed on-chain (nullable for off-chain packs).
  */
 model OwnedCard {
   id            String            @id @default(cuid())
@@ -362,6 +372,9 @@ model OwnedCard {
   packOpeningId String?
   packOpening   PackOpening?      @relation(fields: [packOpeningId], references: [id])
   acquiredAt    DateTime          @default(now())
+  // On-chain mirror: Metaplex Core asset address + fulfil tx (null for play-money packs)
+  assetMint     String?
+  mintTxSig     String?
 
   squadSlots SquadSlot[]
   listings   MarketListing[]
@@ -445,6 +458,9 @@ model Duel {
   createdAt  DateTime    @default(now())
   startedAt  DateTime?
   finishedAt DateTime?
+  // On-chain mirror: tx signatures from initialize_duel and settle_duel
+  chainInitTxSig   String?
+  chainSettleTxSig String?
 
   lineups DuelLineup[]
 
@@ -631,3 +647,28 @@ model RoomMessage {
   @@index([roomId, createdAt])
   @@map("room_messages")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// On-chain mirror — provably-fair seed commits (Duel + Pack)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Stores the raw 32-byte server seed keyed by recordId so the backend can
+ * re-derive it at reveal time. Never exposed to clients. `txSig` is set
+ * after the on-chain commit confirms.
+ */
+model SeedCommit {
+  recordId   String            @id
+  serverSeed String            // hex-encoded 32-byte random seed
+  context    SeedCommitContext
+  revealed   Boolean           @default(false)
+  txSig      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@map("seed_commits")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// On-chain mirror — OwnedCard asset mint address (set after fulfill_pack)
+// ─────────────────────────────────────────────────────────────────────────────

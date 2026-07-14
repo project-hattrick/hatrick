@@ -4,13 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DuelResult, DuelStatus, NotificationType, WalletTxType, type OwnedCard } from '@prisma/client';
 
+import { EventName } from '../../events/enums/event-name.enum';
 import { NotificationsService } from '../../users/notifications.service';
 import { UserRepository, WalletRepository } from '../../users/repositories';
 import { DuelRepository, OwnedCardRepository } from '../repositories';
 import { CreateDuelDto, DuelDto, DuelResultDto, SettleDuelDto } from '../dto/duel.dto';
 import { DUEL_MMR_DELTA } from '../fantasy.constants';
+import type { DuelFinishedPayload } from '../../chain/services/duel-chain.service';
 
 /**
  * 1v1 duel lifecycle, server-side. Opponents are personas (vs CPU → guestId null).
@@ -25,6 +28,7 @@ export class DuelService {
     private readonly users: UserRepository,
     private readonly wallet: WalletRepository,
     private readonly notifications: NotificationsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async list(userId: string): Promise<DuelDto[]> {
@@ -133,6 +137,20 @@ export class DuelService {
       body: `${dto.hostScore}–${dto.guestScore}${mmrDelta !== 0 ? ` · ${mmrDelta > 0 ? '+' : ''}${mmrDelta} MMR` : ''}`,
       href: '/profile',
     });
+
+    // Mirror to the on-chain fantasy escrow (no-op when chain is disabled or the
+    // opponent was CPU — DuelChainService gates on both). Fire-and-forget: chain
+    // failures must not fail the off-chain settle.
+    const payload: DuelFinishedPayload = {
+      duelId,
+      hostId: duel.hostId,
+      guestId: duel.guestId,
+      hostResult: dto.result,
+      hostScore: dto.hostScore,
+      guestScore: dto.guestScore,
+      stake,
+    };
+    this.events.emit(EventName.DuelSettledAfter, payload);
 
     return { duel: DuelDto.fromEntity(finished), balance: balance.toFixed(2) };
   }

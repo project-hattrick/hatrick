@@ -33,19 +33,19 @@ export const BILLBOARDS: Billboard[] = [
   // Adjacent (edge-to-edge) like before, meeting exactly at the Hatrick board's edges — no overlap.
   {
     kind: BillboardKind.Led,
-    corners: [[0.3, 0.3], [0.43, 0.3], [0.43, 0.336], [0.3, 0.336]],
+    corners: [[0.3, 0.3], [0.41, 0.3], [0.41, 0.336], [0.3, 0.336]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.43, 0.3], [0.57, 0.3], [0.57, 0.336], [0.43, 0.336]],
+    corners: [[0.445, 0.3], [0.555, 0.3], [0.555, 0.336], [0.445, 0.336]],
     src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.57, 0.3], [0.7, 0.3], [0.7, 0.336], [0.57, 0.336]],
+    corners: [[0.59, 0.3], [0.7, 0.3], [0.7, 0.336], [0.59, 0.336]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,

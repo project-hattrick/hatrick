@@ -19,4 +19,5 @@ export const queryKeys = {
   room: (id: string) => ['room', id] as const,
   roomMembers: (id: string) => ['room', id, 'members'] as const,
   roomMessages: (id: string) => ['room', id, 'messages'] as const,
+  chainBalance: () => ['chain', 'balance'] as const,
 };

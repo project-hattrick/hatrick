@@ -17,6 +17,11 @@ import {
   stateFromFieldSpec,
   type CalibratorState,
 } from '@/components/aligner/field-calibrator-data';
+import { useReplayCatalog } from '@/services/queries/use-replay';
+import { useLoadReplay } from '@/hooks/use-load-replay';
+import { useRealgkFeedDriver } from '@/services/realtime/use-realgk-driver';
+import { replayService } from '@/services/replay.service';
+import { useMatchStore } from '@/store/match.store';
 import { FloatingWidget } from './floating-widget';
 import { CourtCalibrationOverlay, type Fit } from './court-calibration-overlay';
 
@@ -71,12 +76,32 @@ export function HeroEngineSurface() {
   const red = teamByKey(redKey);
   const court = courtByKey(courtKey);
 
+  // Real-match mode: stream a finished TxLINE fixture through the backend (`POST /replay`) and drive the
+  // engine off it, exactly like the room. Needs NEXT_PUBLIC_USE_MOCK=false + the API/socket up. When no
+  // replay is active the engine stays on the autonomous mock. Name/code are read as primitives (not the
+  // match object) so a per-minute feed tick never reboots the engine.
+  const { data: replayCatalog } = useReplayCatalog(6);
+  const { loadReplay } = useLoadReplay();
+  const isReplay = useMatchStore((s) => s.isReplay);
+  const feedHomeName = useMatchStore((s) => s.match?.home.name);
+  const feedHomeCode = useMatchStore((s) => s.match?.home.code);
+  const feedAwayName = useMatchStore((s) => s.match?.away.name);
+  const feedAwayCode = useMatchStore((s) => s.match?.away.code);
+  const drivenFixtureId = useMatchStore((s) => (s.isReplay ? s.match?.fixtureId ?? null : null));
+  const replayNonce = useMatchStore((s) => s.replayNonce);
+
+  // Effective teams the engine renders: the feed's while replaying, else the manual dropdowns.
+  const bName = isReplay && feedHomeName ? feedHomeName : blue.name;
+  const bCode = isReplay && feedHomeCode ? feedHomeCode : blue.code;
+  const rName = isReplay && feedAwayName ? feedAwayName : red.name;
+  const rCode = isReplay && feedAwayCode ? feedAwayCode : red.code;
+
   // Rebuilding this object reboots the engine (RealGkBackground keys its boot effect on `config`).
   const config = useMemo(() => {
     if (heroLook) return REAL_GK_MATCH_CONFIG;
     const built = buildRealGkFixtureConfig(
-      { name: blue.name, code: blue.code },
-      { name: red.name, code: red.code },
+      { name: bName, code: bCode },
+      { name: rName, code: rCode },
       { png: court.png, field: court.field, billboards: court.billboards },
     ).config;
     // Engine-only: smart football AI + full-pitch opening + a WIDE framing so the whole pitch (far-
@@ -92,9 +117,22 @@ export function HeroEngineSurface() {
         { label: 'Wide', zoom: 0.56, follow: false },
         { label: 'Full pitch', zoom: 0.54, follow: false },
       ],
-      features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true },
+      // `extraAnims` unlocks headers (aerial duels), first touches, interceptions + agile turn/brake so the
+      // match actually USES every mechanic; smartAI + full-pitch opening are engine-only too. `matchIntro`
+      // off skips the slow pre-match showcase/walk-on so /engine drops straight into live play (the
+      // full-pitch opening still gives the reveal).
+      features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true, extraAnims: true, matchIntro: false },
     };
-  }, [heroLook, blue, red, court]);
+  }, [heroLook, bName, bCode, rName, rCode, court]);
+
+  // Drive the engine off the chosen replay's feed (null fixtureId → autonomous mock). Same hook the room
+  // uses; `cinematicIntro: false` drops straight in, `resetKey` re-arms on a replay restart.
+  useRealgkFeedDriver(handleRef, drivenFixtureId, { cinematicIntro: false, resetKey: replayNonce });
+
+  const stopReplay = () => {
+    void replayService.stop().catch(() => {});
+    useMatchStore.setState({ match: null, isReplay: false });
+  };
 
   // Hide the match behind a loading veil until the court PNG + sprite atlases are actually decoded — else
   // the first boot flashes a black pitch with only foot-rings/LED boards while the images stream in. This
@@ -217,7 +255,7 @@ export function HeroEngineSurface() {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      <RealGkBackground config={config} onReady={onReady} bridgeHud teamNames={{ blue: blue.name, red: red.name }} />
+      <RealGkBackground config={config} onReady={onReady} bridgeHud teamNames={{ blue: bName, red: rName }} />
 
       {/* Loading veil — covers the black first-boot flash until the court + sprites are decoded. */}
       {!ready ? (
@@ -232,6 +270,34 @@ export function HeroEngineSurface() {
       {editing && fit && calState ? <CourtCalibrationOverlay fit={fit} state={calState} onChange={applyCal} /> : null}
 
       <EngineMinimap radar={radar} className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2" />
+
+      <FloatingWidget title="Real match (API)" className="left-1/2 top-4 -translate-x-1/2">
+        {isReplay ? (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
+            <span className="text-white/80">{feedHomeName} v {feedAwayName}</span>
+            <button className={btnCls} onClick={stopReplay}>Back to mock</button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <select
+              className={selectCls}
+              value=""
+              disabled={heroLook}
+              onChange={(e) => {
+                const f = replayCatalog?.find((c) => String(c.fixtureId) === e.target.value);
+                if (f) void loadReplay(f, 1);
+              }}
+            >
+              <option value="">Load a past match…</option>
+              {replayCatalog?.map((c) => (
+                <option key={c.fixtureId} value={c.fixtureId}>{c.home} v {c.away}</option>
+              ))}
+            </select>
+            {!replayCatalog?.length ? <span className="text-[11px] text-white/40">API off / no fixtures</span> : null}
+          </div>
+        )}
+      </FloatingWidget>
 
       <FloatingWidget title="Teams" className="left-4 top-4">
         <div className="flex items-end gap-2">

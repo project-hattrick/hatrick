@@ -339,27 +339,37 @@ export function decideOwnerActionSmart(world: RealGkWorld, owner: RealGkPlayer):
     if (prog > lastManProgress) lastManProgress = prog;
   }
 
+  // Score every reachable teammate by forward progress + space + a clear lane. Under pressure the weighting
+  // flips toward the CLOSEST open option (a quick short release); calm, it favors a penetrating pass — so
+  // build-up reads like real passing instead of always hammering a long ball.
   let best: RealGkPlayer | null = null;
   let bestScore = -Infinity;
   for (const m of mates) {
     const forward = owner.dir * (m.x - owner.x);
-    if (forward < -30 * scale) continue; // avoid square/back passes unless nothing else
+    if (forward < -40 * scale) continue; // rarely pass backward
+    const dist = Math.hypot(m.x - owner.x, m.y - owner.y);
     const space = minDistTo(m, opps);
     const lane = laneClearance(owner, m, opps);
-    const score = forward * 0.6 + space * 1.0 + lane * 0.8;
+    const proximity = pressured ? Math.max(0, 320 * scale - dist) : 0; // reward short options when hurried
+    const score = forward * (pressured ? 0.25 : 0.7) + space * 1.0 + lane * 0.8 + proximity * 0.5;
     if (score > bestScore) {
       bestScore = score;
       best = m;
     }
   }
+  if (!best) return;
+  // Calm → often keep carrying into space (owner already dribbles) instead of always passing; pressured →
+  // always release the ball.
+  if (!pressured && Math.random() < 0.45) return;
 
-  // No good option and not under pressure → keep dribbling into space (owner already carries in players.ts).
-  if (!best || (!pressured && Math.random() < 0.5)) return;
-
+  const dist = Math.hypot(best.x - owner.x, best.y - owner.y);
   const mateProgress = owner.dir > 0 ? best.x : -best.x;
   const through = mateProgress > lastManProgress - 6 * scale;
-  const lead = owner.dir * (through ? 34 : 18);
-  kickBall(world, owner, best.x + lead, best.y, through ? 330 : 300, Math.random() < 0.18);
+  const lead = owner.dir * (through ? 34 : 16);
+  // Weight the pass to its distance: crisp short balls, driven long balls; loft only long passes / crosses.
+  const power = clamp(dist * 1.15 + (through ? 40 : 0), 165 * scale, 440 * scale);
+  const lob = dist > 260 * scale && Math.random() < 0.35;
+  kickBall(world, owner, best.x + lead, best.y, power, lob);
   const note = Status.through(owner.name, best.name);
   setStatus(world, note.title, note.text);
 }

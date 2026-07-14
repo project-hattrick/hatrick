@@ -106,6 +106,7 @@ export {
   UserCircle,
   XCircle,
   X,
+  XLogo,
   IconContext,
 } from '@phosphor-icons/react';
 

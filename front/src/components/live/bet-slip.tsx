@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Ticket, X, ShieldWarning, Trophy } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { SectionHeader } from '@/components/common/section-header';
@@ -13,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useZodForm } from '@/hooks/use-zod-form';
 import { useAuth } from '@/services/queries/use-auth';
 import { useRequireAuth } from '@/services/queries/use-require-auth';
+import { usePlaceBet, type PlaceBetVars } from '@/services/queries/use-place-bet';
 import { useBetsStore } from '@/store/bets.store';
 import { useIsMatchLive } from '@/store/match.store';
 import { useResponsibleGamingStore } from '@/store/responsible-gaming.store';
@@ -26,6 +28,10 @@ import {
   type StakedEntry,
 } from '@/store/stake-limits.store';
 import { useBalance } from '@/store/wallet.store';
+import { useMatchStore } from '@/store/match.store';
+import { isChainSession } from '@/services/session-mode';
+import { useChainBalance } from '@/services/queries/use-chain-balance';
+import { MOCK_FIXTURE_ID } from '@/services/mock/live-feed.mock';
 import { formatThousands } from '@/lib/format';
 
 /** Remaining stake allowance for a period (null = no limit set). */
@@ -49,10 +55,20 @@ export function BetSlip() {
   const settledBets = useBetsStore((state) => state.settled);
   const dailyLimit = useStakeLimitsStore((state) => state.daily);
   const weeklyLimit = useStakeLimitsStore((state) => state.weekly);
-  const balance = useBalance();
+  const playMoneyBalance = useBalance();
   const requireAuth = useRequireAuth();
   const { isAuthenticated, isCompetitor } = useAuth();
   const canBet = useIsMatchLive();
+  const { publicKey } = useWallet();
+  const placeBetOnChain = usePlaceBet();
+  const { data: chainBalanceData } = useChainBalance();
+  const fixtureId = useMatchStore((s) => s.match?.fixtureId ?? MOCK_FIXTURE_ID);
+
+  // When chain is active, show the on-chain play-token balance; otherwise play-money.
+  const chainActive = isChainSession() && publicKey !== null;
+  const balance = chainActive
+    ? Number(chainBalanceData?.playToken ?? playMoneyBalance)
+    : playMoneyBalance;
 
   // Mounted gate: store values rehydrate from localStorage on the client only, so we
   // treat the user as active/unlimited until mounted to avoid a hydration mismatch.
@@ -78,34 +94,64 @@ export function BetSlip() {
   const stake = Number(watch('stake')) || 0;
   const potential = slip ? Math.round(stake * slip.odds) : 0;
 
-  function onSubmit(values: FormValues) {
-    if (!slip) return;
+  // Shared validation that applies to both on-chain and play-money paths.
+  function validateBet(values: FormValues): boolean {
+    if (!slip) return false;
     if (!canBet) {
       toast.error('Betting is closed for this match.');
       clearSlip();
-      return;
+      return false;
     }
     if (selfExcluded) {
       toast.error("You're self-excluded from betting. Manage this in Settings (account menu).");
-      return;
+      return false;
     }
-    if (!requireAuth()) return;
+    if (!requireAuth()) return false;
     if (collectorOnly) {
       toast.error('Betting is for Competitors — sign in with a wallet to place bets.');
-      return;
+      return false;
     }
     if (values.stake > balance) {
       toast.error('Not enough coins for this stake.');
-      return;
+      return false;
     }
     if (dailyLeft !== null && values.stake > dailyLeft) {
       toast.error(`Daily stake limit reached — ${formatThousands(dailyLeft)} left today. Adjust it in Settings.`);
-      return;
+      return false;
     }
     if (weeklyLeft !== null && values.stake > weeklyLeft) {
       toast.error(`Weekly stake limit reached — ${formatThousands(weeklyLeft)} left this week. Adjust it in Settings.`);
+      return false;
+    }
+    return true;
+  }
+
+  function onSubmit(values: FormValues) {
+    if (!validateBet(values) || !slip) return;
+
+    // On-chain path: sign + send the built Solana tx.
+    if (chainActive) {
+      const vars: PlaceBetVars = {
+        fixtureId,
+        market: slip.market,
+        selection: slip.selectionId,
+        amount: values.stake,
+        oddsBps: Math.round(slip.odds * 100),
+      };
+      placeBetOnChain.mutate(vars, {
+        onSuccess: () => {
+          toast.success(`Bet placed on-chain · ${slip.label} @ ${slip.odds.toFixed(2)}`);
+          clearSlip();
+          reset({ stake: 100 });
+        },
+        onError: (err) => {
+          toast.error((err as Error)?.message ?? 'On-chain bet failed');
+        },
+      });
       return;
     }
+
+    // Play-money path (default, unchanged).
     setStake(values.stake);
     const bet = place();
     if (bet) {
@@ -173,12 +219,12 @@ export function BetSlip() {
             <span className="font-bold text-neon tabular-nums">{formatThousands(potential)}</span>
           </div>
 
-          <Button type="submit" className="w-full">
-            Place bet
+          <Button type="submit" className="w-full" disabled={placeBetOnChain.isPending}>
+            {placeBetOnChain.isPending ? 'Confirming…' : 'Place bet'}
           </Button>
           <span className="flex items-center gap-1.5 text-micro text-muted-foreground">
             <Image src="/coin.png" alt="" width={12} height={12} className="size-3" />
-            {formatThousands(balance)} available · devnet play-money
+            {formatThousands(balance)} available · {chainActive ? 'on-chain · devnet' : 'devnet play-money'}
           </span>
           {(dailyLeft !== null || weeklyLeft !== null) && (
             <span className="text-micro text-muted-foreground">

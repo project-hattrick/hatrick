@@ -6,6 +6,8 @@ import { PackOpening } from '@/components/store/pack-opening';
 import { PackBuyDialog } from '@/components/store/pack-buy-dialog';
 import { OddsButton } from '@/components/store/drop-rates-dialog';
 import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
+import { useOpenPackOnChain } from '@/services/queries/use-open-pack-on-chain';
+import { isChainSession } from '@/services/session-mode';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +37,13 @@ interface BuyPackFlowProps {
   oddsReveal?: boolean;
   /** Layout for the actions row (defaults to an inline gap). */
   actionsClassName?: string;
+  /**
+   * On-chain pack open: template id (maps to the pack variant on-chain) and pack
+   * type (e.g. 'Standard'). When provided AND `isChainSession()` is true, the
+   * pack-opening resolver mints real cNFTs instead of drawing from the mock pool.
+   */
+  chainTemplateId?: string;
+  chainPackType?: string;
 }
 
 /** Buy button → purchase-confirm modal → real purchase (stock claim + debit) → pack-opening flow. */
@@ -51,6 +60,8 @@ export function BuyPackFlow({
   showOdds = false,
   oddsReveal = false,
   actionsClassName,
+  chainTemplateId,
+  chainPackType,
 }: BuyPackFlowProps) {
   const [confirming, setConfirming] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -60,6 +71,15 @@ export function BuyPackFlow({
   const soldOut = stock !== undefined && stock <= 0;
   // Signed out → open the login dialog (same as the navbar) instead of the buy modal.
   const gate = useAuthGate();
+
+  // On-chain resolver — only active when chain is enabled, the user is authed, and
+  // the caller provided chain metadata. Falls back to the play-money path otherwise.
+  const useChainOpen =
+    isChainSession() && !!chainTemplateId && !!chainPackType;
+  const chainResolveDeck = useOpenPackOnChain({
+    templateId: chainTemplateId ?? slug,
+    packType: chainPackType ?? 'Standard',
+  });
 
   const confirm = async () => {
     setProcessing(true);
@@ -104,7 +124,14 @@ export function BuyPackFlow({
         onConfirm={() => void confirm()}
       />
 
-      <PackOpening open={opening} onClose={() => setOpening(false)} hideTrigger packName={packName} packSize={packSize} />
+      <PackOpening
+        open={opening}
+        onClose={() => setOpening(false)}
+        hideTrigger
+        packName={packName}
+        packSize={packSize}
+        resolveDeck={useChainOpen ? chainResolveDeck : undefined}
+      />
     </>
   );
 }

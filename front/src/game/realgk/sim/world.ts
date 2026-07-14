@@ -149,6 +149,8 @@ export function restartMatch(world: RealGkWorld): void {
     return;
   }
   world.match.phase = MatchPhase.Live;
+  // No pre-match intro → still reveal on the full pitch at kickoff when the opening is enabled.
+  if (world.cfg.features?.openingFullPitch) world.openingT = OPENING_FULL_PITCH_SECONDS;
   resetPlayers(world);
   resetBall(world, Team.Blue);
   resetReferee(world);

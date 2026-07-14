@@ -6,7 +6,9 @@ import { Transaction } from '@solana/web3.js';
 
 import { MarketType } from '@/enums';
 import { betService } from '../bet.service';
+import { chainService, ChainTxKind } from '../chain.service';
 import { useRequireAuth } from './use-require-auth';
+import { useRefreshChainBalance } from './use-chain-balance';
 
 export interface PlaceBetVars {
   fixtureId: number;
@@ -27,6 +29,7 @@ export function usePlaceBet() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const requireAuth = useRequireAuth();
+  const refreshBalance = useRefreshChainBalance();
 
   return useMutation({
     mutationFn: async (vars: PlaceBetVars): Promise<string> => {
@@ -40,6 +43,8 @@ export function usePlaceBet() {
       const tx = Transaction.from(fromBase64(transaction));
       const signature = await sendTransaction(tx, connection);
       await connection.confirmTransaction(signature, 'confirmed');
+      await chainService.confirm(signature, ChainTxKind.Other);
+      refreshBalance();
       return signature;
     },
   });

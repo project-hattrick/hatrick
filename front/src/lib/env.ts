@@ -10,4 +10,6 @@ export const env = {
     process.env.NEXT_PUBLIC_HAT_TRICK_PROGRAM_ID ??
     '6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J',
   playTokenMint: process.env.NEXT_PUBLIC_PLAY_TOKEN_MINT ?? '',
+  /** When true, on-chain Solana flows replace the play-money paths (bets, duel deposit, pack open). */
+  chainEnabled: (process.env.NEXT_PUBLIC_CHAIN_ENABLED ?? 'false') === 'true',
 } as const;
