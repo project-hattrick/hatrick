@@ -36,6 +36,9 @@ export enum EventName {
   /** A limited store item was bought (stock decremented, coins debited). */
   StorePurchaseAfter = 'store-purchase.after',
 
+  /** A 1v1 duel gained a real second player (guest joined) — triggers on-chain initialize_duel. */
+  DuelReadyAfter = 'duel-ready.after',
+
   /** A 1v1 duel finished settling off-chain — mirrors to the fantasy escrow on-chain. */
   DuelSettledAfter = 'duel-settled.after',
 }

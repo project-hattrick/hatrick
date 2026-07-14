@@ -123,7 +123,8 @@ export function enterIntro(world: RealGkWorld): void {
   resetReferee(world);
   resetCoach(world);
   world.match.phase = MatchPhase.Intro;
-  world.match.introStage = IntroStage.Showcase;
+  // quickIntro drops the slow showcase + sponsor sweep and opens straight on the walk-on/arrange.
+  world.match.introStage = world.cfg.features?.quickIntro ? IntroStage.RiseIn : IntroStage.Showcase;
   world.match.introTimer = 0;
   world.match.introHold = false;
   world.match.celebration = 0;

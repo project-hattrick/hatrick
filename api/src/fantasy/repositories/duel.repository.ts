@@ -29,6 +29,22 @@ export class DuelRepository {
     return this.prisma.duel.update({ where: { id }, data: { status } });
   }
 
+  /** A second real player joins an open (Pending) duel → sets guest + goes Live. */
+  joinGuest(id: string, guestId: string): Promise<Duel> {
+    return this.prisma.duel.update({
+      where: { id },
+      data: { guest: { connect: { id: guestId } }, status: DuelStatus.Live },
+    });
+  }
+
+  /** Persist the on-chain escrow tx signatures (mirror of the fantasy program state). */
+  setChainSig(
+    id: string,
+    sigs: { chainInitTxSig?: string; chainSettleTxSig?: string },
+  ): Promise<Duel> {
+    return this.prisma.duel.update({ where: { id }, data: sigs });
+  }
+
   finish(id: string, data: Prisma.DuelUpdateInput): Promise<Duel> {
     return this.prisma.duel.update({
       where: { id },

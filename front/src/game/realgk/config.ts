@@ -73,6 +73,9 @@ export interface RealGkFeatures {
   /** Full-pitch match opening: the first Live kickoff frames the whole court (zoom 0) for ~2.5s, then
    *  eases into the normal follow camera. Off → the camera starts on the follow preset as before. */
   openingFullPitch?: boolean;
+  /** Short intro (needs `matchIntro`): skip the team showcase + sponsor sweep + referee run — just the
+   *  quick walk-on where the squads arrange, then kickoff. Off → the full pre-match sequence. */
+  quickIntro?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */

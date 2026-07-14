@@ -11,6 +11,7 @@ import { COURTS, courtByKey } from '@/game/realgk/courts';
 import { Team } from '@/game/realgk/enums';
 import type { RealGkHandle, RealGkRadar } from '@/game/realgk/types';
 import { EngineMinimap } from './engine-minimap';
+import { EngineScoreboard } from './engine-scoreboard';
 import {
   buildSnippet,
   fieldSpecFromState,
@@ -118,12 +119,21 @@ export function HeroEngineSurface() {
         { label: 'Full pitch', zoom: 0.54, follow: false },
       ],
       // `extraAnims` unlocks headers (aerial duels), first touches, interceptions + agile turn/brake so the
-      // match actually USES every mechanic; smartAI + full-pitch opening are engine-only too. `matchIntro`
-      // off skips the slow pre-match showcase/walk-on so /engine drops straight into live play (the
-      // full-pitch opening still gives the reveal).
-      features: { ...(built.features as RealGkFeatures), smartAI: true, openingFullPitch: true, extraAnims: true, matchIntro: false },
+      // match actually USES every mechanic; smartAI + the full-pitch opening are engine-only too. Keep
+      // `matchIntro` ON (inherited) so switching teams/court replays the pre-match showcase + walk-on +
+      // kickoff arrangement — the loading veil covers the cold-asset flash before it. `drivenFiller` is OFF
+      // while replaying a REAL match so NO autonomous shots-on-goal fire — shots come ONLY from the feed;
+      // the mock keeps it on for liveliness (irrelevant there since the mock isn't feed-driven anyway).
+      features: {
+        ...(built.features as RealGkFeatures),
+        smartAI: true,
+        openingFullPitch: true,
+        extraAnims: true,
+        quickIntro: true,
+        drivenFiller: !isReplay,
+      },
     };
-  }, [heroLook, bName, bCode, rName, rCode, court]);
+  }, [heroLook, bName, bCode, rName, rCode, court, isReplay]);
 
   // Drive the engine off the chosen replay's feed (null fixtureId → autonomous mock). Same hook the room
   // uses; `cinematicIntro: false` drops straight in, `resetKey` re-arms on a replay restart.
@@ -165,7 +175,7 @@ export function HeroEngineSurface() {
     let cancelled = false;
     const cap = window.setTimeout(() => {
       if (!cancelled) setReady(true);
-    }, 5000); // never trap the veil on a stalled asset
+    }, 10000); // never trap the veil on a stalled asset (heavier atlases with extraAnims load slower cold)
     void Promise.all(images.map(settled)).then(() => {
       if (cancelled) return;
       window.clearTimeout(cap);
@@ -271,7 +281,10 @@ export function HeroEngineSurface() {
 
       <EngineMinimap radar={radar} className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2" />
 
-      <FloatingWidget title="Real match (API)" className="left-1/2 top-4 -translate-x-1/2">
+      {/* Broadcast scoreboard — score/clock update on goals, event beats surface, like the main screen. */}
+      {ready ? <EngineScoreboard className="absolute left-1/2 top-3 z-20 -translate-x-1/2" /> : null}
+
+      <FloatingWidget title="Real match (API)" className="left-4 top-[148px]">
         {isReplay ? (
           <div className="flex items-center gap-2 text-sm">
             <span className="size-2 animate-pulse rounded-full bg-emerald-400" />

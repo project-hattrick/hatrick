@@ -36,6 +36,7 @@ import { UsersService } from './users.service';
     WalletRepository,
     NotificationRepository,
     NotificationsService,
+    UserGateway,
   ],
 })
 export class UsersModule {}

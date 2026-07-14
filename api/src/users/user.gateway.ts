@@ -48,4 +48,13 @@ export class UserGateway {
   emitNotification(userId: string, notification: NotificationDto): void {
     this.server?.to(userChannel(userId)).emit(UserEvent.NotificationNew, notification);
   }
+
+  /**
+   * Generic push to a user's private channel (non-notification events).
+   * Used by domain services (e.g. DuelService) to push duel lifecycle events
+   * without going through the notification persistence layer.
+   */
+  emitToUser(userId: string, event: UserEvent, payload: unknown): void {
+    this.server?.to(userChannel(userId)).emit(event, payload);
+  }
 }

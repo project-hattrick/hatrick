@@ -13,6 +13,7 @@ export const queryKeys = {
   duelist: (username: string) => ['duelist', username] as const,
   duelistSearch: (query: string) => ['duelists', 'search', query] as const,
   duels: () => ['duels'] as const,
+  duelDetail: (id: string) => ['duels', id] as const,
   notifications: () => ['notifications'] as const,
   friends: () => ['friends'] as const,
   storeCatalog: () => ['store', 'catalog'] as const,

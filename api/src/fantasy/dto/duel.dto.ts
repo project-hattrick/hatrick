@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DuelMode, DuelResult, DuelStatus, type Duel, type DuelLineup } from '@prisma/client';
+import { DuelMode, DuelResult, DuelStatus, type Duel, type DuelLineup, type User } from '@prisma/client';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -23,10 +24,45 @@ export class CreateDuelDto {
   @IsOptional()
   opponentName?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Open this as a real 1v1 challenge (Pending, awaiting a second player) instead of a vs-CPU duel. ' +
+      'When both players and wallets are known the on-chain escrow is initialised.',
+    example: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  pvp?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Direct challenge: the user id of the opponent to invite. ' +
+      'Only valid together with pvp=true. The opponent receives a notification + socket event.',
+    example: 'clxyz123',
+  })
+  @IsString()
+  @IsOptional()
+  opponentUserId?: string;
+
   @ApiProperty({ description: 'Duel mode', enum: DuelMode })
   @IsEnum(DuelMode)
   mode!: DuelMode;
 
+  @ApiProperty({ description: 'Formation shape, e.g. "4-3-3"', example: '4-3-3' })
+  @IsString()
+  @Matches(/^\d-\d-\d$/)
+  formation!: string;
+
+  @ApiProperty({ description: 'Owned card ids in the fielded XI', type: [String] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(11)
+  @IsString({ each: true })
+  ownedCardIds!: string[];
+}
+
+/** A second player joining an open (Pending) PvP duel with their own XI. */
+export class JoinDuelDto {
   @ApiProperty({ description: 'Formation shape, e.g. "4-3-3"', example: '4-3-3' })
   @IsString()
   @Matches(/^\d-\d-\d$/)
@@ -87,4 +123,54 @@ export class DuelDto {
 export class DuelResultDto {
   @ApiProperty({ type: DuelDto }) duel!: DuelDto;
   @ApiProperty({ description: 'Balance after stake/reward (decimal string)' }) balance!: string;
+}
+
+/** Public profile slice returned inside DuelDetailDto. */
+export class DuelPlayerDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ nullable: true, type: String }) displayName!: string | null;
+  @ApiProperty({ nullable: true, type: String }) username!: string | null;
+  @ApiProperty({ nullable: true, type: String }) country!: string | null;
+  @ApiProperty({ nullable: true, type: String }) avatarUrl!: string | null;
+  @ApiProperty() mmr!: number;
+
+  static fromUser(user: User): DuelPlayerDto {
+    const dto = new DuelPlayerDto();
+    dto.id = user.id;
+    dto.displayName = user.displayName;
+    dto.username = user.username;
+    dto.country = user.country;
+    dto.avatarUrl = user.avatarUrl;
+    dto.mmr = user.mmr;
+    return dto;
+  }
+}
+
+/** Frozen lineup for one participant (formation + card ids). */
+export class DuelLineupSnapshotDto {
+  @ApiProperty({ nullable: true, type: String }) formation!: string | null;
+  @ApiProperty({ type: [String] }) ownedCardIds!: string[];
+  @ApiProperty({ nullable: true, type: String }) opponentName!: string | null;
+}
+
+/**
+ * Full duel detail — both players' public profiles + frozen lineups + status.
+ * Used by the join screen, waiting screen, and arena loader on both clients.
+ */
+export class DuelDetailDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: DuelMode }) mode!: DuelMode;
+  @ApiProperty({ enum: DuelStatus }) status!: DuelStatus;
+  @ApiProperty({ description: 'Stake (decimal string)' }) stake!: string;
+  @ApiProperty() hostScore!: number;
+  @ApiProperty() guestScore!: number;
+  @ApiProperty({ nullable: true, type: String }) winnerId!: string | null;
+  @ApiProperty({ enum: DuelResult, nullable: true }) hostResult!: DuelResult | null;
+  @ApiProperty() mmrDelta!: number | null;
+  @ApiProperty() createdAt!: Date;
+  @ApiProperty({ nullable: true, type: Date }) finishedAt!: Date | null;
+  @ApiProperty({ type: DuelPlayerDto }) host!: DuelPlayerDto;
+  @ApiProperty({ nullable: true, type: DuelPlayerDto }) guest!: DuelPlayerDto | null;
+  @ApiProperty({ nullable: true, type: DuelLineupSnapshotDto }) hostLineup!: DuelLineupSnapshotDto | null;
+  @ApiProperty({ nullable: true, type: DuelLineupSnapshotDto }) guestLineup!: DuelLineupSnapshotDto | null;
 }

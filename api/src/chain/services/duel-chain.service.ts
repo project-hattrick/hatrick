@@ -11,6 +11,7 @@ import { ProvablyFairService } from './provably-fair.service';
 import { DuelWinner } from '../clients/fantasy.client';
 import { UserRepository } from '../../users/repositories/user.repository';
 import { WalletRepository } from '../../users/repositories/wallet.repository';
+import { DuelRepository } from '../../fantasy/repositories';
 
 /**
  * Payload emitted by DuelService after a duel finishes (off-chain settle path).
@@ -37,6 +38,17 @@ export interface DuelChainInput {
   expireTs: number;
 }
 
+/** Emitted by DuelService.join() once a real second player + both wallets are known. */
+export interface DuelReadyPayload {
+  duelId: string;
+  hostWallet: string;
+  guestWallet: string;
+  stake: number;
+}
+
+/** Hours a duel escrow can sit before the layer may force-expire (refund) it. */
+const DUEL_EXPIRE_HOURS = 24;
+
 /**
  * Wires the fantasy duel lifecycle to the on-chain hattrick_fantasy program.
  *
@@ -59,7 +71,32 @@ export class DuelChainService {
     private readonly pf: ProvablyFairService,
     private readonly users: UserRepository,
     private readonly wallet: WalletRepository,
+    private readonly duels: DuelRepository,
   ) {}
+
+  /**
+   * A real second player joined a PvP duel — initialise the on-chain escrow and
+   * mirror the init tx signature onto the duel row. Best-effort: chain failures
+   * must not break the off-chain duel (players can still play; escrow just won't
+   * back it). No-op when chain is disabled.
+   */
+  @OnEvent(EventName.DuelReadyAfter)
+  async onDuelReady(payload: DuelReadyPayload): Promise<void> {
+    if (!this.cfg.enabled) return;
+    try {
+      const expireTs = Math.floor(Date.now() / 1000) + DUEL_EXPIRE_HOURS * 3600;
+      const { initTxSig } = await this.initializeDuel({
+        duelId: payload.duelId,
+        hostWallet: payload.hostWallet,
+        guestWallet: payload.guestWallet,
+        stakeAmount: payload.stake,
+        expireTs,
+      });
+      await this.duels.setChainSig(payload.duelId, { chainInitTxSig: initTxSig });
+    } catch (err) {
+      this.logger.error(`onChain init failed for duel ${payload.duelId}: ${String(err)}`);
+    }
+  }
 
   /**
    * Layer-signed initialize_duel + provably-fair commit_seed.
@@ -185,17 +222,10 @@ export class DuelChainService {
     this.logger.log(`settle_duel ${payload.duelId} winner=${DuelWinner[winner]} txSig=${settleSig}`);
 
     // Mirror: no additional coin credit needed — DuelService already ran the
-    // off-chain wallet ledger. We only store the chain tx sig.
-    // Duel update happens via a direct prisma call through UserRepository's
-    // prisma instance — we use a raw update here to stay within ChainModule.
-    // NOTE: DuelRepository is in FantasyModule; to avoid a circular dep we
-    // use the PrismaService via UserRepository's injected reference only as
-    // a last resort. In this case we store the sig on SeedCommit (already
-    // updated by ProvablyFairService) and log. The duel row sig is written
-    // by the controller's confirm endpoint if the front calls it.
-    this.logger.log(
-      `duel ${payload.duelId} fully settled on-chain (chainSettleTxSig=${settleSig})`,
-    );
+    // off-chain wallet ledger. We only persist the on-chain settle signature
+    // (DuelRepository is exported by FantasyModule, imported by ChainModule —
+    // one-directional, so no circular dependency).
+    await this.duels.setChainSig(payload.duelId, { chainSettleTxSig: settleSig });
   }
 
   private mapWinner(result: DuelResult): DuelWinner {

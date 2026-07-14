@@ -3,10 +3,15 @@ import type { PlayerProfile } from '@/config/duelists.config';
 import { DuelResult } from '@/enums/duel-result.enum';
 import { DuelLayout } from '@/enums/duel-layout.enum';
 import { DuelPhase } from '@/enums/duel-phase.enum';
-import { duelService, type DuelResultValue } from '@/services/fantasy.service';
+import { duelService, type DuelDetailDto, type DuelResultValue } from '@/services/fantasy.service';
 import { isBackendSession } from '@/services/session-mode';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
+import type { RankTier } from '@/enums/rank-tier.enum';
+import type { Presence } from '@/enums/presence.enum';
+
+/** Identifies this player's role in a PvP server duel. */
+export type DuelRole = 'host' | 'guest';
 
 /** Front DuelResult enum ("win") → api DuelResult ("Win"). */
 const toServerResult = (r: DuelResult): DuelResultValue =>
@@ -32,8 +37,20 @@ interface DuelStore {
   phase: DuelPhase;
   finished: boolean;
   result: DuelResult | null;
+  /**
+   * PvP server duel role. Null means vs-CPU (persona) mode — all existing behaviour
+   * stays intact. Set by `startServerDuel` for real 1v1 matches.
+   */
+  role: DuelRole | null;
+
   /** Begin a duel against a chosen opponent — opens on the XI/formation setup step. */
   start: (duelId: string, opponent: PlayerProfile, bet?: number) => void;
+  /**
+   * Wire up a server-side PvP duel received via `duel:ready`. Skips inSetup (both
+   * players already picked their XI on the host/join pages). The arena and director
+   * behave identically; only settlement branches on role.
+   */
+  startServerDuel: (detail: DuelDetailDto, role: DuelRole) => void;
   /** Lock the lineup and enter the arena. */
   confirmSetup: () => void;
   /** Flip between the immersive and split-view arena layouts. */
@@ -42,8 +59,14 @@ interface DuelStore {
   setScore: (selfScore: number, opponentScore: number) => void;
   /** Push the simulated clock + phase from the duel director. */
   setMatchClock: (simMinute: number, phase: DuelPhase) => void;
-  /** Freeze the final result. */
+  /**
+   * Freeze the final result. For PvP host: calls server settle. For PvP guest: only
+   * updates local state (authoritative result comes via `duel:settled` push). For
+   * vs-CPU: original behaviour (calls settle if serverId present).
+   */
   finish: (result: DuelResult) => void;
+  /** Guest-only: receives the authoritative result from the `duel:settled` push. */
+  receiveSettlement: (hostScore: number, guestScore: number, guestResult: DuelResultValue) => void;
   reset: () => void;
 }
 

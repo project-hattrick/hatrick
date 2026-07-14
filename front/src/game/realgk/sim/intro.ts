@@ -70,10 +70,16 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
           moveToward(world, p, home.x, home.y, p.role === Role.GK ? 70 : 96, dt, false);
         }
       }
-      if (allHome || match.introTimer >= RISE_TIMEOUT_SECONDS) {
+      const riseTimeout = world.cfg.features?.quickIntro ? 4 : RISE_TIMEOUT_SECONDS;
+      if (allHome || match.introTimer >= riseTimeout) {
         // Feed-driven buffering: hold the cinematic loop until the first real event releases the kickoff.
         if (match.introHold) {
           advance(world, IntroStage.HoldLoop);
+          return;
+        }
+        // Quick intro: no referee run-in — straight to the kickoff once the squads are arranged.
+        if (world.cfg.features?.quickIntro) {
+          advance(world, IntroStage.Kickoff);
           return;
         }
         spawnRefereeKickoff(world);

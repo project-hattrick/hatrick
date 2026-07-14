@@ -20,7 +20,7 @@ import {
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CreateDuelDto, DuelDto, DuelResultDto, SettleDuelDto } from './dto/duel.dto';
+import { CreateDuelDto, DuelDetailDto, DuelDto, DuelResultDto, JoinDuelDto, SettleDuelDto } from './dto/duel.dto';
 import { DuelService } from './services';
 
 /** 1v1 duels (guarded, self-scoped via the session cookie). */
@@ -39,6 +39,21 @@ export class DuelController {
     return this.duels.list(principal.userId);
   }
 
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Duel detail — both players + frozen lineups',
+    description:
+      'Pending duels are readable by any authenticated user (so the invitee can load the join screen). ' +
+      'Live/Finished duels are restricted to the two participants.',
+  })
+  @ApiOkResponse({ description: 'Full duel detail', type: DuelDetailDto })
+  get(
+    @Param('id') id: string,
+    @CurrentUser() principal: AuthenticatedUser,
+  ): Promise<DuelDetailDto> {
+    return this.duels.get(principal.userId, id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Start a duel (stake + lineup snapshot)' })
   @ApiCreatedResponse({ description: 'Duel + new balance', type: DuelResultDto })
@@ -47,6 +62,18 @@ export class DuelController {
     @CurrentUser() principal: AuthenticatedUser,
   ): Promise<DuelResultDto> {
     return this.duels.create(principal.userId, dto);
+  }
+
+  @Post(':id/join')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Join an open PvP duel (stake + lineup); arms the on-chain escrow' })
+  @ApiOkResponse({ description: 'Joined duel + new balance', type: DuelResultDto })
+  join(
+    @Param('id') id: string,
+    @Body() dto: JoinDuelDto,
+    @CurrentUser() principal: AuthenticatedUser,
+  ): Promise<DuelResultDto> {
+    return this.duels.join(principal.userId, id, dto);
   }
 
   @Post(':id/settle')
