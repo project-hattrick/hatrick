@@ -77,11 +77,7 @@ export function updateIntro(world: RealGkWorld, dt: number): void {
           advance(world, IntroStage.HoldLoop);
           return;
         }
-        // Quick intro: no referee run-in — straight to the kickoff once the squads are arranged.
-        if (world.cfg.features?.quickIntro) {
-          advance(world, IntroStage.Kickoff);
-          return;
-        }
+        // Always run the referee whistle (quickIntro only skips the slow showcase + sponsor sweep).
         spawnRefereeKickoff(world);
         advance(world, IntroStage.RefWhistle);
       }

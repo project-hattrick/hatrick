@@ -3,12 +3,13 @@ import type { PlayerProfile } from '@/config/duelists.config';
 import { DuelResult } from '@/enums/duel-result.enum';
 import { DuelLayout } from '@/enums/duel-layout.enum';
 import { DuelPhase } from '@/enums/duel-phase.enum';
+import { RankTier } from '@/enums/rank-tier.enum';
+import { Presence } from '@/enums/presence.enum';
 import { duelService, type DuelDetailDto, type DuelResultValue } from '@/services/fantasy.service';
 import { isBackendSession } from '@/services/session-mode';
+import { authService } from '@/services/auth.service';
 import { useWalletStore } from '@/store/wallet.store';
 import { useFantasyStore } from '@/store/fantasy.store';
-import type { RankTier } from '@/enums/rank-tier.enum';
-import type { Presence } from '@/enums/presence.enum';
 
 /** Identifies this player's role in a PvP server duel. */
 export type DuelRole = 'host' | 'guest';
@@ -70,6 +71,32 @@ interface DuelStore {
   reset: () => void;
 }
 
+/** Maps a DuelPlayerDto to the minimal PlayerProfile shape the arena/scoreboard needs. */
+function dtoToProfile(p: DuelDetailDto['host']): PlayerProfile {
+  return {
+    id: p.id,
+    username: p.username ?? p.id,
+    name: p.displayName ?? p.username ?? 'Opponent',
+    country: p.country ?? 'BRA',
+    tier: RankTier.Gold,
+    division: 'I',
+    rating: p.mmr,
+    wins: 0,
+    losses: 0,
+    streak: 'W0',
+    portraitSrc: p.avatarUrl ?? '/personas/p01.png',
+    presence: Presence.Online,
+    bio: '',
+    joinedAt: new Date().toISOString(),
+  };
+}
+
+const serverResultToEnum = (r: DuelResultValue): DuelResult => {
+  if (r === 'Win') return DuelResult.Win;
+  if (r === 'Loss') return DuelResult.Loss;
+  return DuelResult.Draw;
+};
+
 /** Current 1v1 duel — ephemeral (never persisted; the live stream stays in memory). */
 export const useDuelStore = create<DuelStore>((set, get) => ({
   duelId: null,
@@ -85,8 +112,32 @@ export const useDuelStore = create<DuelStore>((set, get) => ({
   phase: DuelPhase.FirstHalf,
   finished: false,
   result: null,
+  role: null,
+
   start: (duelId, opponent, bet) =>
-    set({ duelId, serverId: null, opponent, bet: bet ?? null, inSetup: true, selfScore: 0, opponentScore: 0, simMinute: 0, phase: DuelPhase.FirstHalf, finished: false, result: null }),
+    set({ duelId, serverId: null, opponent, bet: bet ?? null, inSetup: true, selfScore: 0, opponentScore: 0, simMinute: 0, phase: DuelPhase.FirstHalf, finished: false, result: null, role: null }),
+
+  startServerDuel: (detail, role) => {
+    const opponent = role === 'host'
+      ? (detail.guest ? dtoToProfile(detail.guest) : null)
+      : dtoToProfile(detail.host);
+    if (!opponent) return;
+    set({
+      duelId: detail.id,
+      serverId: detail.id,
+      opponent,
+      bet: Number(detail.stake) || null,
+      inSetup: false,
+      selfScore: 0,
+      opponentScore: 0,
+      simMinute: 0,
+      phase: DuelPhase.FirstHalf,
+      finished: false,
+      result: null,
+      role,
+    });
+  },
+
   confirmSetup: () => {
     set({ inSetup: false });
     // Persist the duel (stake + lineup) when signed in; reconcile the wallet + keep the server id.
@@ -111,21 +162,39 @@ export const useDuelStore = create<DuelStore>((set, get) => ({
       })
       .catch(() => {});
   },
+
   toggleLayout: () =>
     set((state) => ({
       layout: state.layout === DuelLayout.Immersive ? DuelLayout.Split : DuelLayout.Immersive,
     })),
+
   setScore: (selfScore, opponentScore) => set({ selfScore, opponentScore }),
   setMatchClock: (simMinute, phase) => set({ simMinute, phase }),
+
   finish: (result) => {
     set({ finished: true, result });
-    const { serverId, selfScore, opponentScore } = get();
+    const { serverId, selfScore, opponentScore, role } = get();
     if (!serverId || !isBackendSession()) return;
+
+    // PvP guest: do NOT call settle — the server will push duel:settled back.
+    if (role === 'guest') return;
+
+    // PvP host OR vs-CPU: settle server-side.
     void duelService
       .settle(serverId, { hostScore: selfScore, guestScore: opponentScore, result: toServerResult(result) })
       .then((res) => useWalletStore.getState().hydrate(Number(res.balance)))
       .catch(() => {});
   },
+
+  receiveSettlement: (hostScore, guestScore, guestResult) => {
+    const result = serverResultToEnum(guestResult);
+    set({ selfScore: guestScore, opponentScore: hostScore, finished: true, result });
+    // Hydrate wallet after settlement (balance change on the server side).
+    authService.me()
+      .then((user) => useWalletStore.getState().hydrate(Number(user.balance)))
+      .catch(() => {});
+  },
+
   reset: () =>
-    set({ duelId: null, serverId: null, opponent: null, bet: null, inSetup: false, selfScore: 0, opponentScore: 0, simMinute: 0, phase: DuelPhase.FirstHalf, finished: false, result: null }),
+    set({ duelId: null, serverId: null, opponent: null, bet: null, inSetup: false, selfScore: 0, opponentScore: 0, simMinute: 0, phase: DuelPhase.FirstHalf, finished: false, result: null, role: null }),
 }));

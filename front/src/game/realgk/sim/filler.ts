@@ -27,6 +27,8 @@ export function tickFiller(world: RealGkWorld, dt: number): void {
 
 /** Whether the ball owner may take a filler shot now — consuming the cooldown when granted. */
 export function fillerShotAllowed(world: RealGkWorld): boolean {
+  // Real-match faithfulness: keep the rest of the filler liveliness but never fire a fake shot-on-goal.
+  if (world.cfg.features?.noFillerShots) return false;
   if (!fillerOn(world) || world.fillerShotCooldown > 0) return false;
   world.fillerShotCooldown = SHOT_COOLDOWN_MIN + Math.random() * (SHOT_COOLDOWN_MAX - SHOT_COOLDOWN_MIN);
   return true;

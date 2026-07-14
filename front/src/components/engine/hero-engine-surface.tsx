@@ -12,6 +12,7 @@ import { Team } from '@/game/realgk/enums';
 import type { RealGkHandle, RealGkRadar } from '@/game/realgk/types';
 import { EngineMinimap } from './engine-minimap';
 import { EngineScoreboard } from './engine-scoreboard';
+import { EngineEventLog } from './engine-event-log';
 import {
   buildSnippet,
   fieldSpecFromState,
@@ -21,6 +22,7 @@ import {
 import { useReplayCatalog } from '@/services/queries/use-replay';
 import { useLoadReplay } from '@/hooks/use-load-replay';
 import { useRealgkFeedDriver } from '@/services/realtime/use-realgk-driver';
+import { useLiveFeed } from '@/services/realtime/use-live-feed';
 import { replayService } from '@/services/replay.service';
 import { useMatchStore } from '@/store/match.store';
 import { FloatingWidget } from './floating-widget';
@@ -120,34 +122,42 @@ export function HeroEngineSurface() {
       ],
       // `extraAnims` unlocks headers (aerial duels), first touches, interceptions + agile turn/brake so the
       // match actually USES every mechanic; smartAI + the full-pitch opening are engine-only too. Keep
-      // `matchIntro` ON (inherited) so switching teams/court replays the pre-match showcase + walk-on +
-      // kickoff arrangement — the loading veil covers the cold-asset flash before it. `drivenFiller` is OFF
-      // while replaying a REAL match so NO autonomous shots-on-goal fire — shots come ONLY from the feed;
-      // the mock keeps it on for liveliness (irrelevant there since the mock isn't feed-driven anyway).
+      // `matchIntro` ON (inherited) so switching teams/court replays the walk-on + kickoff arrangement —
+      // the loading veil covers the cold-asset flash before it. `drivenFiller` stays ON so the players
+      // stay LIVELY between the (sparse) feed events, but `noFillerShots` (real match only) suppresses the
+      // fake shots-on-goal — so a shot only appears when the real match actually had one.
       features: {
         ...(built.features as RealGkFeatures),
         smartAI: true,
         openingFullPitch: true,
         extraAnims: true,
         quickIntro: true,
-        drivenFiller: !isReplay,
+        drivenFiller: true,
+        noFillerShots: isReplay,
       },
     };
   }, [heroLook, bName, bCode, rName, rCode, court, isReplay]);
 
+  // Pump the backend socket into the match store (scoreboard/timeline/keyEvents) — the room/live/duel all
+  // do this; without it a real replay never populates the store, so the driver never releases and the log
+  // stays empty. Idle in mock mode / when no match is loaded.
+  useLiveFeed();
+
   // Drive the engine off the chosen replay's feed (null fixtureId → autonomous mock). Same hook the room
-  // uses; `cinematicIntro: false` drops straight in, `resetKey` re-arms on a replay restart.
-  useRealgkFeedDriver(handleRef, drivenFixtureId, { cinematicIntro: false, resetKey: replayNonce });
+  // uses. `cinematicIntro: true` HOLDS a pre-match (no autonomous play) until the feed's first event lands,
+  // so a real match streams cleanly instead of the mock kicking off instantly with a bogus throw-in;
+  // `resetKey` re-arms on a replay restart.
+  useRealgkFeedDriver(handleRef, drivenFixtureId, { cinematicIntro: true, resetKey: replayNonce });
 
   const stopReplay = () => {
     void replayService.stop().catch(() => {});
     useMatchStore.setState({ match: null, isReplay: false });
   };
 
-  // Hide the match behind a loading veil until the court PNG + sprite atlases are actually decoded — else
-  // the first boot flashes a black pitch with only foot-rings/LED boards while the images stream in. This
-  // shares the engine's image cache (`loadRealGkAssets` caches by src), so it just waits on the same
-  // requests. `setReady(true)` runs in a callback (not the effect body) so it stays cheap and rule-clean.
+  // Loading veil: cover the black first-boot flash ONLY until the court PNG is decoded (the big black
+  // area) — NOT the sprite atlases. Waiting on everything hid the whole pre-match intro (walk-on + whistle)
+  // behind the veil so the squads looked teleported into place. The court decodes fast; player sprites pop
+  // in within a beat, so the intro plays visibly. Shares the engine's image cache (`loadRealGkAssets`).
   useEffect(() => {
     const assets = loadRealGkAssets(
       config.features !== undefined,
@@ -158,29 +168,19 @@ export function HeroEngineSurface() {
       config.personaBodyRootAway,
       config.assetVersionAway,
     );
-    const images: HTMLImageElement[] = [];
-    const collect = (node: unknown): void => {
-      if (node instanceof HTMLImageElement) images.push(node);
-      else if (Array.isArray(node)) node.forEach(collect);
-      else if (node && typeof node === 'object') Object.values(node).forEach(collect);
-    };
-    collect(assets);
-    const settled = (img: HTMLImageElement): Promise<void> =>
-      img.complete
-        ? Promise.resolve()
-        : new Promise((res) => {
-            img.addEventListener('load', () => res(), { once: true });
-            img.addEventListener('error', () => res(), { once: true });
-          });
+    const court = assets.court;
     let cancelled = false;
-    const cap = window.setTimeout(() => {
+    const reveal = () => {
       if (!cancelled) setReady(true);
-    }, 10000); // never trap the veil on a stalled asset (heavier atlases with extraAnims load slower cold)
-    void Promise.all(images.map(settled)).then(() => {
-      if (cancelled) return;
+    };
+    const cap = window.setTimeout(reveal, 4000); // never trap the veil on a stalled court image
+    if (court.complete && court.naturalWidth) {
       window.clearTimeout(cap);
-      setReady(true);
-    });
+      reveal();
+    } else {
+      court.addEventListener('load', reveal, { once: true });
+      court.addEventListener('error', reveal, { once: true });
+    }
     return () => {
       cancelled = true;
       window.clearTimeout(cap);
@@ -283,6 +283,9 @@ export function HeroEngineSurface() {
 
       {/* Broadcast scoreboard — score/clock update on goals, event beats surface, like the main screen. */}
       {ready ? <EngineScoreboard className="absolute left-1/2 top-3 z-20 -translate-x-1/2" /> : null}
+
+      {/* Running event log — feed events (real match) or the mock's HUD beats — with the clock/minute. */}
+      {ready ? <EngineEventLog isReplay={isReplay} className="absolute right-4 top-[104px] z-20" /> : null}
 
       <FloatingWidget title="Real match (API)" className="left-4 top-[148px]">
         {isReplay ? (

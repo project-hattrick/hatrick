@@ -76,6 +76,9 @@ export interface RealGkFeatures {
   /** Short intro (needs `matchIntro`): skip the team showcase + sponsor sweep + referee run — just the
    *  quick walk-on where the squads arrange, then kickoff. Off → the full pre-match sequence. */
   quickIntro?: boolean;
+  /** Real-match faithfulness: keep `drivenFiller`'s liveliness (tackles / intercepts / ball movement) but
+   *  NEVER take a filler shot-on-goal — a shot only appears when the real feed injects one. */
+  noFillerShots?: boolean;
 }
 
 /** A national/team brand for the v5 intro showcase (flag + name + tricolor palette). */
@@ -234,21 +237,23 @@ export const FRANCE_STADIUM_FIELD: FieldSpec = {
 export const FRANCE_BILLBOARDS: Billboard[] = [
   // Animated neon LED (left) · static black Hatrick board (centered) · animated neon LED (right).
   // Adjacent (edge-to-edge) like before, but meeting exactly at the Hatrick board's edges — no overlap.
+  // Big LED · small Hatrick · big LED — the middle board is small so the logo doesn't stretch on the thin
+  // strip. All within 0.30–0.70 so nothing spills past the marked pitch.
   {
     kind: BillboardKind.Led,
-    corners: [[0.3, 0.295], [0.41, 0.295], [0.41, 0.327], [0.3, 0.327]],
+    corners: [[0.3, 0.295], [0.44, 0.295], [0.44, 0.327], [0.3, 0.327]],
     text: 'TXODDS  ·  WORLD CUP 26',
     theme: 'amber',
     speed: 9,
   },
   {
     kind: BillboardKind.Image,
-    corners: [[0.445, 0.295], [0.555, 0.295], [0.555, 0.327], [0.445, 0.327]],
+    corners: [[0.47, 0.295], [0.53, 0.295], [0.53, 0.327], [0.47, 0.327]],
     src: '/game/ads/hatrick.svg',
   },
   {
     kind: BillboardKind.Led,
-    corners: [[0.59, 0.295], [0.7, 0.295], [0.7, 0.327], [0.59, 0.327]],
+    corners: [[0.56, 0.295], [0.7, 0.295], [0.7, 0.327], [0.56, 0.327]],
     text: 'PLAY LIVE  ·  TXLINE',
     theme: 'blue',
     speed: 9,

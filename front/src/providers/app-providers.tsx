@@ -10,7 +10,9 @@ import { IconContext, type IconProps } from '@/components/common/icons';
 import { WalletAuthSync } from '@/components/common/wallet-auth-sync';
 import { SearchCommand } from '@/components/common/search-command';
 import { LoginMount } from '@/components/common/login-mount';
+import { NavConsumer } from '@/components/common/nav-consumer';
 import { ChallengeMount } from '@/components/duel/challenge-mount';
+import { DuelInviteDialog } from '@/components/duel/duel-invite-dialog';
 import { OnboardingMount } from '@/components/onboarding/onboarding-mount';
 import { BetSettlementMount } from '@/components/live/bet-settlement-mount';
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -53,7 +55,9 @@ export function AppProviders({
                 {children}
                 <SearchCommand />
                 <LoginMount />
+                <NavConsumer />
                 <ChallengeMount />
+                <DuelInviteDialog />
                 <OnboardingMount />
                 <BetSettlementMount />
               </IconContext.Provider>

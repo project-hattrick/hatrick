@@ -6,6 +6,7 @@ import { TierBadge } from './tier-badge';
 import { PresenceDot } from './presence-dot';
 import { FriendButton } from './friend-button';
 import { ChallengeButton } from './challenge-button';
+import { PvpChallengeButton } from './pvp-challenge-button';
 import type { PlayerProfile } from '@/config/duelists.config';
 
 interface DuelistHeaderProps {
@@ -80,6 +81,7 @@ export function DuelistHeader({ profile }: DuelistHeaderProps) {
           <div className="flex items-center gap-2">
             <FriendButton id={profile.id} />
             <ChallengeButton profile={profile} />
+            <PvpChallengeButton profile={profile} />
           </div>
         </div>
       </div>

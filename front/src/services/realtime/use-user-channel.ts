@@ -13,6 +13,11 @@ import { useAuthStore } from '@/store/auth.store';
 import { useBetsStore } from '@/store/bets.store';
 import { useNotificationsStore } from '@/store/notifications.store';
 import { useWalletStore } from '@/store/wallet.store';
+import { useDuelInviteStore, type IncomingDuelInvite } from '@/store/duel-invite.store';
+import { useDuelStore } from '@/store/duel.store';
+import { usePendingNavStore } from '@/store/pending-nav.store';
+import type { DuelResultValue } from '@/services/fantasy.service';
+import { duelService } from '@/services/fantasy.service';
 import { getSocket } from './socket';
 
 const CH_MATCH_END = 'match-end.after';
@@ -63,11 +68,45 @@ export function useUserChannel(): void {
       backstop = setTimeout(refetchSettlement, SETTLEMENT_BACKSTOP_MS);
     };
 
+    // --- PvP duel events ---
+    const onDuelInvite = (payload: IncomingDuelInvite) => {
+      useDuelInviteStore.getState().setInvite(payload);
+    };
+
+    const onDuelReady = (payload: { duelId: string }) => {
+      const duelId = payload?.duelId;
+      if (!duelId) return;
+      // Determine role: if the current user is already the host (they created the duel
+      // and are waiting), they're 'host'; if they just joined, they're 'guest'.
+      // We resolve by fetching the duel detail and checking host.id vs current userId.
+      void duelService.get(duelId).then((detail) => {
+        const role = detail.host.id === userId ? 'host' : 'guest';
+        useDuelStore.getState().startServerDuel(detail, role);
+        usePendingNavStore.getState().navigate(`/duel/${duelId}`);
+      }).catch(() => {
+        // Fallback: navigate anyway and let the page recover.
+        usePendingNavStore.getState().navigate(`/duel/${duelId}`);
+      });
+    };
+
+    const onDuelSettled = (payload: { duelId: string; hostScore: number; guestScore: number; guestResult: DuelResultValue }) => {
+      const { duelId, hostScore, guestScore, guestResult } = payload ?? {};
+      if (!duelId) return;
+      const store = useDuelStore.getState();
+      // Only apply if this is our active duel and we are the guest.
+      if (store.serverId === duelId && store.role === 'guest') {
+        store.receiveSettlement(hostScore, guestScore, guestResult);
+      }
+    };
+
     join();
     // socket.io reconnects silently drop channel membership — re-join every connect.
     socket.on('connect', join);
     socket.on(UserEvent.NotificationNew, onNotification);
     socket.on(CH_MATCH_END, onMatchEnd);
+    socket.on(UserEvent.DuelInvite, onDuelInvite);
+    socket.on(UserEvent.DuelReady, onDuelReady);
+    socket.on(UserEvent.DuelSettled, onDuelSettled);
 
     return () => {
       if (backstop) clearTimeout(backstop);
@@ -75,6 +114,9 @@ export function useUserChannel(): void {
       socket.off('connect', join);
       socket.off(UserEvent.NotificationNew, onNotification);
       socket.off(CH_MATCH_END, onMatchEnd);
+      socket.off(UserEvent.DuelInvite, onDuelInvite);
+      socket.off(UserEvent.DuelReady, onDuelReady);
+      socket.off(UserEvent.DuelSettled, onDuelSettled);
     };
   }, [userId, queryClient]);
 }
