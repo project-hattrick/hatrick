@@ -6,6 +6,8 @@ import { ballOwner, kickBall, teamPlayers } from './ball';
 import { Status } from './messages';
 import { goal, setStatus } from './rules';
 import { commitShot } from './shot';
+import { spawnRefereeFoul } from './referee';
+import { startFoul } from './foul';
 
 /** How long the feed's intended receivers keep trap/claim priority after a possession grant. */
 const GRANT_SECONDS = 2.5;
@@ -18,6 +20,34 @@ const GRANT_SECONDS = 2.5;
  */
 
 const opposite = (team: Team): Team => (team === Team.Blue ? Team.Red : Team.Blue);
+
+function nearestOutfielderTo(world: RealGkWorld, team: Team, point: Vec2): RealGkPlayer | null {
+  let pick: RealGkPlayer | null = null;
+  let best = Number.POSITIVE_INFINITY;
+  for (const p of teamPlayers(world, team)) {
+    if (p.role === Role.GK) continue;
+    const d = Math.hypot(p.x - point.x, p.y - point.y);
+    if (d < best) {
+      best = d;
+      pick = p;
+    }
+  }
+  return pick;
+}
+
+function cardScenePlayers(world: RealGkWorld, team: Team): { offender: RealGkPlayer; victim: RealGkPlayer } | null {
+  const owner = ballOwner(world);
+  const offender = owner?.team === team
+    ? owner
+    : nearestOutfielderTo(world, team, { x: world.ball.x, y: world.ball.y });
+  if (!offender || offender.role === Role.GK) return null;
+  const victimTeam = opposite(team);
+  const victim = owner?.team === victimTeam
+    ? owner
+    : nearestOutfielderTo(world, victimTeam, { x: offender.x, y: offender.y });
+  if (!victim || victim.role === Role.GK) return null;
+  return { offender, victim };
+}
 
 /** The team's non-keeper closest to the ball. */
 function nearestOutfielder(world: RealGkWorld, team: Team): RealGkPlayer | null {
@@ -157,9 +187,17 @@ export function injectCardDriven(world: RealGkWorld, team: Team, red = false): v
   world.match.cardFlashSeq += 1;
   world.match.cardFlashColor = red ? 'red' : 'yellow';
   world.match.cardFlashTeam = team;
-  if (red) sendOff(world, team);
   const note = Status.card(team, red);
   setStatus(world, note.title, note.text);
+  const scene = cardScenePlayers(world, team);
+  if (scene && !world.match.restart && world.match.celebration <= 0) {
+    startFoul(world, scene.offender, scene.victim, red, red ? 'red' : 'yellow');
+    world.feelFx.shake = Math.max(world.feelFx.shake, red ? 0.34 : 0.24);
+    return;
+  }
+  if (red) sendOff(world, team);
+  if (world.match.restart || world.match.celebration > 0) return;
+  spawnRefereeFoul(world, world.ball.x, world.ball.y - 34, true, red ? 'red' : 'yellow');
 }
 
 /** Sends one outfielder of `team` off (down to ten). Keeps ≥7 on the side and never picks the ball

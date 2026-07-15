@@ -1,40 +1,56 @@
-/* The lib snaps the hover tilt (it injects `transition: transform 0s` on
-   `.sticker-card.active:hover`) and uses a strong 25deg / -20deg rotation. With
-   the scene's perspective + translateZ that reads as the card abruptly jumping
-   in size on hover. Soften per-card: a gentler tilt + a short eased transition
-   so the card grows/settles smoothly instead of popping. */
 .holoRoot {
-  --sticker-rotate-x: 12deg;
-  --sticker-rotate-y: -10deg;
+  --sticker-rotate-x: 0deg;
+  --sticker-rotate-y: 0deg;
 }
 
 .holoRoot :global(.sticker-card.active:hover) {
-  transition: transform 0.14s ease-out;
+  transition: transform 0.16s ease-out;
+  transform: translateZ(12px);
 }
 
-/* Refraction color override — the lib hard-codes its rainbow in injected CSS
-   and ignores the `colors` prop, so we re-declare the gradients with vars.
-   --holo-1/2/3 are set inline per card (country flag colors); gold fallback. */
+.centerMark {
+  position: absolute;
+  inset: 22% 15% 25%;
+  z-index: 1;
+  background-image: url('/logo.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: grayscale(1) contrast(1.1);
+  mix-blend-mode: soft-light;
+  opacity: 0.22;
+}
+
+.surfaceGrain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: url('/cards/card-texture.png');
+  background-position: center;
+  background-size: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.18;
+}
 
 .holoRefraction:global(.sticker-refraction-1) {
   background: radial-gradient(
     circle at 0 100%,
-    transparent 10%,
-    var(--holo-1, #ffd98a),
-    var(--holo-2, #ffaa40),
-    var(--holo-3, #a78bfa),
-    transparent 60%
+    transparent 18%,
+    color-mix(in srgb, var(--holo-1, #d8d2bd) 36%, transparent),
+    color-mix(in srgb, var(--holo-2, #e7e1cf) 28%, transparent),
+    color-mix(in srgb, var(--holo-3, #9fb5ad) 24%, transparent),
+    transparent 58%
   );
 }
 
 .holoRefraction:global(.sticker-refraction-2) {
   background: radial-gradient(
     circle at 100% 0,
-    transparent 10%,
-    var(--holo-1, #ffd98a),
-    var(--holo-2, #ffaa40),
-    var(--holo-3, #a78bfa),
-    transparent 60%
+    transparent 18%,
+    color-mix(in srgb, var(--holo-1, #d8d2bd) 34%, transparent),
+    color-mix(in srgb, var(--holo-2, #e7e1cf) 26%, transparent),
+    color-mix(in srgb, var(--holo-3, #9fb5ad) 22%, transparent),
+    transparent 58%
   );
 }
 
@@ -45,8 +61,8 @@
   left: -65%;
   width: 48%;
   transform: skewX(-14deg);
-  background: linear-gradient(100deg, transparent, rgb(255 239 170 / 0.42), transparent);
-  filter: blur(3px);
+  background: linear-gradient(100deg, transparent, rgb(255 239 170 / 0.2), transparent);
+  filter: blur(4px);
   animation: surface-shine 2.8s ease-in-out infinite;
 }
 
@@ -58,7 +74,7 @@
   }
 
   52% {
-    opacity: 1;
+    opacity: 0.75;
   }
 
   78%,

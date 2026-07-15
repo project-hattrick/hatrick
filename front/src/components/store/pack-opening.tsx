@@ -41,8 +41,8 @@ const XI_PACK_SIZE = 11;
 const XI_GROUP_SIZE = 3;
 
 const raritySurfaceColors: Partial<Record<PullRarity, [string, string]>> = {
-  [PullRarity.Epic]: ['#2b1742', '#69419a'],
-  [PullRarity.Legendary]: ['#6b4608', '#e0b83f'],
+  [PullRarity.Epic]: ['#1d1a24', '#4b3d67'],
+  [PullRarity.Legendary]: ['#242018', '#8c783c'],
 };
 
 /** Default cards per pack — each opening draws them at random from the FULL character pool (pack-pool.config). */

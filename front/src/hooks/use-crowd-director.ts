@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { startCrowdDirector } from '@/lib/crowd/crowd-director';
 import { ambientFanMessage } from '@/lib/crowd/fan-burst';
 import { buildBotWelcome } from '@/lib/crowd/hatbot-messages';
+import { env } from '@/lib/env';
 import { CrowdSource } from '@/enums/crowd-source.enum';
 import { useCrowdFeed } from '@/services/realtime/use-crowd-feed';
 import { useCrowdStore } from '@/store/crowd.store';
@@ -26,7 +27,8 @@ export function useCrowdDirector(options?: { hatBotOnly?: boolean }): void {
   useEffect(() => {
     const crowd = useCrowdStore.getState();
     const match = useMatchStore.getState().match;
-    if (hatBotOnly) {
+    const realCrowdOnly = !env.useMock;
+    if (hatBotOnly || realCrowdOnly) {
       // No fake stands in a private session — just introduce the bot so the feed isn't empty.
       if (!crowd.messages.some((message) => message.source === CrowdSource.HatBot)) {
         crowd.add(buildBotWelcome(match));
@@ -34,6 +36,6 @@ export function useCrowdDirector(options?: { hatBotOnly?: boolean }): void {
     } else if (crowd.messages.length === 0) {
       crowd.seed(SEED_AGES.map((ageLabel) => ({ ...ambientFanMessage(match), ageLabel })));
     }
-    return startCrowdDirector({ hatBotOnly });
+    return startCrowdDirector({ hatBotOnly: hatBotOnly || realCrowdOnly });
   }, [hatBotOnly]);
 }

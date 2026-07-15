@@ -2,8 +2,9 @@
 
 import { useCallback, useState } from 'react';
 
-import { replayService, type ReplayCatalogItem } from '@/services/replay.service';
-import { useMatchStore } from '@/store/match.store';
+import { replayService, type FixtureStats, type ReplayCatalogItem } from '@/services/replay.service';
+import { useMatchStore, type LiveMatchStats } from '@/store/match.store';
+import { useOddsStore } from '@/store/odds.store';
 import { useReplaySessionStore } from '@/store/replay-session.store';
 import { teamInfoFromName } from '@/config/teams.config';
 import { toMatchEvents } from '@/lib/fixture-actions';
@@ -14,6 +15,19 @@ import type { LiveMatch } from '@/types/match';
 
 /** How long after kickoff a fixture still counts as in play (90' + break + stoppage headroom). */
 const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+function toLiveStats(stats: FixtureStats): LiveMatchStats {
+  return {
+    shots: stats.shots,
+    shotsOnTarget: stats.shotsOnTarget,
+    fouls: stats.fouls,
+    corners: stats.corners,
+    yellowCards: stats.yellowCards,
+    redCards: stats.redCards,
+    offsides: stats.offsides,
+    possessionEvents: { home: 0, away: 0 },
+  };
+}
 
 /**
  * Loads a finished fixture as a real-time-feeling replay: switch to it, then stream its history back
@@ -43,8 +57,22 @@ export function useLoadReplay() {
         startTime,
       });
       try {
-        const snap = await replayService.getScore(base.fixtureId);
+        const [scoreResult, statsResult, oddsResult] = await Promise.allSettled([
+          replayService.getScore(base.fixtureId),
+          replayService.getStats(base.fixtureId),
+          replayService.getOdds(base.fixtureId),
+        ]);
         const store = useMatchStore.getState();
+        if (statsResult.status === 'fulfilled') {
+          store.setAuthoritativeStats(base.fixtureId, toLiveStats(statsResult.value));
+        }
+        if (oddsResult.status === 'fulfilled') {
+          const odds = useOddsStore.getState();
+          odds.reset(base.fixtureId);
+          odds.baseline(base.fixtureId, oddsResult.value);
+        }
+        if (scoreResult.status !== 'fulfilled') return;
+        const snap = scoreResult.value;
         if (snap.finished) {
           // The window lied (abandoned/short match) — settle on the final score.
           store.finishMatch({ fixtureId: base.fixtureId, seq: 0, ts: now, homeScore: snap.home, awayScore: snap.away });

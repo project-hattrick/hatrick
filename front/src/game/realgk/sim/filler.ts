@@ -1,5 +1,7 @@
 import { Role, Team } from '../enums';
+import { fieldRatios, pointOnField } from '../field';
 import type { RealGkWorld } from '../types';
+import { clamp } from '../util';
 import { Status } from './messages';
 import { setStatus } from './rules';
 
@@ -50,8 +52,22 @@ export function parryDrivenMouth(world: RealGkWorld, goalOwner: Team, dirX: numb
   ball.cooldown = 0.3;
   const keeper = world.players.find((p) => p.team === goalOwner && p.role === Role.GK);
   if (keeper) {
+    const r = fieldRatios(world.size, ball.x, ball.y);
+    const brace = pointOnField(world.size, goalOwner === Team.Blue ? 0.08 : 0.92, r.depth);
+    keeper.x += (brace.x - keeper.x) * 0.55;
+    keeper.y += (brace.y - keeper.y) * 0.55;
     keeper.saveCooldown = 0.65;
     const note = Status.save(keeper.name);
     setStatus(world, note.title, note.text);
   }
+  world.players
+    .filter((p) => p.team === goalOwner && p.role !== Role.GK)
+    .sort((a, b) => Math.hypot(a.x - ball.x, a.y - ball.y) - Math.hypot(b.x - ball.x, b.y - ball.y))
+    .slice(0, 3)
+    .forEach((p, i) => {
+      const laneDepth = clamp(fieldRatios(world.size, ball.x, ball.y).depth + (i - 1) * 0.08, 0.18, 0.78);
+      const lane = pointOnField(world.size, goalOwner === Team.Blue ? 0.13 : 0.87, laneDepth);
+      p.x += (lane.x - p.x) * 0.38;
+      p.y += (lane.y - p.y) * 0.38;
+    });
 }

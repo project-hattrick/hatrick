@@ -36,7 +36,7 @@ export const rarityFor = (rating: number): CardRarity => {
 export const RARITY_THEME: Record<CardRarity, RarityTheme> = {
   [CardRarity.Legendary]: {
     label: 'Legendary',
-    surfaceColors: ['#6b4608', '#e0b83f'],
+    surfaceColors: ['#242018', '#8c783c'],
     surfaceShine: true,
     badgeClass: 'text-warning',
     tileClass: 'border-warning/40',
@@ -44,7 +44,7 @@ export const RARITY_THEME: Record<CardRarity, RarityTheme> = {
   },
   [CardRarity.Epic]: {
     label: 'Epic',
-    surfaceColors: ['#2b1742', '#69419a'],
+    surfaceColors: ['#1d1a24', '#4b3d67'],
     surfaceShine: false,
     badgeClass: 'text-[#b58aff]',
     tileClass: 'border-[#b58aff]/35',
@@ -53,7 +53,7 @@ export const RARITY_THEME: Record<CardRarity, RarityTheme> = {
   [CardRarity.Rare]: {
     label: 'Rare',
     surfaceShine: false,
-    surfaceColors: ['#132a4d', '#33639f'],
+    surfaceColors: ['#171e27', '#2f4d6c'],
     badgeClass: 'text-info',
     tileClass: 'border-info/35',
     tint: 'rgba(91,155,255,0.13)',

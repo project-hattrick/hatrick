@@ -24,10 +24,10 @@ export function GlobalLiveImmersive() {
   return (
     <div className="relative h-full w-full">
       {/* Scoreboard flanked by each side's booking cards (yellow/red) — top-centre under the navbar. */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 md:top-16">
+      <ImpactSlide direction="up" className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 md:top-16">
         <Scoreboard homeBackers={<HeroCardsBadge side="home" />} awayBackers={<HeroCardsBadge side="away" />} />
         <RoomPickToast />
-      </div>
+      </ImpactSlide>
 
       {/* Bet widget — desktop left rail; slides down and away during a goal beat.
           Gated at xl: below ~1280px the 560px centre dock would overlap the edge rails,
@@ -63,10 +63,12 @@ export function GlobalLiveImmersive() {
       </ImpactSlide>
 
       {/* Mobile pills + the timeline readout (no replay/pace controls in a shared live view). */}
-      <GlobalMobileActions />
-      <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3 md:px-6 md:pb-4">
+      <ImpactSlide direction="down" className="xl:hidden">
+        <GlobalMobileActions />
+      </ImpactSlide>
+      <ImpactSlide direction="down" className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3 md:px-6 md:pb-4">
         <MatchTimeline playback={false} />
-      </div>
+      </ImpactSlide>
     </div>
   );
 }

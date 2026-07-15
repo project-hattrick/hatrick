@@ -4,6 +4,7 @@ import { GOALS, fieldRatios, goalCenterForTeam } from '../field';
 import type { RealGkPlayer, RealGkWorld, Vec2 } from '../types';
 import { clamp, easeOutCubic, lerp } from '../util';
 import { KEEPER_FRAME_CONFIG, type FrameCfg } from '../assets/configs';
+import { clampPlayerToPitch } from './bounds';
 
 const DEFAULT_CFG: FrameCfg = { headView: HeadView.Front, bodyScale: 0.68, headScale: 0.47, offsetXRatio: 0, offsetYRatio: 0.14 };
 
@@ -119,6 +120,12 @@ export function updateKeeperDive(player: RealGkPlayer, dt: number): boolean {
   return true;
 }
 
+export function updateKeeperDiveInWorld(world: RealGkWorld, player: RealGkPlayer, dt: number): boolean {
+  const active = updateKeeperDive(player, dt);
+  if (active) clampPlayerToPitch(world, player, 10);
+  return active;
+}
+
 /** Manual dive for the keyboard-controlled keeper: side < 0 dives toward the top post, > 0 toward the
  *  bottom one, always dashing forward into the pitch (never backward into his own goal). */
 export function controlKeeperDive(world: RealGkWorld, side: -1 | 1): boolean {
@@ -140,8 +147,8 @@ export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer)
   const windowScale = world.cfg.fieldScale / 1.5;
   const goalCenter = goalCenterForTeam(size, player.team);
   const towardGoal = player.team === Team.Blue ? ball.vx < -80 : ball.vx > 80;
-  const closeLane = Math.abs(ball.y - goalCenter.y) < 82 * windowScale;
-  const approachingKeeper = Math.abs(ball.x - player.x) < (isV2 ? DIVE2_TRIGGER_RANGE : 150) * windowScale;
+  const closeLane = Math.abs(ball.y - goalCenter.y) < 104 * windowScale;
+  const approachingKeeper = Math.abs(ball.x - player.x) < (isV2 ? DIVE2_TRIGGER_RANGE + 48 : 190) * windowScale;
   if (!towardGoal || !closeLane || !approachingKeeper) return false;
 
   // v2 aims at where the ball will actually cross the keeper's line; legacy uses the short fixed lead.
@@ -150,7 +157,7 @@ export function maybeTriggerKeeperDive(world: RealGkWorld, player: RealGkPlayer)
     : clamp(0.1 + Math.abs(ball.vx) / 900, 0.1, 0.2);
   const targetX = ball.x + ball.vx * lead;
   const targetY = ball.y + ball.vy * lead;
-  if (Math.abs(targetY - player.y) > 54 * windowScale) return false;
+  if (Math.abs(targetY - player.y) > 72 * windowScale) return false;
 
   // Only dash toward the pitch — never backward into the keeper's own goal.
   return startKeeperDive(player, player.dir, targetX, targetY, diveAnimFor(world));

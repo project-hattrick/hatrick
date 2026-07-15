@@ -260,7 +260,7 @@ export function updateRestart(world: RealGkWorld, dt: number): void {
   if (r.stage === RestartStage.FoulFreeze) {
     holdFoulScene(world, dt);
     if (r.timer >= FOUL_FREEZE_SECONDS && r.foul) {
-      spawnRefereeFoul(world, r.foul.at.x, r.foul.at.y - 34, r.foul.card);
+      spawnRefereeFoul(world, r.foul.at.x, r.foul.at.y - 34, r.foul.cardColor != null, r.foul.cardColor ?? 'red');
       r.stage = RestartStage.RefArrive;
       r.timer = 0;
     }

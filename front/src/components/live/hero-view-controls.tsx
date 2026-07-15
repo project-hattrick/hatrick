@@ -3,7 +3,6 @@
 import { ArrowsOut, Rectangle } from '@/components/common/icons';
 import { GlassPanel } from '@/components/common/glass-panel';
 import { IconButton } from '@/components/common/icon-button';
-import { DimensionToggle } from './dimension-toggle';
 import { HeroLayout } from '@/enums/hero-layout.enum';
 import { useUiStore } from '@/store/ui.store';
 
@@ -15,7 +14,7 @@ function toggleFullscreen(): void {
 }
 
 /**
- * Stage view controls: 2D/2.5D dimension · split/immersive layout · fullscreen.
+ * Stage view controls: split/immersive layout and fullscreen.
  * Rendered bare inside the timeline bar (`standalone={false}`); wrapped in its own
  * glass pill when it stands alone — pre-match, where the replay bar is hidden and
  * these controls relocate to a corner.
@@ -26,7 +25,6 @@ export function HeroViewControls({ standalone = false }: { standalone?: boolean 
 
   const controls = (
     <div className="flex items-center gap-2">
-      <DimensionToggle />
       <button
         type="button"
         onClick={toggleHeroLayout}

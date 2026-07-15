@@ -36,6 +36,8 @@ const ACROSS_GAIN = 0.32;
  *  view) so the play happens UP near the placares instead of hugging the near touchline. depth 0 = far
  *  side. Paired with a tight upper depth clamp so the block lives in the top of the pitch. */
 const UP_BIAS = 0.24;
+const BALL_PRESSERS_WHEN_DEFENDING = 4;
+const BALL_PRESSERS_WHEN_LOOSE = 3;
 
 /** Per-role along-pitch clamp in ATTACK-PROGRESS space (0 = own goal, 1 = opponent goal). */
 const ALONG_BACK: Record<Role, number> = { GK: 0.02, DEF: 0.1, MID: 0.2, ST: 0.34 };
@@ -60,11 +62,19 @@ export function buildShapeContext(world: RealGkWorld): ShapeContext {
   const presserIds = new Set<number>();
   if (possessionTeam !== null) {
     const defenders = teamPlayers(world, possessionTeam === Team.Blue ? Team.Red : Team.Blue).filter((p) => p.role !== Role.GK);
-    // Two nearest defenders to the ball step to press (the plain chaser is the 1st; this adds support).
+    // Several nearest defenders step to press; the plain chaser owns the ball line, the rest close outlets.
     defenders
       .sort((a, b) => Math.hypot(a.x - ball.x, a.y - ball.y) - Math.hypot(b.x - ball.x, b.y - ball.y))
-      .slice(0, 2)
+      .slice(0, BALL_PRESSERS_WHEN_DEFENDING)
       .forEach((p) => presserIds.add(p.id));
+  } else {
+    for (const team of [Team.Blue, Team.Red]) {
+      teamPlayers(world, team)
+        .filter((p) => p.role !== Role.GK)
+        .sort((a, b) => Math.hypot(a.x - ball.x, a.y - ball.y) - Math.hypot(b.x - ball.x, b.y - ball.y))
+        .slice(0, BALL_PRESSERS_WHEN_LOOSE)
+        .forEach((p) => presserIds.add(p.id));
+    }
   }
 
   return { possessionTeam, ballRatio: fieldRatios(size, ball.x, ball.y), presserIds };
@@ -132,8 +142,17 @@ export function smartSupportTarget(world: RealGkWorld, player: RealGkPlayer, ctx
 
   // 2nd presser: commit toward the ball (the plain chaser is handled in players.ts).
   if (player.isPresser) {
-    lat = lerp(lat, ballRatio.lat, 0.7);
-    depth = lerp(depth, ballRatio.depth, 0.7);
+    lat = lerp(lat, ballRatio.lat, 0.84);
+    depth = lerp(depth, ballRatio.depth, 0.84);
+  }
+
+  // High-danger shots need bodies in the box: defenders collapse into lanes around the keeper instead of
+  // freezing near the post, which reads like real last-ditch blocking.
+  if (defending && world.intent.threat >= 0.72 && (player.role === Role.DEF || player.role === Role.MID)) {
+    const ownLat = player.dir > 0 ? 0.1 : 0.9;
+    const blockDepth = clamp(ballRatio.depth + (idNoise(player.id, 9) - 0.5) * 0.22, 0.22, 0.74);
+    lat = lerp(lat, ownLat, player.role === Role.DEF ? 0.72 : 0.42);
+    depth = lerp(depth, blockDepth, player.role === Role.DEF ? 0.68 : 0.38);
   }
 
   // Active off-ball run overrides toward the run target (eased in the last/first 0.4s of the run).

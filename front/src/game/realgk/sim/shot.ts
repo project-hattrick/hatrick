@@ -74,6 +74,8 @@ export function startPowerShot(world: RealGkWorld, player: RealGkPlayer, persona
  * instant strike. Shared by the autonomous owner AI (decideOwnerAction) and the feed director (injectShot).
  */
 export function commitShot(world: RealGkWorld, owner: RealGkPlayer): void {
+  world.intent.attackingTeam = owner.team;
+  world.intent.threat = Math.max(world.intent.threat, 0.86);
   if (world.cfg.features?.extraAnims || world.cfg.features?.personaShot) {
     startPowerShot(world, owner, world.cfg.features?.personaHeads === true);
     return;

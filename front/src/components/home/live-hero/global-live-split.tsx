@@ -43,13 +43,13 @@ export function GlobalLiveSplit() {
       {/* Framed engine + overlays — on beats only the bet CTA slides away. */}
       <div className="relative min-h-[52vh] flex-1 overflow-hidden rounded-2xl border border-white/10 md:min-h-0">
         <RoomMatchBackdrop scrim={false} />
-        <div className="absolute top-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2">
+        <ImpactSlide direction="up" className="absolute top-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2">
           <Scoreboard homeBackers={<HeroCardsBadge side="home" />} awayBackers={<HeroCardsBadge side="away" />} />
           <RoomPickToast />
-        </div>
-        <div className="absolute bottom-20 left-4 z-10 hidden lg:block">
+        </ImpactSlide>
+        <ImpactSlide direction="down" className="absolute bottom-20 left-4 z-10 hidden lg:block">
           <RoomMiniPitch />
-        </div>
+        </ImpactSlide>
         {/* Headline 1·X·2 dock with the data-provider credit sat right above it. */}
         <ImpactSlide
           direction="down"
@@ -60,16 +60,18 @@ export function GlobalLiveSplit() {
           </span>
           <RoomResultDock />
         </ImpactSlide>
-        <div className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3">
+        <ImpactSlide direction="down" className="absolute inset-x-0 bottom-0 z-30 px-3 pb-3">
           {/* No replay/pace controls in a shared live view — timeline is a readout only. */}
           <MatchTimeline playback={false} />
-        </div>
+        </ImpactSlide>
       </div>
 
       {/* Rail — public header, bet widget, slip and stats/crowd tabs. The bet group
           slides off the right edge during a goal beat. */}
       <div className="flex w-full min-h-0 flex-col gap-3 md:w-[392px]">
-        <GlobalRailHeader />
+        <ImpactSlide direction="right">
+          <GlobalRailHeader />
+        </ImpactSlide>
         <ImpactSlide direction="right" className="flex min-h-0 flex-[1.3] flex-col gap-3">
           <RoomBetPanel className="min-h-0 flex-1" />
           <RoomBetSlip />

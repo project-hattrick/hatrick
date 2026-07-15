@@ -26,7 +26,13 @@ const REF_BUSY = new Set<RefPhase>([RefPhase.RunCenter, RefPhase.Pause, RefPhase
  * Freezes play at the foul and opens the sanction flow: the victim goes down, the referee sprints over,
  * whistles or brandishes the red card, then a free kick (with wall) or penalty (full box staging) follows.
  */
-export function startFoul(world: RealGkWorld, offender: RealGkPlayer, victim: RealGkPlayer, card: boolean): void {
+export function startFoul(
+  world: RealGkWorld,
+  offender: RealGkPlayer,
+  victim: RealGkPlayer,
+  card: boolean,
+  cardColor: 'yellow' | 'red' | null = card ? 'red' : null,
+): void {
   const { size, match, ball } = world;
   const inBox = inPenaltyBox(size, offender.team, victim.x, victim.y);
   const at = { x: victim.x, y: victim.y };
@@ -67,7 +73,7 @@ export function startFoul(world: RealGkWorld, offender: RealGkPlayer, victim: Re
     timer: 0,
     spot,
     takerId: null,
-    foul: { offenderId: offender.id, victimId: victim.id, card, at },
+    foul: { offenderId: offender.id, victimId: victim.id, card, cardColor, at },
   };
   match.foulCooldown = COOLDOWN_MIN + Math.random() * COOLDOWN_SPREAD;
   match.ballText = BallText.foul;

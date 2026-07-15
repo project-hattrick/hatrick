@@ -33,9 +33,7 @@ export function CardBroadcastOverlay({ blueName, redName }: { blueName?: string;
     return unsub;
   }, [blueName, redName]);
 
-  // Auto-dismiss timers keyed on the flash ITSELF — deliberately separate from the subscription effect so
-  // a team-name prop change (a room match switch) can never cancel an in-flight dismissal and leave a
-  // card frozen on screen. A new card = a new `flash` object → this re-runs and restarts the timers.
+  // Auto-dismiss timers are keyed on the flash, so match changes cannot freeze an in-flight card.
   useEffect(() => {
     if (!flash) return;
     const leaveT = window.setTimeout(() => setLeaving(true), 2000);
@@ -50,7 +48,9 @@ export function CardBroadcastOverlay({ blueName, redName }: { blueName?: string;
 
   return (
     <div key={flash.key} className={styles.overlay} data-leaving={leaving} aria-label={`${flash.color} card`}>
-      <div className={styles.card} data-color={flash.color} />
+      <div className={styles.card} data-color={flash.color}>
+        <span className={styles.logo} />
+      </div>
       <span className={styles.label}>{flash.color === 'red' ? 'Red Card' : 'Yellow Card'}</span>
       {flash.team ? <span className={styles.team}>{flash.team}</span> : null}
     </div>

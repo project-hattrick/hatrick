@@ -1,5 +1,4 @@
-/* Feed-driven card broadcast — a yellow/red card slams in when the referee books a team, then fades.
-   Play keeps rolling underneath (unlike the red-card foul freeze), so this auto-dismisses after a beat. */
+/* Feed-driven card broadcast: a yellow/red card slams in, then fades while play keeps rolling. */
 
 .overlay {
   position: absolute;
@@ -20,47 +19,78 @@
 }
 
 .card {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: clamp(104px, 12vw, 168px);
   height: clamp(156px, 18vw, 248px);
-  border-radius: 12px;
-  transform: perspective(900px) rotateZ(-8deg) rotateX(6deg);
-  animation: cardSlam 0.42s cubic-bezier(0.2, 1.5, 0.35, 1) both;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  animation: cardIn 0.28s ease-out both;
+}
+
+.card::before {
+  position: absolute;
+  inset: 8px;
+  content: '';
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 6px;
+}
+
+.card::after {
+  position: absolute;
+  inset: auto 16px 16px;
+  height: 4px;
+  content: '';
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.logo {
+  width: 70%;
+  aspect-ratio: 1;
+  background: url('/logo.png') center / contain no-repeat;
+  opacity: 1;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
 }
 
 .card[data-color='yellow'] {
-  background: linear-gradient(150deg, #fde047 0%, #f5c518 55%, #d9a400 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 48%),
+    #f6c90e;
   box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.16),
-    0 22px 60px rgba(245, 197, 24, 0.5),
-    0 8px 24px rgba(0, 0, 0, 0.55);
+    0 18px 44px rgba(246, 201, 14, 0.38),
+    0 8px 22px rgba(0, 0, 0, 0.42);
 }
 
 .card[data-color='red'] {
-  background: linear-gradient(150deg, #ef4444 0%, #b91c1c 60%, #7f1010 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 48%),
+    #c81e2a;
   box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.14),
-    0 22px 60px rgba(220, 38, 38, 0.55),
-    0 8px 24px rgba(0, 0, 0, 0.6);
+    0 18px 44px rgba(200, 30, 42, 0.4),
+    0 8px 22px rgba(0, 0, 0, 0.44);
 }
 
 .label {
-  font-size: clamp(22px, 4vw, 44px);
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: #fff;
+  font-size: clamp(22px, 4vw, 44px);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.04em;
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.6);
+  text-transform: uppercase;
   animation: labelIn 0.5s ease-out 0.12s both;
 }
 
 .team {
+  color: rgba(255, 255, 255, 0.88);
   font-size: clamp(13px, 2vw, 22px);
   font-weight: 700;
   letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.88);
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  text-transform: uppercase;
   animation: labelIn 0.5s ease-out 0.22s both;
 }
 
@@ -82,28 +112,22 @@
   }
 }
 
-@keyframes cardSlam {
+@keyframes cardIn {
   0% {
     opacity: 0;
-    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(2.4) translateY(-40px);
-  }
-  60% {
-    opacity: 1;
   }
   100% {
     opacity: 1;
-    transform: perspective(900px) rotateZ(-8deg) rotateX(6deg) scale(1) translateY(0);
   }
 }
 
 @keyframes labelIn {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.8);
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 

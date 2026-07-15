@@ -77,8 +77,8 @@ function HoloPlayerCard({
             style={{
               position: 'absolute',
               inset: 0,
-              background: surfaceColors ? `linear-gradient(145deg, ${surfaceColors[0]}, ${surfaceColors[1]})` : '#101013',
-              borderRadius: '8cqi',
+              background: surfaceColors ? `linear-gradient(180deg, ${surfaceColors[0]}, ${surfaceColors[1]})` : '#101315',
+              borderRadius: '4cqi',
             }}
           />
           {surfaceColors ? (
@@ -86,28 +86,32 @@ function HoloPlayerCard({
               style={{
                 position: 'absolute',
                 inset: 0,
-                borderRadius: '8cqi',
+                borderRadius: '4cqi',
                 backgroundColor: surfaceColors[0],
-                backgroundImage: `linear-gradient(145deg, ${surfaceColors[0]}, ${surfaceColors[1]}), url('/cards/card-texture.png')`,
-                backgroundBlendMode: 'color, normal',
+                backgroundImage: `linear-gradient(180deg, ${surfaceColors[0]}, ${surfaceColors[1]})`,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
                 overflow: 'hidden',
               }}
             >
+              <span className={styles.surfaceGrain} />
+              <span className={styles.centerMark} />
               {surfaceShine && <span className={styles.surfaceShine} />}
             </div>
           ) : (
-            <HologramSticker.ImageLayer src="/cards/card-texture.png" alt="" objectFit="cover" />
+            <>
+              <HologramSticker.ImageLayer src="/cards/card-texture.png" alt="" objectFit="cover" />
+              <span className={styles.centerMark} />
+            </>
           )}
 
           {/* Layer 2: holographic pattern */}
-          <HologramSticker.Pattern textureUrl={HOLO_PATTERN_TEXTURE} opacity={0.4} mixBlendMode="multiply">
+          <HologramSticker.Pattern textureUrl={HOLO_PATTERN_TEXTURE} opacity={0.18} mixBlendMode="multiply">
             <HologramSticker.Refraction intensity={1} className={styles.holoRefraction} />
           </HologramSticker.Pattern>
 
           {/* Layer 3: faded club watermark behind the character */}
-          <HologramSticker.Watermark imageUrl="/cards/fade-logo.png" opacity={0.35}>
+          <HologramSticker.Watermark imageUrl="/cards/fade-logo.png" opacity={0.12}>
             <HologramSticker.Refraction intensity={1} className={styles.holoRefraction} />
           </HologramSticker.Watermark>
 
@@ -118,9 +122,9 @@ function HoloPlayerCard({
                 position: 'absolute',
                 inset: 0,
                 zIndex: 2,
-                borderRadius: '8cqi',
+                borderRadius: '4cqi',
                 filter: `url(#${lightingId})`,
-                clipPath: 'inset(0 0 0 0 round 8cqi)',
+                clipPath: 'inset(0 0 0 0 round 4cqi)',
               }}
             >
               {/* Emboss border */}
@@ -128,8 +132,8 @@ function HoloPlayerCard({
                 style={{
                   position: 'absolute',
                   inset: '-1px',
-                  border: 'calc((8cqi * 0.5) + 1px) solid hsl(0 0% 10%)',
-                  borderRadius: '8cqi',
+                  border: 'calc((4cqi * 0.5) + 1px) solid hsl(0 0% 10%)',
+                  borderRadius: '4cqi',
                   zIndex: 99,
                 }}
               />

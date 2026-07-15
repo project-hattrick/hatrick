@@ -194,6 +194,8 @@ export interface FoulInfo {
   victimId: number;
   /** True = straight red: play freezes on the card and the offender is sent off. */
   card: boolean;
+  /** Feed/natural sanction colour; undefined/null means whistle-only foul. */
+  cardColor?: 'yellow' | 'red' | null;
   /** Where the foul happened — the referee runs here (the kick spot may differ for penalties). */
   at: Vec2;
 }

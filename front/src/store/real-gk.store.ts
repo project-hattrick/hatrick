@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useEffect, useRef, useState } from 'react';
 import type { RealGkHudPatch } from '@/game/realgk/types';
 
 interface RealGkStore {
@@ -85,5 +86,19 @@ export const useRealGkStore = create<RealGkStore>((set) => ({
  * these so the match takes the whole screen, then returns once the beat clears. Restart/intro banners
  * are intentionally excluded — they fire on every corner/throw-in and would make the chrome flicker.
  */
-export const useHeroImpactActive = () =>
-  useRealGkStore((s) => s.goalActive || s.replayActive || s.redCardActive);
+export const useHeroImpactActive = () => {
+  const baseImpact = useRealGkStore((s) => s.goalActive || s.replayActive || s.redCardActive);
+  const cardFlashSeq = useRealGkStore((s) => s.cardFlashSeq);
+  const [cardImpact, setCardImpact] = useState(false);
+  const seenSeq = useRef(cardFlashSeq);
+
+  useEffect(() => {
+    if (cardFlashSeq <= 0 || cardFlashSeq === seenSeq.current) return;
+    seenSeq.current = cardFlashSeq;
+    setCardImpact(true);
+    const timer = window.setTimeout(() => setCardImpact(false), 2400);
+    return () => window.clearTimeout(timer);
+  }, [cardFlashSeq]);
+
+  return baseImpact || cardImpact;
+};

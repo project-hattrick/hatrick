@@ -1,5 +1,5 @@
 import { BodyAnim, CelebrationPhase, PlayerAction, Role, RunKind, Team } from '../enums';
-import { fieldBounds, fieldRatios, pointOnField } from '../field';
+import { fieldRatios, pointOnField } from '../field';
 import type { RealGkPlayer, RealGkWorld } from '../types';
 import { clamp } from '../util';
 import { ITEM_MAP } from '../assets/items';
@@ -14,10 +14,12 @@ import { maybeTriggerReceive, updateReceive } from './receive';
 import { commitShot, updatePowerShot } from './shot';
 import { maybeTriggerSlideTackle, updateSlideTackle } from './slide';
 import { buildShapeContext, decideOwnerActionSmart, smartSupportTarget, supportTarget, updateMarking, updateOffBallRun } from './positioning';
-import { dive2FrameAt, keeperCrossTarget, maybeTriggerKeeperDive, updateKeeperDive } from './keeper';
+import { dive2FrameAt, keeperCrossTarget, maybeTriggerKeeperDive, updateKeeperDiveInWorld } from './keeper';
 import { Status } from './messages';
 import { createPlayer } from './player-factory';
 import { setStatus } from './rules';
+import { clampPlayerToPitch } from './bounds';
+import { applyPlayerSeparation } from './player-separation';
 
 const TEAM_TAG: Record<Team, string> = { [Team.Blue]: 'BLU', [Team.Red]: 'RED' };
 
@@ -237,7 +239,7 @@ function startTurnOrBrake(player: RealGkPlayer, facingBefore: number, targetDist
 export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number, ty: number, topSpeed: number, dt: number, clampToPitch = true): void {
   if (player.role === Role.GK) {
     player.saveCooldown = Math.max(0, player.saveCooldown - dt);
-    if (updateKeeperDive(player, dt)) return;
+    if (updateKeeperDiveInWorld(world, player, dt)) return;
   }
 
   const extraAnims = world.cfg.features?.extraAnims === true;
@@ -278,11 +280,7 @@ export function moveToward(world: RealGkWorld, player: RealGkPlayer, tx: number,
 
   player.x += player.vx * dt;
   player.y += player.vy * dt;
-  if (clampToPitch) {
-    const bounds = fieldBounds(world.size, player.y);
-    player.y = clamp(player.y, bounds.topY + 4, bounds.bottomY - 8);
-    player.x = clamp(player.x, bounds.left + 12, bounds.right - 12);
-  }
+  if (clampToPitch) clampPlayerToPitch(world, player, player.role === Role.GK ? 10 : 12);
   const facingBefore = player.facing;
   updateFacingGuard(player, dt);
 
@@ -510,7 +508,7 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
     if (player.role === Role.GK && keeperUnderControl) {
       // Autopilot (feel grid): let the pinned keeper auto-dive at incoming shots like an AI keeper.
       if (world.cfg.keeperAutopilot && player.action !== PlayerAction.Dive) maybeTriggerKeeperDive(world, player);
-      if (updateKeeperDive(player, dt)) continue;
+      if (updateKeeperDiveInWorld(world, player, dt)) continue;
     }
     // Keeper comes off his line to claim a central cross/corner (livelyMatch keepers): rush to the drop,
     // then maybeClaimBall catches it on landing. Wide/deep balls are left to the defenders.
@@ -522,7 +520,7 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
       }
     }
     if (player.role === Role.GK && !keeperUnderControl && maybeTriggerKeeperDive(world, player)) {
-      updateKeeperDive(player, dt);
+      updateKeeperDiveInWorld(world, player, dt);
       continue;
     }
 
@@ -593,32 +591,5 @@ export function updatePlayers(world: RealGkWorld, dt: number): void {
   // end — the old in-place version let a scrum on the ball compound many overlaps into one huge single-tick
   // shove (players "teleporting" around the ball). The cap keeps normal 1–2 overlaps identical while killing
   // that pathological pop; minDist scales with the pitch so spacing reads the same across courts.
-  const minDist = 18 * (world.cfg.fieldScale / 1.5);
-  const maxSeparation = 12 * (world.cfg.fieldScale / 1.5);
-  const sepX = new Array<number>(players.length).fill(0);
-  const sepY = new Array<number>(players.length).fill(0);
-  for (let i = 0; i < players.length; i++) {
-    if (players[i].celebrationPhase !== CelebrationPhase.None) continue;
-    for (let j = i + 1; j < players.length; j++) {
-      if (players[j].celebrationPhase !== CelebrationPhase.None) continue;
-      const dx = players[j].x - players[i].x;
-      const dy = players[j].y - players[i].y;
-      const d = Math.hypot(dx, dy);
-      if (d > 0 && d < minDist) {
-        const push = (minDist - d) * 0.5;
-        const nx = dx / d;
-        const ny = dy / d;
-        sepX[i] -= nx * push;
-        sepY[i] -= ny * push;
-        sepX[j] += nx * push;
-        sepY[j] += ny * push;
-      }
-    }
-  }
-  for (let i = 0; i < players.length; i++) {
-    const mag = Math.hypot(sepX[i], sepY[i]);
-    const scale = mag > maxSeparation ? maxSeparation / mag : 1;
-    players[i].x += sepX[i] * scale;
-    players[i].y += sepY[i] * scale;
-  }
+  applyPlayerSeparation(world);
 }
