@@ -1,5 +1,6 @@
 import { endpoints } from './endpoints';
 import { api } from './http';
+import { STORE_CATALOG_SEED } from '@/config/store-catalog.config';
 
 /** A limited-stock store product as the API catalog exposes it. */
 export interface StoreItem {
@@ -25,7 +26,15 @@ export interface StorePurchaseResult {
  * and returns the new balance + remaining stock.
  */
 export const storeService = {
-  catalog: (signal?: AbortSignal): Promise<StoreItem[]> => api.get<StoreItem[]>(endpoints.store.catalog, signal),
+  catalog: async (signal?: AbortSignal): Promise<StoreItem[]> => {
+    try {
+      return await api.get<StoreItem[]>(endpoints.store.catalog, signal);
+    } catch (error) {
+      const message = (error as Error)?.message ?? '';
+      if (message.includes('404')) return STORE_CATALOG_SEED.map((item) => ({ ...item }));
+      throw error;
+    }
+  },
 
   purchase: (slug: string): Promise<StorePurchaseResult> =>
     api.post<StorePurchaseResult>(endpoints.store.purchase, { slug }),

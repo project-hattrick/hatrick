@@ -58,12 +58,27 @@ const TEAM_BY_NAME: Record<string, { code: string; flag: string }> = {
   'Saudi Arabia': { code: 'KSA', flag: '🇸🇦' },
   'New Zealand': { code: 'NZL', flag: '🇳🇿' },
   'South Africa': { code: 'RSA', flag: '🇿🇦' },
+  Vietnam: { code: 'VIE', flag: '🇻🇳' },
+  'Viet Nam': { code: 'VIE', flag: '🇻🇳' },
+  Myanmar: { code: 'MYA', flag: '🇲🇲' },
 };
+
+const TEAM_NAME_ALIAS: Record<string, string> = {
+  VIETNAM: 'Vietnam',
+  'VIET NAM': 'Viet Nam',
+  MYANMAR: 'Myanmar',
+};
+
+function teamByName(name: string): { code: string; flag: string } | undefined {
+  const trimmed = name.trim();
+  return TEAM_BY_NAME[trimmed] ?? TEAM_BY_NAME[TEAM_NAME_ALIAS[trimmed.toUpperCase().replace(/\s+/g, ' ')]];
+}
 
 /** Build a TeamInfo from a fixture's participant name — falls back to a derived 3-letter code. */
 export function teamInfoFromName(name: string, side: TeamSide): TeamInfo {
-  const known = TEAM_BY_NAME[name] ?? { code: name.slice(0, 3).toUpperCase(), flag: '🏳️' };
-  return { side, code: known.code, name, flag: known.flag };
+  const cleanName = name.trim();
+  const known = teamByName(cleanName) ?? { code: cleanName.slice(0, 3).toUpperCase(), flag: '🏳️' };
+  return { side, code: known.code, name: cleanName, flag: known.flag };
 }
 
 /** Full team name for a FIFA code (reverse lookup), or the code itself when unknown. */
@@ -74,6 +89,6 @@ export function teamNameFromCode(code: string): string {
 
 /** flag-icons ISO for a recognised country name, or null when the name isn't a known nation. */
 export function flagIsoForName(name: string): string | null {
-  const known = TEAM_BY_NAME[name];
+  const known = teamByName(name);
   return known ? fifaToIso(known.code) : null;
 }

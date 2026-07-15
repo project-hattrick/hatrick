@@ -245,7 +245,7 @@ export const FRANCE_BILLBOARDS: Billboard[] = [
   {
     kind: BillboardKind.Led,
     corners: [[0.3, 0.295], [0.44, 0.295], [0.44, 0.327], [0.3, 0.327]],
-    text: 'TXODDS  ·  WORLD CUP 26',
+    text: 'RENT THIS LED SPACE  ·  YOUR AD HERE',
     theme: 'amber',
     speed: 9,
   },
@@ -257,7 +257,7 @@ export const FRANCE_BILLBOARDS: Billboard[] = [
   {
     kind: BillboardKind.Led,
     corners: [[0.56, 0.295], [0.7, 0.295], [0.7, 0.327], [0.56, 0.327]],
-    text: 'PLAY LIVE  ·  TXLINE',
+    text: 'ADVERTISE HERE  ·  MATCHDAY SPONSOR',
     theme: 'blue',
     speed: 9,
   },
@@ -331,4 +331,3 @@ export const AWAY_TEAM_PACKS: Record<string, { root: string; brand: TeamBrand; a
   denmark: { root: '/game/teams/denmark', brand: { name: 'Denmark', flagId: 'denmark', colors: ['#C60C30', '#FFFFFF', '#C60C30'] }, accent: '#C60C30' },
   poland: { root: '/game/teams/poland', brand: { name: 'Poland', flagId: 'poland', colors: ['#FFFFFF', '#DC143C', '#FFFFFF'] }, accent: '#DC143C' },
 };
-

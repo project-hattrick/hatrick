@@ -100,11 +100,47 @@ export const HERO_PORTRAITS: Record<string, HeroPortrait> = {
     away: { width: 170, x: -169, y: 8, scale: 1, flip: true, objectY: 0 },
   },
   FRA: { src: '/cards/hero-fra.png', away: { width: 170, x: -155, y: 8, scale: 1, flip: true, objectY: 0 } },
+  VIE: {
+    src: '/cards/hero-vie.png',
+    home: { width: 172, x: -5, y: 4, scale: 1, flip: false, objectY: 0 },
+    away: { width: 172, x: -160, y: 5, scale: 1, flip: true, objectY: 0 },
+  },
+  VNM: {
+    src: '/cards/hero-vie.png',
+    home: { width: 172, x: -5, y: 4, scale: 1, flip: false, objectY: 0 },
+    away: { width: 172, x: -160, y: 5, scale: 1, flip: true, objectY: 0 },
+  },
+  MYA: {
+    src: '/cards/hero-mya.png',
+    home: { width: 172, x: -5, y: 5, scale: 1, flip: false, objectY: 0 },
+    away: { width: 172, x: -160, y: 5, scale: 1, flip: true, objectY: 0 },
+  },
+  MMR: {
+    src: '/cards/hero-mya.png',
+    home: { width: 172, x: -5, y: 5, scale: 1, flip: false, objectY: 0 },
+    away: { width: 172, x: -160, y: 5, scale: 1, flip: true, objectY: 0 },
+  },
 };
+
+const HERO_PORTRAIT_ALIAS: Record<string, string> = {
+  VIETNAM: 'VIE',
+  'VIET NAM': 'VIE',
+  VIE: 'VIE',
+  VNM: 'VIE',
+  MYANMAR: 'MYA',
+  MYA: 'MYA',
+  MMR: 'MYA',
+};
+
+function heroPortraitKey(name: string, fifaCode: string): string {
+  const code = fifaCode.trim().toUpperCase();
+  const normalizedName = name.trim().toUpperCase().replace(/\s+/g, ' ');
+  return HERO_PORTRAIT_ALIAS[code] ?? HERO_PORTRAIT_ALIAS[normalizedName] ?? code;
+}
 
 /** Hero figure (portrait + placement) for a fixture team — heroMatch default when no art exists. */
 export function heroTeamFor(name: string, fifaCode: string, side: 'home' | 'away'): HeroTeam {
-  const code = fifaCode.toUpperCase();
+  const code = heroPortraitKey(name, fifaCode);
   const entry = HERO_PORTRAITS[code];
   if (!entry) return heroMatch[side];
   const placement = entry[side] ?? DEFAULT_FIGURE_PLACEMENT[side];

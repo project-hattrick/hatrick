@@ -35,7 +35,7 @@ export const BILLBOARDS: Billboard[] = [
   {
     kind: BillboardKind.Led,
     corners: [[0.3, 0.3], [0.44, 0.3], [0.44, 0.336], [0.3, 0.336]],
-    text: 'TXODDS  ·  WORLD CUP 26',
+    text: 'RENT THIS LED SPACE  ·  YOUR AD HERE',
     theme: 'amber',
     speed: 9,
   },
@@ -47,7 +47,7 @@ export const BILLBOARDS: Billboard[] = [
   {
     kind: BillboardKind.Led,
     corners: [[0.56, 0.3], [0.7, 0.3], [0.7, 0.336], [0.56, 0.336]],
-    text: 'PLAY LIVE  ·  TXLINE',
+    text: 'ADVERTISE HERE  ·  MATCHDAY SPONSOR',
     theme: 'blue',
     speed: 9,
   },

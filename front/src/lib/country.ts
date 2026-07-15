@@ -53,6 +53,10 @@ const FIFA_TO_ISO: Record<string, string> = {
   PAN: 'pa',
   NZL: 'nz',
   RSA: 'za',
+  VIE: 'vn',
+  VNM: 'vn',
+  MYA: 'mm',
+  MMR: 'mm',
 };
 
 /** Map a FIFA/short code to an ISO alpha-2; falls back to a lowercased 2-letter code. */

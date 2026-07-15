@@ -6,6 +6,8 @@
 
 export interface StoreCatalogSeed {
   slug: string;
+  kind: 'Pack' | 'Bundle' | 'Card';
+  name: string;
   /** Price in coins (display SOL = price / 100k). */
   price: number;
   /** Initial units for the mock shop. */
@@ -13,16 +15,16 @@ export interface StoreCatalogSeed {
 }
 
 export const STORE_CATALOG_SEED: StoreCatalogSeed[] = [
-  { slug: 'legendary-pack', price: 200_000, stock: 12 },
-  { slug: 'pro-pack', price: 120_000, stock: 25 },
-  { slug: 'starter-pack', price: 50_000, stock: 40 },
-  { slug: 'limited-bundle', price: 350_000, stock: 8 },
-  { slug: 'midfield-bundle', price: 250_000, stock: 15 },
-  { slug: 'card-mbappe', price: 295_000, stock: 3 },
-  { slug: 'card-haaland', price: 245_000, stock: 5 },
-  { slug: 'card-messi', price: 235_000, stock: 5 },
-  { slug: 'card-vini', price: 215_000, stock: 8 },
-  { slug: 'card-bellingham', price: 185_000, stock: 10 },
+  { slug: 'legendary-pack', kind: 'Pack', name: 'Legendary Pack', price: 200_000, stock: 12 },
+  { slug: 'pro-pack', kind: 'Pack', name: 'Pro Pack', price: 120_000, stock: 25 },
+  { slug: 'starter-pack', kind: 'Pack', name: 'Starter Pack', price: 50_000, stock: 40 },
+  { slug: 'limited-bundle', kind: 'Bundle', name: 'Limited Bundle', price: 350_000, stock: 8 },
+  { slug: 'midfield-bundle', kind: 'Bundle', name: 'Midfield Bundle', price: 250_000, stock: 15 },
+  { slug: 'card-mbappe', kind: 'Card', name: 'Mbappe Pick', price: 295_000, stock: 3 },
+  { slug: 'card-haaland', kind: 'Card', name: 'Haaland Pick', price: 245_000, stock: 5 },
+  { slug: 'card-messi', kind: 'Card', name: 'Messi Pick', price: 235_000, stock: 5 },
+  { slug: 'card-vini', kind: 'Card', name: 'Vini Pick', price: 215_000, stock: 8 },
+  { slug: 'card-bellingham', kind: 'Card', name: 'Bellingham Pick', price: 185_000, stock: 10 },
 ];
 
 /** Market-pick slug for a fantasy card id (matches the API seed slugs). */
