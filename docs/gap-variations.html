@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hatrick — Gap (estilo widgets)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --background:#0b0c0f;--surface-1:#141519;--surface-2:#1b1c21;--surface-3:#26272e;
+    --foreground:#f2f3f5;--muted:#8b8d94;--neon:#aef019;--live:#ff5a5f;--gold:#f5c451;
+    --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.12);
+    --e3:0 10px 24px -8px rgb(0 0 0 / .46), 0 2px 6px rgb(0 0 0 / .3);
+    --sans:'Inter',system-ui,sans-serif;--mono:'Geist Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}html,body{height:100%;margin:0;}
+  body{background:var(--background);color:var(--foreground);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;}
+  .bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;opacity:.14;z-index:0;}
+  .bg-scrim{position:fixed;inset:0;z-index:0;background:radial-gradient(90% 80% at 30% 20%, color-mix(in oklch,var(--neon) 6%,transparent), transparent 60%);}
+  .wrap{position:relative;z-index:1;height:100%;display:grid;grid-template-columns:40% 60%;align-items:center;}
+
+  /* ── Left: text zone (swaps per variation) ── */
+  .textzone{padding:0 3vw 0 6vw;position:relative;}
+  .textblock{display:none;}
+  .textblock.active{display:block;animation:rise .3s var(--ease) both;}
+  @keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+  .eyebrow{font-family:var(--sans);font-size:clamp(11px,1.1vw,14px);font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:var(--neon);margin-bottom:2.4vh;}
+  h1{margin:0;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;font-size:clamp(24px,2.9vw,42px);line-height:1.08;}
+  h1 .n{color:var(--neon);} h1 .hw{color:var(--foreground);}
+  .sub{margin:2.6vh 0 0;font-size:clamp(15px,1.5vw,21px);line-height:1.5;color:var(--muted);font-weight:500;}
+  .sub strong{color:var(--foreground);font-weight:700;}
+  /* globe "broken tools" card */
+  .globe{margin-top:4vh;display:inline-flex;align-items:center;gap:14px;background:color-mix(in oklch,var(--surface-1) 88%,transparent);
+    border:1px solid var(--border-2);border-radius:16px;padding:14px 18px;box-shadow:var(--e3);backdrop-filter:blur(10px);}
+  .globe svg{width:30px;height:30px;color:var(--neon);flex:0 0 auto;}
+  .globe .gt{font-size:clamp(12px,1.15vw,15px);line-height:1.35;color:var(--foreground);font-weight:600;}
+  .globe .gt b{color:var(--neon);font-weight:700;}
+
+  /* ── Right: illustration (character + orbiting widgets + dashed arrows) ── */
+  .illo{position:relative;height:100%;}
+  .illo .arrows{position:absolute;inset:0;width:100%;height:100%;z-index:1;}
+  .arrows path{fill:none;stroke:color-mix(in oklch,var(--neon) 55%,var(--muted));stroke-width:2;stroke-dasharray:5 6;opacity:.55;}
+  .arrows .head{fill:color-mix(in oklch,var(--neon) 70%,var(--muted));opacity:.7;}
+
+  .hero-fan{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);z-index:2;
+    width:30%;aspect-ratio:3/4;display:grid;place-items:center;}
+  .hero-fan img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 30px rgb(0 0 0 /.6));}
+  /* placeholder shown until assets/fan.png exists */
+  .fan-ph{width:100%;height:100%;border:2px dashed color-mix(in oklch,var(--neon) 45%,transparent);border-radius:20px;
+    background:color-mix(in oklch,var(--surface-1) 70%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);}
+  .fan-ph .h{font-family:var(--sans);font-weight:900;font-size:clamp(30px,3.4vw,52px);color:var(--neon);
+    width:1.7em;height:1.7em;border:3px solid var(--neon);border-radius:14px;display:grid;place-items:center;}
+  .fan-ph small{font-family:var(--mono);font-size:11px;text-align:center;padding:0 10px;line-height:1.4;}
+
+  /* Widget cards */
+  .w{position:absolute;z-index:3;background:color-mix(in oklch,var(--surface-1) 92%,transparent);
+    border:1px solid var(--border-2);border-radius:14px;padding:11px 13px;box-shadow:var(--e3);backdrop-filter:blur(8px);min-width:132px;}
+  .w .wh{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .w .wh .ic{width:13px;height:13px;color:var(--neon);flex:0 0 auto;}
+  .w .wh .rt{margin-left:auto;color:var(--muted);}
+  /* live score */
+  .score{display:flex;align-items:center;justify-content:center;gap:10px;}
+  .flag{width:22px;height:15px;border-radius:3px;overflow:hidden;flex:0 0 auto;box-shadow:0 0 0 1px rgb(0 0 0 /.4);}
+  .flag.eng{background:#fff;position:relative;}
+  .flag.eng::before,.flag.eng::after{content:'';position:absolute;background:#c8102e;}
+  .flag.eng::before{left:9px;top:0;width:4px;height:100%;} .flag.eng::after{top:5.5px;left:0;height:4px;width:100%;}
+  .flag.ger{background:linear-gradient(#111 33%,#c8102e 33% 66%,#f5c451 66%);}
+  .score .sc{font-weight:800;font-size:17px;letter-spacing:.02em;}
+  .score .cc{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;margin-top:2px;}
+  .teamcol{display:flex;flex-direction:column;align-items:center;}
+  /* fantasy */
+  .pts{font-weight:900;font-size:20px;} .pts small{font-size:11px;color:var(--muted);font-weight:600;margin-left:3px;}
+  .bar{height:6px;border-radius:999px;background:var(--surface-3);margin-top:7px;overflow:hidden;}
+  .bar>i{display:block;height:100%;width:72%;background:var(--neon);border-radius:999px;}
+  .jersey{position:absolute;right:10px;bottom:9px;width:26px;height:26px;color:var(--foreground);opacity:.85;}
+  /* odds */
+  .odds{display:flex;gap:6px;} .odds .o{flex:1;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 0;}
+  .odds .o.up{color:var(--neon);border-color:color-mix(in oklch,var(--neon) 40%,transparent);}
+  .odline{margin-top:7px;height:20px;}
+  /* stats bars */
+  .sbars{display:flex;align-items:flex-end;gap:4px;height:34px;}
+  .sbars>i{flex:1;background:var(--neon);border-radius:2px;opacity:.85;}
+  /* chat */
+  .chat{display:flex;align-items:center;gap:7px;} .chat .bub{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;}
+  .chat .dots{color:var(--muted);font-weight:800;letter-spacing:1px;}
+
+  /* chrome */
+  .vtag{position:fixed;top:14px;left:16px;z-index:20;font-family:var(--mono);font-size:12px;color:var(--neon);
+    background:var(--surface-2);border:1px solid color-mix(in oklch,var(--neon) 45%,transparent);border-radius:999px;padding:7px 14px;}
+  .vtag b{color:var(--foreground);}
+  .counter{position:fixed;top:14px;right:16px;z-index:20;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-2);border-radius:999px;padding:7px 12px;}
+  .foot{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-between;padding:12px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .foot b{color:var(--foreground);}
+</style>
+</head>
+<body>
+<img class="bg" src="assets/stadium-hero.png" alt="" />
+<div class="bg-scrim"></div>
+<div class="vtag" id="vtag"></div>
+<div class="counter" id="counter">1 / 4</div>
+
+<div class="wrap">
+  <!-- LEFT: swappable text -->
+  <div class="textzone">
+    <div class="textblock" data-tag="A · Comportamento (o que o fã já faz)">
+      <div class="eyebrow">The Gap</div>
+      <h1><span class="hw">Você assiste, aposta</span><br><span class="n">e escala seu time.</span></h1>
+      <p class="sub">Ao mesmo tempo, em apps diferentes — e <strong>nenhum sabe que o jogo está rolando agora.</strong></p>
+      <div class="globe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <div class="gt">O maior evento do planeta.<br><b>Ferramentas quebradas.</b></div>
+      </div>
+    </div>
+
+    <div class="textblock" data-tag="B · Mercado (a oportunidade)">
+      <div class="eyebrow">The Gap</div>
+      <h1><span class="hw">Todo jogo move</span><br><span class="n">milhões de fãs.</span></h1>
+      <p class="sub">Atenção, apostas, fantasy, figurinhas — mercados enormes, <strong>todos desligados da partida real.</strong></p>
+      <div class="globe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <div class="gt">O maior evento do planeta.<br><b>Ferramentas quebradas.</b></div>
+      </div>
+    </div>
+
+    <div class="textblock" data-tag="C · O momento perdido (recomendada)">
+      <div class="eyebrow">The Gap</div>
+      <h1><span class="hw">O gol saiu.</span><br><span class="n">Seu fantasy nem soube.</span></h1>
+      <p class="sub">O momento que importa <strong>se perde entre abas que não se falam.</strong></p>
+      <div class="globe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <div class="gt">O maior evento do planeta.<br><b>Ferramentas quebradas.</b></div>
+      </div>
+    </div>
+
+    <div class="textblock" data-tag="D · Atrito concreto">
+      <div class="eyebrow">The Gap</div>
+      <h1><span class="hw">Cinco telas</span><br><span class="n">pra viver 90 minutos.</span></h1>
+      <p class="sub">Placar, odds, fantasy, chat — cada um num app, <strong>nenhum falando com o outro.</strong></p>
+      <div class="globe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <div class="gt">O maior evento do planeta.<br><b>Ferramentas quebradas.</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: illustration (fixed across variations) -->
+  <div class="illo">
+    <svg class="arrows" viewBox="0 0 1000 640" preserveAspectRatio="none">
+      <path d="M250,150 C360,220 420,270 470,300"/><polygon class="head" points="470,300 456,290 462,306"/>
+      <path d="M720,150 C640,230 580,270 540,300"/><polygon class="head" points="540,300 554,291 548,307"/>
+      <path d="M180,330 C300,340 380,345 440,350"/><polygon class="head" points="440,350 425,343 427,358"/>
+      <path d="M820,340 C700,352 620,356 560,360"/><polygon class="head" points="560,360 575,353 573,368"/>
+      <path d="M760,500 C660,460 600,430 545,400"/><polygon class="head" points="545,400 560,404 550,416"/>
+    </svg>
+
+    <!-- character slot -->
+    <div class="hero-fan">
+      <img src="assets/fan.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <div class="fan-ph" style="display:none"><span class="h">H</span><small>drop do mascote<br>assets/fan.png</small></div>
+    </div>
+
+    <!-- widgets -->
+    <div class="w" style="left:16%;top:9%">
+      <div class="wh"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M6 6a8 8 0 0 0 0 12M18 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2"/></svg> Live Score <span class="rt">90'</span></div>
+      <div class="score">
+        <div class="teamcol"><span class="flag eng"></span><span class="cc">ENG</span></div>
+        <span class="sc">2 - 1</span>
+        <div class="teamcol"><span class="flag ger"></span><span class="cc">GER</span></div>
+      </div>
+    </div>
+
+    <div class="w" style="right:6%;top:8%;min-width:150px;position:absolute">
+      <div class="wh"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10 12 3l9 7v10H3z"/></svg> Fantasy</div>
+      <div class="pts">124<small>PTS</small></div>
+      <div class="bar"><i></i></div>
+      <svg class="jersey" viewBox="0 0 24 24" fill="currentColor"><path d="M8 3 4 6l2 3 2-1v10h8V8l2 1 2-3-4-3-2 2H10z"/></svg>
+    </div>
+
+    <div class="w" style="left:9%;top:47%">
+      <div class="wh"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l5-5 3 3 7-8"/></svg> Odds <span class="rt">Casa X</span></div>
+      <div class="odds"><span class="o">2.10</span><span class="o up">3.20</span><span class="o">3.45</span></div>
+      <svg class="odline" viewBox="0 0 120 20" preserveAspectRatio="none"><polyline points="0,17 25,15 45,11 70,12 95,5 120,2" fill="none" stroke="var(--neon)" stroke-width="2"/></svg>
+    </div>
+
+    <div class="w" style="right:6%;top:46%">
+      <div class="wh"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg> Stats</div>
+      <div class="sbars"><i style="height:40%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:45%"></i><i style="height:75%"></i></div>
+    </div>
+
+    <div class="w" style="right:12%;bottom:11%">
+      <div class="wh"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H7l-3 3z"/></svg> News / Chat</div>
+      <div class="chat"><span class="bub">Goal at 82'!</span><span class="dots">•••</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot"><span><b>Hatrick</b> · Gap — estilo widgets (4 headlines)</span><span>← → trocar headline · me diga a letra</span></div>
+
+<script>
+  const blocks=[...document.querySelectorAll('.textblock')];
+  const vtag=document.getElementById('vtag');const counter=document.getElementById('counter');
+  let i=0;
+  function show(n){i=(n+blocks.length)%blocks.length;blocks.forEach((b,k)=>b.classList.toggle('active',k===i));
+    vtag.innerHTML='Variação '+blocks[i].dataset.tag;counter.textContent=(i+1)+' / '+blocks.length;}
+  addEventListener('keydown',e=>{if(['ArrowRight',' ','PageDown','Enter'].includes(e.key)){e.preventDefault();show(i+1);}
+    else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1);}});
+  addEventListener('click',e=>{if(e.target.closest('a'))return;show(innerWidth*0.32>e.clientX?i-1:i+1);});
+  show(0);
+</script>
+</body>
+</html>

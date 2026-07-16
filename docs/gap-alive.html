@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hatrick — Gap (system cards)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css" />
+<style>
+  :root{
+    --background:#0b0c0f;--surface-1:#141519;--surface-2:#1b1c21;--surface-3:#26272e;
+    --foreground:#f2f3f5;--muted:#8b8d94;--neon:#aef019;--live:#ff5a5f;--gold:#f5c451;
+    --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.12);
+    --e4:0 24px 56px -14px rgb(0 0 0 / .58), 0 6px 16px -8px rgb(0 0 0 / .42);
+    --sans:'Inter',system-ui,sans-serif;--mono:'Geist Mono',ui-monospace,monospace;--ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}html,body{height:100%;margin:0;}
+  body{background:var(--background);color:var(--foreground);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(75% 55% at 82% 12%, color-mix(in oklch,var(--neon) 6%,transparent), transparent 60%);}
+  .deck{position:relative;z-index:1;height:100%;width:100%;}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:8vh 7vw;}
+  .slide.active{display:flex;}
+  @keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+  .slide.active .badge,.slide.active h1,.slide.active .sub{animation:rise .4s var(--ease) both;}
+  .slide.active h1{animation-delay:.05s;} .slide.active .sub{animation-delay:.1s;}
+
+  /* neutral "system" badge (neon dot, surface chip) */
+  .badge{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;font-size:clamp(10px,1vw,12px);font-weight:800;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);
+    border:1px solid var(--border-2);border-radius:8px;padding:7px 12px;margin-bottom:2.6vh;}
+  .badge .dt{width:7px;height:7px;border-radius:999px;background:var(--live);box-shadow:0 0 8px var(--live);animation:pulse 1.5s infinite;}
+  @keyframes pulse{50%{opacity:.35;}}
+  h1{margin:0;font-weight:800;letter-spacing:-.025em;font-size:clamp(28px,4vw,54px);line-height:1.05;}
+  h1 .n{color:var(--neon);} h1 .w{color:var(--foreground);}
+  .sub{margin:2.2vh 0 0;font-size:clamp(14px,1.45vw,20px);line-height:1.5;color:var(--muted);max-width:64ch;}
+  .sub strong{color:var(--foreground);font-weight:600;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:2.2vh 2vw;margin-top:4.5vh;}
+
+  /* system modal card — same chrome, icons and colors as ui/dialog */
+  .mcard{position:relative;background:color-mix(in oklch,var(--surface-1) 85%,transparent);
+    border:6px solid color-mix(in oklch,var(--surface-2) 90%,transparent);border-radius:22px;box-shadow:var(--e4);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:2.6vh 1.8vw;overflow:hidden;
+    transition:transform .25s var(--ease),border-color .25s var(--ease);}
+  .slide.active .mcard{animation:rise .5s var(--ease) both;}
+  .slide.active .mcard:nth-child(1){animation-delay:.14s;} .slide.active .mcard:nth-child(2){animation-delay:.22s;}
+  .slide.active .mcard:nth-child(3){animation-delay:.30s;} .slide.active .mcard:nth-child(4){animation-delay:.38s;}
+  .mcard:hover{transform:translateY(-4px);}
+  .mcard::before{content:'';position:absolute;inset:-1px;z-index:-1;border-radius:24px;
+    background:radial-gradient(65% 65% at 50% 0%, color-mix(in oklch,var(--neon) 8%,transparent), transparent 72%);filter:blur(22px);}
+  /* highlighted card — the "selected" look from the reference (neon border) */
+  .mcard.hot{border-color:color-mix(in oklch,var(--neon) 55%,transparent);}
+  .mcard.hot::before{background:radial-gradient(70% 70% at 50% 0%, color-mix(in oklch,var(--neon) 16%,transparent), transparent 72%);}
+
+  .head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;}
+  /* icon square — dark, faint neon tint, neon Phosphor duotone glyph (matches the modal) */
+  .ic{width:44px;height:44px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;
+    background:color-mix(in oklch,var(--neon) 9%, var(--surface-2));border:1px solid color-mix(in oklch,var(--neon) 22%,transparent);}
+  .ic i{font-size:24px;color:var(--neon);line-height:1;}
+  .lbl{font-family:var(--mono);font-size:clamp(9px,.95vw,11px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 3px;}
+  .t{font-size:clamp(15px,1.5vw,20px);font-weight:700;color:var(--foreground);margin:0;}
+  .d{font-size:clamp(13px,1.2vw,16px);line-height:1.5;color:var(--muted);margin:12px 0 0;}
+
+  /* mini live widgets */
+  .mw{display:flex;align-items:center;gap:9px;margin:14px 0 0;flex-wrap:wrap;}
+  .flag{width:20px;height:14px;border-radius:3px;overflow:hidden;flex:0 0 auto;box-shadow:0 0 0 1px rgb(0 0 0 /.4);position:relative;}
+  .flag.eng{background:#fff;} .flag.eng::before,.flag.eng::after{content:'';position:absolute;background:#c8102e;}
+  .flag.eng::before{left:8px;top:0;width:3px;height:100%;} .flag.eng::after{top:5px;left:0;height:3px;width:100%;}
+  .flag.ger{background:linear-gradient(#111 33%,#c8102e 33% 66%,#f5c451 66%);}
+  .mw .sc{font-weight:800;font-size:16px;}
+  .livechip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--live);
+    background:color-mix(in oklch,var(--live) 12%,transparent);border:1px solid color-mix(in oklch,var(--live) 35%,transparent);border-radius:999px;padding:3px 8px;}
+  .livechip .d2{width:6px;height:6px;border-radius:999px;background:var(--live);box-shadow:0 0 6px var(--live);animation:pulse 1.4s infinite;}
+  .odds{display:flex;gap:6px;} .odds span{font-family:var(--mono);font-size:12px;font-weight:600;background:var(--surface-2);border:1px solid var(--border-2);border-radius:7px;padding:4px 9px;}
+  .odds span.up{color:var(--neon);border-color:color-mix(in oklch,var(--neon) 35%,transparent);}
+  .pts{font-weight:900;font-size:18px;} .pts small{font-size:11px;color:var(--muted);font-weight:600;margin-left:3px;}
+  .bar{flex:1;min-width:80px;height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden;} .bar>i{display:block;height:100%;width:66%;background:var(--neon);}
+  .bub{font-size:13px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:9px;padding:5px 10px;color:var(--foreground);}
+  .dots{color:var(--muted);font-weight:800;letter-spacing:1px;}
+
+  .vtag{position:fixed;top:14px;left:16px;z-index:20;font-family:var(--mono);font-size:12px;color:var(--neon);
+    background:var(--surface-2);border:1px solid color-mix(in oklch,var(--neon) 45%,transparent);border-radius:999px;padding:7px 14px;}
+  .counter{position:fixed;top:14px;right:16px;z-index:20;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-2);border-radius:999px;padding:7px 12px;}
+  .foot{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-between;padding:12px 20px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .foot b{color:var(--foreground);}
+</style>
+</head>
+<body>
+<div class="vtag" id="vtag"></div>
+<div class="counter" id="counter">1 / 3</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · SYSTEM CARDS · uniform neon (icons + colors like the app) -->
+  <section class="slide" data-tag="1 · System cards · neon (recommended)">
+    <span class="badge"><span class="dt"></span> The Problem</span>
+    <h1><span class="w">Four apps.</span> <span class="n">One match. Zero glue.</span></h1>
+    <p class="sub">Everything you already do during a game — each trapped in its own app, none of them reacting together.</p>
+    <div class="grid">
+      <div class="mcard">
+        <div class="head"><div class="ic"><i class="ph-duotone ph-broadcast"></i></div><div><p class="lbl">Live score · app 1</p><p class="t">The moment is lost</p></div></div>
+        <div class="mw"><span class="flag eng"></span><span class="sc">2 — 1</span><span class="flag ger"></span><span class="livechip"><span class="d2"></span>LIVE 90'</span></div>
+        <p class="d">You watch here — but you bet somewhere else.</p>
+      </div>
+      <div class="mcard">
+        <div class="head"><div class="ic"><i class="ph-duotone ph-chart-line-up"></i></div><div><p class="lbl">Odds · app 2</p><p class="t">A house you don't trust</p></div></div>
+        <div class="mw"><span class="odds"><span>2.10</span><span class="up">3.20</span><span>3.45</span></span></div>
+        <p class="d">Separate login, separate house, an opaque payout.</p>
+      </div>
+      <div class="mcard">
+        <div class="head"><div class="ic"><i class="ph-duotone ph-cards"></i></div><div><p class="lbl">Fantasy · app 3</p><p class="t">Always a day late</p></div></div>
+        <div class="mw"><span class="pts">124<small>PTS</small></span><span class="bar"><i></i></span></div>
+        <p class="d">Updated tomorrow — never in sync with the match today.</p>
+      </div>
+      <div class="mcard">
+        <div class="head"><div class="ic"><i class="ph-duotone ph-chat-circle-dots"></i></div><div><p class="lbl">Chat · app 4</p><p class="t">Reaction, far from the moment</p></div></div>
+        <div class="mw"><span class="bub">Goaaal! 🎉</span><span class="dots">•••</span></div>
+        <p class="d">The cheer lives far from the goal that caused it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · SYSTEM CARDS · plain (label + title + desc, no widgets) -->
+  <section class="slide" data-tag="2 · System cards · plain">
+    <span class="badge"><span class="dt"></span> The Problem</span>
+    <h1><span class="w">You live the match</span> <span class="n">in pieces.</span></h1>
+    <p class="sub">The biggest event on earth — and every way you follow it lives in a different app, none of them connected to the pitch.</p>
+    <div class="grid">
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-clock-countdown"></i></div><div><p class="lbl">Timing</p><p class="t">The moment is lost</p></div></div><p class="d">A goal happens — and by the time you switch tabs, it's already gone.</p></div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-link-break"></i></div><div><p class="lbl">Fragmentation</p><p class="t">Apps that don't talk</p></div></div><p class="d">Score, odds, fantasy, chat — four screens, none tied to the live game.</p></div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-game-controller"></i></div><div><p class="lbl">Relevance</p><p class="t">The game doesn't count</p></div></div><p class="d">Your football game and fantasy ignore what's really happening.</p></div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-eye"></i></div><div><p class="lbl">Passivity</p><p class="t">You only watch</p></div></div><p class="d">The fan's only move is to sit back and refresh the score.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 · SYSTEM CARDS · one highlighted (selected look from the reference) -->
+  <section class="slide" data-tag="3 · System cards · one highlighted">
+    <span class="badge"><span class="dt"></span> The Problem</span>
+    <h1><span class="w">The goal went in.</span> <span class="n">Your fantasy has no idea.</span></h1>
+    <p class="sub">The live moment is the one thing that should tie it all together — and it's exactly what every tool misses.</p>
+    <div class="grid">
+      <div class="mcard hot">
+        <div class="head"><div class="ic"><i class="ph-duotone ph-broadcast"></i></div><div><p class="lbl">The live moment</p><p class="t">Nothing reacts in real time</p></div></div>
+        <div class="mw"><span class="flag eng"></span><span class="sc">2 — 1</span><span class="flag ger"></span><span class="livechip"><span class="d2"></span>82'</span></div>
+        <p class="d">The instant that matters passes unshared across every app.</p>
+      </div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-link-break"></i></div><div><p class="lbl">Fragmentation</p><p class="t">Apps that don't talk</p></div></div></div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-cards"></i></div><div><p class="lbl">Fantasy</p><p class="t">Always a day late</p></div></div></div>
+      <div class="mcard"><div class="head"><div class="ic"><i class="ph-duotone ph-eye"></i></div><div><p class="lbl">Passivity</p><p class="t">You only watch</p></div></div></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="foot"><span><b>Hatrick</b> · Gap — system cards (Phosphor + neon)</span><span>← → switch · tell me the number</span></div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const vtag=document.getElementById('vtag');const counter=document.getElementById('counter');
+  let i=0;
+  function show(n){i=(n+slides.length)%slides.length;slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    vtag.textContent=slides[i].dataset.tag;counter.textContent=(i+1)+' / '+slides.length;}
+  addEventListener('keydown',e=>{if(['ArrowRight',' ','PageDown','Enter'].includes(e.key)){e.preventDefault();show(i+1);}
+    else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1);}});
+  addEventListener('click',e=>{if(e.target.closest('a'))return;show(innerWidth*0.32>e.clientX?i-1:i+1);});
+  show(0);
+</script>
+</body>
+</html>

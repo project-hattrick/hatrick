@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hatrick — Demo walkthrough (5 min)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&family=Geist+Mono:wght@400;500;700&family=Saira+Condensed:ital,wght@1,800;1,900&display=swap" rel="stylesheet" />
+<style>
+  /* ── Hatrick Neon Turf DS tokens (mirror of frontend/src/app/globals.css) ── */
+  :root {
+    --background: #0b0c0f;
+    --surface-1: #141519;
+    --surface-2: #1b1c21;
+    --surface-3: #26272e;
+    --overlay:   #07080b;
+    --foreground: #f2f3f5;
+    --muted: #8b8d94;
+    --neon: #aef019;
+    --neon-hover: #c2ff3d;
+    --live: #ff5a5f;
+    --gold: #f5c451;
+    --border: rgba(255,255,255,.08);
+    --border-2: rgba(255,255,255,.12);
+    --e3: 0 10px 24px -8px rgb(0 0 0 / .46), 0 2px 6px rgb(0 0 0 / .3);
+    --e4: 0 24px 56px -14px rgb(0 0 0 / .58), 0 6px 16px -8px rgb(0 0 0 / .42);
+    --sans: 'Inter', system-ui, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, monospace;
+    --cond: 'Saira Condensed', 'Inter', sans-serif;
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(90% 70% at 50% -10%, color-mix(in oklch, var(--neon) 7%, transparent), transparent 55%);
+  }
+
+  .deck { position: relative; z-index: 1; height: 100%; width: 100%; }
+  .slide {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; justify-content: center;
+    padding: 6.5vh 8vw 10vh; gap: 2vh;
+  }
+  .slide.active { display: flex; animation: rise .34s var(--ease) both; }
+  .slide.cover { padding: 0; justify-content: flex-end; }
+  @keyframes rise { from { opacity: 0; transform: translateY(20px) scale(.995); } to { opacity: 1; transform: none; } }
+
+  /* ── Type ── */
+  .eyebrow {
+    font-size: clamp(9px, 1.05vw, 12px); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .16em; color: var(--muted); display: flex; align-items: center; gap: .55em;
+  }
+  .eyebrow .dot { color: var(--neon); }
+  .step-no { color: var(--neon); font-family: var(--mono); }
+  h2 { margin: 0; font-weight: 800; letter-spacing: -.02em; color: var(--foreground);
+       font-size: clamp(24px, 4.2vw, 52px); line-height: 1.08; }
+  .neon { color: var(--neon); }
+  h2 .neon, .lead .neon { text-shadow: 0 0 10px color-mix(in oklch, var(--neon) 45%, transparent); }
+  .lead { font-size: clamp(17px, 2.2vw, 27px); line-height: 1.5; color: var(--foreground); max-width: 62ch; }
+  .muted { color: var(--muted); }
+  .gold  { color: var(--gold); }
+  strong { color: var(--neon); font-weight: 700; }
+
+  /* ── Cover (LIVE SPORTS. FANTASY. COMPETE.) ── */
+  .cover .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  .cover .scrim { position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg, color-mix(in oklch, var(--overlay) 55%, transparent) 0%, color-mix(in oklch, var(--overlay) 20%, transparent) 45%, color-mix(in oklch, var(--overlay) 88%, transparent) 100%); }
+  .cover .inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 1.4vh; padding: 0 8vw 12vh; }
+  .cover img.mark { width: clamp(72px, 8vw, 116px); height: auto;
+    filter: drop-shadow(0 0 26px color-mix(in oklch, var(--neon) 26%, transparent)); }
+  .wordlines { font-family: var(--cond); font-style: italic; font-weight: 900; text-transform: uppercase;
+    font-size: clamp(40px, 8.2vw, 116px); line-height: .9; letter-spacing: .01em; }
+  .wordlines .w { display: block; color: var(--foreground); text-shadow: 0 3px 18px rgb(0 0 0 / .6); }
+  .wordlines .w.neon { color: var(--neon); text-shadow: 0 0 34px color-mix(in oklch, var(--neon) 34%, transparent); }
+
+  /* ── Modal-chrome surface (from ui/dialog.tsx) ── */
+  .modal {
+    position: relative;
+    background: color-mix(in oklch, var(--surface-1) 85%, transparent);
+    border: 6px solid color-mix(in oklch, var(--surface-2) 90%, transparent);
+    border-radius: 28px; box-shadow: var(--e4);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    padding: 3vh 2.6vw;
+  }
+  .modal::before { content: ''; position: absolute; inset: -1px; z-index: -1; border-radius: 30px;
+    background: radial-gradient(60% 60% at 50% 0%, color-mix(in oklch, var(--neon) 12%, transparent), transparent 70%);
+    filter: blur(30px); transform: rotate(-4deg); }
+  @media (min-width: 768px) { .modal { border-width: 8px; border-radius: 32px; } }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6vw; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+  .mode-tag { font-size: clamp(13px,1.5vw,17px); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .mode-tag.live { color: var(--live); }
+  .mode-tag.fantasy { color: var(--neon); }
+  .mode-tag.gold { color: var(--gold); }
+  .modal p { margin: .9vh 0 0; font-size: clamp(14px,1.6vw,20px); line-height: 1.45; color: var(--foreground); }
+
+  ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 1.3vh; }
+  ul li { font-size: clamp(15px, 1.9vw, 24px); line-height: 1.4; position: relative; padding-left: 1.5em; }
+  ul li::before { content: ''; position: absolute; left: 0; top: .5em; width: .5em; height: .5em;
+    border-radius: 2px; background: var(--neon); box-shadow: 0 0 10px var(--neon); }
+
+  /* ── Badges / pills ── */
+  .badges { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .badge {
+    font-family: var(--mono); font-size: clamp(9px,1.05vw,12px); font-weight: 500; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--muted); background: var(--surface-2);
+    border: 1px solid var(--border-2); border-radius: 999px; padding: 8px 14px;
+  }
+  .badge.neon { color: var(--neon); border-color: color-mix(in oklch, var(--neon) 45%, transparent); }
+  .badge.live { color: var(--live); border-color: color-mix(in oklch, var(--live) 45%, transparent); }
+
+  /* ── Powered by TxLINE — 1:1 with common/powered-by-txline.tsx ── */
+  .powered { display: inline-flex; align-items: center; gap: 6px; font-size: clamp(12px,1.35vw,15px); font-weight: 500; color: var(--muted); }
+  .powered .bc { width: 1.05em; height: 1.05em; color: var(--neon); }
+  .powered a { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; letter-spacing: -.01em; color: var(--neon); text-decoration: none; }
+  .powered a .ar { width: .8em; height: .8em; opacity: .6; }
+  .cover .powered { color: rgba(255,255,255,.72); }
+
+  .livedot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: var(--live);
+    box-shadow: 0 0 10px var(--live); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  /* ── Flow chips ── */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: .5vw; }
+  .flow .step {
+    font-family: var(--mono); font-size: clamp(10px,1.2vw,14px); font-weight: 400;
+    background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px;
+    padding: 1.1vh .9vw; color: var(--foreground);
+  }
+  .flow .step.hi { border-color: var(--neon); color: var(--neon); }
+  .flow .arrow { color: var(--neon); font-weight: 700; }
+
+  /* ── Endpoint list (backend slide) ── */
+  .endpoints { font-family: var(--mono); font-size: clamp(11px,1.25vw,15px); display: grid; gap: .8vh; }
+  .endpoints .ep { display: flex; gap: .7em; align-items: baseline; color: var(--foreground); }
+  .endpoints .m { color: var(--neon); font-weight: 700; min-width: 3.2em; }
+  .endpoints .c { color: var(--muted); }
+
+  /* ── Video frame ── */
+  .videoframe {
+    position: relative; width: 100%; max-width: 1120px; margin: 0 auto;
+    aspect-ratio: 16/9; max-height: 56vh; border-radius: 28px; overflow: hidden;
+    border: 8px solid color-mix(in oklch, var(--surface-2) 90%, transparent);
+    background: var(--surface-1); box-shadow: var(--e4);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh;
+  }
+  .videoframe .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .2; }
+  .videoframe .scrim { position: absolute; inset: 0; background: color-mix(in oklch, var(--overlay) 55%, transparent); }
+  .videoframe > * { position: relative; }
+  .videoframe .rec { position: absolute; top: 16px; left: 18px; font-family: var(--mono);
+    font-size: 12px; letter-spacing: .08em; color: var(--live); text-transform: uppercase; display: flex; gap: 7px; align-items: center; }
+  .videoframe .play {
+    width: clamp(58px, 7vw, 92px); aspect-ratio: 1; border-radius: 999px;
+    background: color-mix(in oklch, var(--neon) 14%, var(--surface-2));
+    border: 2px solid var(--neon); display: grid; place-items: center;
+    box-shadow: 0 0 40px color-mix(in oklch, var(--neon) 26%, transparent);
+  }
+  .videoframe .play::before { content: ''; width: 0; height: 0; margin-left: 8px;
+    border-left: clamp(16px,2vw,26px) solid var(--neon);
+    border-top: clamp(11px,1.4vw,17px) solid transparent;
+    border-bottom: clamp(11px,1.4vw,17px) solid transparent; }
+  .videoframe .vlabel { font-weight: 700; font-size: clamp(15px,1.8vw,22px); letter-spacing: -.01em; }
+  .videoframe .vhint { font-family: var(--mono); font-size: clamp(10px,1.1vw,13px); color: var(--muted); }
+  .videoframe video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 5; }
+
+  /* Composition mockups — panes que mostram o ENQUADRAMENTO do micro-vídeo (desktop / celular / terminal). */
+  .stage { position: relative; display: flex; gap: 1.6vw; align-items: center; justify-content: center;
+    width: 100%; flex: 1; min-height: 0; padding: 4.5vh 2vw 1vh; }
+  .pane { position: relative; border: 3px solid var(--border-2); border-radius: 14px;
+    background: color-mix(in oklch, var(--overlay) 55%, transparent);
+    display: grid; place-items: center; overflow: hidden; }
+  .pane .tag { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-family: var(--mono);
+    font-size: clamp(8px,.95vw,11px); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .pane.desktop { aspect-ratio: 16/10; height: 70%; }
+  .pane.phone { aspect-ratio: 9/19; height: 84%; border-radius: 20px;
+    border-color: color-mix(in oklch, var(--neon) 40%, var(--border-2)); }
+  .pane.phone::before { content: ''; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+    width: 30%; height: 5px; border-radius: 999px; background: var(--surface-3); }
+  .pane.term { aspect-ratio: 16/11; height: 52%; align-self: flex-end; margin-bottom: 4%; }
+  .pane.term .code { font-family: var(--mono); font-size: clamp(7px,.8vw,10px); color: var(--neon);
+    opacity: .75; line-height: 1.7; text-align: left; padding: 0 10px; }
+  .pane.term .code .c { color: var(--muted); }
+  .vs { font-family: var(--cond); font-style: italic; font-weight: 900;
+    font-size: clamp(18px,2.6vw,34px); color: var(--neon);
+    text-shadow: 0 0 16px color-mix(in oklch, var(--neon) 40%, transparent); }
+  .mini-play { width: clamp(32px,3.2vw,46px); aspect-ratio: 1; border-radius: 999px;
+    border: 2px solid var(--neon); background: color-mix(in oklch, var(--neon) 12%, var(--surface-2));
+    display: grid; place-items: center; box-shadow: 0 0 22px color-mix(in oklch, var(--neon) 22%, transparent); }
+  .mini-play::before { content: ''; width: 0; height: 0; margin-left: 3px;
+    border-left: 11px solid var(--neon); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+  .videoframe .cap { position: relative; padding-bottom: 1.8vh; text-align: center; }
+  .videoframe .cap .vlabel { display: block; }
+  .videoframe .cap .vhint { display: block; margin-top: .3vh; }
+  .shotlist { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 1.4vh; }
+  .shotlist .chip { font-family: var(--mono); font-size: clamp(9px,1vw,12px); color: var(--foreground);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; }
+  .shotlist .chip b { color: var(--neon); font-weight: 700; }
+
+  /* ── Chrome ── */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--neon); z-index: 30;
+    box-shadow: 0 0 14px color-mix(in oklch, var(--neon) 60%, transparent); transition: width .34s var(--ease); }
+  .chip-tr { position: fixed; top: 14px; right: 16px; z-index: 31; font-family: var(--mono);
+    font-size: 12px; color: var(--neon); background: var(--surface-2); border: 1px solid var(--border-2);
+    border-radius: 999px; padding: 6px 12px; }
+  .foot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: flex;
+    justify-content: space-between; align-items: center; padding: 12px 20px;
+    font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .foot .brand { display: flex; align-items: center; gap: 8px; }
+  .foot .brand img { width: 16px; height: auto; }
+  .foot .brand b { color: var(--foreground); font-weight: 700; }
+  .nav-hint { font-family: var(--mono); font-size: clamp(10px,1.1vw,13px); color: rgba(255,255,255,.5); margin-top: 1vh; }
+
+  .ctrls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 31; display: flex; gap: 8px; }
+  .ctrls button { font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--surface-2);
+    border: 1px solid var(--border-2); border-radius: 999px; padding: 6px 12px; cursor: pointer;
+    transition: color .14s, border-color .14s; }
+  .ctrls button:hover { color: var(--neon); border-color: color-mix(in oklch, var(--neon) 45%, transparent); }
+
+  /* ── Speaker notes ── */
+  .notes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: none;
+    background: color-mix(in oklch, var(--surface-1) 96%, transparent); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border-2); padding: 16px 24px 40px; box-shadow: var(--e4); }
+  .notes.on { display: block; }
+  .notes .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--neon); }
+  .notes .crit { color: var(--gold); }
+  .notes p { margin: 6px 0 0; font-size: 15px; line-height: 1.5; color: var(--foreground); max-width: 94ch; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="chip-tr" id="time">0:00</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="broadcast" viewBox="0 0 256 256">
+    <circle cx="128" cy="128" r="20" fill="currentColor"/>
+    <path d="M181 75a75 75 0 0 1 0 106M75 181a75 75 0 0 1 0-106" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/>
+    <path d="M212 44a119 119 0 0 1 0 168M44 212a119 119 0 0 1 0-168" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="arrow-ur" viewBox="0 0 256 256">
+    <path d="M72 184 184 72M104 72h80v80" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · CAPA -->
+  <section class="slide cover" data-time="0:00"
+    data-notes="Abertura de 6s. Deixar a arte respirar, uma linha: 'Hatrick — a Copa do Mundo, ao vivo e jogável.'">
+    <img class="bg" src="assets/stadium-hero.png" alt="" />
+    <div class="scrim"></div>
+    <div class="inner">
+      <img class="mark" src="assets/logo.png" alt="Hatrick" />
+      <div class="wordlines">
+        <span class="w">Live Sports.</span>
+        <span class="w neon">Fantasy.</span>
+        <span class="w">Compete.</span>
+      </div>
+      <span class="powered">
+        <svg class="bc"><use href="#broadcast"/></svg> Powered by
+        <a href="https://txline.txodds.com">TxLINE <svg class="ar"><use href="#arrow-ur"/></svg></a>
+      </span>
+      <p class="nav-hint">ESPAÇO / → avançar · N = notas · F = tela cheia</p>
+    </div>
+  </section>
+
+  <!-- 2 · O GAP (contexto: o que é o Hatrick, via gap→solução) -->
+  <section class="slide" data-time="0:05"
+    data-notes="CONTEXTO (o que é o Hatrick) entregando VALOR, não slogan: abrir no momento quebrado concreto (o gol saiu e nada reagiu = exatamente o que o produto conserta), depois a frase que DEFINE o produto. Narração: 'Um gol acabou de sair — e o seu fantasy não sabe. Sua aposta também não. O fã vive a partida em pedaços: aposta num app, fantasy noutro, chat num terceiro, e nenhum sabe que o jogo está rolando agora. O Hatrick junta tudo num feed só: assistir, apostar e jogar a Copa real — ao vivo, num lugar só.' Corte seco pro onboarding no 'num lugar só'. Cada peça é paga depois: assistir → Ao Vivo · jogar → Fantasy · um só lugar → o garfo do onboarding.">
+    <div class="eyebrow">O Gap</div>
+    <h2>O gol saiu.<br><span class="neon">Seu fantasy nem soube.</span></h2>
+    <div class="modal" style="max-width:62ch; margin-top:1.2vh">
+      <ul>
+        <li>Você aposta num app, escala o fantasy noutro, comenta num terceiro</li>
+        <li>Nenhum deles sabe que a partida está acontecendo <strong>agora</strong></li>
+        <li>O <strong>momento que importa</strong> se perde entre abas que não se falam</li>
+      </ul>
+    </div>
+    <p class="lead" style="margin-top:1.2vh">O <strong>Hatrick</strong> junta tudo num feed só — <span class="neon">assiste, aposta e joga</span> a Copa real, ao vivo, com o feed <span class="gold">TxLINE</span>.</p>
+  </section>
+
+  <!-- 3 · MICRO 1 · ONBOARDING → O GARFO -->
+  <section class="slide" data-time="0:20"
+    data-notes="CRITÉRIO: Fan UX + Completude + Execução. Screen-capture no PC: login por e-mail (Privy, sem fricção de wallet), test funds no faucet, compra o Starter Pack, foil abrindo em slow-mo. PROVA ON-CHAIN #2 (a economia): ao abrir, clica numa carta → RELANCE no Solscan mostrando que é um Metaplex Core NFT real na wallet. MICRO-FALA (termos EXATOS, tudo verdade): 'cada carta é um NFT Metaplex Core — edição limitada, número de série, e o sorteio do pack é provably-fair'. NÃO dizer cNFT (é MPL Core) nem que atributo evolui ao vivo (não é shipado). Depois: XI por drag → TERMINE parado nos 2 CTAs (o garfo). ⚠️ mesmo pré-requisito: se o mint on-chain não estiver estável, capturar a página da carta no Solscan à parte como B-roll (NFT real, só filmado antes).">
+    <div class="eyebrow"><span class="step-no">01</span> <span class="dot">·</span> A resposta — um perfil, dois caminhos</div>
+    <div class="videoframe">
+      <img class="bg" src="assets/arena-stage.png" alt="" /><div class="scrim"></div>
+      <span class="rec"><span class="livedot"></span> REC · captura de tela (PC)</span>
+      <!-- <video src="videos/01-onboarding.mp4" autoplay muted loop playsinline></video> -->
+      <div class="stage">
+        <div class="pane desktop"><span class="tag">Desktop · onboarding</span><div class="mini-play"></div></div>
+      </div>
+      <div class="cap">
+        <span class="vlabel">Entrar → Pack → XI → o garfo</span>
+        <span class="vhint">screen-capture PC: login → faucet → pack (slow-mo) → squad → 2 CTAs</span>
+      </div>
+    </div>
+    <div class="shotlist">
+      <span class="chip">login <b>e-mail</b> (Privy)</span>
+      <span class="chip"><b>faucet</b> test USDC</span>
+      <span class="chip">pack <b>foil</b> em slow-mo</span>
+      <span class="chip">carta = <b>Core NFT</b> (Solscan)</span>
+      <span class="chip">montar <b>XI</b></span>
+      <span class="chip">CTA <b>Watch Live</b> / <b>Challenge</b></span>
+    </div>
+  </section>
+
+  <!-- 4 · O HUB · a home (paga a tese 'num lugar só') -->
+  <section class="slide" data-time="1:00"
+    data-notes="A PROVA VISUAL DA TESE DO GAP ('num lugar só') + responde 'onde mostramos o conteúdo da home'. Beat curto (~20s). Cai na home logada e faz UM scroll suave de cima↓: hero da partida ao vivo no topo → desce → SEU fantasy team em formação, stats do jogo, suas apostas (My Bets), tudo na mesma página. Narração: 'E tudo isso mora numa tela só — sua home. Em cima, a partida ao vivo; rola pra baixo e está o seu time em campo, as estatísticas, suas apostas. Daqui você escolhe: assistir, ou jogar.' É o garfo — e a ponte pros dois caminhos.">
+    <div class="eyebrow">A home <span class="dot">·</span> seu hub</div>
+    <div class="videoframe">
+      <img class="bg" src="assets/stadium-hero.png" alt="" /><div class="scrim"></div>
+      <span class="rec"><span class="livedot"></span> REC · captura de tela (PC)</span>
+      <!-- <video src="videos/02-hub.mp4" autoplay muted loop playsinline></video> -->
+      <div class="stage">
+        <div class="pane desktop"><span class="tag">Home · scroll ↓</span><div class="mini-play"></div></div>
+      </div>
+      <div class="cap">
+        <span class="vlabel">Uma tela: ao vivo em cima, seu time embaixo</span>
+        <span class="vhint">scroll suave: hero ao vivo → My Fantasy Team (formação) → stats → My Bets</span>
+      </div>
+    </div>
+    <div class="shotlist">
+      <span class="chip"><b>hero</b> ao vivo (topo)</span>
+      <span class="chip"><b>My Fantasy Team</b> + formação</span>
+      <span class="chip"><b>stats</b> do jogo</span>
+      <span class="chip"><b>My Bets</b></span>
+      <span class="chip">daqui: <b>assistir</b> ou <b>jogar</b></span>
+    </div>
+  </section>
+
+  <!-- 5 · MICRO 2 · CAMINHO 1 — AO VIVO (assistir + apostar, contínuo) -->
+  <section class="slide" data-time="1:20"
+    data-notes="CRITÉRIOS-CHAVE: Fan UX + Responsividade em Tempo Real + Execução (não-mockup). Clica 'Watch Live' → desktop contínuo: placar, aba EVENTS com nomes reais, odds se movendo, coloca a aposta. MICRO-FALA TxLINE: 'placar, eventos e odds chegam pelos streams SSE da TxLINE'. Ao confirmar a aposta, RELANCE de 1s no Solscan (tx de escrow/place — o stake no PDA). MOMENTO-UAU: gol entra pelo feed → corta pro 3-way split (SSE cru | desktop | celular) no mesmo segundo. Volta: HatBot reage, aposta LIQUIDA sozinha → PROVA ON-CHAIN: abre o Solscan da tx de PAYOUT e fala 'ninguém aprovou esse pagamento — o contrato pagou, tá aqui a transação na Solana'. Isso mata a suspeita de mockup. ⚠️ PRÉ-REQUISITO: exige o path on-chain rodando no browser (CHAIN_ENABLED on + delegação Privy) — se não estiver estável até a gravação, FAZER 1 bet+settle real no devnet ANTES e capturar a página do Solscan como B-roll (é tx real, só gravada à parte — honesto). NÃO forjar tela de explorer.">
+    <div class="eyebrow"><span class="step-no">02</span> <span class="dot">·</span> Caminho 1 — Ao Vivo</div>
+    <div class="videoframe">
+      <img class="bg" src="assets/stadium-hero.png" alt="" /><div class="scrim"></div>
+      <span class="rec"><span class="livedot"></span> REC · no gol: 3 telas simultâneas</span>
+      <!-- <video src="videos/02-live.mp4" autoplay muted loop playsinline></video> -->
+      <div class="stage">
+        <div class="pane term"><span class="tag">TxLINE · SSE cru</span>
+          <div class="code">Action:"goal"<br /><span class="c">Confirmed:false → during</span><br />Confirmed:true<span class="c"> → settle</span></div>
+        </div>
+        <div class="pane desktop"><span class="tag">Desktop · home hero</span><div class="mini-play"></div></div>
+        <div class="pane phone"><span class="tag">Celular</span><div class="mini-play"></div></div>
+      </div>
+      <div class="cap">
+        <span class="vlabel">Assistir → Apostar → GOL em 3 telas → Liquida</span>
+        <span class="vhint">desktop contínuo · no gol, split de 5s: SSE + desktop + celular no mesmo segundo</span>
+      </div>
+    </div>
+    <div class="shotlist">
+      <span class="chip"><b>Placar</b> + <b>Events</b> reais</span>
+      <span class="chip"><b>Odds</b> se movendo</span>
+      <span class="chip">colocar <b>aposta</b></span>
+      <span class="chip"><b>gol</b>: 3 telas no mesmo segundo</span>
+      <span class="chip"><b>HatBot</b> reage</span>
+      <span class="chip"><b>liquida</b> sozinho</span>
+      <span class="chip"><b>Solscan</b> da tx de payout</span>
+    </div>
+  </section>
+
+  <!-- 5 · MICRO 3 · CAMINHO 2 — FANTASY 1v1 -->
+  <section class="slide" data-time="2:35"
+    data-notes="CRITÉRIO: Originalidade (o diferencial) + Completude — o momento UAU do vídeo. DOIS JOGADORES REAIS, tela dividida o segmento inteiro: PC à esquerda, celular à direita. O desafio sai do PC, é ACEITO no celular; o MESMO duelo 3D roda nas duas telas ao mesmo tempo; resultado SIMULTÂNEO nos dois. MICRO-FALA TxLINE: 'os atributos de cada carta vêm dos dados reais da Copa, via TxLINE'. Fora isso, deixar o split falar: multiplayer real, responsivo, o único modo jogável do track.">
+    <div class="eyebrow"><span class="step-no">03</span> <span class="dot">·</span> Caminho 2 — Fantasy 1v1 · PC × celular</div>
+    <div class="videoframe">
+      <img class="bg" src="assets/stadium-hero.png" alt="" /><div class="scrim"></div>
+      <span class="rec"><span class="livedot"></span> REC · 2 jogadores, 2 aparelhos</span>
+      <!-- <video src="videos/03-fantasy.mp4" autoplay muted loop playsinline></video> -->
+      <div class="stage">
+        <div class="pane desktop"><span class="tag">PC · Jogador 1</span><div class="mini-play"></div></div>
+        <span class="vs">VS</span>
+        <div class="pane phone"><span class="tag">Celular · J2</span><div class="mini-play"></div></div>
+      </div>
+      <div class="cap">
+        <span class="vlabel">Desafio no PC → aceito no celular → mesmo duelo, duas telas</span>
+        <span class="vhint">split-screen o segmento inteiro · resultado simultâneo nos dois aparelhos</span>
+      </div>
+    </div>
+    <div class="shotlist">
+      <span class="chip"><b>desafiar</b> no PC</span>
+      <span class="chip"><b>aceitar</b> no celular</span>
+      <span class="chip">mesmo <b>duelo 3D</b> nas 2 telas</span>
+      <span class="chip">atributos de <b>dados reais</b></span>
+      <span class="chip"><b>resultado simultâneo</b></span>
+    </div>
+  </section>
+
+  <!-- 7 · BACKEND (obrigatória) -->
+  <section class="slide" data-time="3:40"
+    data-notes="REQUISITO DO VÍDEO: como a TxLINE alimenta o backend — 30s, os endpoints NÃO são falados (aparecem agrupados na tela; lista completa na doc técnica). NARRAÇÃO (só isto): 'Tudo que vocês viram é um feed só. Os streams da TxLINE entram no backend, viram WebSocket e atualizam as duas telas ao vivo; quando o resultado é confirmado, a aposta liquida no Solana. E como os 104 jogos acabam antes da revisão, a gente re-toca o histórico real pelo MESMO pipeline — é por isso que a demo responde em tempo real sem jogo no ar.' Se sobrar footage: split de 5s com SSE cru + UI.">
+    <div class="eyebrow">Requisito <span class="dot">·</span> Como a TxLINE alimenta o backend</div>
+    <h2>O mesmo feed move <span class="neon">assistir e jogar.</span></h2>
+    <div class="flow" style="margin-top:.6vh">
+      <span class="step">TxLINE SSE · scores + odds</span><span class="arrow">▶</span>
+      <span class="step">NestJS mapper</span><span class="arrow">▶</span>
+      <span class="step">WebSocket</span><span class="arrow">▶</span>
+      <span class="step hi">UI ao vivo</span><span class="arrow">▶</span>
+      <span class="step">Solana · liquida no resultado</span>
+    </div>
+    <div class="grid2" style="margin-top:1.6vh; grid-template-columns: 1fr 1fr 1fr; gap:1vw">
+      <div class="modal" style="padding:2.2vh 1.6vw">
+        <div class="mode-tag">Conectar</div>
+        <div class="endpoints" style="margin-top:1vh">
+          <div class="ep"><span class="m">POST</span><span>/auth/guest/start</span></div>
+          <div class="ep"><span class="m">POST</span><span>/api/token/activate</span></div>
+        </div>
+      </div>
+      <div class="modal" style="padding:2.2vh 1.6vw">
+        <div class="mode-tag live"><span class="livedot"></span> Ao vivo · SSE</div>
+        <div class="endpoints" style="margin-top:1vh">
+          <div class="ep"><span class="m">GET</span><span>/api/scores/stream</span></div>
+          <div class="ep"><span class="m">GET</span><span>/api/odds/stream</span></div>
+        </div>
+      </div>
+      <div class="modal" style="padding:2.2vh 1.6vw">
+        <div class="mode-tag fantasy">Estado &amp; replay</div>
+        <div class="endpoints" style="margin-top:1vh">
+          <div class="ep"><span class="m">GET</span><span>/api/fixtures/snapshot</span></div>
+          <div class="ep"><span class="m">GET</span><span>…/snapshot/:fixture</span></div>
+          <div class="ep"><span class="m">GET</span><span>…/updates/dia/hora<span class="c"> · replay</span></span></div>
+        </div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:1.4vh">Sem jogo ao vivo na revisão? A demo <strong>re-toca o histórico real</strong> pelo mesmo pipeline — <span class="neon">replay</span> responde em tempo real do mesmo jeito.</p>
+  </section>
+
+  <!-- 8 · MONETIZAÇÃO + FUTURO -->
+  <section class="slide" data-time="4:10"
+    data-notes="CRITÉRIO: Caminho comercial. B-ROLL enquanto narra: passeia pela STORE (packs Legendary/Pro/Starter) e pelo MARKETPLACE de cartas (comprar/vender entre users — mesmo que o preço/liquidez ainda seja mockado, a tela existe e prova o modelo). Fala: 'a economia já tem as duas pontas — venda primária de packs e um mercado secundário de cartas entre jogadores, além do rake das apostas.' Escala: TxODDS = 350+ ligas / 30+ esportes, mesmo motor. Fantasy always-on = retenção o ano todo. NÃO chamar o marketplace de 'ao vivo' se a liquidez for mock — dizer 'mercado secundário' basta.">
+    <div class="eyebrow">Negócio <span class="dot">·</span> Monetização &amp; futuro</div>
+    <h2>A Copa acaba. <span class="neon">O Hatrick não.</span></h2>
+    <div class="grid2" style="margin-top:1.2vh">
+      <div class="modal">
+        <div class="mode-tag gold">◆ Economia de duas pontas</div>
+        <p><strong>Store</strong>: venda primária de packs · <strong>Marketplace</strong>: mercado secundário de cartas entre jogadores · <strong>rake</strong> das apostas · premium.</p>
+      </div>
+      <div class="modal">
+        <div class="mode-tag fantasy">◆ Escala</div>
+        <p><strong>350+ ligas · 30+ esportes.</strong> O mesmo motor roda basquete, tênis e e-sports. Fantasy always-on = retenção o ano todo.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:1.2vh">Roadmap: mainnet + settlement real (Merkle proof + <span class="mono">validate_stat</span>), mercados por jogador, mobile.</p>
+  </section>
+
+  <!-- 9 · FECHO -->
+  <section class="slide cover" data-time="4:40"
+    data-notes="Fecho de 15s. Repetir a promessa e mostrar o LINK do deploy + repo na tela (obrigatórios na submissão). Agradecer.">
+    <img class="bg" src="assets/stadium-hero.png" alt="" />
+    <div class="scrim"></div>
+    <div class="inner">
+      <img class="mark" src="assets/logo.png" alt="Hatrick" />
+      <div class="wordlines">
+        <span class="w">Live Sports.</span>
+        <span class="w neon">Fantasy.</span>
+        <span class="w">Compete.</span>
+      </div>
+      <div class="badges" style="justify-content:center; margin-top:1vh">
+        <span class="badge neon">hatrick.app · deploy</span>
+        <span class="badge">github · repo</span>
+        <span class="powered"><svg class="bc"><use href="#broadcast"/></svg> Powered by <a href="https://txline.txodds.com">TxLINE</a></span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="foot">
+  <span class="brand"><img src="assets/logo.png" alt="" /> <b>Hatrick</b></span>
+  <span id="counter">1 / 9</span>
+</div>
+
+<div class="ctrls">
+  <button onclick="toggleNotes()">🎤 Notas (N)</button>
+  <button onclick="toggleFs()">⛶ Tela cheia (F)</button>
+</div>
+
+<div class="notes" id="notes">
+  <div class="lbl">Notas do apresentador</div>
+  <p id="notesText"></p>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const timeEl = document.getElementById('time');
+  const notes = document.getElementById('notes');
+  const notesText = document.getElementById('notesText');
+  let i = 0;
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    timeEl.textContent = slides[i].dataset.time || '';
+    notesText.textContent = slides[i].dataset.notes || '';
+  }
+  const next = () => show(i + 1);
+  const prev = () => show(i - 1);
+  function toggleNotes() { notes.classList.toggle('on'); }
+  function toggleFs() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') toggleFs();
+    else if (e.key.toLowerCase() === 'n') toggleNotes();
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) return;
+    (e.clientX < window.innerWidth * 0.32 ? prev : next)();
+  });
+  let x0 = null;
+  addEventListener('touchstart', e => x0 = e.touches[0].clientX, { passive: true });
+  addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+    x0 = null;
+  });
+
+  show(0);
+</script>
+</body>
+</html>
