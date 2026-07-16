@@ -299,6 +299,8 @@ export interface RealGkWorld {
   /** Set when a driven shot is OffTarget: the next ball to cross a byline is a GOAL KICK to this team
    *  (the defender), overriding the engine's attacker-touch → corner rule so a wide shot reads as a miss. */
   drivenShotWide?: Team | null;
+  /** Feed goal waiting to be visualized by an actual attack + shot before the celebration/replay fires. */
+  drivenGoalPending?: Team | null;
   /** Keeper-feel experiment flags (seeded via cfg.feel; toggled live by handle.setFeel). */
   feel: RealGkFeel;
   /** One-shot feel effects consumed by the loop: sim hitstop + camera-shake request. */

@@ -4,8 +4,8 @@ import { debugEvent as runDebugEvent } from './engine-debug';
 import { loadRealGkAssets } from './assets/loader';
 import { drawBroadcastWipe, drawReplayDressing } from './broadcast';
 import { cameraLabel, calibrationRect, createCamera, pinCalibrationCamera, requestShake, triggerRefereeFocus, updateCamera, updateIntroCamera } from './camera';
-import { BodyAnim, DrivenDirective, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
-import { fieldRatios, pointOnField, setFieldSpec } from './field';
+import { BodyAnim, DrivenDirective, IntroStage, MatchPhase, RefPhase, RestartKind, RestartStage, Role, Team } from './enums';
+import { centerSpot, fieldRatios, pointOnField, setFieldSpec } from './field';
 import { shotEffectLabelFor, shotSlowMoScale } from './effects';
 import { render } from './render';
 import { detectQualityTier, quality, setQualityTier } from './quality';
@@ -23,6 +23,7 @@ import { createWorld, enterDrivenKickoff, enterIntro, resetBall, restartMatch, r
 import { directDriven } from './sim/directives';
 import { setScoreDriven } from './sim/driver';
 import { armFiller } from './sim/filler';
+import { resetReferee } from './sim/referee';
 import type { RealGkHandle, RealGkHudPatch } from './types';
 
 /** Broadcast banner copy per restart type/stage (enum → label; empty when the ball is live). */
@@ -419,7 +420,22 @@ export function createRealGkEngine(canvas: HTMLCanvasElement, opts: RealGkEngine
       world.possessionGrant = null;
       world.pendingDirectives = [];
       armFiller(world);
-      enterIntro(world);
+      resetPlayers(world);
+      const c = centerSpot(world.size);
+      world.ball.x = c.x;
+      world.ball.y = c.y;
+      world.ball.z = 0;
+      world.ball.vx = 0;
+      world.ball.vy = 0;
+      world.ball.vz = 0;
+      world.ball.ownerId = null;
+      world.ball.lastKickerId = null;
+      world.ball.cooldown = 0;
+      resetReferee(world);
+      resetCoach(world);
+      world.match.phase = MatchPhase.Intro;
+      world.match.introStage = IntroStage.HoldLoop;
+      world.match.introTimer = 0;
       world.match.introHold = true;
     },
     setDriven: (on) => {

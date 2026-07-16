@@ -77,6 +77,7 @@ export function HeroEngineSurface() {
   const [paused, setPaused] = useState(false);
   const [radar, setRadar] = useState<RealGkRadar | null>(null);
   const [ready, setReady] = useState(false);
+  const [engineReadyToken, setEngineReadyToken] = useState(0);
   const handleRef = useRef<RealGkHandle | null>(null);
 
   // Poll the live positions a few times a second for the minimap (mirrors the actual on-pitch dots + ball).
@@ -103,14 +104,15 @@ export function HeroEngineSurface() {
   const feedHomeCode = useMatchStore((s) => s.match?.home.code);
   const feedAwayName = useMatchStore((s) => s.match?.away.name);
   const feedAwayCode = useMatchStore((s) => s.match?.away.code);
-  const drivenFixtureId = useMatchStore((s) => (s.isReplay ? s.match?.fixtureId ?? null : null));
+  const drivenFixtureId = useMatchStore((s) => s.match?.fixtureId ?? null);
   const replayNonce = useMatchStore((s) => s.replayNonce);
 
   // Effective teams the engine renders: the feed's while replaying, else the manual dropdowns.
-  const bName = isReplay && feedHomeName ? feedHomeName : blue.name;
-  const bCode = isReplay && feedHomeCode ? feedHomeCode : blue.code;
-  const rName = isReplay && feedAwayName ? feedAwayName : red.name;
-  const rCode = isReplay && feedAwayCode ? feedAwayCode : red.code;
+  const hasFeedMatch = drivenFixtureId != null;
+  const bName = hasFeedMatch && feedHomeName ? feedHomeName : blue.name;
+  const bCode = hasFeedMatch && feedHomeCode ? feedHomeCode : blue.code;
+  const rName = hasFeedMatch && feedAwayName ? feedAwayName : red.name;
+  const rCode = hasFeedMatch && feedAwayCode ? feedAwayCode : red.code;
 
   // Rebuilding this object reboots the engine (RealGkBackground keys its boot effect on `config`).
   const config = useMemo(() => {
@@ -146,10 +148,10 @@ export function HeroEngineSurface() {
         extraAnims: true,
         quickIntro: true,
         drivenFiller: true,
-        noFillerShots: isReplay,
+        noFillerShots: hasFeedMatch,
       },
     };
-  }, [heroLook, bName, bCode, rName, rCode, court, isReplay]);
+  }, [heroLook, bName, bCode, rName, rCode, court, hasFeedMatch]);
 
   // Pump the backend socket into the match store (scoreboard/timeline/keyEvents) — the room/live/duel all
   // do this; without it a real replay never populates the store, so the driver never releases and the log
@@ -160,7 +162,10 @@ export function HeroEngineSurface() {
   // uses. `cinematicIntro: true` HOLDS a pre-match (no autonomous play) until the feed's first event lands,
   // so a real match streams cleanly instead of the mock kicking off instantly with a bogus throw-in;
   // `resetKey` re-arms on a replay restart.
-  useRealgkFeedDriver(handleRef, drivenFixtureId, { cinematicIntro: true, resetKey: replayNonce });
+  useRealgkFeedDriver(handleRef, drivenFixtureId, {
+    cinematicIntro: true,
+    resetKey: `${replayNonce}:${engineReadyToken}`,
+  });
 
   const stopReplay = () => {
     void replayService.stop().catch(() => {});
@@ -211,6 +216,7 @@ export function HeroEngineSurface() {
     if (handle) {
       setPaused(false);
       setSpeed(1);
+      setEngineReadyToken((token) => token + 1);
     }
   }, []);
 
