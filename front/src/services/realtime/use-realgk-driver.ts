@@ -14,10 +14,22 @@ import { rosterNamesForSide } from '@/lib/player-form';
 
 /** Authoritative end-of-match channel (same one use-match-feed listens on). */
 const CH_MATCH_END = 'match-end.after';
+const KICKOFF_RAW_ACTION = 'kickoff';
 
 /** Wire participant → realgk team (1 = Blue/home, 2 = Red/away). */
 const teamOf = (participant?: number): Team | null =>
   participant === 1 ? Team.Blue : participant === 2 ? Team.Red : null;
+
+const isEngineStartEvent = (event: MatchEventPayload) => {
+  const raw = (event.rawAction ?? '').toLowerCase();
+  return raw === KICKOFF_RAW_ACTION;
+};
+
+const hasEngineStartSignal = () => {
+  const { match, events } = useMatchStore.getState();
+  if (!match) return false;
+  return events.some(isEngineStartEvent);
+};
 
 /**
  * Drives a realgk engine from an explicit fixture's live/replay feed. The engine boots in autonomous
@@ -28,7 +40,7 @@ const teamOf = (participant?: number): Team | null =>
 export function useRealgkFeedDriver(
   handleRef: MutableRefObject<RealGkHandle | null>,
   fixtureId: number | null,
-  opts?: { cinematicIntro?: boolean; resetKey?: number },
+  opts?: { cinematicIntro?: boolean; resetKey?: number | string },
 ): void {
   const startedRef = useRef(false);
   // Celebration baseline per side. A `goal` feed event fires the on-pitch celebration ONLY when it
@@ -53,6 +65,20 @@ export function useRealgkFeedDriver(
     lastAway.current = 0;
     lastRosterKey.current = '';
     const handle = handleRef.current;
+    const armWhenReady =
+      !handle && fixtureId != null && cinematicIntro
+        ? window.setInterval(() => {
+            const h = handleRef.current;
+            if (!h) return;
+            if (hasEngineStartSignal()) {
+              h.setDriven(true);
+              startedRef.current = true;
+            } else if (typeof h.beginDrivenIntro === 'function') {
+              h.beginDrivenIntro();
+            }
+            if (armWhenReady != null) window.clearInterval(armWhenReady);
+          }, 50)
+        : null;
     // Joining a match that's ALREADY in play (mid-game): the walk-on entrance only makes sense from
     // pre-match — skip it and drop straight into live play (a center kickoff the feed takes over on its
     // first event). A pre-match / not-yet-live fixture still gets the held cinematic entrance.
@@ -61,7 +87,12 @@ export function useRealgkFeedDriver(
       !env.useMock &&
       (() => {
         const { match } = useMatchStore.getState();
-        return !!match && match.fixtureId === fixtureId && IN_PLAY_STATES.has(match.gameState);
+        return (
+          !!match &&
+          match.fixtureId === fixtureId &&
+          IN_PLAY_STATES.has(match.gameState) &&
+          hasEngineStartSignal()
+        );
       })();
     if (fixtureId != null && joinInPlay) {
       const { match } = useMatchStore.getState();
@@ -76,14 +107,14 @@ export function useRealgkFeedDriver(
     }
     if (fixtureId == null) return;
 
-    // A live match must not wait for a wire event to leave the held entrance: if the STORE already says
-    // this fixture is in play (mid-game join via snapshot, or the kickoff rollover), release the pitch
-    // now and keep its scoreboard/clock synced. Wire events still drive the actual play when they flow.
+    // A live match must not wait for a wire event to leave the held entrance when joining mid-game from a
+    // real snapshot, but the scheduled kickoff rollover alone is UI-only and must not start gameplay.
     // Mock mode keeps the autonomous attract match (its events go through the store, not the socket).
     const syncFromStore = () => {
       if (env.useMock) return;
       const { match } = useMatchStore.getState();
       if (!match || match.fixtureId !== fixtureId || !IN_PLAY_STATES.has(match.gameState)) return;
+      if (!hasEngineStartSignal()) return;
       const h = handleRef.current;
       if (!h) return;
       if (!startedRef.current) {
@@ -163,6 +194,10 @@ export function useRealgkFeedDriver(
       const h = handleRef.current;
       if (!h) return;
       if (!startedRef.current) {
+        if (cinematicIntro && !isEngineStartEvent(p)) {
+          driveGuarded(h, p);
+          return;
+        }
         startedRef.current = true;
         h.setDriven(true); // first real event → kick off the feed-driven match
         const snap = useMatchStore.getState().match;
@@ -182,6 +217,7 @@ export function useRealgkFeedDriver(
     socket.on(`match-event.${EmissionState.After}`, onMatch);
     socket.on(CH_MATCH_END, onEnd);
     return () => {
+      if (armWhenReady != null) window.clearInterval(armWhenReady);
       unsubscribeStore();
       socket.off(`match-event.${EmissionState.During}`, onMatch);
       socket.off(`match-event.${EmissionState.After}`, onMatch);

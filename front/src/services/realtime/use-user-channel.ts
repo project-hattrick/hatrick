@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { NotificationType } from '@/enums/notification-type.enum';
 import { UserEvent } from '@/enums/user-event.enum';
@@ -71,6 +72,9 @@ export function useUserChannel(): void {
     // --- PvP duel events ---
     const onDuelInvite = (payload: IncomingDuelInvite) => {
       useDuelInviteStore.getState().setInvite(payload);
+      toast.info('New duel challenge', {
+        description: `${payload.hostName} challenged you to a 1v1 duel.`,
+      });
     };
 
     const onDuelReady = (payload: { duelId: string }) => {

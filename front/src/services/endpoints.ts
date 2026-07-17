@@ -35,6 +35,8 @@ export const endpoints = {
   duels: {
     base: '/duels',
     detail: (id: string) => `/duels/${id}`,
+    matchmakingEnter: '/duels/matchmaking/enter',
+    matchmakingLeave: '/duels/matchmaking/leave',
     join: (id: string) => `/duels/${id}/join`,
     settle: (id: string) => `/duels/${id}/settle`,
   },

@@ -75,8 +75,14 @@ export function spawnRefereeKickoff(world: RealGkWorld): void {
   referee.mirror = referee.targetX < referee.x;
 }
 
-/** v5 fouls: the referee sprints to the foul, then whistles (free kick) or brandishes the red card. */
-export function spawnRefereeFoul(world: RealGkWorld, x: number, y: number, card: boolean): void {
+/** v5 fouls: the referee sprints to the foul, then whistles (free kick) or brandishes the card. */
+export function spawnRefereeFoul(
+  world: RealGkWorld,
+  x: number,
+  y: number,
+  card: boolean,
+  _cardColor: 'yellow' | 'red' | null = card ? 'red' : null,
+): void {
   const { referee } = world;
   if (!referee.active) resetReferee(world);
   referee.startX = referee.x;

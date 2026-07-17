@@ -84,6 +84,11 @@ interface DuelResultResponse {
   balance: string;
 }
 
+export interface MatchmakingResultResponse {
+  status: 'queued' | 'matched';
+  duelId?: string;
+}
+
 /** A second player joining an open PvP duel with their own XI. */
 export interface JoinDuelPayload {
   formation: string;
@@ -160,6 +165,12 @@ export interface DuelHistoryDto {
 export const duelService = {
   create: (payload: CreateDuelPayload): Promise<DuelResultResponse> =>
     api.post<DuelResultResponse>(endpoints.duels.base, payload),
+
+  enterMatchmaking: (payload: JoinDuelPayload): Promise<MatchmakingResultResponse> =>
+    api.post<MatchmakingResultResponse>(endpoints.duels.matchmakingEnter, payload),
+
+  leaveMatchmaking: (): Promise<void> =>
+    api.del<void>(endpoints.duels.matchmakingLeave),
 
   /** Fetch a single duel by id — used by the host waiting screen and join page. */
   get: (id: string, signal?: AbortSignal): Promise<DuelDetailDto> =>

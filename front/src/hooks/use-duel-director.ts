@@ -44,6 +44,11 @@ function selfSimCards(): SimCard[] {
 const engineTeam = (team: DuelSimTeam): Team => (team === DuelSimTeam.Home ? Team.Blue : Team.Red);
 const opposite = (team: Team): Team => (team === Team.Blue ? Team.Red : Team.Blue);
 
+const visibleTeam = (team: DuelSimTeam, role: 'host' | 'guest' | null): Team => {
+  if (role !== 'guest') return engineTeam(team);
+  return team === DuelSimTeam.Home ? Team.Red : Team.Blue;
+};
+
 /**
  * Runs the duel as a DIRECTED match: the chance-battle simulator pre-rolls 90' from the two squads'
  * card attributes (attributes ARE the dispute), and this director replays its beats over ~5 real
@@ -55,12 +60,17 @@ export function useDuelDirector(handle: RealGkHandle | null): void {
   const inSetup = useDuelStore((s) => s.inSetup);
   const finished = useDuelStore((s) => s.finished);
   const duelId = useDuelStore((s) => s.duelId);
+  const role = useDuelStore((s) => s.role);
 
   useEffect(() => {
     if (inSetup || finished || !duelId || !handle) return;
 
-    // Same duel id → same match (rematches roll a new id via the route).
-    const timeline = simulateDuel(selfSimCards(), OPPONENT_DECK.map(fromPlayerCardData), seedFromString(duelId));
+    // PvP duels use a canonical host-vs-guest timeline so both browsers see the same match.
+    // Persona duels keep using the signed-in player's actual XI against the configured opponent deck.
+    const timeline =
+      role === null
+        ? simulateDuel(selfSimCards(), OPPONENT_DECK.map(fromPlayerCardData), seedFromString(duelId))
+        : simulateDuel(userCards.map(fromPlayerCardData), OPPONENT_DECK.map(fromPlayerCardData), seedFromString(duelId));
     handle.setDriven(true);
     useDuelStore.getState().setScore(0, 0);
     useDuelStore.getState().setMatchClock(0, DuelPhase.FirstHalf);
@@ -75,13 +85,13 @@ export function useDuelDirector(handle: RealGkHandle | null): void {
     const startedAt = performance.now();
 
     const dispatch = (e: DuelChanceEvent): void => {
-      const team = engineTeam(e.team);
+      const team = visibleTeam(e.team, role);
       if (e.outcome === ChanceOutcome.Goal) {
         if (e.team === DuelSimTeam.Home) home += 1;
         else away += 1;
-        handle.setScore(home, away);
+        handle.setScore(role === 'guest' ? away : home, role === 'guest' ? home : away);
         handle.injectGoal(team);
-        useDuelStore.getState().setScore(home, away);
+        useDuelStore.getState().setScore(role === 'guest' ? away : home, role === 'guest' ? home : away);
       } else if (e.outcome === ChanceOutcome.SavedShot || e.outcome === ChanceOutcome.OffTargetShot) {
         handle.setPossession(team, 0.85);
         handle.injectShot(team);
@@ -145,5 +155,5 @@ export function useDuelDirector(handle: RealGkHandle | null): void {
       window.clearInterval(id);
       if (settleId !== null) window.clearTimeout(settleId);
     };
-  }, [inSetup, finished, duelId, handle]);
+  }, [inSetup, finished, duelId, handle, role]);
 }

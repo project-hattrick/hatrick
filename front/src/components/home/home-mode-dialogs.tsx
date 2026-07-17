@@ -154,7 +154,7 @@ export function HomeModeDialogs() {
                   action={
                     <div className="flex flex-col gap-3">
                       <BetSelector amount={challengeBet} onSelect={setChallengeBet} />
-                      <ChallengePicker />
+                      <ChallengePicker onPick={closeMode} />
                     </div>
                   }
                 />

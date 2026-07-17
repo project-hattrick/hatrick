@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -23,6 +24,9 @@ import { fifaToIso } from '@/lib/country';
 import { duelists } from '@/config/duelists.config';
 import { useSelfProfile } from '@/hooks/use-self-identity';
 import { useDuelStore } from '@/store/duel.store';
+import { useFantasyStore } from '@/store/fantasy.store';
+import { duelService } from '@/services/fantasy.service';
+import { backendEnabled } from '@/services/session-mode';
 import {
   ACCEPT_SECONDS,
   MMR_STAKE,
@@ -56,7 +60,7 @@ const HEADINGS: Record<MatchPhase, { title: string; description: string }> = {
 /**
  * Ranked-duel matchmaking modal — a phase-driven flow (searching → opponent found →
  * accepted) on the shared Dialog shell, mirroring the login-dialog step pattern.
- * Timers are mocked until real matchmaking lands.
+ * Backend sessions use the real ranked queue; mock sessions keep the local timer.
  */
 export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm }: MatchmakingDialogProps) {
   const router = useRouter();
@@ -73,6 +77,7 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
   const [elapsed, setElapsed] = useState(0);
   const [startIn, setStartIn] = useState(START_SECONDS);
   const [wasOpen, setWasOpen] = useState(false);
+  const queuedRef = useRef(false);
 
   // Reset the flow each time the dialog opens — adjust state during render (not in an effect).
   if (open && !wasOpen) {
@@ -100,13 +105,47 @@ export function MatchmakingDialog({ open, onOpenChange, opponent, bet, onConfirm
     router.push(`/duel/${profile.username}`);
   };
 
-  // Searching: count up, then flip to "found" after a short scan.
+  // Backend ranked queue: send the current XI once and wait for duel:ready.
+  useEffect(() => {
+    if (!open || isChallenge || !backendEnabled) return;
+
+    const fantasy = useFantasyStore.getState();
+    const ownedCardIds = fantasy.squad
+      .map((i) => fantasy.collection[i]?.ownedCardId)
+      .filter(Boolean) as string[];
+
+    if (!ownedCardIds.length) {
+      toast.error('Build your XI in Fantasy before entering matchmaking.');
+      onOpenChange(false);
+      return;
+    }
+
+    let cancelled = false;
+    queuedRef.current = true;
+
+    void duelService
+      .enterMatchmaking({ formation: fantasy.formation, ownedCardIds })
+      .catch((err) => {
+        if (cancelled) return;
+        toast.error((err as Error)?.message ?? 'Failed to enter matchmaking');
+        onOpenChange(false);
+      });
+
+    return () => {
+      cancelled = true;
+      if (!queuedRef.current) return;
+      queuedRef.current = false;
+      void duelService.leaveMatchmaking().catch(() => {});
+    };
+  }, [open, isChallenge, onOpenChange]);
+
+  // Searching: count up; mock sessions also flip to "found" after a short scan.
   useEffect(() => {
     if (!open || phase !== MatchPhase.Searching) return;
-    const found = window.setTimeout(() => setPhase(MatchPhase.Found), SEARCH_MS);
+    const found = backendEnabled ? null : window.setTimeout(() => setPhase(MatchPhase.Found), SEARCH_MS);
     const tick = window.setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => {
-      window.clearTimeout(found);
+      if (found) window.clearTimeout(found);
       window.clearInterval(tick);
     };
   }, [open, phase]);

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -20,7 +21,15 @@ import {
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CreateDuelDto, DuelDetailDto, DuelDto, DuelResultDto, JoinDuelDto, SettleDuelDto } from './dto/duel.dto';
+import {
+  CreateDuelDto,
+  DuelDetailDto,
+  DuelDto,
+  DuelResultDto,
+  EnterMatchmakingDto,
+  JoinDuelDto,
+  SettleDuelDto,
+} from './dto/duel.dto';
 import { DuelService } from './services';
 
 /** 1v1 duels (guarded, self-scoped via the session cookie). */
@@ -56,7 +65,10 @@ export class DuelController {
 
   @Post()
   @ApiOperation({ summary: 'Start a duel (stake + lineup snapshot)' })
-  @ApiCreatedResponse({ description: 'Duel + new balance', type: DuelResultDto })
+  @ApiCreatedResponse({
+    description: 'Duel + new balance',
+    type: DuelResultDto,
+  })
   create(
     @Body() dto: CreateDuelDto,
     @CurrentUser() principal: AuthenticatedUser,
@@ -64,10 +76,32 @@ export class DuelController {
     return this.duels.create(principal.userId, dto);
   }
 
+  @Post('matchmaking/enter')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Enter ranked matchmaking with the current XI' })
+  enterMatchmaking(
+    @Body() dto: EnterMatchmakingDto,
+    @CurrentUser() principal: AuthenticatedUser,
+  ): Promise<{ status: 'queued' | 'matched'; duelId?: string }> {
+    return this.duels.enterMatchmaking(principal.userId, dto);
+  }
+
+  @Delete('matchmaking/leave')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Leave ranked matchmaking' })
+  leaveMatchmaking(@CurrentUser() principal: AuthenticatedUser): void {
+    this.duels.leaveMatchmaking(principal.userId);
+  }
+
   @Post(':id/join')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Join an open PvP duel (stake + lineup); arms the on-chain escrow' })
-  @ApiOkResponse({ description: 'Joined duel + new balance', type: DuelResultDto })
+  @ApiOperation({
+    summary: 'Join an open PvP duel (stake + lineup); arms the on-chain escrow',
+  })
+  @ApiOkResponse({
+    description: 'Joined duel + new balance',
+    type: DuelResultDto,
+  })
   join(
     @Param('id') id: string,
     @Body() dto: JoinDuelDto,
@@ -79,7 +113,10 @@ export class DuelController {
   @Post(':id/settle')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Settle a duel (result + reward + MMR)' })
-  @ApiOkResponse({ description: 'Settled duel + new balance', type: DuelResultDto })
+  @ApiOkResponse({
+    description: 'Settled duel + new balance',
+    type: DuelResultDto,
+  })
   settle(
     @Param('id') id: string,
     @Body() dto: SettleDuelDto,
