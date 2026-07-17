@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, MaxLength } from 'class-validator';
 import { StoreItemKind, type StoreItem } from '@prisma/client';
+import { CardDto } from '../../fantasy/dto/card.dto';
 
 /** A limited-stock store product as the catalog exposes it. */
 export class StoreItemDto {
@@ -48,4 +49,7 @@ export class StorePurchaseResultDto {
 
   @ApiProperty({ example: 'legendary-pack' })
   slug!: string;
+
+  @ApiPropertyOptional({ description: 'Owned cards unlocked by this purchase', type: [CardDto] })
+  cards?: CardDto[];
 }

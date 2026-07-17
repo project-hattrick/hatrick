@@ -25,7 +25,10 @@ export class UpdateProfileDto {
   })
   username?: string;
 
-  @ApiPropertyOptional({ description: 'Country the user represents', maxLength: 56 })
+  @ApiPropertyOptional({
+    description: 'Country the user represents',
+    maxLength: 56,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(56)
@@ -39,10 +42,10 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional({
     description: 'Avatar source — a preset path (/personas/*) or image URL',
-    maxLength: 512,
+    maxLength: 150_000,
   })
   @IsString()
   @IsOptional()
-  @MaxLength(512)
+  @MaxLength(150_000)
   portraitSrc?: string;
 }

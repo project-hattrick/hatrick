@@ -2,6 +2,7 @@
 export enum WalletTxType {
   WelcomeGrant = 'WelcomeGrant',
   Faucet = 'Faucet',
+  StorePurchase = 'StorePurchase',
   PackPurchase = 'PackPurchase',
   MarketSale = 'MarketSale',
   MarketPurchase = 'MarketPurchase',

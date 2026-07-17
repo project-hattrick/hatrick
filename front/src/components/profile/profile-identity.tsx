@@ -21,6 +21,36 @@ import { useProfileStore, type ProfileDraft } from '@/store/profile.store';
 
 /** Max upload size (kept small — the data URL lives in localStorage). */
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const AVATAR_EXPORT_SIZE = 160;
+const AVATAR_EXPORT_QUALITY = 0.82;
+
+function compressAvatar(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onerror = () => reject(new Error('Could not load that image.'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = AVATAR_EXPORT_SIZE;
+        canvas.height = AVATAR_EXPORT_SIZE;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not prepare that image.'));
+          return;
+        }
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - side) / 2;
+        const sy = (img.naturalHeight - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_EXPORT_SIZE, AVATAR_EXPORT_SIZE);
+        resolve(canvas.toDataURL('image/jpeg', AVATAR_EXPORT_QUALITY));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function MiniStat({ value, label, accent }: { value: string; label: string; accent?: boolean }) {
   return (
@@ -80,10 +110,9 @@ function IdentityEditForm({ fallbackName, onDone }: { fallbackName: string; onDo
       setUploadError('Image is too large (max 2 MB).');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setField('portraitSrc', String(reader.result));
-    reader.onerror = () => setUploadError('Could not read that file.');
-    reader.readAsDataURL(file);
+    void compressAvatar(file)
+      .then((src) => setField('portraitSrc', src))
+      .catch((err) => setUploadError((err as Error)?.message ?? 'Could not read that file.'));
   };
 
   const uploaded = isUploadedPhoto(draft.portraitSrc);

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import {
@@ -33,15 +34,18 @@ export function PickBuyDialog({
   card: PlayerCardData;
   price: string;
 }) {
+  const [processing, setProcessing] = useState(false);
   const rarity = rarityFor(card.rating);
   const theme = RARITY_THEME[rarity];
   const purchase = usePurchaseItem();
 
   const buy = async () => {
-    const ok = await purchase(pickSlug(card.id));
-    if (!ok) return; // reason already toasted — keep the dialog open
+    setProcessing(true);
+    const result = await purchase(pickSlug(card.id));
+    setProcessing(false);
+    if (!result.ok) return; // reason already toasted — keep the dialog open
     // The bought star lands in the fantasy collection (same seam as a market buy).
-    useFantasyStore.getState().addToCollection([
+    useFantasyStore.getState().addToCollection(result.cards?.length ? result.cards : [
       {
         name: card.name,
         number: card.rating,
@@ -58,7 +62,7 @@ export function PickBuyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !processing && onOpenChange(next)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Confirm purchase</DialogTitle>
@@ -87,7 +91,7 @@ export function PickBuyDialog({
           </span>
         </ItemShowcase>
         <DialogFooter>
-          <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => onOpenChange(false)} disabled={processing}>
             Cancel
           </Button>
           <MetalButton
@@ -97,9 +101,10 @@ export function PickBuyDialog({
             size="lg"
             metalFxClassName="visible! w-full flex-1 opacity-100!"
             onClick={() => void buy()}
+            disabled={processing}
             className="h-11 w-full px-8 text-sm font-bold"
           >
-            Confirm buy
+            {processing ? 'Processing...' : 'Confirm buy'}
           </MetalButton>
         </DialogFooter>
       </DialogContent>

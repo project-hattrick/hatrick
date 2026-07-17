@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { ArrowsLeftRight, Lightning, Sparkle, TrendUp, Users, type Icon } from '@/components/common/icons';
@@ -18,9 +18,12 @@ import { MetalButton } from '@/components/ui/metal-button';
 import { StoreBadge, BadgeTone } from '@/components/store/store-badge';
 import { INTERACTIVE_CARD } from '@/components/store/interactive-card';
 import { ItemShowcase } from '@/components/store/item-showcase';
+import { PackOpening } from '@/components/store/pack-opening';
 import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { BundleTrait, type Bundle } from '@/config/store-bundles.config';
+import { useFantasyStore } from '@/store/fantasy.store';
+import type { CollectionCard } from '@/services/fantasy.service';
 import { cn } from '@/lib/utils';
 
 /** Same backdrop as the Legendary Pack card / pack-opening stage. */
@@ -34,6 +37,7 @@ const TRAIT_META: Record<BundleTrait, { icon: Icon; label: string }> = {
 
 /** Fanned pack thumbnails — the spread-hand stack from the pack-buy modal. */
 const PACK_ROTATIONS = ['-rotate-12', '', 'rotate-12'];
+const BUNDLE_PACK_SIZE = 5;
 
 export function PackFan({ className, packClassName = 'h-24' }: { className?: string; packClassName?: string }) {
   return (
@@ -74,6 +78,10 @@ function MetaItem({ icon: MetaIcon, label }: { icon: Icon; label: string }) {
  */
 export function BundleCard({ bundle }: { bundle: Bundle }) {
   const [confirming, setConfirming] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [hasPurchasedDeck, setHasPurchasedDeck] = useState(false);
+  const purchasedCards = useRef<CollectionCard[] | null>(null);
   const { slug, name, caption, price, trait, tag } = bundle;
   const traitMeta = TRAIT_META[trait];
   const purchase = usePurchaseItem();
@@ -83,10 +91,28 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   const gate = useAuthGate();
 
   const buy = async () => {
-    const ok = await purchase(slug);
-    if (!ok) return; // reason already toasted — keep the dialog open
+    setProcessing(true);
+    const result = await purchase(slug);
+    setProcessing(false);
+    if (!result.ok) return; // reason already toasted — keep the dialog open
+    purchasedCards.current = result.cards ?? null;
+    setHasPurchasedDeck(Boolean(result.cards?.length));
+    if (result.cards?.length) useFantasyStore.getState().addToCollection(result.cards);
     setConfirming(false);
-    toast.success(`${name} purchased.`);
+    setOpening(true);
+  };
+
+  const resolvePurchasedDeck = async () => {
+    const cards = purchasedCards.current;
+    if (!cards?.length) throw new Error('No purchased cards available');
+    return cards;
+  };
+
+  const complete = (cards: CollectionCard[]) => {
+    useFantasyStore.getState().addToCollection(cards);
+    purchasedCards.current = null;
+    setHasPurchasedDeck(false);
+    toast.success(`${name} added ${cards.length} players to your collection.`);
   };
 
   return (
@@ -135,7 +161,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
         </div>
       </button>
 
-      <Dialog open={confirming} onOpenChange={setConfirming}>
+      <Dialog open={confirming} onOpenChange={(next) => !processing && setConfirming(next)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Confirm purchase</DialogTitle>
@@ -153,7 +179,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
             </span>
           </ItemShowcase>
           <DialogFooter>
-            <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => setConfirming(false)}>
+            <Button variant="outline" size="lg" className="h-11 flex-none px-6" onClick={() => setConfirming(false)} disabled={processing}>
               Cancel
             </Button>
             <MetalButton
@@ -163,13 +189,27 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
               size="lg"
               metalFxClassName="visible! w-full flex-1 opacity-100!"
               onClick={() => void buy()}
+              disabled={processing}
               className="h-11 w-full px-8 text-sm font-bold"
             >
-              Confirm buy
+              {processing ? 'Processing...' : 'Confirm buy'}
             </MetalButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PackOpening
+        open={opening}
+        onClose={() => {
+          setOpening(false);
+          setHasPurchasedDeck(false);
+        }}
+        hideTrigger
+        packName={name}
+        packSize={BUNDLE_PACK_SIZE}
+        onComplete={complete}
+        resolveDeck={hasPurchasedDeck ? resolvePurchasedDeck : undefined}
+      />
     </>
   );
 }

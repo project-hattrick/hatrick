@@ -14,6 +14,7 @@ import type { WalletTransaction } from '@/services/wallet.service';
 const TX_LABELS: Record<WalletTxType, string> = {
   [WalletTxType.WelcomeGrant]: 'Welcome grant',
   [WalletTxType.Faucet]: 'Faucet',
+  [WalletTxType.StorePurchase]: 'Store purchase',
   [WalletTxType.PackPurchase]: 'Pack purchase',
   [WalletTxType.MarketSale]: 'Market sale',
   [WalletTxType.MarketPurchase]: 'Market purchase',

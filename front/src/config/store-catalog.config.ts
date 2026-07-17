@@ -20,11 +20,11 @@ export const STORE_CATALOG_SEED: StoreCatalogSeed[] = [
   { slug: 'starter-pack', kind: 'Pack', name: 'Starter Pack', price: 50_000, stock: 40 },
   { slug: 'limited-bundle', kind: 'Bundle', name: 'Limited Bundle', price: 350_000, stock: 8 },
   { slug: 'midfield-bundle', kind: 'Bundle', name: 'Midfield Bundle', price: 250_000, stock: 15 },
-  { slug: 'card-mbappe', kind: 'Card', name: 'Mbappe Pick', price: 295_000, stock: 3 },
-  { slug: 'card-haaland', kind: 'Card', name: 'Haaland Pick', price: 245_000, stock: 5 },
-  { slug: 'card-messi', kind: 'Card', name: 'Messi Pick', price: 235_000, stock: 5 },
-  { slug: 'card-vini', kind: 'Card', name: 'Vini Pick', price: 215_000, stock: 8 },
-  { slug: 'card-bellingham', kind: 'Card', name: 'Bellingham Pick', price: 185_000, stock: 10 },
+  { slug: 'card-mbappe', kind: 'Card', name: 'Mbappe Pick', price: 80_000, stock: 3 },
+  { slug: 'card-haaland', kind: 'Card', name: 'Haaland Pick', price: 70_000, stock: 5 },
+  { slug: 'card-messi', kind: 'Card', name: 'Messi Pick', price: 65_000, stock: 5 },
+  { slug: 'card-vini', kind: 'Card', name: 'Vini Pick', price: 60_000, stock: 8 },
+  { slug: 'card-bellingham', kind: 'Card', name: 'Bellingham Pick', price: 50_000, stock: 10 },
 ];
 
 /** Market-pick slug for a fantasy card id (matches the API seed slugs). */

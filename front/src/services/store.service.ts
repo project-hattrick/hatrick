@@ -1,6 +1,7 @@
 import { endpoints } from './endpoints';
 import { api } from './http';
 import { STORE_CATALOG_SEED } from '@/config/store-catalog.config';
+import { toPackCard, type CollectionCard } from './fantasy.service';
 
 /** A limited-stock store product as the API catalog exposes it. */
 export interface StoreItem {
@@ -18,6 +19,14 @@ export interface StorePurchaseResult {
   balance: string;
   stock: number;
   slug: string;
+  cards?: CollectionCard[];
+}
+
+interface StorePurchaseWireResult {
+  balance: string;
+  stock: number;
+  slug: string;
+  cards?: Parameters<typeof toPackCard>[0][];
 }
 
 /**
@@ -36,6 +45,8 @@ export const storeService = {
     }
   },
 
-  purchase: (slug: string): Promise<StorePurchaseResult> =>
-    api.post<StorePurchaseResult>(endpoints.store.purchase, { slug }),
+  purchase: async (slug: string): Promise<StorePurchaseResult> => {
+    const result = await api.post<StorePurchaseWireResult>(endpoints.store.purchase, { slug });
+    return { ...result, cards: result.cards?.map(toPackCard) };
+  },
 };

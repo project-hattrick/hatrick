@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ComponentProps, type ReactNode } from 'react';
+import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { PackOpening } from '@/components/store/pack-opening';
 import { PackBuyDialog } from '@/components/store/pack-buy-dialog';
@@ -9,6 +9,8 @@ import { useItemStock, usePurchaseItem } from '@/services/queries/use-store-item
 import { useOpenPackOnChain } from '@/services/queries/use-open-pack-on-chain';
 import { isChainSession } from '@/services/session-mode';
 import { useAuthGate } from '@/hooks/use-auth-gate';
+import { useFantasyStore } from '@/store/fantasy.store';
+import type { CollectionCard } from '@/services/fantasy.service';
 import { cn } from '@/lib/utils';
 
 /** Minimum settling beat between confirm and the opening overlay — a real purchase feels like a transaction. */
@@ -66,6 +68,8 @@ export function BuyPackFlow({
   const [confirming, setConfirming] = useState(false);
   const [opening, setOpening] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [hasPurchasedDeck, setHasPurchasedDeck] = useState(false);
+  const purchasedCards = useRef<CollectionCard[] | null>(null);
   const purchase = usePurchaseItem();
   const stock = useItemStock(slug);
   const soldOut = stock !== undefined && stock <= 0;
@@ -84,11 +88,26 @@ export function BuyPackFlow({
   const confirm = async () => {
     setProcessing(true);
     // Keep the settling beat even when the server answers instantly.
-    const [ok] = await Promise.all([purchase(slug), delay(PROCESSING_MS)]);
+    const [result] = await Promise.all([purchase(slug), delay(PROCESSING_MS)]);
     setProcessing(false);
-    if (!ok) return; // reason already toasted — keep the dialog open
+    if (!result.ok) return; // reason already toasted — keep the dialog open
+    purchasedCards.current = result.cards ?? null;
+    setHasPurchasedDeck(Boolean(result.cards?.length));
+    if (result.cards?.length) useFantasyStore.getState().addToCollection(result.cards);
     setConfirming(false);
     setOpening(true);
+  };
+
+  const resolvePurchasedDeck = async () => {
+    const cards = purchasedCards.current;
+    if (!cards?.length) throw new Error('No purchased cards available');
+    return cards;
+  };
+
+  const complete = (cards: CollectionCard[]) => {
+    useFantasyStore.getState().addToCollection(cards);
+    purchasedCards.current = null;
+    setHasPurchasedDeck(false);
   };
 
   return (
@@ -126,11 +145,15 @@ export function BuyPackFlow({
 
       <PackOpening
         open={opening}
-        onClose={() => setOpening(false)}
+        onClose={() => {
+          setOpening(false);
+          setHasPurchasedDeck(false);
+        }}
         hideTrigger
         packName={packName}
         packSize={packSize}
-        resolveDeck={useChainOpen ? chainResolveDeck : undefined}
+        onComplete={complete}
+        resolveDeck={useChainOpen ? chainResolveDeck : hasPurchasedDeck ? resolvePurchasedDeck : undefined}
       />
     </>
   );

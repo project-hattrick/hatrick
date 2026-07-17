@@ -222,11 +222,11 @@ const storeItems: Array<{ slug: string; kind: StoreItemKind; name: string; price
   { slug: 'starter-pack', kind: StoreItemKind.Pack, name: 'Starter Pack', price: 50_000, stock: 40 },
   { slug: 'limited-bundle', kind: StoreItemKind.Bundle, name: 'Limited Bundle', price: 350_000, stock: 8 },
   { slug: 'midfield-bundle', kind: StoreItemKind.Bundle, name: 'Midfield Bundle', price: 250_000, stock: 15 },
-  { slug: 'card-mbappe', kind: StoreItemKind.Card, name: 'Mbappé', price: 295_000, stock: 3 },
-  { slug: 'card-haaland', kind: StoreItemKind.Card, name: 'Haaland', price: 245_000, stock: 5 },
-  { slug: 'card-messi', kind: StoreItemKind.Card, name: 'Messi', price: 235_000, stock: 5 },
-  { slug: 'card-vini', kind: StoreItemKind.Card, name: 'Vini Jr', price: 215_000, stock: 8 },
-  { slug: 'card-bellingham', kind: StoreItemKind.Card, name: 'Bellingham', price: 185_000, stock: 10 },
+  { slug: 'card-mbappe', kind: StoreItemKind.Card, name: 'Mbappé', price: 80_000, stock: 3 },
+  { slug: 'card-haaland', kind: StoreItemKind.Card, name: 'Haaland', price: 70_000, stock: 5 },
+  { slug: 'card-messi', kind: StoreItemKind.Card, name: 'Messi', price: 65_000, stock: 5 },
+  { slug: 'card-vini', kind: StoreItemKind.Card, name: 'Vini Jr', price: 60_000, stock: 8 },
+  { slug: 'card-bellingham', kind: StoreItemKind.Card, name: 'Bellingham', price: 50_000, stock: 10 },
 ];
 
 /** Store items — upsert by slug so new items land without resetting live stock. */
@@ -234,7 +234,7 @@ async function seedStoreItems(): Promise<void> {
   for (const item of storeItems) {
     await prisma.storeItem.upsert({
       where: { slug: item.slug },
-      update: {}, // never touch live stock on re-seed
+      update: { kind: item.kind, name: item.name, price: item.price }, // never touch live stock on re-seed
       create: item,
     });
   }

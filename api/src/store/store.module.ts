@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../auth/auth.module';
+import { FantasyModule } from '../fantasy/fantasy.module';
 import { UsersModule } from '../users/users.module';
 import { StoreController } from './store.controller';
 import { StoreService } from './store.service';
@@ -10,6 +11,7 @@ import { StoreItemRepository } from './repositories';
 @Module({
   imports: [
     UsersModule, // UserRepository + WalletRepository
+    FantasyModule, // CardRepository + OwnedCardRepository + PackRepository
     AuthModule, // JwtAuthGuard
   ],
   controllers: [StoreController],

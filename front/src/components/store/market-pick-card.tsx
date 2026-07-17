@@ -4,15 +4,15 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { HoloPlayerCard } from '@/components/store/holo-player-card';
 import { PickBuyDialog } from '@/components/store/pick-buy-dialog';
-import { useItemStock } from '@/services/queries/use-store-item';
+import { useItemPrice, useItemStock } from '@/services/queries/use-store-item';
 import { useAuthGate } from '@/hooks/use-auth-gate';
 import { rarityFor, RARITY_THEME } from '@/config/card-rarity.config';
 import { pickSlug } from '@/config/store-catalog.config';
 import { statOrder, type PlayerCardData } from '@/config/fantasy-cards.config';
 import { cn } from '@/lib/utils';
 
-/** Mock market price scaled from the card rating (≈1.9–2.5 SOL for the star pool). */
-const cardPrice = (rating: number): string => `${((rating - 78) / 7.5).toFixed(1)} SOL`;
+const formatStorePrice = (coins: number): string =>
+  `${(coins / 100_000).toFixed(2).replace(/0$/, '')} SOL`;
 
 /**
  * A market-picks product tile: the pack-opening holo card fused with its
@@ -23,8 +23,10 @@ export function MarketPickCard({ card }: { card: PlayerCardData }) {
   const [buying, setBuying] = useState(false);
   const rarity = rarityFor(card.rating);
   const theme = RARITY_THEME[rarity];
-  const price = cardPrice(card.rating);
-  const stock = useItemStock(pickSlug(card.id));
+  const slug = pickSlug(card.id);
+  const priceCoins = useItemPrice(slug) ?? 0;
+  const price = priceCoins > 0 ? formatStorePrice(priceCoins) : '...';
+  const stock = useItemStock(slug);
   const soldOut = stock !== undefined && stock <= 0;
   // Signed out → open the login dialog (same as the navbar) instead of the buy modal.
   const gate = useAuthGate();

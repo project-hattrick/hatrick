@@ -7,15 +7,11 @@ import { useAuthStore } from '@/store/auth.store';
 import { useProfileStore } from '@/store/profile.store';
 import { queryKeys } from './keys';
 
-/** Data URLs are big and would bloat every /auth/me — kept local, never PATCHed. */
-const isUploadedPhoto = (src: string): boolean => src.startsWith('data:');
-
-/** Drop empty strings so "" doesn't overwrite a field; skip uploaded-photo portraits. */
+/** Drop empty strings so "" doesn't overwrite a field. */
 function toServerPatch(patch: ProfilePatch): ProfilePatch {
   const out: ProfilePatch = {};
   for (const [key, value] of Object.entries(patch) as [keyof ProfilePatch, string | undefined][]) {
     if (!value) continue;
-    if (key === 'portraitSrc' && isUploadedPhoto(value)) continue;
     out[key] = value;
   }
   return out;
@@ -41,6 +37,7 @@ export function useUpdateProfile() {
       setSession(user); // refresh cached user (displayName/etc.)
       hydrateFromServer(user);
       queryClient.setQueryData(queryKeys.authMe(), user);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.duelists() });
     },
   });
 }

@@ -41,11 +41,16 @@ export class CacheService implements OnModuleDestroy {
       this.logger.log('Redis cache connected.');
     });
     this.redis.on('error', (err: Error) => {
-      if (this.redisHealthy) this.logger.warn(`Redis error — using in-memory fallback: ${err.message}`);
+      if (this.redisHealthy)
+        this.logger.warn(
+          `Redis error — using in-memory fallback: ${err.message}`,
+        );
       this.redisHealthy = false;
     });
     this.redis.connect().catch(() => {
-      this.logger.warn('Redis unreachable — cache runs in-memory until it comes back.');
+      this.logger.warn(
+        'Redis unreachable — cache runs in-memory until it comes back.',
+      );
     });
   }
 
@@ -83,10 +88,13 @@ export class CacheService implements OnModuleDestroy {
       }
     }
     if (this.memory.size >= MEMORY_MAX_ENTRIES) {
-      const oldest = this.memory.keys().next().value;
+      const oldest = this.memory.keys().next().value as string | undefined;
       if (oldest !== undefined) this.memory.delete(oldest);
     }
-    this.memory.set(key, { value: raw, expiresAt: Date.now() + ttlSeconds * 1_000 });
+    this.memory.set(key, {
+      value: raw,
+      expiresAt: Date.now() + ttlSeconds * 1_000,
+    });
   }
 
   /** Invalidate a key in both tiers (write paths call this so a cached read never goes stale). */
@@ -101,8 +109,27 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
+  /** Invalidate every key with a prefix in both tiers. Keep prefixes narrow. */
+  async delPrefix(prefix: string): Promise<void> {
+    for (const key of this.memory.keys()) {
+      if (key.startsWith(prefix)) this.memory.delete(key);
+    }
+    if (this.redisHealthy && this.redis) {
+      try {
+        const keys = await this.redis.keys(`${prefix}*`);
+        if (keys.length) await this.redis.del(...keys);
+      } catch {
+        /* degraded — the memory copies are already gone */
+      }
+    }
+  }
+
   /** Read-through with single-flight: concurrent misses on a key share one factory call. */
-  async getOrSet<T>(key: string, ttlSeconds: number, factory: () => Promise<T>): Promise<T> {
+  async getOrSet<T>(
+    key: string,
+    ttlSeconds: number,
+    factory: () => Promise<T>,
+  ): Promise<T> {
     if (ttlSeconds <= 0) return factory();
     const cached = await this.get<T>(key);
     if (cached !== null) return cached;

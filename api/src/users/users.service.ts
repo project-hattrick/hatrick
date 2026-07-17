@@ -42,14 +42,21 @@ export class UsersService {
     query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<UserResponseDto>> {
     // Leaderboard/list — TTL-only (no explicit bust): the page self-heals in 20s, cheap vs. a full scan.
-    return this.cache.getOrSet(`users:list:${query.skip}:${query.limit}`, LIST_TTL, async () => {
-      const [rows, total] = await this.users.findMany(query.skip, query.limit);
-      return PaginatedResponseDto.of(
-        rows.map((row) => UserResponseDto.fromEntity(row)),
-        total,
-        query,
-      );
-    });
+    return this.cache.getOrSet(
+      `users:list:${query.skip}:${query.limit}`,
+      LIST_TTL,
+      async () => {
+        const [rows, total] = await this.users.findMany(
+          query.skip,
+          query.limit,
+        );
+        return PaginatedResponseDto.of(
+          rows.map((row) => UserResponseDto.fromEntity(row)),
+          total,
+          query,
+        );
+      },
+    );
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
@@ -71,9 +78,12 @@ export class UsersService {
 
   async update(id: string, dto: UpdateProfileDto): Promise<UserResponseDto> {
     try {
-      const updated = UserResponseDto.fromEntity(await this.users.update(id, dto));
+      const updated = UserResponseDto.fromEntity(
+        await this.users.update(id, dto),
+      );
       // Bust the public-profile cache so an edit shows immediately (username may have changed).
       if (updated.username) await this.cache.del(usernameKey(updated.username));
+      await this.cache.delPrefix('users:list:');
       return updated;
     } catch (error) {
       throw this.mapPrismaError(error, id);
@@ -93,7 +103,9 @@ export class UsersService {
       if (error.code === PrismaErrorCode.UniqueViolation.valueOf()) {
         // meta.target names the offending unique field(s) (e.g. username, email).
         const target = error.meta?.target;
-        const field = Array.isArray(target) ? target.join(', ') : 'walletAddress';
+        const field = Array.isArray(target)
+          ? target.join(', ')
+          : 'walletAddress';
         return new ConflictException(`That ${field} is already taken`);
       }
       if (error.code === PrismaErrorCode.RecordNotFound.valueOf()) {
