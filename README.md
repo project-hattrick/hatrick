@@ -3,7 +3,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/your-org/hat-trick">
+  <a href="https://github.com/project-hattrick/hat-trick">
     <img src="front/public/logo.png" alt="Hatrick" width="96" />
   </a>
 
@@ -12,21 +12,21 @@
   <p align="center">
     One platform, two ways to live the 2026 World Cup — simulated fantasy duels and a live 2D match arena, both driven by the same real-time data source: the <strong>TxLINE</strong> feed on <strong>Solana</strong>.
     <br />
-    <a href="#" target="_blank">View Design System</a>
+    <a href="https://hatrick.xyz/style-guide" target="_blank">View Design System</a>
     ·
-    <a href="https://github.com/your-org/hat-trick/issues" target="_blank">Report Bug</a>
+    <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Report Bug</a>
     ·
-    <a href="https://github.com/your-org/hat-trick/issues" target="_blank">Request Feature</a>
+    <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Request Feature</a>
   </p>
 
   <p align="center">
-    <a href="https://your-deploy-url.example" target="_blank"><strong>🌐 Live demo (placeholder) »</strong></a>
+    <a href="https://hatrick.xyz" target="_blank"><strong>🌐 Live — hatrick.xyz »</strong></a>
     ·
     <a href="https://x.com/playhatrick" target="_blank"><strong>Follow @playhatrick on X</strong></a>
   </p>
 
   <p align="center">
-    <a href="https://github.com/your-org/hat-trick/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/your-org/hat-trick/ci.yml?branch=main&label=ci&style=flat-square"></a>
+    <a href="https://github.com/project-hattrick/hat-trick/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/project-hattrick/hat-trick/ci.yml?branch=main&label=ci&style=flat-square"></a>
     <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
     <img alt="Solana" src="https://img.shields.io/badge/Solana-devnet-14F195?style=flat-square">
     <img alt="Powered by TxLINE" src="https://img.shields.io/badge/powered%20by-TxLINE-orange?style=flat-square">
@@ -39,19 +39,19 @@
 
 <div align="center">
   <!-- still capture — for extra punch, swap for a 3–5s GIF loop of the arena taking a goal (during → after) -->
-  <img src="docs/media/hero-demo.png" alt="Hatrick live arena demo" width="760">
+  <img src="docs/media/hero-demo.jpeg" alt="Hatrick live arena demo" width="760">
 </div>
 
 <p align="center">
-  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>3</strong> engine runtimes · <strong>2 states</strong> per event (during / after)
+  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>2 states</strong> per event (during / after)
 </p>
 
 > [!TIP]
 > **For judges — try it in ~60s:**
-> 1. Open the live demo. In a restricted region? Append `?geo=demo` to unblock the betting surfaces.
-> 2. Connect a **Solana wallet** (Phantom) to sign in as a Competitor — or use an email account just to browse.
-> 3. Confirm the **18+** gate, then top up test coins from the navbar.
-> 4. Open a pack → build your XI → run a 1v1 duel, or jump into **Live** and place an in-match bet.
+> 1. Open [hatrick.xyz](https://hatrick.xyz). In a restricted region? Append `?geo=demo` to unblock the betting surfaces.
+> 2. Sign in with just an **email** — a Solana embedded wallet is created for you, invisibly (Privy). Phantom also works.
+> 3. Confirm the **18+** gate, tap **Get test funds** (mints test USDC on devnet), and buy the starter pack.
+> 4. Build your XI → run a 1v1 duel, or stay on the home and place an in-match bet on the live game.
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -175,7 +175,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
     </td>
     <td width="54%" valign="top">
       <h3>🃏 Sticker packs → your cards</h3>
-      <p>Open packs to reveal player stickers with <strong>fixed ratings</strong>, a country, and a rarity. Each card is a collectible you own — the plan is to mint them as <strong>cNFTs on Solana</strong> so your collection lives in your own wallet.</p>
+      <p>Open packs to reveal player stickers with <strong>fixed ratings</strong>, a country, and a rarity. Each card is minted as a <strong>Metaplex Core NFT on Solana devnet</strong> — serial-numbered, capped supply, provably-fair pull — so your collection lives in your own wallet.</p>
       <ul>
         <li>Attributes are locked at open time (never change).</li>
         <li>Cards feed the <strong>Fantasy 1v1</strong> — not the live matches.</li>
@@ -197,7 +197,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
       </ul>
     </td>
     <td width="46%" valign="top">
-      <img src="docs/media/feature-fantasy-duel.png" alt="Fantasy 1v1 duels — ranked ladder" width="100%">
+      <img src="docs/media/feature-fantasy-duel.jpeg" alt="Fantasy 1v1 duels — arena" width="100%">
     </td>
   </tr>
 </table>
@@ -206,7 +206,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
 <table>
   <tr>
     <td width="46%" valign="top">
-      <img src="docs/media/feature-live.png" alt="Live 2D arena with odds" width="100%">
+      <img src="docs/media/feature-live.jpeg" alt="Live 2D arena with odds" width="100%">
     </td>
     <td width="54%" valign="top">
       <h3>📺 Live mode + in-match betting</h3>
@@ -227,8 +227,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
       <p>Invite-only <strong>rooms</strong> to watch a match with friends — shared chat, social picks, and a match backdrop driven by the same feed.</p>
     </td>
     <td width="46%" valign="top">
-      <!-- replace with: docs/media/feature-rooms.png -->
-      <img src="https://placehold.co/560x340/0b0b0b/14F195?text=Rooms" alt="Watch-together room" width="100%">
+      <img src="docs/media/feature-rooms.jpeg" alt="Watch-together room" width="100%">
     </td>
   </tr>
 </table>
@@ -251,7 +250,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
   <tr>
     <td width="54%" valign="top">
       <h3>🛒 Team store &amp; wallet</h3>
-      <p>A themed <strong>store</strong> for packs and cards, and one <strong>wallet</strong> shared across both modes. Sign in with Phantom (Solana) or an email account.</p>
+      <p>A themed <strong>store</strong> for packs and cards, and one <strong>wallet</strong> shared across both modes. Sign in with just an email — a Solana embedded wallet is created invisibly (Privy) — or connect Phantom.</p>
       <ul>
         <li>Wager balance shown as a stablecoin ticker (devnet).</li>
         <li>Betting gated to wallet accounts; compliance built in (18+, geo, self-exclusion).</li>
@@ -277,7 +276,7 @@ A **polyglot monorepo of independent apps** — nothing shared, no cross-app imp
 
 - Node.js 20+
 - Docker (for Postgres + Redis)
-- A Solana wallet (e.g. Phantom) for the front
+- (optional) A Solana wallet such as Phantom — email sign-in works without one
 - Rust, Solana CLI 2.2.16, and Anchor 0.31.1 when building or deploying `contracts/`
 
 ### Installation
@@ -366,7 +365,7 @@ How Hatrick answers each judging criterion of the track:
 | **Fan Accessibility & UX** | One platform instead of three tabs: watch, play, and bet share one profile, wallet, and design system. Two clear modes from a single home; built for a non-technical fan. |
 | **Real-Time Responsiveness** | The during/after contract makes latency a feature: the arena animates the instant an event arrives (`*.during`) and reconciles when TxLINE confirms it (`*.after`). One SSE ingest → WebSocket fan-out to every surface. |
 | **Originality & Value Creation** | Not another picks leaderboard or pundit bot — a **playable match simulation** driven by real data. Live matches become a 2D arena; fantasy cards get stronger from real performances; both are the same engine fed by the same feed. |
-| **Commercial Viability** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
+| **Commercial & Monetization Path** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
@@ -378,12 +377,13 @@ We'd rather show the seams than oversell. What's genuinely live/on-chain today, 
 | ✅ Real (live / on-chain capable) | 🎭 Simulated (for the demo) |
 |---|---|
 | TxLINE SSE ingest — scores + odds | Crowd speech balloons & social picks |
-| On-chain TxLINE token activation (devnet) | Fantasy 1v1 opponent (matchmaking) |
+| On-chain TxLINE token activation (devnet) | — |
+| Fantasy 1v1 vs real users (direct challenge + ranked queue, CPU fallback) | — |
 | Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds | — |
 | Betting markets + settlement from `*.after` | — |
 | Match **replay** through the real pipeline | — |
 
-> 🔗 **Proof it's on-chain:** program ids, deploy commands, and verification steps live in [`contracts/README.md`](contracts/README.md) and [`docs/onchain-integration.md`](../docs/onchain-integration.md).
+> 🔗 **Proof it's on-chain:** program ids, deploy commands, and verification steps live in [`contracts/README.md`](contracts/README.md) — and every pack buy, bet, and settlement in the app links straight to Solscan (devnet).
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -418,9 +418,9 @@ project/
 - [x] Responsible gaming — 18+ age gate, self-exclusion, stake limits
 - [x] Geo-blocking on betting surfaces (`proxy.ts`, `?geo=demo` bypass)
 - [x] **Contracts** — Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds
+- [x] **Public deploy** — live at [hatrick.xyz](https://hatrick.xyz) + demo video with the submission
+- [x] On-chain proof — Solscan receipts for pack buys, bets, and settlements (devnet)
 - [ ] **Crowd** — chat + X balloons with moderation & ranking (front-simulated for the demo)
-- [ ] Public deploy (scaffolding ready — deploy notes kept outside the repo) + demo video ([script](../docs/demo-video-script.md))
-- [ ] On-chain proof polish — Explorer links, proof panels, and demo-friendly transaction receipts
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -481,7 +481,7 @@ Distributed under the **MIT License**. See `LICENSE.txt` for details once the li
 
 <div id="contact"></div>
 
-Team Hatrick · X: [@playhatrick](https://x.com/playhatrick) · Repository: [https://github.com/your-org/hat-trick](https://github.com/your-org/hat-trick)
+Team Hatrick · X: [@playhatrick](https://x.com/playhatrick) · Repository: [https://github.com/project-hattrick/hat-trick](https://github.com/project-hattrick/hat-trick)
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
