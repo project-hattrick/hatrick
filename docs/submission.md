@@ -1,7 +1,8 @@
 # Hatrick — Submission Technical Doc
 
 > One-page brief for the judges. Track: **Consumer & Fan Experiences** (TxODDS World Cup Hackathon
-> 2026). Deep-dives are linked throughout.
+> 2026). **Full technical writeup:** [`technical-documentation.md`](technical-documentation.md).
+> Deep-dives are linked throughout.
 
 ## TL;DR for reviewers
 
@@ -106,6 +107,9 @@ essential-only cookies · devnet play-money disclaimer in the footer.
 - **Live:** [hatrick.xyz](https://hatrick.xyz). Sign in with an email, grab test funds (one tap), buy
   the starter pack, then either watch/bet the live match on the home or duel from `/duelists`.
   In a restricted region, append `?geo=demo`.
+- **For judges — zero friction, zero cost:** email sign-in creates the Solana wallet for you, the faucet
+  funds it, and everything runs on devnet play-money. **No external wallet to connect, no Google account,
+  no gas to pay** — matching the organizers' guidance to keep evaluation friction-free.
 - **Local:** `api/` → `docker compose up -d && npm i && npm run prisma:deploy && npm run start:dev`
   (`:3001`); `front/` → `npm i && npm run dev` (`:3000`, `NEXT_PUBLIC_USE_MOCK=false`). Envs
   documented in each app's `.env.example`.

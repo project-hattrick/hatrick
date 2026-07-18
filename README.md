@@ -71,9 +71,8 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
     <li>
       <a href="#about-the-project">About the Project</a>
       <ul>
-        <li><a href="#problem">Problem</a></li>
         <li><a href="#the-two-modes">The Two Modes</a></li>
-        <li><a href="#fan-journey">The Fan Journey</a></li>
+        <li><a href="#txline-feeds-modes">How TxLINE Feeds the Modes</a></li>
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
@@ -100,57 +99,29 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 
 <div id="about-the-project"></div>
 
-**Hatrick** treats the World Cup as what it really is — a universe of live data — and builds one place to *play it* and *watch + bet it*. Two modes share one profile, one wallet, and one design, all fed by the same TxLINE feed.
-
-### Problem
-
-<div id="problem"></div>
-
-Most fans watch with a phone in hand and a fragmented setup: score in one tab, fantasy in a separate app, odds in yet another. The data exists — TxLINE streams scores, events, and odds for all 104 matches — but the unified experience hasn't been built. Hatrick is that experience.
+**Hatrick** turns the World Cup feed into a consumer game loop. Fans normally split their attention across score apps, fantasy tools, odds screens, and social feeds; Hatrick puts the core actions in one place: watch the match, bet the live market, collect cards, and play a squad duel.
 
 ### The Two Modes
 
 <div id="the-two-modes"></div>
 
-- **🎮 Fantasy** — open packs, build your XI, and stake in **simulated 1v1 arena duels**.
-- **📺 Live** — real matches as a **2D real-time arena** with live odds and in-match betting on one screen.
-- **🗣️ Crowd layer** — chat + curated posts become comic-style **speech balloons** over the stands.
+- **🎮 Fantasy** — open player packs, build your XI, and enter simulated 1v1 arena duels. Base cards are collectibles; live form and squad strength are informed by real player and team performance.
+- **📺 Live** — follow real matches as a 2D arena with play-by-play, odds, and in-match betting on one screen.
 
 > The defining mechanic: every event is emitted in **two states** — `during` (optimistic, animates instantly) and `after` (confirmed by TxLINE, authoritative). See [Architecture](#architecture).
 
-### The Fan Journey
+### How TxLINE feeds the modes
 
-<div id="fan-journey"></div>
+<div id="txline-feeds-modes"></div>
 
-One profile, one wallet ledger, two loops that feed each other:
+TxLINE is the engine behind both modes, not just a logo in the footer.
 
-```mermaid
-flowchart LR
-    A([Fan arrives]) --> B{18+ age gate}
-    B -->|confirm| C[Sign in with Solana wallet]
-    C --> D{Pick a mode}
+| Mode | What TxLINE provides | What Hatrick turns it into |
+|---|---|---|
+| **Fantasy** | Player stats, lineups, goals, cards, shots, corners, final results, and confirmed `after` events | Card form, squad strength, duel inputs, player context, and replayable fantasy moments |
+| **Live** | Real-time score events, match clock, play-by-play actions, odds updates, snapshots, and confirmed results | 2D arena motion, event feed, odds board, bet slip, settlement, and late-join state recovery |
 
-    subgraph LIVE [📺 Live — real matches]
-        E[Watch the 2D arena<br/>shaped by TxLINE events] --> F[Odds move in real time]
-        F --> G[Place a bet<br/>during the match]
-        G --> H[Settled on confirmed<br/>*.after events]
-    end
-
-    subgraph FANTASY [🎮 Fantasy — simulated duels]
-        I[Open sticker packs] --> J[Build your XI]
-        J --> K[Challenge a friend<br/>to a 1v1 arena duel]
-        K --> L[Attributes evolve with real<br/>tournament performance]
-    end
-
-    D --> E
-    D --> I
-    H --> M[(Shared wallet ledger)]
-    L --> M
-    M --> N[Market: trade players,<br/>buy packs, bet again]
-    N --> D
-```
-
-Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting on. Responsible-gaming controls (self-exclusion, stake limits) sit on top of the same ledger.
+The value is the same signed feed creating two products: Live makes the match watchable and bettable now; Fantasy keeps the fan economy active before, during, and after the match.
 
 ### Built With
 
@@ -186,11 +157,11 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
     </td>
     <td width="54%" valign="top">
       <h3>🃏 Sticker packs → your cards</h3>
-      <p>Open packs to reveal player stickers with <strong>fixed ratings</strong>, a country, and a rarity. Each card is minted as a <strong>Metaplex Core NFT on Solana devnet</strong> — serial-numbered, capped supply, provably-fair pull — so your collection lives in your own wallet.</p>
+      <p>Open packs to reveal player stickers with a base rating, country, and rarity. Each card is minted as a <strong>Metaplex Core NFT on Solana devnet</strong> — serial-numbered, capped supply, provably-fair pull — so your collection lives in your own wallet.</p>
       <ul>
-        <li>Attributes are locked at open time (never change).</li>
-        <li>Cards feed the <strong>Fantasy 1v1</strong> — not the live matches.</li>
-        <li>Country is recorded for future country-based mechanics.</li>
+        <li>Base card identity stays fixed; live form can be recomputed from TxLINE player and match stats.</li>
+        <li>Cards feed the <strong>Fantasy 1v1</strong>, where real performance influences squad strength.</li>
+        <li>Country and rarity support future collection and marketplace mechanics.</li>
       </ul>
     </td>
   </tr>
@@ -201,7 +172,7 @@ Winnings from Live fund Fantasy packs; a stronger XI makes duels worth betting o
   <tr>
     <td width="54%" valign="top">
       <h3>⚔️ Fantasy 1v1 duels</h3>
-      <p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings seed the sim (e.g. 95 vs 80 ≈ 86% edge).</p>
+      <p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation.</p>
       <ul>
         <li>Challenge a friend or get matched.</li>
         <li>Wager settles to the winner; result is provable.</li>
@@ -353,11 +324,9 @@ The core contract: **every domain event fires twice**. `*.during` is the optimis
 
 ### What the feed drives on screen
 
-- **Live 2D arena** — a match director translates feed events (possession shifts, shots, goals, corners) into the simulated pitch in real time; the scoreboard is authoritative from `*.after`.
-- **Betting** — markets and odds mirror the odds stream; settlement only ever happens on confirmed events and can be mirrored from the Anchor betting program when chain mode is enabled.
-- **Fantasy attributes** — player cards get stronger or weaker based on real tournament performance, recalculated on `*.after`.
-- **Hero backdrop** — the landing page itself is a live render driven by the same feed.
-- **Replay** — `POST /replay` re-plays a finished match through the *same* during/after pipeline, so every surface can be demonstrated 1:1 without waiting for kickoff.
+- **Live:** score events animate the arena; odds updates price the board; confirmed results settle bets.
+- **Fantasy:** player/team performance updates card form and squad strength after confirmed events.
+- **Replay:** finished matches run through the same pipeline, so demos show real TxLINE behavior without waiting for kickoff.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -376,14 +345,6 @@ How Hatrick answers each judging criterion of the track:
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
-
-### Why this should stand out
-
-- **It turns the feed into gameplay.** TxLINE is not a badge in the README; it controls animation, markets, replay, and settlement.
-- **It joins two fan behaviors that are usually separated.** A user can watch a real match, bet on it, then spend winnings inside a fantasy loop powered by the same identity and wallet.
-- **It explains latency instead of hiding it.** The `during` / `after` model is legible to judges and visible to users: instant action first, confirmed truth second.
-- **It is demo-friendly without being fake.** Replay runs historical match data through the same pipeline, so the walkthrough can show real-time behavior even when no live fixture is active.
-- **It respects the category.** The product is built for consumer accessibility, responsible devnet betting, and sports-data entertainment, not for internal tooling or pure infrastructure.
 
 ### Real vs simulated — an honest scope
 
@@ -448,8 +409,6 @@ project/
 - **Geo-blocking** — betting surfaces restrict regulated jurisdictions.
 - **Natural-person authorship** — AI used as a tool; a human team owns the submission.
 
-Devnet only — fictitious tokens; no real money moves during the hackathon.
-
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
 ## License
@@ -482,8 +441,8 @@ Distributed under the **MIT License**. See `LICENSE.txt` for details once the li
     </td>
     <td align="center">
       <a href="https://github.com/opedrooz">
-        <img src="https://github.com/opedrooz.png" width="110" height="110" alt="Pedro H." style="border-radius:50%"><br />
-        <sub><b>Pedro H.</b></sub>
+        <img src="https://github.com/opedrooz.png" width="110" height="110" alt="Pedro Henrique" style="border-radius:50%"><br />
+        <sub><b>Pedro Henrique</b></sub>
       </a><br />
       <sub>Member · <a href="https://github.com/opedrooz">@opedrooz</a></sub>
     </td>
