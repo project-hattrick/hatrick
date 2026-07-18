@@ -46,6 +46,16 @@
   <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>2 states</strong> per event (during / after)
 </p>
 
+## Evaluation Snapshot
+
+Hatrick is designed to read as more than a demo: it is a consumer product loop where real-time sports data becomes play, social viewing, and settlement. The judging shortcut is simple:
+
+- **Unique concept:** one TxLINE-powered engine drives both a live match arena and fantasy duels, instead of shipping another leaderboard, prediction widget, or chatbot.
+- **Clear TxLINE dependency:** scores, events, odds, snapshots, replay, settlement, and fantasy progression all flow from the same provider-shaped pipeline.
+- **Consumer-first UX:** email sign-in creates a Solana wallet invisibly, so a non-crypto fan can enter, get test funds, open packs, and place devnet bets without wallet setup friction.
+- **Real-time credibility:** every event has a fast `during` state for animation and a confirmed `after` state for settlement, making responsiveness and trust visible in the product.
+- **Business path:** Live betting margin, fantasy packs, market fees, and wallet retention form one economy instead of disconnected features.
+
 > [!TIP]
 > **For judges — try it in ~60s:**
 > 1. Open [hatrick.xyz](https://hatrick.xyz). In a restricted region? Append `?geo=demo` to unblock the betting surfaces.
@@ -57,6 +67,7 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
+    <li><a href="#evaluation-snapshot">Evaluation Snapshot</a></li>
     <li>
       <a href="#about-the-project">About the Project</a>
       <ul>
@@ -339,10 +350,6 @@ TxLINE SSE (scores + odds)
 
 The core contract: **every domain event fires twice**. `*.during` is the optimistic read (TxLINE `confirmed=false`) — it drives instant animation. `*.after` is the authoritative read (`confirmed=true`) — it settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
 
-<div align="center">
-  <!-- replace with: docs/media/during-after.png — the same moment twice: optimistic pick vs confirmed settlement -->
-  <img src="https://placehold.co/820x300/0b0b0b/14F195?text=during%20(optimistic)%20%E2%86%92%20after%20(confirmed)" alt="during vs after — optimistic animation, then authoritative settlement" width="820">
-</div>
 
 ### What the feed drives on screen
 
@@ -369,6 +376,14 @@ How Hatrick answers each judging criterion of the track:
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
+
+### Why this should stand out
+
+- **It turns the feed into gameplay.** TxLINE is not a badge in the README; it controls animation, markets, replay, and settlement.
+- **It joins two fan behaviors that are usually separated.** A user can watch a real match, bet on it, then spend winnings inside a fantasy loop powered by the same identity and wallet.
+- **It explains latency instead of hiding it.** The `during` / `after` model is legible to judges and visible to users: instant action first, confirmed truth second.
+- **It is demo-friendly without being fake.** Replay runs historical match data through the same pipeline, so the walkthrough can show real-time behavior even when no live fixture is active.
+- **It respects the category.** The product is built for consumer accessibility, responsible devnet betting, and sports-data entertainment, not for internal tooling or pure infrastructure.
 
 ### Real vs simulated — an honest scope
 

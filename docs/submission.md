@@ -3,6 +3,20 @@
 > One-page brief for the judges. Track: **Consumer & Fan Experiences** (TxODDS World Cup Hackathon
 > 2026). Deep-dives are linked throughout.
 
+## TL;DR for reviewers
+
+- **This is a working product, not a mockup**: live at [hatrick.xyz](https://hatrick.xyz), with real
+  devnet transactions end-to-end — pack mints, bet escrow, duel stakes, and settlements all link to Solscan.
+- **TxLINE is the primary input, not a garnish**: scores, clock, play-by-play, lineups, odds, replays,
+  settlement, and fantasy card progression all derive from the feed. Nothing on screen is typed in.
+- **The original bet of the project**: instead of another dashboard or pundit bot, the data becomes a
+  *playable* experience — a live 2D match you watch and bet, and a 1v1 fantasy duel simulated from
+  real player stats.
+- **A non-crypto fan can use it in under a minute**: email sign-in silently creates a Solana wallet
+  (Privy); test funds are one tap; no extension, no seed phrase.
+- **Real-time is structural**: every event fires twice — optimistic `during` for instant UI,
+  confirmed `after` for money — so responsiveness and trustworthiness are separate, visible guarantees.
+
 ## The idea
 
 **One platform, two ways to play a real match — both driven by the same real-time TxLINE feed.**
