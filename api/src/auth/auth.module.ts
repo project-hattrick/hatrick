@@ -7,9 +7,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { NonceStore } from './nonce.store';
+import { privyClientProvider } from './privy.provider';
 
 @Module({
   imports: [
+    ConfigModule, // ensures ConfigService is available for privyClientProvider
     forwardRef(() => UsersModule), // provides UserRepository (cycle: UsersModule uses JwtAuthGuard)
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,7 +29,7 @@ import { NonceStore } from './nonce.store';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, NonceStore, JwtAuthGuard],
+  providers: [AuthService, NonceStore, JwtAuthGuard, privyClientProvider],
   exports: [JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

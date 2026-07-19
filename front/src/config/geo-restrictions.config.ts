@@ -22,6 +22,13 @@ export const GEO_BYPASS_PARAM = 'geo';
 export const GEO_BYPASS_VALUE = 'demo';
 export const GEO_BYPASS_COOKIE = 'ht_geo_bypass';
 
+/**
+ * The submission link (`?onboarding=true`) opens the judge intro tour AND implicitly grants the
+ * same geo bypass as `?geo=demo`, so one link works for judges testing from a restricted region.
+ */
+export const ONBOARDING_PARAM = 'onboarding';
+export const ONBOARDING_VALUE = 'true';
+
 /** True when the resolved country is on the block list. Unknown (local dev) never blocks. */
 export function isRestrictedCountry(code: string | null | undefined): boolean {
   return Boolean(code) && RESTRICTED.has((code as string).toUpperCase());

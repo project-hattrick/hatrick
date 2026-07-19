@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { usePrivy } from '@privy-io/react-auth';
 
 import {
   Dialog,
@@ -33,7 +33,7 @@ interface LoginDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Which screen the flow is on: wallet + auth state, plus the explicit email branch. */
+/** Which screen the flow is on. */
 enum LoginStep {
   Connect = 'connect',
   Sign = 'sign',
@@ -41,12 +41,17 @@ enum LoginStep {
 }
 
 /**
- * "Sign in with Solana" modal: connect, sign, then first registrations continue into onboarding.
+ * Auth modal: connects via Privy (wallet or email OTP). First registrations continue
+ * into onboarding after sign-in.
+ *
+ * Auth gate: `usePrivy().ready && authenticated` replaces the old `useWallet().connected`
+ * so the Sign step shows immediately when Privy has an active session, not when the
+ * Solana adapter connects (which may lag behind or never fire for email users).
  */
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const t = useT();
   const router = useRouter();
-  const { connected } = useWallet();
+  const { ready, authenticated } = usePrivy();
   const { isAuthenticated, user } = useAuth();
   const pending = useOnboardingStore((s) => s.pending);
   const complete = useOnboardingStore((s) => s.complete);
@@ -73,7 +78,14 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     if (path) router.push(path);
   };
 
-  const step = emailMode ? LoginStep.Email : connected ? LoginStep.Sign : LoginStep.Connect;
+  // Show the Sign step while Privy is authenticated but the backend session is still
+  // being exchanged, or while Privy is ready but not authenticated yet (Connect step).
+  const step = emailMode
+    ? LoginStep.Email
+    : ready && authenticated
+      ? LoginStep.Sign
+      : LoginStep.Connect;
+
   const heading = {
     [LoginStep.Connect]: { title: t('common.login.connectTitle'), description: t('common.login.connectDescription') },
     [LoginStep.Sign]: { title: t('common.login.signTitle'), description: t('common.login.signDescription') },

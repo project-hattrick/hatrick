@@ -27,7 +27,9 @@ import { CurrentUser } from './current-user.decorator';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { EmailSignInDto } from './dto/email-sign-in.dto';
 import { NonceResponseDto } from './dto/nonce-response.dto';
+import { PrivyLoginDto } from './dto/privy-login.dto';
 import { RequestNonceDto } from './dto/request-nonce.dto';
+import { SessionResponseDto } from './dto/session-response.dto';
 import { VerifySignatureDto } from './dto/verify-signature.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import {
@@ -116,5 +118,48 @@ export class AuthController {
     const user = await this.users.findById(principal.userId);
     if (!user) throw new UnauthorizedException('User no longer exists');
     return UserResponseDto.fromEntity(user);
+  }
+
+  // ─── Privy routes ──────────────────────────────────────────────────────────
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sign in with a Privy access token (Competitor tier)',
+    description:
+      'Verifies the Privy JWT, upserts the user keyed by Privy DID, ' +
+      'resolves (or polls for) the linked Solana wallet, sets the `ht_session` httpOnly ' +
+      'cookie, and returns the session envelope.',
+  })
+  @ApiOkResponse({ description: 'Session envelope + cookie set', type: SessionResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Invalid or expired Privy token' })
+  async loginWithPrivy(
+    @Body() dto: PrivyLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SessionResponseDto> {
+    const result = await this.auth.loginWithPrivy(dto.privyToken);
+    res.cookie(SESSION_COOKIE, result.token, sessionCookieOptions());
+    const session = new SessionResponseDto();
+    session.user = result.user;
+    session.hasDelegation = result.hasDelegation;
+    session.delegationExpiresAt = result.delegationExpiresAt;
+    return session;
+  }
+
+  @Get('session')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Return the session envelope for the currently authenticated user',
+    description:
+      'Reads the `ht_session` cookie (or `Authorization: Bearer` header) and returns the ' +
+      'full session envelope. 401 when the cookie is missing or expired.',
+  })
+  @ApiOkResponse({ description: 'Session envelope', type: SessionResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid session token' })
+  async getSession(
+    @CurrentUser() principal: AuthenticatedUser,
+  ): Promise<SessionResponseDto> {
+    return this.auth.getSessionForUser(principal.userId);
   }
 }

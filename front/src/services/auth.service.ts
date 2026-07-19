@@ -9,7 +9,7 @@ import { api } from './http';
 export interface AuthUser {
   id: string;
   walletAddress: string;
-  /** Login tier — Competitor (wallet) vs Collector (casual email/Google). */
+  /** Login tier — Competitor (wallet/Privy) vs Collector (email). */
   accountType: AccountType;
   displayName: string | null;
   balance: string;
@@ -29,46 +29,67 @@ export interface AuthUser {
   presence: Presence;
 }
 
-interface NonceResponse {
-  nonce: string;
-  message: string;
+/** Backend wrapper for login/session routes (POST /auth/login, GET /auth/session). */
+interface SessionResponse {
+  user: ApiUserDto;
+  hasDelegation: boolean;
+  delegationExpiresAt: string | null;
 }
 
-export interface AuthSession {
-  /** The JWT also comes back in the body for non-browser clients; the browser uses the cookie. */
-  token: string;
-  user: AuthUser;
-  /** True when this sign-in created the account (first registration) — drives onboarding. */
-  isNew: boolean;
+/** Backend wrapper for the email-only route (POST /auth/email). */
+interface EmailResponse {
+  user: ApiUserDto;
+  token?: string;
+  isNew?: boolean;
 }
 
-/** Step 1: ask the api for a one-time message to sign. */
-const requestNonce = (walletAddress: string): Promise<NonceResponse> =>
-  api.post<NonceResponse>(endpoints.auth.nonce, { walletAddress });
-
-/** Step 2: submit the signed message; the api sets the httpOnly session cookie. */
-const verify = async (walletAddress: string, signature: string): Promise<AuthSession> => {
-  const res = await api.post<{ token: string; user: ApiUserDto; isNew: boolean }>(
-    endpoints.auth.verify,
-    { walletAddress, signature },
-  );
-  return { token: res.token, user: toAuthUser(res.user), isNew: res.isNew };
+/**
+ * Exchange a Privy access token for a backend session cookie.
+ * POST /auth/login { privyToken } → sets httpOnly cookie.
+ */
+const login = async (privyToken: string): Promise<AuthUser> => {
+  const res = await api.post<SessionResponse>(endpoints.auth.login, { privyToken });
+  return toAuthUser(res.user);
 };
 
-/** Email sign-in-or-register (Collector tier); the api sets the httpOnly session cookie. */
-const signInWithEmail = async (email: string, password: string): Promise<AuthSession> => {
-  const res = await api.post<{ token: string; user: ApiUserDto; isNew: boolean }>(
-    endpoints.auth.email,
-    { email, password },
-  );
-  return { token: res.token, user: toAuthUser(res.user), isNew: res.isNew };
+/**
+ * Email sign-in-or-register (Collector tier).
+ * POST /auth/email { email, password } → sets httpOnly cookie.
+ */
+const signInWithEmail = async (email: string, password: string): Promise<{ user: AuthUser; isNew: boolean }> => {
+  const res = await api.post<EmailResponse>(endpoints.auth.email, { email, password });
+  return { user: toAuthUser(res.user), isNew: res.isNew ?? false };
 };
 
-/** Validate the session cookie and hydrate the current user (used on boot). */
-const me = async (signal?: AbortSignal): Promise<AuthUser> =>
-  toAuthUser(await api.get<ApiUserDto>(endpoints.auth.me, signal));
+/**
+ * Validate the session cookie and hydrate the current user (used on boot).
+ * GET /auth/session → throws ApiError 401 when the cookie is absent/expired.
+ */
+const session = async (signal?: AbortSignal): Promise<AuthUser> => {
+  const res = await api.get<SessionResponse>(endpoints.auth.session, signal);
+  return toAuthUser(res.user);
+};
+
+/**
+ * @deprecated Use `authService.session()` instead. Kept as a shim for existing callers
+ * while the migration is in progress (use-session.ts still calls `me` in some paths).
+ */
+const me = (signal?: AbortSignal): Promise<AuthUser> => session(signal);
 
 /** End the session — clears the httpOnly cookie server-side. */
 const logout = (): Promise<void> => api.post<void>(endpoints.auth.logout);
 
-export const authService = { requestNonce, verify, signInWithEmail, me, logout };
+/**
+ * Delegation status — project/api has no delegation endpoints, so this is a stub
+ * that always reports false. hasDelegation from the session payload is ignored here.
+ */
+const delegationStatus = async (_signal?: AbortSignal): Promise<boolean> => false;
+
+export const authService = {
+  login,
+  signInWithEmail,
+  session,
+  me,
+  logout,
+  delegationStatus,
+};

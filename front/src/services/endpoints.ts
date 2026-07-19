@@ -4,10 +4,11 @@
  */
 export const endpoints = {
   auth: {
-    nonce: '/auth/nonce',
-    verify: '/auth/verify',
+    // Privy session login (body: { privyToken }).
+    login: '/auth/login',
+    // Combined email endpoint for Collector tier (body: { email, password }).
     email: '/auth/email',
-    me: '/auth/me',
+    session: '/auth/session',
     logout: '/auth/logout',
   },
   users: {

@@ -228,6 +228,8 @@ enum NotificationType {
 model User {
   id            String     @id @default(cuid())
   walletAddress String     @unique
+  // Privy DID (did:privy:<id>) — set on Privy-token login; null for legacy wallet/email accounts.
+  privyDid      String?    @unique
   email         String?    @unique
   // scrypt hash (`scrypt$<salt>$<hash>`); null for wallet-only accounts.
   passwordHash  String?

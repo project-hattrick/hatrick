@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@privy-io/server-auth": "^1.32.5",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/event-emitter": "^3.1.0",

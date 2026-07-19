@@ -6,6 +6,8 @@ import {
   GEO_BYPASS_PARAM,
   GEO_BYPASS_VALUE,
   GEO_RESTRICTED_PATH,
+  ONBOARDING_PARAM,
+  ONBOARDING_VALUE,
   isBettingSurface,
   isRestrictedCountry,
 } from '@/config/geo-restrictions.config';
@@ -22,12 +24,18 @@ function countryOf(request: NextRequest): string | null {
   );
 }
 
-/** A judge who appended `?geo=demo` once (or already holds the cookie) skips the block while navigating. */
-function geoBypassed(request: NextRequest): boolean {
+/** True when the request carries a bypass trigger — `?geo=demo` or the submission `?onboarding=true`. */
+function hasBypassParam(request: NextRequest): boolean {
+  const params = request.nextUrl.searchParams;
   return (
-    request.cookies.get(GEO_BYPASS_COOKIE)?.value === '1' ||
-    request.nextUrl.searchParams.get(GEO_BYPASS_PARAM) === GEO_BYPASS_VALUE
+    params.get(GEO_BYPASS_PARAM) === GEO_BYPASS_VALUE ||
+    params.get(ONBOARDING_PARAM) === ONBOARDING_VALUE
   );
+}
+
+/** A judge who appended `?geo=demo`/`?onboarding=true` once (or already holds the cookie) skips the block. */
+function geoBypassed(request: NextRequest): boolean {
+  return request.cookies.get(GEO_BYPASS_COOKIE)?.value === '1' || hasBypassParam(request);
 }
 
 function preferredLocale(request: NextRequest): Locale {
@@ -74,7 +82,7 @@ export function proxy(request: NextRequest) {
     url.pathname = `/${pathLocale}${GEO_RESTRICTED_PATH}`;
     const response = blocked ? NextResponse.rewrite(url) : NextResponse.next();
 
-    if (request.nextUrl.searchParams.get(GEO_BYPASS_PARAM) === GEO_BYPASS_VALUE) {
+    if (hasBypassParam(request)) {
       response.cookies.set(GEO_BYPASS_COOKIE, '1', { path: '/', maxAge: 60 * 60 * 24, sameSite: 'lax' });
     }
     response.cookies.set(LOCALE_COOKIE, pathLocale, {

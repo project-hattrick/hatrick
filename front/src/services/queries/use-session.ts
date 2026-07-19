@@ -11,10 +11,10 @@ import { useWalletStore } from '@/store/wallet.store';
 import { backendEnabled } from '@/services/session-mode';
 import { queryKeys } from './keys';
 
-/** GET /auth/me → user, or null when the cookie is absent/expired (401). */
+/** GET /auth/session → user, or null when the cookie is absent/expired (401). */
 async function fetchSession(signal?: AbortSignal): Promise<AuthUser | null> {
   try {
-    return await authService.me(signal);
+    return await authService.session(signal);
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) return null;
     throw e;
@@ -43,7 +43,7 @@ export function useSession() {
   const query = useQuery({
     queryKey: queryKeys.authMe(),
     queryFn: ({ signal }) => fetchSession(signal),
-    enabled: backendEnabled && hasSessionHint, // mock mode drives the session locally (useWalletAuth)
+    enabled: backendEnabled && hasSessionHint, // mock mode drives the session locally
     retry: false,
     staleTime: 60_000,
   });
