@@ -36,12 +36,12 @@
 > Hackathon entry for the **TxODDS World Cup 2026 → Consumer & Fan Experiences** track. Devnet only, fictitious tokens — no real money moves. Not affiliated with FIFA; no official marks are used.
 
 <div align="center">
-  <!-- still capture — for extra punch, swap for a 3–5s GIF loop of the arena taking a goal (during → after) -->
+  <!-- still capture — for extra punch, swap for a 3–5s GIF loop of the arena taking a goal (celebrate, then confirm) -->
   <img src="docs/media/hero-demo.jpeg" alt="Hatrick live arena demo" width="760">
 </div>
 
 <p align="center">
-  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>2 states</strong> per event (during / after)
+  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>instant → authoritative</strong> settlement
 </p>
 
 > [!TIP]
@@ -246,26 +246,26 @@ Everything you see in Hatrick originates from **[TxLINE](https://txline.txodds.c
 | **TxLINE REST snapshots** | Fixtures, lineups, current state | Fixture pages, initial state on connect |
 | **Solana devnet** | TxLINE token activation plus Hatrick Anchor programs for betting, fantasy duels, card packs, and provably-fair seeds | Access to the feed is provisioned on-chain; app flows can run in play-money mode or chain-authoritative mode |
 
-### One feed, two states, many consumers
+### One feed, two phases, many consumers
 
 ```
 TxLINE SSE (scores + odds)
         ▼
-[api] ingest → normalizer ──emits──►  *.during (confirmed=false → optimistic, animate now)
-        │   in-memory state           *.after  (confirmed=true  → authoritative, settle & recompute)
+[api] ingest → normalizer ──emits──►  provisional (confirmed=false → optimistic, animate now)
+        │   in-memory state           confirmed   (confirmed=true  → authoritative, settle & recompute)
         ▼
    EventEmitter2 ─► listeners (fantasy attributes · live markets · settlement)
         ▼
 [api] WebSocket gateway ──► [front] one WS → Zustand stores → surfaces
 ```
 
-The core contract: **every domain event fires twice**. `*.during` is the optimistic read (TxLINE `confirmed=false`) — it drives instant animation. `*.after` is the authoritative read (`confirmed=true`) — it settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
+The core contract: **every domain event fires twice**. The provisional read (TxLINE `confirmed=false`) drives instant animation. The confirmed read (`confirmed=true`) settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
 
 
 ### What the feed drives on screen
 
 - **Live:** score events animate the arena; odds updates price the board; confirmed results settle bets.
-- **Fantasy:** player/team performance updates card form and squad strength after confirmed events.
+- **Fantasy:** player/team performance updates card form and squad strength once events are confirmed.
 - **Replay:** finished matches run through the same pipeline, so demos show real TxLINE behavior without waiting for kickoff.
 
 > 📄 **Go deeper — full technical documentation.** The complete writeup lives in **[`docs/technical-documentation.md`](docs/technical-documentation.md)**: the event-driven architecture, the full list of TxLINE endpoints we use, the wire-format gotchas we solved (score truth, regulation vs. extra time, naming events, gap-filling), and how the four Solana programs handle betting, duels, packs, and provably-fair seeds.
@@ -281,7 +281,7 @@ How Hatrick answers each judging criterion of the track:
 | Criterion | How Hatrick answers it |
 |---|---|
 | **Fan Accessibility & UX** | One platform instead of three tabs: watch, play, and bet share one profile, wallet, and design system. Two clear modes from a single home; built for a non-technical fan. |
-| **Real-Time Responsiveness** | The during/after contract makes latency a feature: the arena animates the instant an event arrives (`*.during`) and reconciles when TxLINE confirms it (`*.after`). One SSE ingest → WebSocket fan-out to every surface. |
+| **Real-Time Responsiveness** | The two-phase contract makes latency a feature: the arena animates the instant an event arrives and reconciles when TxLINE confirms it. One SSE ingest → WebSocket fan-out to every surface. |
 | **Originality & Value Creation** | Not another picks leaderboard or pundit bot — a **playable match simulation** driven by real data. Live matches become a 2D arena; fantasy cards get stronger from real performances; both are the same engine fed by the same feed. |
 | **Commercial & Monetization Path** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
@@ -361,7 +361,7 @@ project/
 <div id="roadmap"></div>
 
 - [x] Monorepo scaffold (api + front), governance docs, CI, Docker infra
-- [x] Event-driven core with the `during` / `after` contract
+- [x] Event-driven core with a provisional → confirmed event contract
 - [x] **TxLINE integration** — on-chain token activation, SSE ingest, snapshots, match **replay** through the live pipeline
 - [x] **Live Mode** — feed-driven 2D arena, live odds board, markets, in-match betting + settlement
 - [x] **Fantasy Mode** — packs, XI builder, dynamic attributes, 1v1 arena duels
