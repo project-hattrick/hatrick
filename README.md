@@ -56,13 +56,6 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 - **Real-time credibility:** every event has a fast `during` state for animation and a confirmed `after` state for settlement, making responsiveness and trust visible in the product.
 - **Business path:** Live betting margin, fantasy packs, market fees, and wallet retention form one economy instead of disconnected features.
 
-> [!TIP]
-> **For judges — try it in ~60s:**
-> 1. Open [hatrick.xyz](https://hatrick.xyz). In a restricted region? Append `?geo=demo` to unblock the betting surfaces.
-> 2. Sign in with just an **email** — a Solana embedded wallet is created for you, invisibly (Privy). Phantom also works.
-> 3. Confirm the **18+** gate, tap **Get test funds** (mints test USDC on devnet), and buy the starter pack.
-> 4. Build your XI → run a 1v1 duel, or stay on the home and place an in-match bet on the live game.
-
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
@@ -147,8 +140,6 @@ The value is the same signed feed creating two products: Live makes the match wa
 
 <div id="features"></div>
 
-> 📸 Screenshots are placeholders — drop the real captures into [`docs/media/`](docs) (path noted in each block) and they render automatically.
-
 <!-- FEATURE: Sticker packs / collection -->
 <table>
   <tr>
@@ -214,15 +205,15 @@ The value is the same signed feed creating two products: Live makes the match wa
   </tr>
 </table>
 
-<!-- FEATURE: Crowd + HatBot -->
+<!-- FEATURE: Live feed + chat + HatBot -->
 <table>
   <tr>
     <td width="46%" valign="top">
-      <img src="docs/media/feature-crowd.png" alt="Crowd speech balloons and HatBot" width="100%">
+      <img src="docs/media/feature-crowd.png" alt="Live events feed, chat, and HatBot" width="100%">
     </td>
     <td width="54%" valign="top">
-      <h3>🗣️ Crowd &amp; HatBot</h3>
-      <p>Match moments become comic-style <strong>speech balloons</strong> over the stands. <strong>HatBot</strong> narrates the big beats (goals, reds, penalties, VAR) — a nicely-formatted feed of real events, by design not AI.</p>
+      <h3>🗣️ Live feed, chat &amp; HatBot</h3>
+      <p>Every live match <em>and</em> Fantasy duel carries a social panel — <strong>Stats</strong>, a real-time <strong>Events</strong> feed (the full play-by-play, with player names), and <strong>Chat</strong>. <strong>HatBot</strong> jumps into the feed on the big beats — goals, reds, penalties, VAR — the instant they land, so the conversation keeps pace with the match. Crowd moments also surface as comic-style speech balloons over the stands. HatBot is a nicely-formatted feed of real events, by design not AI.</p>
     </td>
   </tr>
 </table>
@@ -346,19 +337,6 @@ How Hatrick answers each judging criterion of the track:
 
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
 
-### Real vs simulated — an honest scope
-
-We'd rather show the seams than oversell. What's genuinely live/on-chain today, and what's simulated for the demo:
-
-| ✅ Real (live / on-chain capable) | 🎭 Simulated (for the demo) |
-|---|---|
-| TxLINE SSE ingest — scores + odds | Crowd speech balloons & social picks |
-| On-chain TxLINE token activation (devnet) | — |
-| Fantasy 1v1 vs real users (direct challenge + ranked queue, CPU fallback) | — |
-| Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds | — |
-| Betting markets + settlement from `*.after` | — |
-| Match **replay** through the real pipeline | — |
-
 > 🔗 **Proof it's on-chain:** program ids, deploy commands, and verification steps live in [`contracts/README.md`](contracts/README.md) — and every pack buy, bet, and settlement in the app links straight to Solscan (devnet).
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
@@ -396,7 +374,9 @@ project/
 - [x] **Contracts** — Anchor programs for betting escrow, fantasy duel escrow, card packs, and provably-fair seeds
 - [x] **Public deploy** — live at [hatrick.xyz](https://hatrick.xyz) + demo video with the submission
 - [x] On-chain proof — Solscan receipts for pack buys, bets, and settlements (devnet)
-- [ ] **Crowd** — chat + X balloons with moderation & ranking (front-simulated for the demo)
+- [x] **Live social feed** — real-time Events play-by-play with player names, HatBot reactions on the big beats, and live viewer picks across Live and Fantasy
+- [ ] **More matches & leagues** — grow past the World Cup into TxODDS' wider catalog (350+ leagues, 30+ sports); ingest is league-agnostic, so activating a competition is config (`POST /token/activate {leagues}`), not a rewrite
+- [ ] **Crowd at scale** — multi-user chat with moderation & ranking, plus X-style social balloons
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
