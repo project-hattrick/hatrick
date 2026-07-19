@@ -192,19 +192,6 @@ The value is the same signed feed creating two products: Live makes the match wa
   </tr>
 </table>
 
-<!-- FEATURE: Rooms -->
-<table>
-  <tr>
-    <td width="54%" valign="top">
-      <h3>👥 Watch-together rooms</h3>
-      <p>Invite-only <strong>rooms</strong> to watch a match with friends — shared chat, social picks, and a match backdrop driven by the same feed.</p>
-    </td>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-rooms.jpeg" alt="Watch-together room" width="100%">
-    </td>
-  </tr>
-</table>
-
 <!-- FEATURE: Live feed + chat + HatBot -->
 <table>
   <tr>
