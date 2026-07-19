@@ -12,6 +12,8 @@
   <p align="center">
     One platform, two ways to live the 2026 World Cup — simulated fantasy duels and a live 2D match arena, both driven by the same real-time data source: the <strong>TxLINE</strong> feed on <strong>Solana</strong>.
     <br />
+    <a href="docs/technical-documentation.md"><strong>📄 Technical Documentation</strong></a>
+    ·
     <a href="https://hatrick.xyz/style-guide" target="_blank">View Design System</a>
     ·
     <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Report Bug</a>
@@ -305,6 +307,8 @@ The core contract: **every domain event fires twice**. `*.during` is the optimis
 - **Live:** score events animate the arena; odds updates price the board; confirmed results settle bets.
 - **Fantasy:** player/team performance updates card form and squad strength after confirmed events.
 - **Replay:** finished matches run through the same pipeline, so demos show real TxLINE behavior without waiting for kickoff.
+
+> 📄 **Go deeper — full technical documentation.** The complete writeup lives in **[`docs/technical-documentation.md`](docs/technical-documentation.md)**: the event-driven architecture, the full list of TxLINE endpoints we use, the wire-format gotchas we solved (score truth, regulation vs. extra time, naming events, gap-filling), and how the four Solana programs handle betting, duels, packs, and provably-fair seeds.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
