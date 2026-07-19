@@ -20,5 +20,10 @@ export const intro = {
       body: 'Open Metaplex Core NFT card packs (provably-fair), build an XI, and face other fans 1v1. Real tournament data buffs and nerfs your cards after every round — form follows the feed.',
       caption: 'Play when no match is live. Your roster evolves with the World Cup.',
     },
+    cards: {
+      headline: 'Your cards live the tournament',
+      body: 'After every real match, TxLINE data buffs or nerfs your player cards — a big game levels a card up, a quiet one drops it. Your collection evolves with the World Cup.',
+      caption: 'Form follows the feed. Every result reshapes your squad.',
+    },
   },
 };

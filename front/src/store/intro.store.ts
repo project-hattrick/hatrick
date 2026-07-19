@@ -23,8 +23,8 @@ interface IntroStore {
  */
 export const useIntroStore = create<IntroStore>((set, get) => ({
   open: false,
-  step: IntroStep.Welcome,
-  openIntro: () => set({ open: true, step: IntroStep.Welcome }),
+  step: IntroStep.Live,
+  openIntro: () => set({ open: true, step: IntroStep.Live }),
   close: () => set({ open: false }),
   next: () => {
     const i = INTRO_ORDER.indexOf(get().step);

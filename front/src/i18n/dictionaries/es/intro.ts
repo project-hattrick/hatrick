@@ -20,5 +20,10 @@ export const intro = {
       body: 'Abre sobres de cartas NFT Metaplex Core (provably-fair), arma un XI y enfréntate a otros fans en 1v1. Los datos reales del torneo suben y bajan tus cartas tras cada ronda: la forma sigue al feed.',
       caption: 'Juega aunque no haya partido en vivo. Tu plantilla evoluciona con el Mundial.',
     },
+    cards: {
+      headline: 'Tus cartas viven el torneo',
+      body: 'Tras cada partido real, los datos de TxLINE suben o bajan tus cartas — un gran partido la sube de nivel, uno flojo la baja. Tu colección evoluciona con el Mundial.',
+      caption: 'La forma sigue al feed. Cada resultado rehace tu plantilla.',
+    },
   },
 };

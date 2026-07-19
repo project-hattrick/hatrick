@@ -142,6 +142,24 @@ The value is the same signed feed creating two products: Live makes the match wa
 
 <div id="features"></div>
 
+<!-- FEATURE: Live mode + betting -->
+<h3>📺 Live mode + in-match betting</h3>
+
+<p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result — optimistic <code>during</code> animation, confirmed <code>after</code> settlement, and 1X2 / Over-Under markets from the real odds feed.</p>
+
+<div align="center">
+  <img src="docs/media/live-mode.gif" alt="Live 2D arena with odds and in-match betting" width="60%">
+</div>
+
+<!-- FEATURE: Fantasy 1v1 duel -->
+<h3>⚔️ Fantasy 1v1 duels</h3>
+
+<p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation — challenge a friend or get matched; the wager settles to the winner and the result is provable.</p>
+
+<div align="center">
+  <img src="docs/media/fantasy.gif" alt="Fantasy 1v1 duel — arena" width="60%">
+</div>
+
 <!-- FEATURE: Packs, cards & wallet (packs + store merged) -->
 <h3>🃏 Packs &amp; cards · 🛒 store &amp; wallet</h3>
 
@@ -150,7 +168,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 <table>
   <tr>
     <td width="50%" valign="top"><img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%"></td>
-    <td width="50%" valign="top"><img src="docs/media/feature-store.png" alt="Team store and wallet" width="100%"></td>
+    <td width="50%" valign="top"><img src="docs/media/market.gif" alt="Team store &amp; market" width="100%"></td>
   </tr>
 </table>
 
@@ -159,24 +177,6 @@ The value is the same signed feed creating two products: Live makes the match wa
   <li>Cards feed the <strong>Fantasy 1v1</strong>, where real performance influences squad strength.</li>
   <li>Wager balance shows as a stablecoin ticker (devnet); betting is gated to wallet accounts, with compliance built in (18+, geo-block, self-exclusion).</li>
 </ul>
-
-<!-- FEATURE: Fantasy 1v1 duel -->
-<h3>⚔️ Fantasy 1v1 duels</h3>
-
-<p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation — challenge a friend or get matched; the wager settles to the winner and the result is provable.</p>
-
-<div align="center">
-  <img src="docs/media/feature-fantasy-duel.jpeg" alt="Fantasy 1v1 duels — arena" width="72%">
-</div>
-
-<!-- FEATURE: Live mode + betting -->
-<h3>📺 Live mode + in-match betting</h3>
-
-<p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result — optimistic <code>during</code> animation, confirmed <code>after</code> settlement, and 1X2 / Over-Under markets from the real odds feed.</p>
-
-<div align="center">
-  <img src="docs/media/feature-live.jpeg" alt="Live 2D arena with odds" width="72%">
-</div>
 
 <!-- FEATURE: Live social — feed, chat, HatBot & rooms (crowd + rooms merged) -->
 <h3>🗣️ Live social — feed, chat, HatBot &amp; 👥 watch-together rooms</h3>

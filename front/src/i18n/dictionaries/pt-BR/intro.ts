@@ -20,5 +20,10 @@ export const intro = {
       body: 'Abra packs de cartas NFT Metaplex Core (provably-fair), monte um XI e enfrente outros fãs em 1v1. Os dados reais do torneio dão buff e nerf nas suas cartas a cada rodada — a forma segue o feed.',
       caption: 'Jogue mesmo sem partida ao vivo. Seu elenco evolui com a Copa.',
     },
+    cards: {
+      headline: 'Suas cartas vivem o torneio',
+      body: 'Depois de cada partida real, os dados da TxLINE dão buff ou nerf nas suas cartas — um grande jogo faz a carta subir, um jogo apagado faz cair. Sua coleção evolui com a Copa.',
+      caption: 'A forma segue o feed. Cada resultado remodela seu time.',
+    },
   },
 };
