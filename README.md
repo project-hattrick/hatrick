@@ -4,7 +4,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/project-hattrick/hat-trick">
-    <img src="front/public/logo.png" alt="Hatrick" width="96" />
+    <img src="https://hatrick.xyz/api/preview/logo.png" alt="Hatrick" width="96" />
   </a>
 
   <h1 align="center">Hatrick</h1>
