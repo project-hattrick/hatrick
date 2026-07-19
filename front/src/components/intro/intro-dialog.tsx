@@ -157,7 +157,7 @@ export function IntroDialog() {
         </div>
 
         {/* Content below — direct: progress, headline, one line of body, nav */}
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-6 sm:p-7">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 sm:gap-5 sm:p-7">
           <div className="flex items-center gap-3">
             <Progress index={index} fill={fill} />
             <span className="shrink-0 text-micro font-bold tabular-nums text-muted-foreground">
@@ -170,14 +170,14 @@ export function IntroDialog() {
             className="flex flex-col gap-2.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
           >
             <div className="flex items-center gap-2.5">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl border border-neon/25 bg-neon/10">
-                <Icon className="size-5 text-neon" weight="duotone" />
+              <div className="grid size-8 shrink-0 place-items-center rounded-xl border border-neon/25 bg-neon/10 sm:size-9">
+                <Icon className="size-4 text-neon sm:size-5" weight="duotone" />
               </div>
-              <DialogTitle className="font-heading text-2xl font-bold leading-tight tracking-tight">
+              <DialogTitle className="font-heading text-lg font-bold leading-tight tracking-tight sm:text-2xl">
                 {t(copy.headline)}
               </DialogTitle>
             </div>
-            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+            <DialogDescription className="text-sm leading-relaxed text-muted-foreground sm:text-base">
               {t(copy.body)}
             </DialogDescription>
           </div>
