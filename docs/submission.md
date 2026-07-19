@@ -15,8 +15,8 @@
   real player stats.
 - **A non-crypto fan can use it in under a minute**: email sign-in silently creates a Solana wallet
   (Privy); test funds are one tap; no extension, no seed phrase.
-- **Real-time is structural**: every event fires twice — optimistic `during` for instant UI,
-  confirmed `after` for money — so responsiveness and trustworthiness are separate, visible guarantees.
+- **Real-time is structural**: the TxLINE SSE feed drives every screen live, and each event carries a
+  `confirmed` flag — so the UI can react instantly while money only moves on the authoritative result.
 
 ## The idea
 
@@ -39,16 +39,16 @@ TxLINE SSE (scores + odds)
   → txline-service  (guest JWT → on-chain subscribe → /api/token/activate;
                      Last-Event-ID resume, heartbeat, backoff)
   → Kafka           (normalized domain events)
-  → hattrick-layer  (NestJS · Prisma/Postgres · Redis) — every domain event exists in TWO states:
-        *.during  (optimistic, confirmed=false)  → instant UI / animation
-        *.after   (authoritative, confirmed=true) → on-chain settlement
+  → hattrick-layer  (NestJS · Prisma/Postgres · Redis) — each event carries a `confirmed` flag:
+        confirmed=false → optimistic, drives instant UI / animation
+        confirmed=true  → authoritative, drives on-chain settlement
       handlers: bets (escrow settle on final result) · fixture-events (play-by-play persistence)
                 statistics · rooms/crowd · duels (server-authoritative sim + escrow payout)
-  → socket.io gateway → browser (match-event.during/after, odds updates, duel results)
+  → socket.io gateway → browser (live match events, odds updates, duel results)
 ```
 
-The **DURING/AFTER two-state contract** is the spine: the UI reacts instantly on `during`, then
-reconciles against the authoritative `after` that also drives settlement. Full pipeline:
+The UI reacts instantly to live events, then reconciles against the authoritative `confirmed`
+result that also drives settlement — so responsiveness and trust stay separate guarantees. Full pipeline:
 [`architecture.md`](architecture.md) · provider details (auth, SSE, IDs, settlement):
 [`txline-provider.md`](txline-provider.md).
 
@@ -91,7 +91,7 @@ writeup (dated, specific): [`txline-feedback.md`](txline-feedback.md).
 | Criterion | Where |
 |---|---|
 | **Fan Accessibility & UX** | Email → invisible wallet (Privy); one home, two clear modes; age gate + self-exclusion + geo-block baked in |
-| **Real-Time Responsiveness** | TxLINE SSE → during/after → WS → UI animates on `during`, reconciles on `after` |
+| **Real-Time Responsiveness** | TxLINE SSE → WS → UI animates on live events, reconciles on the `confirmed` result |
 | **Originality & Value** | A playable 2D live match **+** a 1v1 simulated game, unified by one feed — not another pundit-bot |
 | **Commercial & Monetization** | Primary packs + marketplace spread + betting margin; TxODDS covers 350+ leagues / 30+ sports, same engine scales past football |
 | **Completeness & Execution** | Real backend (Postgres + Redis + Kafka + WS) and real devnet transactions end-to-end — bet escrow, settle, mint |

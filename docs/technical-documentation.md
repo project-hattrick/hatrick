@@ -88,20 +88,6 @@ api/src/txline ── ingest → mapper → normalizer ── emits typed domain
                                                 animate on .during · reconcile on .after
 ```
 
-### The two-state contract (the core rule)
-
-Every domain event is emitted **twice** over its lifetime, keyed on the score event's `confirmed`
-boolean:
-
-| State | Trigger | Purpose |
-|---|---|---|
-| `*.during` | TxLINE event with `confirmed=false` (or our optimistic projection) | instant UI / animation; provisional, may be revised |
-| `*.after` | TxLINE event with `confirmed=true` | authoritative; settles bets, recomputes fantasy attributes, locks the score |
-
-The frontend treats `.during` as provisional (animate, allow rollback) and `.after` as final (lock,
-settle, recompute). This is what makes the UI feel instant **and** trustworthy — they are two
-different events, not one guess. All event names are enums; payloads are typed DTOs.
-
 ### Why event-driven
 
 One feed, many consumers get the same event at the same instant → consistency between the Live view
