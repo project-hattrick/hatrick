@@ -41,7 +41,7 @@
 </div>
 
 <p align="center">
-  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>instant → authoritative</strong> settlement
+  <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>real-time arena</strong> + on-chain settlement
 </p>
 
 > [!TIP]
@@ -54,7 +54,7 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 - **Unique concept:** one TxLINE-powered engine drives both a live match arena and fantasy duels, instead of shipping another leaderboard, prediction widget, or chatbot.
 - **Clear TxLINE dependency:** scores, events, odds, snapshots, replay, settlement, and fantasy progression all flow from the same provider-shaped pipeline.
 - **Consumer-first UX:** email sign-in creates a Solana wallet invisibly, so a non-crypto fan can enter, get test funds, open packs, and place devnet bets without wallet setup friction.
-- **Real-time credibility:** every event animates instantly for responsiveness, then locks to the authoritative TxLINE result before anything settles — the product feels fast *and* stays trustworthy.
+- **Real-time credibility:** the arena reacts to the feed live, and every bet settles from the authoritative TxLINE result — fast to watch, trustworthy to bet.
 - **Business path:** Live betting margin, fantasy packs, market fees, and wallet retention form one economy instead of disconnected features.
 
 <!-- TABLE OF CONTENTS -->
@@ -102,7 +102,7 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 - **🎮 Fantasy** — open player packs, build your XI, and enter simulated 1v1 arena duels. Base cards are collectibles; live form and squad strength are informed by real player and team performance.
 - **📺 Live** — follow real matches as a 2D arena with play-by-play, odds, and in-match betting on one screen.
 
-> The defining mechanic: every event is shown **twice** — instantly for smooth animation, then reconciled against the authoritative TxLINE result before anything settles. See [Architecture](#architecture).
+> The defining mechanic: **one authoritative feed drives everything on screen** — the arena reacts to TxLINE in real time, and bets settle from its confirmed result. See [Architecture](#architecture).
 
 ### How TxLINE feeds the modes
 
@@ -115,7 +115,7 @@ TxLINE is the engine behind both modes, not just a logo in the footer.
 | **Fantasy** | Player stats, lineups, goals, cards, shots, corners, and confirmed final results | Card form, squad strength, duel inputs, player context, and replayable fantasy moments |
 | **Live** | Real-time score events, match clock, play-by-play actions, odds updates, snapshots, and confirmed results | 2D arena motion, event feed, odds board, bet slip, settlement, and late-join state recovery |
 
-The value is the same signed feed creating two products: Live makes the match watchable and bettable now; Fantasy keeps the fan economy active before, during, and after the match.
+The value is the same signed feed creating two products: Live makes the match watchable and bettable now; Fantasy keeps the fan economy active around the clock, match or no match.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -246,20 +246,21 @@ Everything you see in Hatrick originates from **[TxLINE](https://txline.txodds.c
 | **TxLINE REST snapshots** | Fixtures, lineups, current state | Fixture pages, initial state on connect |
 | **Solana devnet** | TxLINE token activation plus Hatrick Anchor programs for betting, fantasy duels, card packs, and provably-fair seeds | Access to the feed is provisioned on-chain; app flows can run in play-money mode or chain-authoritative mode |
 
-### One feed, two phases, many consumers
+### One feed, many consumers
 
 ```
 TxLINE SSE (scores + odds)
         ▼
-[api] ingest → normalizer ──emits──►  provisional (confirmed=false → optimistic, animate now)
-        │   in-memory state           confirmed   (confirmed=true  → authoritative, settle & recompute)
+[api] ingest → normalizer → in-memory match state
         ▼
    EventEmitter2 ─► listeners (fantasy attributes · live markets · settlement)
         ▼
 [api] WebSocket gateway ──► [front] one WS → Zustand stores → surfaces
+        ▼
+   arena animates in real time · bets settle on TxLINE's confirmed result
 ```
 
-The core contract: **every domain event fires twice**. The provisional read (TxLINE `confirmed=false`) drives instant animation. The confirmed read (`confirmed=true`) settles bets, recomputes fantasy attributes, and locks the score. The UI feels instant *and* trustworthy because those are two different events, not one guess.
+The core idea: **one authoritative feed drives every surface**. TxLINE events flow through a single normalizer into an in-memory match state, fan out to listeners (live markets, fantasy attributes, settlement), and reach the frontend over one WebSocket. The arena reacts the instant an event arrives; bets settle from TxLINE's confirmed result. One pipeline feeding every screen — instant to watch, authoritative when it counts.
 
 
 ### What the feed drives on screen
@@ -281,7 +282,7 @@ How Hatrick answers each judging criterion of the track:
 | Criterion | How Hatrick answers it |
 |---|---|
 | **Fan Accessibility & UX** | One platform instead of three tabs: watch, play, and bet share one profile, wallet, and design system. Two clear modes from a single home; built for a non-technical fan. |
-| **Real-Time Responsiveness** | The two-phase contract makes latency a feature: the arena animates the instant an event arrives and reconciles when TxLINE confirms it. One SSE ingest → WebSocket fan-out to every surface. |
+| **Real-Time Responsiveness** | Real-time by design: the arena animates the instant an event arrives and settles from TxLINE's confirmed result. One SSE ingest → WebSocket fan-out to every surface. |
 | **Originality & Value Creation** | Not another picks leaderboard or pundit bot — a **playable match simulation** driven by real data. Live matches become a 2D arena; fantasy cards get stronger from real performances; both are the same engine fed by the same feed. |
 | **Commercial & Monetization Path** | A closed economy with real monetization hooks: betting margin (Live), pack sales and market fees (Fantasy), and a wallet ledger connecting them. Responsible gaming built in (18+ gate, self-exclusion, stake limits) — table stakes for anything odds-adjacent. |
 | **Completeness & Execution** | Functional end-to-end today: on-chain TxLINE token activation, four Anchor programs, live ingest, betting with settlement, pack → XI → 1v1 duels, replay for demos. Devnet, no real money. |
@@ -361,7 +362,7 @@ project/
 <div id="roadmap"></div>
 
 - [x] Monorepo scaffold (api + front), governance docs, CI, Docker infra
-- [x] Event-driven core with a provisional → confirmed event contract
+- [x] Event-driven core — real-time ingest, one WebSocket fan-out, authoritative settlement
 - [x] **TxLINE integration** — on-chain token activation, SSE ingest, snapshots, match **replay** through the live pipeline
 - [x] **Live Mode** — feed-driven 2D arena, live odds board, markets, in-match betting + settlement
 - [x] **Fantasy Mode** — packs, XI builder, dynamic attributes, 1v1 arena duels
