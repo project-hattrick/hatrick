@@ -143,7 +143,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 <div id="features"></div>
 
 <!-- FEATURE: Live mode + betting -->
-<table>
+<table width="100%">
 <tr>
 <td>
 
@@ -152,7 +152,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 <p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result — optimistic <code>during</code> animation, confirmed <code>after</code> settlement, and 1X2 / Over-Under markets from the real odds feed.</p>
 
 <div align="center">
-  <img src="docs/media/live-mode.gif" alt="Live 2D arena with odds and in-match betting" width="60%">
+  <img src="docs/media/live-mode.gif" alt="Live 2D arena with odds and in-match betting" width="100%">
 </div>
 
 </td>
@@ -160,7 +160,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 </table>
 
 <!-- FEATURE: Fantasy 1v1 duel -->
-<table>
+<table width="100%">
 <tr>
 <td>
 
@@ -169,7 +169,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 <p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation — challenge a friend or get matched; the wager settles to the winner and the result is provable.</p>
 
 <div align="center">
-  <img src="docs/media/fantasy.gif" alt="Fantasy 1v1 duel — arena" width="60%">
+  <img src="docs/media/fantasy.gif" alt="Fantasy 1v1 duel — arena" width="100%">
 </div>
 
 </td>
@@ -177,20 +177,22 @@ The value is the same signed feed creating two products: Live makes the match wa
 </table>
 
 <!-- FEATURE: Packs, cards & wallet (packs + store merged) -->
-<table>
+<table width="100%">
 <tr>
-<td>
+<td colspan="2">
 
 <h3>🃏 Packs &amp; cards · 🛒 store &amp; wallet</h3>
 
 <p>Open packs to reveal player stickers — base rating, country, and rarity — each minted as a <strong>Metaplex Core NFT on Solana devnet</strong> (serial-numbered, capped supply, provably-fair pull), so your collection lives in your own wallet. A themed <strong>store</strong> and a single <strong>wallet</strong> tie both modes together: sign in with just an email and a Solana wallet is created invisibly (Privy), or connect Phantom.</p>
 
-<table>
-  <tr>
-    <td width="50%" valign="top"><img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%"></td>
-    <td width="50%" valign="top"><img src="docs/media/market.gif" alt="Team store &amp; market" width="100%"></td>
-  </tr>
-</table>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%"></td>
+<td width="50%" valign="top"><img src="docs/media/market.gif" alt="Team store &amp; market" width="100%"></td>
+</tr>
+<tr>
+<td colspan="2">
 
 <ul>
   <li>Base card identity stays fixed; live form is recomputed from TxLINE player and match stats.</li>
@@ -203,20 +205,22 @@ The value is the same signed feed creating two products: Live makes the match wa
 </table>
 
 <!-- FEATURE: Live social — feed, chat, HatBot & rooms (crowd + rooms merged) -->
-<table>
+<table width="100%">
 <tr>
-<td>
+<td colspan="2">
 
 <h3>🗣️ Live social — feed, chat, HatBot &amp; 👥 watch-together rooms</h3>
 
 <p>Every live match <em>and</em> Fantasy duel carries a social panel — <strong>Stats</strong>, a real-time <strong>Events</strong> feed (the full play-by-play, with player names), and <strong>Chat</strong>. <strong>HatBot</strong> jumps in on the big beats — goals, reds, penalties, VAR — the instant they land, and crowd moments surface as comic-style speech balloons over the stands. Prefer to watch with friends? Spin up an <strong>invite-only room</strong> — shared chat, social picks, and a match backdrop driven by the same feed.</p>
 
-<table>
-  <tr>
-    <td width="50%" valign="top"><img src="docs/media/feature-crowd.png" alt="Live events feed, chat, and HatBot" width="100%"></td>
-    <td width="50%" valign="top"><img src="docs/media/feature-rooms.jpeg" alt="Watch-together room" width="100%"></td>
-  </tr>
-</table>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/media/feature-crowd.png" alt="Live events feed, chat, and HatBot" width="100%"></td>
+<td width="50%" valign="top"><img src="docs/media/feature-rooms.jpeg" alt="Watch-together room" width="100%"></td>
+</tr>
+<tr>
+<td colspan="2">
 
 <p><em>HatBot is a nicely-formatted feed of real events — by design not AI.</em></p>
 
