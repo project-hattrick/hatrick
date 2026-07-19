@@ -142,87 +142,55 @@ The value is the same signed feed creating two products: Live makes the match wa
 
 <div id="features"></div>
 
-<!-- FEATURE: Sticker packs / collection -->
+<!-- FEATURE: Packs, cards & wallet (packs + store merged) -->
+<h3>🃏 Packs &amp; cards · 🛒 store &amp; wallet</h3>
+
+<p>Open packs to reveal player stickers — base rating, country, and rarity — each minted as a <strong>Metaplex Core NFT on Solana devnet</strong> (serial-numbered, capped supply, provably-fair pull), so your collection lives in your own wallet. A themed <strong>store</strong> and a single <strong>wallet</strong> tie both modes together: sign in with just an email and a Solana wallet is created invisibly (Privy), or connect Phantom.</p>
+
 <table>
   <tr>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%">
-    </td>
-    <td width="54%" valign="top">
-      <h3>🃏 Sticker packs → your cards</h3>
-      <p>Open packs to reveal player stickers with a base rating, country, and rarity. Each card is minted as a <strong>Metaplex Core NFT on Solana devnet</strong> — serial-numbered, capped supply, provably-fair pull — so your collection lives in your own wallet.</p>
-      <ul>
-        <li>Base card identity stays fixed; live form can be recomputed from TxLINE player and match stats.</li>
-        <li>Cards feed the <strong>Fantasy 1v1</strong>, where real performance influences squad strength.</li>
-        <li>Country and rarity support future collection and marketplace mechanics.</li>
-      </ul>
-    </td>
+    <td width="50%" valign="top"><img src="docs/media/feature-packs.png" alt="Opening a sticker pack" width="100%"></td>
+    <td width="50%" valign="top"><img src="docs/media/feature-store.png" alt="Team store and wallet" width="100%"></td>
   </tr>
 </table>
+
+<ul>
+  <li>Base card identity stays fixed; live form is recomputed from TxLINE player and match stats.</li>
+  <li>Cards feed the <strong>Fantasy 1v1</strong>, where real performance influences squad strength.</li>
+  <li>Wager balance shows as a stablecoin ticker (devnet); betting is gated to wallet accounts, with compliance built in (18+, geo-block, self-exclusion).</li>
+</ul>
 
 <!-- FEATURE: Fantasy 1v1 duel -->
-<table>
-  <tr>
-    <td width="54%" valign="top">
-      <h3>⚔️ Fantasy 1v1 duels</h3>
-      <p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation.</p>
-      <ul>
-        <li>Challenge a friend or get matched.</li>
-        <li>Wager settles to the winner; result is provable.</li>
-      </ul>
-    </td>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-fantasy-duel.jpeg" alt="Fantasy 1v1 duels — arena" width="100%">
-    </td>
-  </tr>
-</table>
+<h3>⚔️ Fantasy 1v1 duels</h3>
+
+<p>Build your XI from the cards you own and stake in a <strong>simulated 1v1 arena duel</strong> rendered by the custom canvas engine. Card ratings and TxLINE-informed form seed the simulation — challenge a friend or get matched; the wager settles to the winner and the result is provable.</p>
+
+<div align="center">
+  <img src="docs/media/feature-fantasy-duel.jpeg" alt="Fantasy 1v1 duels — arena" width="72%">
+</div>
 
 <!-- FEATURE: Live mode + betting -->
+<h3>📺 Live mode + in-match betting</h3>
+
+<p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result — optimistic <code>during</code> animation, confirmed <code>after</code> settlement, and 1X2 / Over-Under markets from the real odds feed.</p>
+
+<div align="center">
+  <img src="docs/media/feature-live.jpeg" alt="Live 2D arena with odds" width="72%">
+</div>
+
+<!-- FEATURE: Live social — feed, chat, HatBot & rooms (crowd + rooms merged) -->
+<h3>🗣️ Live social — feed, chat, HatBot &amp; 👥 watch-together rooms</h3>
+
+<p>Every live match <em>and</em> Fantasy duel carries a social panel — <strong>Stats</strong>, a real-time <strong>Events</strong> feed (the full play-by-play, with player names), and <strong>Chat</strong>. <strong>HatBot</strong> jumps in on the big beats — goals, reds, penalties, VAR — the instant they land, and crowd moments surface as comic-style speech balloons over the stands. Prefer to watch with friends? Spin up an <strong>invite-only room</strong> — shared chat, social picks, and a match backdrop driven by the same feed.</p>
+
 <table>
   <tr>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-live.jpeg" alt="Live 2D arena with odds" width="100%">
-    </td>
-    <td width="54%" valign="top">
-      <h3>📺 Live mode + in-match betting</h3>
-      <p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result.</p>
-      <ul>
-        <li>Optimistic <code>during</code> animation, confirmed <code>after</code> settlement.</li>
-        <li>1X2 / Over-Under markets from the real odds feed.</li>
-      </ul>
-    </td>
+    <td width="50%" valign="top"><img src="docs/media/feature-crowd.png" alt="Live events feed, chat, and HatBot" width="100%"></td>
+    <td width="50%" valign="top"><img src="docs/media/feature-rooms.jpeg" alt="Watch-together room" width="100%"></td>
   </tr>
 </table>
 
-<!-- FEATURE: Live feed + chat + HatBot -->
-<table>
-  <tr>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-crowd.png" alt="Live events feed, chat, and HatBot" width="100%">
-    </td>
-    <td width="54%" valign="top">
-      <h3>🗣️ Live feed, chat &amp; HatBot</h3>
-      <p>Every live match <em>and</em> Fantasy duel carries a social panel — <strong>Stats</strong>, a real-time <strong>Events</strong> feed (the full play-by-play, with player names), and <strong>Chat</strong>. <strong>HatBot</strong> jumps into the feed on the big beats — goals, reds, penalties, VAR — the instant they land, so the conversation keeps pace with the match. Crowd moments also surface as comic-style speech balloons over the stands. HatBot is a nicely-formatted feed of real events, by design not AI.</p>
-    </td>
-  </tr>
-</table>
-
-<!-- FEATURE: Store + wallet -->
-<table>
-  <tr>
-    <td width="54%" valign="top">
-      <h3>🛒 Team store &amp; wallet</h3>
-      <p>A themed <strong>store</strong> for packs and cards, and one <strong>wallet</strong> shared across both modes. Sign in with just an email — a Solana embedded wallet is created invisibly (Privy) — or connect Phantom.</p>
-      <ul>
-        <li>Wager balance shown as a stablecoin ticker (devnet).</li>
-        <li>Betting gated to wallet accounts; compliance built in (18+, geo, self-exclusion).</li>
-      </ul>
-    </td>
-    <td width="46%" valign="top">
-      <img src="docs/media/feature-store.png" alt="Team store and wallet" width="100%">
-    </td>
-  </tr>
-</table>
+<p><em>HatBot is a nicely-formatted feed of real events — by design not AI.</em></p>
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
