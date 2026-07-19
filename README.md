@@ -15,12 +15,6 @@
     <a href="docs/technical-documentation.md"><strong>📄 Technical Documentation</strong></a>
     ·
     <a href="https://www.loom.com/share/767ca072d39a4ea598b296489fec2518" target="_blank"><strong>🎥 Demo Video</strong></a>
-    ·
-    <a href="https://hatrick.xyz/style-guide" target="_blank">View Design System</a>
-    ·
-    <a href="https://github.com/project-hattrick/hatrick/issues" target="_blank">Report Bug</a>
-    ·
-    <a href="https://github.com/project-hattrick/hatrick/issues" target="_blank">Request Feature</a>
   </p>
 
   <p align="center">
@@ -60,7 +54,7 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 - **Unique concept:** one TxLINE-powered engine drives both a live match arena and fantasy duels, instead of shipping another leaderboard, prediction widget, or chatbot.
 - **Clear TxLINE dependency:** scores, events, odds, snapshots, replay, settlement, and fantasy progression all flow from the same provider-shaped pipeline.
 - **Consumer-first UX:** email sign-in creates a Solana wallet invisibly, so a non-crypto fan can enter, get test funds, open packs, and place devnet bets without wallet setup friction.
-- **Real-time credibility:** every event has a fast `during` state for animation and a confirmed `after` state for settlement, making responsiveness and trust visible in the product.
+- **Real-time credibility:** every event animates instantly for responsiveness, then locks to the authoritative TxLINE result before anything settles — the product feels fast *and* stays trustworthy.
 - **Business path:** Live betting margin, fantasy packs, market fees, and wallet retention form one economy instead of disconnected features.
 
 <!-- TABLE OF CONTENTS -->
@@ -108,7 +102,7 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
 - **🎮 Fantasy** — open player packs, build your XI, and enter simulated 1v1 arena duels. Base cards are collectibles; live form and squad strength are informed by real player and team performance.
 - **📺 Live** — follow real matches as a 2D arena with play-by-play, odds, and in-match betting on one screen.
 
-> The defining mechanic: every event is emitted in **two states** — `during` (optimistic, animates instantly) and `after` (confirmed by TxLINE, authoritative). See [Architecture](#architecture).
+> The defining mechanic: every event is shown **twice** — instantly for smooth animation, then reconciled against the authoritative TxLINE result before anything settles. See [Architecture](#architecture).
 
 ### How TxLINE feeds the modes
 
@@ -118,7 +112,7 @@ TxLINE is the engine behind both modes, not just a logo in the footer.
 
 | Mode | What TxLINE provides | What Hatrick turns it into |
 |---|---|---|
-| **Fantasy** | Player stats, lineups, goals, cards, shots, corners, final results, and confirmed `after` events | Card form, squad strength, duel inputs, player context, and replayable fantasy moments |
+| **Fantasy** | Player stats, lineups, goals, cards, shots, corners, and confirmed final results | Card form, squad strength, duel inputs, player context, and replayable fantasy moments |
 | **Live** | Real-time score events, match clock, play-by-play actions, odds updates, snapshots, and confirmed results | 2D arena motion, event feed, odds board, bet slip, settlement, and late-join state recovery |
 
 The value is the same signed feed creating two products: Live makes the match watchable and bettable now; Fantasy keeps the fan economy active before, during, and after the match.
@@ -136,7 +130,7 @@ The value is the same signed feed creating two products: Live makes the match wa
 
 <h3>📺 Live mode + in-match betting</h3>
 
-<p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result — optimistic <code>during</code> animation, confirmed <code>after</code> settlement, and 1X2 / Over-Under markets from the real odds feed.</p>
+<p>Follow real matches as a <strong>2D real-time arena</strong> shaped by the TxLINE feed, with live odds and in-match bets settled by the <strong>authoritative</strong> result.</p>
 
 <div align="center">
   <img src="docs/media/live-mode.gif" alt="Live 2D arena with odds and in-match betting" width="100%">
