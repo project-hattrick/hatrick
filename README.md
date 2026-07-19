@@ -3,7 +3,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/project-hattrick/hat-trick">
+  <a href="https://github.com/project-hattrick/hatrick">
     <img src="https://hatrick.xyz/api/preview/logo.png" alt="Hatrick" width="96" />
   </a>
 
@@ -18,9 +18,9 @@
     ·
     <a href="https://hatrick.xyz/style-guide" target="_blank">View Design System</a>
     ·
-    <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Report Bug</a>
+    <a href="https://github.com/project-hattrick/hatrick/issues" target="_blank">Report Bug</a>
     ·
-    <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Request Feature</a>
+    <a href="https://github.com/project-hattrick/hatrick/issues" target="_blank">Request Feature</a>
   </p>
 
   <p align="center">
@@ -30,7 +30,7 @@
   </p>
 
   <p align="center">
-    <a href="https://github.com/project-hattrick/hat-trick/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/project-hattrick/hat-trick/ci.yml?branch=main&label=ci&style=flat-square"></a>
+    <a href="https://github.com/project-hattrick/hatrick/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/project-hattrick/hatrick/ci.yml?branch=main&label=ci&style=flat-square"></a>
     <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
     <img alt="Solana" src="https://img.shields.io/badge/Solana-devnet-14F195?style=flat-square">
     <img alt="Powered by TxLINE" src="https://img.shields.io/badge/powered%20by-TxLINE-orange?style=flat-square">
@@ -437,7 +437,7 @@ Distributed under the **MIT License**. See `LICENSE.txt` for details once the li
 
 <div id="contact"></div>
 
-Team Hatrick · X: [@playhatrick](https://x.com/playhatrick) · Repository: [https://github.com/project-hattrick/hat-trick](https://github.com/project-hattrick/hat-trick)
+Team Hatrick · X: [@playhatrick](https://x.com/playhatrick) · Repository: [https://github.com/project-hattrick/hatrick](https://github.com/project-hattrick/hatrick)
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
