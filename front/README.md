@@ -1,8 +1,8 @@
-# hat-trick / front — Next.js (App Router)
+# Hatrick — Front (Next.js, App Router)
 
-Next 16 · React 19 · Tailwind v4 · shadcn/ui + Zustand + React Query + a `services/` layer + Solana wallet login (devnet).
+Next 16 · React 19 · Tailwind v4 · shadcn/ui + Zustand + React Query + a `services/` layer + **Privy** email sign-in (embedded Solana wallet, Phantom optional — devnet).
 
-The consumer web app for both modes — **Fantasy** (pack → XI → simulated 1v1) and **Live** (real-time match view + betting) — over a shared profile/wallet/design. MVP user flows are built and **front-mocked** (backend adiado): the betting loop + settlement, the fantasy loop, market, fixtures, and profile all run off `config/` mocks + `services/mock/`, wired through the real stores.
+The consumer web app for both modes — **Fantasy** (pack → XI → simulated 1v1) and **Live** (real-time match view + betting) — over a shared profile/wallet/design. All flows are wired to the live **API** (`services/`) and the real-time socket (betting + settlement, the fantasy loop, market, fixtures, profile); a `services/mock/` layer stays available for offline/dev work.
 
 ## Run
 ```bash
@@ -30,7 +30,7 @@ NEXT_PUBLIC_CHAIN_ENABLED=false
 NEXT_PUBLIC_PLAY_TOKEN_MINT=
 ```
 
-**Full details**: [`docs/onchain-integration.md`](../../docs/onchain-integration.md) and the backend [`project/api/README.md`](../api/README.md).
+**Full details**: [`docs/technical-documentation.md`](../docs/technical-documentation.md) and the backend [`api/README.md`](../api/README.md).
 
 ## Routes (`src/app`)
 | Route | Role |
@@ -45,7 +45,6 @@ NEXT_PUBLIC_PLAY_TOKEN_MINT=
 | `/about` · `/contact` · `/faq` · `/blog` · `/blog/[slug]` | marketing + MDX blog |
 | `/legal/{privacy,terms,cookies,responsible-gaming,geo-restricted}` | compliance pages |
 | `/style-guide` | living design-system reference |
-| `/sandbox` (+ `?cp=`) | game-engine checkpoint runner + editor tools (see below) |
 
 Metadata routes: `manifest.ts`, `robots.ts`, `sitemap.ts`, `opengraph-image.tsx`.
 
@@ -72,8 +71,7 @@ Metadata routes: `manifest.ts`, `robots.ts`, `sitemap.ts`, `opengraph-image.tsx`
 ## Game engine (`src/game`)
 Custom **canvas/TS engine, framework-free** (no Three.js). `engine.ts` + `core/` `math/` `sim/` `render/`, plus `realgk/` for the real-match variant.
 
-- **Checkpoints** — `checkpoints/registry.ts` registers self-contained scenes (`chuva-v1`, `arena-v1`, `effects-lab`, `real-gk-v2…v6`, `real-gk-play/solo/match/personas/persona-play`). `DEFAULT_CHECKPOINT = ChuvaV1`; `HERO_CHECKPOINT = RealGkMatch` plays live behind the home hero.
-- **Sandbox** — `/sandbox?cp=<id>` renders any checkpoint via `GameStage`; sub-tools: `personas`, `personas-idle`, `player-heads`, `svg-players`, `hero-figures`, `markers`, `field-calibrator`, `sprite-editor`, `shadow-editor`, `billboard-editor`.
+- **Checkpoints** — `checkpoints/registry.ts` registers self-contained scenes; `HERO_CHECKPOINT = RealGkMatch` plays live behind the home hero.
 - **Assets** — `public/game/` (`actors/`, `ball/`, `personas/`, `player-align/`, `real-gk/`, `stadiums/`). Persona line-players = headless body + composed persona head (gated behind `features.personaHeads`).
 
 ## Engineering rules (non-negotiable)
@@ -92,7 +90,7 @@ Custom **canvas/TS engine, framework-free** (no Three.js). `engine.ts` + `core/`
 | English only · no tests this sprint | — |
 
 ## Design system — Neon Turf (dark-only)
-Tokens live in `src/app/globals.css` (Tailwind v4, CSS-first — no `tailwind.config`): neutral graphite surfaces + lime-neon accent, semantic type scale (`.text-display/title/eyebrow/micro`), pitch-turf utilities, the glass-black surface (use the `GlassPanel` component, never copy-pasted classes), hero accent glow + seam utilities. The theme switcher/color palettes were removed — the Neon Turf baseline is the only theme. Living reference at `/style-guide`; formal docs in `docs/design-system.md`.
+Tokens live in `src/app/globals.css` (Tailwind v4, CSS-first — no `tailwind.config`): neutral graphite surfaces + lime-neon accent, semantic type scale (`.text-display/title/eyebrow/micro`), pitch-turf utilities, the glass-black surface (use the `GlassPanel` component, never copy-pasted classes), hero accent glow + seam utilities. The theme switcher/color palettes were removed — the Neon Turf baseline is the only theme. Living reference at `/style-guide`.
 
 ## Key deps
-`next` 16 · `react` 19 · Tailwind v4 · `shadcn` · `@base-ui/react` · `@phosphor-icons/react` · `zustand` · `@tanstack/react-query` · `react-hook-form` + `zod` · `socket.io-client` · `@solana/wallet-adapter-*` (sign-in only) · `@next/mdx` + `remark-*` (blog) · `lenis` (smooth scroll) · `sonner`, `flag-icons`, `next-themes`.
+`next` 16 · `react` 19 · Tailwind v4 · `shadcn` · `@base-ui/react` · `@phosphor-icons/react` · `zustand` · `@tanstack/react-query` · `react-hook-form` + `zod` · `socket.io-client` · `@privy-io/react-auth` (email sign-in + embedded wallet) · `@solana/wallet-adapter-*` (Phantom option) · `@next/mdx` + `remark-*` (blog) · `lenis` (smooth scroll) · `sonner`, `flag-icons`, `next-themes`.

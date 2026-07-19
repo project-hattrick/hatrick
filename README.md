@@ -14,6 +14,8 @@
     <br />
     <a href="docs/technical-documentation.md"><strong>📄 Technical Documentation</strong></a>
     ·
+    <a href="https://www.loom.com/share/767ca072d39a4ea598b296489fec2518" target="_blank"><strong>🎥 Demo Video</strong></a>
+    ·
     <a href="https://hatrick.xyz/style-guide" target="_blank">View Design System</a>
     ·
     <a href="https://github.com/project-hattrick/hat-trick/issues" target="_blank">Report Bug</a>
@@ -48,6 +50,9 @@
   <strong>104</strong> matches · <strong>1</strong> TxLINE feed · <strong>2</strong> modes · <strong>2 states</strong> per event (during / after)
 </p>
 
+> [!TIP]
+> **Try it in under a minute — no wallet, no gas.** Open **[hatrick.xyz](https://hatrick.xyz/en?onboarding=true)** and sign in with an email — a Solana devnet wallet and test funds are set up for you automatically. Then open a pack or watch &amp; bet the live match. Testing from a restricted region? Add `?geo=demo`. &nbsp;·&nbsp; 🎥 **[Watch the 5-min demo](https://www.loom.com/share/767ca072d39a4ea598b296489fec2518)**
+
 ## Evaluation Snapshot
 
 Hatrick is designed to read as more than a demo: it is a consumer product loop where real-time sports data becomes play, social viewing, and settlement. The judging shortcut is simple:
@@ -68,10 +73,12 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
       <ul>
         <li><a href="#the-two-modes">The Two Modes</a></li>
         <li><a href="#txline-feeds-modes">How TxLINE Feeds the Modes</a></li>
-        <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
     <li><a href="#features">Features</a></li>
+    <li><a href="#built-with">Built With</a></li>
+    <li><a href="#architecture">Data &amp; Architecture — powered by TxLINE</a></li>
+    <li><a href="#track-fit">Track Fit — Consumer &amp; Fan Experiences</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -79,8 +86,6 @@ Hatrick is designed to read as more than a demo: it is a consumer product loop w
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#architecture">Data &amp; Architecture — powered by TxLINE</a></li>
-    <li><a href="#track-fit">Track Fit — Consumer &amp; Fan Experiences</a></li>
     <li><a href="#apps">Apps</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#compliance">Compliance</a></li>
@@ -117,24 +122,6 @@ TxLINE is the engine behind both modes, not just a logo in the footer.
 | **Live** | Real-time score events, match clock, play-by-play actions, odds updates, snapshots, and confirmed results | 2D arena motion, event feed, odds board, bet slip, settlement, and late-join state recovery |
 
 The value is the same signed feed creating two products: Live makes the match watchable and bettable now; Fantasy keeps the fan economy active before, during, and after the match.
-
-### Built With
-
-<div id="built-with"></div>
-
-[![TypeScript][ts-badge]][ts-url]
-[![NestJS][nest-badge]][nest-url]
-[![Next.js][next-badge]][next-url]
-[![React][react-badge]][react-url]
-[![Tailwind][tw-badge]][tw-url]
-[![Solana][sol-badge]][sol-url]
-[![Docker][docker-badge]][docker-url]
-
-- **API:** NestJS · `@nestjs/event-emitter` (event-driven) · Socket.IO · Axios
-- **Front:** Next.js (App Router) · shadcn/ui · Zustand · React Query · Solana Wallet Adapter · custom canvas game engine (framework-free TS)
-- **Data:** TxLINE (SSE scores + odds, REST snapshots, oracle-signed settlement inputs) — see [Data & Architecture](#architecture)
-- **Chain:** Solana (devnet) · Anchor programs for betting, fantasy duels, packs, and provably-fair seeds
-- **Infra:** Docker (Postgres + Redis) · GitHub Actions CI
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -230,48 +217,23 @@ The value is the same signed feed creating two products: Live makes the match wa
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
-## Getting Started
+## Built With
 
-<div id="getting-started"></div>
+<div id="built-with"></div>
 
-A **polyglot monorepo of independent apps** — nothing shared, no cross-app imports. Run each app on its own.
+[![TypeScript][ts-badge]][ts-url]
+[![NestJS][nest-badge]][nest-url]
+[![Next.js][next-badge]][next-url]
+[![React][react-badge]][react-url]
+[![Tailwind][tw-badge]][tw-url]
+[![Solana][sol-badge]][sol-url]
+[![Docker][docker-badge]][docker-url]
 
-### Prerequisites
-
-<div id="prerequisites"></div>
-
-- Node.js 20+
-- Docker (for Postgres + Redis)
-- (optional) A Solana wallet such as Phantom — email sign-in works without one
-- Rust, Solana CLI 2.2.16, and Anchor 0.31.1 when building or deploying `contracts/`
-
-### Installation
-
-<div id="installation"></div>
-
-```bash
-# 1) API + infra (run from project/)
-cd api
-docker compose up -d                  # postgres :5432 + redis :6379
-npm install                           # postinstall runs `prisma generate`
-cp .env.example .env                   # set TXLINE_* to ingest live data
-npm run prisma:deploy                  # apply migrations to a fresh DB
-npm run start:dev                      # http://localhost:3001/health
-
-# 2) Front (separate terminal)
-cd front
-npm install
-cp .env.example .env.local
-npm run dev                            # http://localhost:3000
-
-# 3) Contracts (only when deploying or testing on-chain mode)
-cd ../contracts
-yarn install
-anchor build --release
-yarn test                              # local validator-backed Anchor tests
-```
-
-> The API boots cleanly with `TXLINE_ENABLED=false` and `SOLANA_ENABLED=false` (no credentials needed). See [`api/README.md`](api/README.md) for TxLINE and chain setup, and [`contracts/README.md`](contracts/README.md) for Anchor build/deploy instructions.
+- **API:** NestJS · `@nestjs/event-emitter` (event-driven) · Socket.IO · Axios
+- **Front:** Next.js (App Router) · shadcn/ui · Zustand · React Query · Solana Wallet Adapter · custom canvas game engine (framework-free TS)
+- **Data:** TxLINE (SSE scores + odds, REST snapshots, oracle-signed settlement inputs) — see [Data & Architecture](#architecture)
+- **Chain:** Solana (devnet) · Anchor programs for betting, fantasy duels, packs, and provably-fair seeds
+- **Infra:** Docker (Postgres + Redis) · GitHub Actions CI
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
@@ -333,6 +295,51 @@ How Hatrick answers each judging criterion of the track:
 And the hard requirements: **TxLINE as live input** ✅ · **Solana sign-up** ✅ (wallet = Competitor account) · **functional product, not a mockup** ✅ · public repo + ≤5-min demo video with the submission.
 
 > 🔗 **Proof it's on-chain:** program ids, deploy commands, and verification steps live in [`contracts/README.md`](contracts/README.md) — and every pack buy, bet, and settlement in the app links straight to Solscan (devnet).
+
+<p align="right">(<a href="#readme-top">Back to top</a>)</p>
+
+## Getting Started
+
+<div id="getting-started"></div>
+
+A **polyglot monorepo of independent apps** — nothing shared, no cross-app imports. Run each app on its own.
+
+### Prerequisites
+
+<div id="prerequisites"></div>
+
+- Node.js 20+
+- Docker (for Postgres + Redis)
+- (optional) A Solana wallet such as Phantom — email sign-in works without one
+- Rust, Solana CLI 2.2.16, and Anchor 0.31.1 when building or deploying `contracts/`
+
+### Installation
+
+<div id="installation"></div>
+
+```bash
+# 1) API + infra (run from project/)
+cd api
+docker compose up -d                  # postgres :5432 + redis :6379
+npm install                           # postinstall runs `prisma generate`
+cp .env.example .env                   # set TXLINE_* to ingest live data
+npm run prisma:deploy                  # apply migrations to a fresh DB
+npm run start:dev                      # http://localhost:3001/health
+
+# 2) Front (separate terminal)
+cd front
+npm install
+cp .env.example .env.local
+npm run dev                            # http://localhost:3000
+
+# 3) Contracts (only when deploying or testing on-chain mode)
+cd ../contracts
+yarn install
+anchor build --release
+yarn test                              # local validator-backed Anchor tests
+```
+
+> The API boots cleanly with `TXLINE_ENABLED=false` and `SOLANA_ENABLED=false` (no credentials needed). See [`api/README.md`](api/README.md) for TxLINE and chain setup, and [`contracts/README.md`](contracts/README.md) for Anchor build/deploy instructions.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 

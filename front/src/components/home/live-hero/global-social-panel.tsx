@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 // The global counterpart of RoomSocialPanel: same glass shell + tabs, but the "Chat" tab is the
 // PUBLIC live crowd (open stands + HatBot), not a private room's members-only thread.
-type SocialTab = 'stats' | 'events' | 'crowd';
+export type SocialTab = 'stats' | 'events' | 'crowd';
 
 const TABS: { id: SocialTab; label: string; icon: Icon }[] = [
   { id: 'stats', label: 'Stats', icon: ChartBar },
@@ -97,8 +97,8 @@ function GlobalEventsFeed() {
  * Mirrors RoomSocialPanel's chrome so the landing hero reads exactly like a room —
  * minus anything private (no members, no room chat).
  */
-export function GlobalSocialPanel({ className }: { className?: string }) {
-  const [tab, setTab] = useState<SocialTab>('stats');
+export function GlobalSocialPanel({ className, initialTab = 'stats' }: { className?: string; initialTab?: SocialTab }) {
+  const [tab, setTab] = useState<SocialTab>(initialTab);
   const [open, setOpen] = useState(true);
   const viewers = useViewerCount();
 

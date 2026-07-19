@@ -1,4 +1,4 @@
-# hat-trick / api — NestJS (event-driven)
+# Hatrick — API (NestJS, event-driven)
 
 TxLINE ingest → `@nestjs/event-emitter` (DURING/AFTER) → WebSocket gateway.
 
@@ -23,8 +23,8 @@ Boots cleanly with `TXLINE_ENABLED=false` and `SOLANA_ENABLED=false` (no creds n
 | `events/` | `enums/` (event names, actions, markets, states) + `dto/` (typed payloads) | done |
 | `realtime/` | WebSocket gateway re-broadcasting both states + per-user notification channel | done |
 | `auth/` · `users/` · `wallet/` | wallet + email/password sign-in (JWT cookie) · profiles/friends/notifications · ledger-backed wallet | done |
-| `live/` | play-money betting + **authoritative settlement** on `match-end.after` | done · *market-projector = stub* |
-| `fantasy/` | packs · squad/XI · staked 1v1 duels (MMR) | done · *attribute-engine = stub* |
+| `live/` | play-money betting + **authoritative settlement** on `match-end.after` + odds/market projection | done |
+| `fantasy/` | packs · squad/XI · staked 1v1 duels (MMR) + TxLINE-driven card attributes | done |
 | `market/` · `store/` · `room/` · `crowd/` | card trades · limited-stock store · invite-only rooms · crowd balloons | done |
 | `chain/` | Solana faucet · unsigned bet-tx builder · settlement keeper (gated by `SOLANA_ENABLED`) | separate dev |
 | `prisma/` · `common/` | schema + client · cache/DTOs/guards | done |
@@ -59,7 +59,7 @@ PLAY_TOKEN_MINT=         # Leave empty for dev (auto-create on first faucet)
 USDC_MINT=               # For duel escrow (defaults to play token if unset)
 ```
 
-See `project/api/.env.example` for all settings. Full architecture: [`docs/onchain-integration.md`](../../docs/onchain-integration.md).
+See `.env.example` for all settings. Full on-chain architecture: [`docs/technical-documentation.md`](../docs/technical-documentation.md).
 
 ## Dual-Mode Architecture
 
@@ -71,4 +71,4 @@ Both modes coexist; frontend/backend respect their flags independently.
 ## Conventions
 Event-driven only · enums not strings · ≤600 lines/file · no tests this sprint · English.
 
-> Two known backend stubs: `fantasy/services/attribute-engine.service.ts` (cards don't yet evolve from TxLINE stats) and `live/services/market-projector.service.ts` (odds not projected into extra markets). See [`../../docs/gaps.md`](../../docs/gaps.md).
+> Honest scope — what's live vs simulated — is documented in [`docs/technical-documentation.md`](../docs/technical-documentation.md#12-honest-scope--real-vs-simulated).
