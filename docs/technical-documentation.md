@@ -1,16 +1,32 @@
 # Hatrick — Technical Documentation
 
 > **Track:** Consumer & Fan Experiences · TxODDS World Cup Hackathon 2026
-> **Live:** [hatrick.xyz](https://hatrick.xyz) · **Repo:** [github.com/project-hattrick/hat-trick](https://github.com/project-hattrick/hat-trick)
+> **Live:** [hatrick.xyz](https://hatrick.xyz) · **Repo:** [github.com/project-hattrick/hatrick](https://github.com/project-hattrick/hatrick)
 > **Network:** Solana devnet · test tokens only — no real money moves.
 
-This is the complete technical writeup for the judges: what Hatrick is, how the TxLINE feed
-drives every surface, how the four Solana programs work, and an honest account of what is real
-versus simulated. For the quick version see [`submission.md`](submission.md); for a speaking guide
-see [`judge-briefing.md`](judge-briefing.md); for our dated API feedback see
-[`txline-feedback.md`](txline-feedback.md); for the country-by-country rollout & compliance model see
-[`market-rollout-compliance.md`](market-rollout-compliance.md); and for organizer guidance + API facts
-we aligned to, see [`hackathon-qa-intel.md`](hackathon-qa-intel.md).
+This is the complete technical writeup for the judges: what Hatrick is, how the TxLINE feed drives
+every surface, how the four Solana programs work, and an honest account of what is real versus
+simulated. For the two-minute version see [`submission.md`](submission.md); for the verified TxLINE
+provider reference see [`txline-provider.md`](txline-provider.md); for the event-flow deep-dive see
+[`architecture.md`](architecture.md).
+
+---
+
+## Contents
+
+1. [TL;DR for reviewers](#1-tldr-for-reviewers)
+2. [Product overview](#2-product-overview)
+3. [System architecture](#3-system-architecture)
+4. [Repository layout](#4-repository-layout)
+5. [TxLINE integration — the required live input](#5-txline-integration--the-required-live-input)
+6. [Solana / on-chain (devnet)](#6-solana--on-chain-devnet)
+7. [Fantasy mechanics](#7-fantasy-mechanics)
+8. [Live mode mechanics](#8-live-mode-mechanics)
+9. [Tech stack](#9-tech-stack)
+10. [Running it](#10-running-it)
+11. [Compliance & responsible gaming](#11-compliance--responsible-gaming)
+12. [Honest scope — real vs simulated](#12-honest-scope--real-vs-simulated)
+13. [Team](#13-team)
 
 ---
 
@@ -50,24 +66,26 @@ The originality is the pairing: **not a dashboard *about* the data — a game *m
 
 ## 3. System architecture
 
-The backend is a NestJS monorepo built around **`@nestjs/event-emitter`** and a two-state emission
-contract. One feed in; every surface downstream.
+The backend (`api/`) is a single **event-driven NestJS** application built around
+**`@nestjs/event-emitter`** and a two-state emission contract. One feed comes in; a typed event bus
+fans it to every consumer; a `socket.io` gateway broadcasts to the frontend. No microservices, no
+message broker — the whole pipeline is in-process and easy to reason about.
 
 ```
 TxLINE SSE (scores + odds)
         │  fetch() stream · reconnect + resume (Last-Event-ID) · heartbeat
         ▼
-[txline-service]  ingest → normalizer ── emits typed domain events ─┐
-        │  keeps in-memory tournament state                          │
-        ▼                                                            ▼
-   (Kafka, optional)                              *.during  (confirmed=false → optimistic, animate now)
-        │                                         *.after   (confirmed=true  → authoritative, settle)
-        ▼                                                            │
-[hattrick-layer]  NestJS · Prisma/Postgres · Redis  ── listeners:  betting settle · fixture-events
-        │            fantasy attributes · statistics · crowd          persistence · duel orchestration
+api/src/txline ── ingest → mapper → normalizer ── emits typed domain events ─┐
+        │  keeps in-memory tournament state (scores, odds, stats, lineups)     │
+        ▼                                                                      ▼
+   EventEmitter2 bus                          *.during  (confirmed=false → optimistic, animate now)
+        │                                     *.after   (confirmed=true  → authoritative, settle)
+        ▼                                                                      │
+   listeners:  live (odds/markets) · fantasy (attributes) · chain (betting    │
+        │      settlement) · crowd · statistics · duel orchestration ◄─────────┘
         ▼
-   socket.io gateway ── broadcasts both states ──► [frontend] Next.js
-                                                     animate on .during · reconcile on .after
+   api/src/realtime ── socket.io gateway ── broadcasts both states ──► front/ (Next.js)
+                                                animate on .during · reconcile on .after
 ```
 
 ### The two-state contract (the core rule)
@@ -86,14 +104,40 @@ different events, not one guess. All event names are enums; payloads are typed D
 
 ### Why event-driven
 
-One feed, many consumers get the same event at the same instant → consistency. New listeners (crowd,
-narration, analytics) attach without touching the ingest path.
+One feed, many consumers get the same event at the same instant → consistency between the Live view
+and Fantasy attribute engine. New listeners (crowd, narration, analytics) attach without touching the
+ingest path. A client joining mid-match receives the current in-memory tournament state on connect —
+no feed replay needed — then streams deltas from there.
 
 ---
 
-## 4. TxLINE integration (the required live input)
+## 4. Repository layout
 
-### 4.1 Authentication
+One public repository, three independent apps — each installs, builds, and deploys on its own; no
+shared packages, no cross-imports.
+
+```
+hatrick/
+├── api/          NestJS — TxLINE ingest, event bus, WebSocket gateway, chain clients
+│   └── src/
+│       ├── txline/     SSE ingest, mapper, normalizer, in-memory tournament state
+│       ├── realtime/   socket.io gateway (broadcasts *.during / *.after)
+│       ├── events/     shared enums (event names, actions, markets) + typed DTOs
+│       ├── live/        odds/market projection + in-match bet intake
+│       ├── fantasy/     packs, XI, duel simulation, attribute engine
+│       ├── chain/       Solana clients + services (betting, duels, packs, provably-fair)
+│       ├── crowd/       chat + social intake, ranked speech-balloon stream
+│       └── users · wallet · store · market · room · common
+├── front/        Next.js (App Router) — Zustand, React Query, services/, canvas match engine
+├── contracts/    Anchor 0.31.1 — four on-chain programs (betting, fantasy, packs, provably-fair)
+└── docs/         this document · submission.md · txline-provider.md · architecture.md
+```
+
+---
+
+## 5. TxLINE integration — the required live input
+
+### 5.1 Authentication
 
 Every data request carries **two headers**:
 
@@ -104,9 +148,9 @@ Every data request carries **two headers**:
   free — a `transferChecked` of 0 TxL).
 
 **Gotcha we learned:** the host *is* the network selector. Devnet auth, activation, and data must all
-use `https://txline-dev.txodds.com`; mixing hosts fails silently with a 30s 504.
+use `https://txline-dev.txodds.com`; mixing hosts fails silently with a 30-second 504.
 
-### 4.2 Endpoints we use
+### 5.2 Endpoints we use
 
 Verified against the running code — this is the complete list.
 
@@ -122,15 +166,33 @@ Verified against the running code — this is the complete list.
 | `GET /api/scores/updates/{epochDay}/{hour}/{interval}` | historical 5-min interval of score events | replay of finished matches |
 | `GET /api/odds/updates/{epochDay}/{hour}/{interval}` | historical 5-min interval of odds | replay odds board |
 
-> We do **not** consume TxLINE's `/api/scores/stat-validation` endpoint or its `validate_stat` CPI —
-> trustless verification of the feed's own Merkle proofs on-chain is on our roadmap, not in this build.
-> (Our `hattrick_betting` program does settle via its own oracle-signed Merkle of results — that's our
-> settlement mechanism, unrelated to TxLINE's validation endpoint.) The organizers confirmed the
-> `validate_stat` CPI is recommended, not required, and is aimed at the Prediction Markets & Settlement
-> track — a consumer app that settles from the authoritative confirmed result is in scope. We call this
-> out so the claim is honest.
+> **On trustless verification (honest note).** We do **not** consume TxLINE's
+> `/api/scores/stat-validation` endpoint or its `validate_stat` CPI — verifying the feed's own Merkle
+> proofs on-chain is on our roadmap, not in this build. Our `hattrick_betting` program settles via its
+> own oracle-signed Merkle of results — that's our settlement mechanism, independent of TxLINE's
+> validation endpoint. The organizers confirmed `validate_stat` is recommended, not required, and is
+> aimed at the Prediction Markets & Settlement track; a consumer app that settles from the
+> authoritative confirmed result is in scope. We call this out so the claim stays honest.
 
-### 4.3 Making sparse data watchable (the gap-filler engine)
+### 5.3 The hard part: the wire ≠ the docs
+
+The feed's real value — and where most of the engineering went — is turning a terse, quirky data
+stream into something correct enough to move money and playable enough to watch. The traps we solved
+(all verified against the live API):
+
+- **The wire uses Capitalized keys** (`FixtureId`, `Action`, `Confirmed`, `Score`, `Stats`) — not the
+  lowercase shape the public schema implies. A single defensive **mapper** adapts wire → internal
+  event, tolerates both casings, never throws, and logs unknown actions once as a drift watch.
+- **Score comes from the `Score` object, never by counting `goal` actions.** A goal is emitted once
+  unconfirmed, re-confirmed twice, and can be reversed via `action_discarded` — counting double-counts.
+  `Score.ParticipantN.Total.Goals` is authoritative and sparse (absent key = 0).
+- **Full-time is the `game_finalised` action, not `GameState`** (which can read `"scheduled"` all
+  match). We surface it as full-time so settlement fires.
+- **Settle 1X2 / Over-Under on regulation (H1 + H2), not `Total`** — `Total` includes extra time, so a
+  knockout decided in ET would settle standard markets wrong. We derive and carry the regulation score
+  separately; shootout goals live isolated and never contaminate the result.
+
+### 5.4 Making sparse data watchable (the gap-filler engine)
 
 The feed emits a handful of discrete rows per minute — perfect truth for settlement, not enough motion
 for a continuous pitch. Between rows we run a **gap-filler**: it derives a possession lean + tempo from
@@ -139,31 +201,32 @@ offsides) and drives autonomous connective play — dribbles, passes, ball-steal
 shot**. Any real event always overrides it. What's on screen between rows is still a function of real
 data, not fiction.
 
-### 4.4 Naming events
+### 5.5 Naming events
 
 Events carry `playerId` only; there is no queryable roster endpoint. The single source of a name in
 the whole feed is the `action=lineups` frame, embedded in the scores stream ~40 min before kickoff. So
 we pre-scan history backward to before kickoff, reconstruct a `playerId → {name, shirt}` map, and join
 it onto every event — server-side for replay, and the same join again on the client for live.
 
-### 4.5 Stats we compute ourselves
+### 5.6 Stats we compute ourselves
 
 The feed totals only goals, corners, and cards. Shots-on-target, fouls, and offsides are **tallied
 client/server-side from the discrete rows** (deduped by a stable per-event sequence, so a
 during/after pair isn't double-counted). Possession has no percentage in the feed, so we **derive** a
-territorial lean from the stats it does carry. This is why a mid-match joiner still gets correct
-running totals — we replay the snapshot to rebuild them.
+territorial lean from the stats it does carry. A mid-match joiner still gets correct running totals —
+we replay the snapshot to rebuild them.
 
-### 4.6 Replay through the same pipeline
+### 5.7 Replay through the same pipeline
 
 Because the 104 group-stage matches end before judging, the demo replays **real recorded TxLINE
 history** through the exact live pipeline. Historical 5-minute intervals feed a client-side clock
 (`useReplayClock`): play/pause/restart, speed switchable live from 1× to 8×, key-event markers on the
-bar. Every event, name, and score on screen is real feed data.
+bar. Every event, name, and score on screen is real feed data — the replay path is byte-for-byte the
+same normalizer the live path uses.
 
 ---
 
-## 5. Solana / on-chain (devnet)
+## 6. Solana / on-chain (devnet)
 
 State is **chain-authoritative with a Postgres mirror**: the source of truth lives on-chain, the DB
 mirrors it for fast reads and to gate the UI. Four independent Anchor programs (Anchor 0.31.1):
@@ -175,19 +238,19 @@ mirrors it for fast reads and to gate the UI. Four independent Anchor programs (
 | `hattrick_packs` | `BtgAtofxN8RJxaC824XUeamCZL13b63u2YaVTvhVGfFo` | Provably-fair card packs; mints Metaplex Core NFTs; layer controls vaults |
 | `hattrick_provably_fair` | `DsWff3P22AsnXAk7EthHNythzDWLc7bg5JS3aPpNjsLQ` | Commit-reveal seed oracle; gates fantasy settlement and pack fulfillment on `is_revealed` |
 
-### 5.1 Sign-in with zero wallet friction
+### 6.1 Sign-in with zero wallet friction
 
 Email login through **Privy** creates an embedded Solana wallet invisibly — no extension, no seed
 phrase. A faucet mints test USDC on devnet in one tap (the platform wallet is the mint authority).
 Phantom also works for users who prefer it.
 
-### 5.2 Betting flow
+### 6.2 Betting flow
 
 Place bet → backend builds an unsigned `place_position` tx → user signs → confirmed on-chain → DB
-mirror updated. On `match-end.after` (the authoritative TxLINE result), the backend settles the market
-— no human approves a payout.
+mirror updated. On the authoritative full-time result (`match-end.after`), the backend settles the
+market — no human approves a payout.
 
-### 5.3 Duel flow (provably fair)
+### 6.3 Duel flow (provably fair)
 
 1. Backend (layer-signed) `initialize_duel` — creates the escrow — and `commit_seed` to the
    provably-fair program, **before kickoff**.
@@ -195,13 +258,13 @@ mirror updated. On `match-end.after` (the authoritative TxLINE result), the back
 3. At full time the seed is revealed on-chain and `settle_duel` runs — **gated on `is_revealed`**, so
    the result cannot be manipulated after the commitment. Not even we can rig it.
 
-### 5.4 Packs flow
+### 6.4 Packs flow
 
 Pack purchase commits a seed to provably-fair (before opening) and mints **Metaplex Core NFTs** —
 serial-numbered, capped supply. Fulfillment is gated on the seed reveal. Card ownership and metadata
 live on-chain (`OwnedCard.assetMint` mirrors it in the DB).
 
-### 5.5 Proof + off-chain fallback
+### 6.5 Proof + off-chain fallback
 
 Every pack buy, bet, and settlement surfaces a **"View on Solscan"** link (`?cluster=devnet`). A
 single flag `CHAIN_ENABLED=false` routes the same flows through a DB test-USDC ledger — a safe
@@ -212,15 +275,15 @@ fallback if anything on-chain misbehaves during judging, with no other change ne
 
 ---
 
-## 6. Fantasy mechanics
+## 7. Fantasy mechanics
 
-### 6.1 Cards → XI → duel
+### 7.1 Cards → XI → duel
 
 Open packs to reveal cards (fixed ratings, nation, rarity), build an XI, then challenge another real
 user (direct challenge or ranked queue; a CPU fallback keeps the demo alive if no human is waiting).
 Set a stake, both sides escrow on-chain, the duel runs on both screens.
 
-### 6.2 How the winner is decided
+### 7.2 How the winner is decided
 
 The simulation is **server-authoritative**: each card carries its player's latest real stats
 (`loadSquadPayload`), the two squad payloads go into the sim, and the outcome is **deterministic,
@@ -228,13 +291,13 @@ seeded from the on-chain seed commitment** (the same replay log animates the are
 Squad rating biases chance probability — a stronger XI earns more and better chances. No client can
 influence the result.
 
-### 6.3 Card form from TxLINE data (the feed writes onto the cards)
+### 7.3 Card form from TxLINE data (the feed writes onto the cards)
 
 After real matches, cards move based on the feed:
 
 - **Nation layer** — a fixture's authoritative final score buffs/nerfs every card of that nation
   (±1–3 form).
-- **Player layer** — the real scorers from the match timeline react twice.
+- **Player layer** — the real scorers from the match timeline react on top of the nation swing.
 - **Matching** — real named players match by name; fictional cards resolve by **nation flag + shirt
   number + position** (never by name), which is compliance-safe and works for any card.
 - **Upcoming impact** — a forward-looking panel maps real scheduled fixtures to the nations you own and
@@ -242,7 +305,7 @@ After real matches, cards move based on the feed:
 
 ---
 
-## 7. Live mode mechanics
+## 8. Live mode mechanics
 
 The home is a live match dashboard, every widget sourced from the feed:
 
@@ -262,33 +325,33 @@ the engine.
 
 ---
 
-## 8. Tech stack
+## 9. Tech stack
 
 | Layer | Stack |
 |---|---|
 | **Frontend** | Next.js (App Router) · React · Tailwind · shadcn/ui · Zustand (state) · React Query (fetching) · framework-free canvas 2D match engine · Privy (email → embedded wallet) |
-| **Backend** | NestJS · `@nestjs/event-emitter` · Prisma · Postgres · Redis · Kafka (optional) · socket.io · Zod DTOs · TypeScript |
+| **Backend** | NestJS · `@nestjs/event-emitter` (in-process event bus) · `@nestjs/websockets` + `socket.io` · Prisma · Postgres · Redis (ioredis) · Zod DTOs · TypeScript |
 | **Blockchain** | Solana devnet · Anchor 0.31.1 (4 programs) · Metaplex Core · `@solana/web3.js` · SPL tokens |
 | **Data** | TxLINE (SSE scores + odds, REST snapshots, historical intervals) |
 
 Frontend never calls `fetch`/`axios` directly from components — all network access lives in
-`src/services/`. All match/market/game constants are enums, never magic strings.
+`src/services/`. All match/market/game constants are enums, never magic strings. Files are kept under
+600 lines.
 
 ---
 
-## 9. Running it
+## 10. Running it
 
 - **Live:** [hatrick.xyz](https://hatrick.xyz). Sign in with an email, tap **Get test funds**, buy the
   starter pack, then watch/bet the live match on the home or duel from `/duelists`. In a restricted
   region, append `?geo=demo`.
 - **Local:** `api/` → `docker compose up -d && npm i && npm run prisma:deploy && npm run start:dev`;
-  `front/` → `npm i && npm run dev` (`NEXT_PUBLIC_USE_MOCK=false`). Envs documented in each app's
-  `.env.example`. The API boots cleanly without a Kafka broker (producer buffers; duels use a
-  layer-side fallback settle).
+  `front/` → `npm i && npm run dev` (`NEXT_PUBLIC_USE_MOCK=false`). Envs are documented in each app's
+  `.env.example`.
 
 ---
 
-## 10. Compliance & responsible gaming
+## 11. Compliance & responsible gaming
 
 - **No FIFA IP** — no official branding, logos, marks, or implied affiliation. Player names arrive as
   factual TxLINE data (OK to display); card art is stylized and does not match real players (no
@@ -302,7 +365,7 @@ Frontend never calls `fetch`/`axios` directly from components — all network ac
 
 ---
 
-## 11. Honest scope — real vs simulated
+## 12. Honest scope — real vs simulated
 
 We would rather show the seams than oversell.
 
@@ -315,14 +378,14 @@ We would rather show the seams than oversell.
 | Fantasy 1v1 vs real users (direct challenge + ranked queue) | — |
 | Match replay through the real pipeline | — |
 
-**Known gaps:** the card marketplace settles off-chain (a DB ledger; mint and all money flows are
-on-chain); synthetic betting markets beyond 1X2 / over-under aren't derived yet; crowd ambience outside
-rooms is front-simulated; and because the feed carries no possession percentage, the pitch's
+**Known gaps:** the card marketplace settles off-chain (a DB ledger; the mint and all money flows are
+on-chain); synthetic betting markets beyond 1X2 / over-under aren't derived yet; ambient crowd
+reactions are front-simulated; and because the feed carries no possession percentage, the pitch's
 territorial lean is derived from the stats TxLINE does provide.
 
 ---
 
-## 12. Team
+## 13. Team
 
 | Name | Role | GitHub |
 |---|---|---|
